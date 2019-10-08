@@ -1,9 +1,9 @@
 /* eslint-disable */
 process.AFL_HE_ROOT_DIR = './src/html/'
 
-const { TemplateEngine } = require('../src/nodejs/lib/template_engine.js');
+const { TemplateEngine } = require('../src/lib/template_engine.js');
 
-const { FsTemplateProvider } = require('../src/nodejs/lib/template_provider.js');
+const { FsTemplateProvider } = require('../src/lib/template_provider.js');
 
 const mustache_template = `{
     "name" : "test template",

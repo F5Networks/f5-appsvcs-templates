@@ -1,18 +1,8 @@
 image: node:8
 
 stages:
-    - lint
     - test
     - build
-
-lint:
-    image: node:8
-    stage: lint
-    tags:
-        - docker-executor
-    script:
-        - npm run install-test
-        - npm run lint
 
 test:
     image: node:8
@@ -21,6 +11,7 @@ test:
         - docker-executor
     script:
         - npm run install-test
+        - npm run lint
         - npm run test
     artifacts:
         name: ${CI_COMMIT_REF_NAME}_test_artifacts

@@ -1,9 +1,9 @@
 /* eslint-disable */
 process.AFL_HE_ROOT_DIR = './src/html/'
 
-const te = require('../src/nodejs/lib/template_engine.js');
+const te = require('../src/lib/template_engine.js');
 
-const { FsTemplateProvider, GitHubTemplateProvider } = require('../src/nodejs/lib/template_provider.js');
+const { FsTemplateProvider, GitHubTemplateProvider } = require('../src/lib/template_provider.js');
 
 const provider = new FsTemplateProvider('./src/templates', './src/schemas')
 //const provider = new GitHubTemplateProvider('zinkem5/f5-as3-templates');
@@ -253,7 +253,7 @@ describe('template valid-json', function() {
   });
 
   it('cdt_service 1', async function() {
-    const { FsSchemaProvider } = require('../src/nodejs/lib/schema_provider.js');
+    const { FsSchemaProvider } = require('../src/lib/schema_provider.js');
     const context = {
       service_type: 'Service_HTTP',
       tenant_name: 'zinke',
@@ -283,7 +283,7 @@ describe('template valid-json', function() {
     *   this test ensures the 'edit' behavior that preserves the
     *   provided application_name in the rendered template
     */
-    const { FsSchemaProvider } = require('../src/nodejs/lib/schema_provider.js');
+    const { FsSchemaProvider } = require('../src/lib/schema_provider.js');
     const context = {
       application_name: 'arbitrary42',
       service_type: 'Service_HTTP',
