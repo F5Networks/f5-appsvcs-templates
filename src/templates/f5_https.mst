@@ -1,0 +1,49 @@
+{{!
+ Simple TCP load balancer using the same port on client and server side.
+}}
+{
+  "class": "AS3",
+  "action": "deploy",
+  "persist": true,
+  "declaration": {
+    "class": "ADC",
+    "schemaVersion": "3.11.0",
+    "id": "{{uuid}}",
+    "label": "Service_HTTPS",
+    "remark": "HTTPS Service Template",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{template_name}}_{{uuid}}": {
+        "class": "Application",
+        "template": "generic",
+        "VIP_Service_HTTPS_{{virtual_port}}": {
+          "class": "Service_HTTPS",
+          "virtualAddresses": [
+            "{{virtual_address}}"
+          ],
+          "virtualPort": {{virtual_port:f5:port}},
+          "pool": "POOL_Service_HTTPS_{{virtual_port}}",
+          "serverTLS": "TLS_Service_HTTPS_{{virtual_port}}"
+        },
+        "POOL_Service_HTTPS_{{virtual_port}}": {
+          "class": "Pool",
+          "members": [{
+            "serverAddresses": {{server_addresses::array}},
+            "servicePort": {{service_port:f5:port}}
+          }]
+        },
+        "TLS_Service_HTTPS_{{virtual_port}}": {
+          "class": "TLS_Server",
+          "certificates": [{
+            "certificate": "CERT_Service_HTTPS_{{virtual_port}}"
+          }]
+        },
+        "CERT_Service_HTTPS_{{virtual_port}}": {
+          "class": "Certificate",
+          "certificate": {{certificate::text}},
+          "privateKey": {{private_key::text}}
+        }
+      }
+    }
+  }
+}

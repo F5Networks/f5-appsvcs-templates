@@ -1,0 +1,42 @@
+image: node:8
+
+stages:
+    - lint
+    - test
+    - build
+
+lint:
+    image: node:8
+    stage: lint
+    tags:
+        - docker-executor
+    script:
+        - npm run install-test
+        - npm run lint
+
+test:
+    image: node:8
+    stage: test
+    tags:
+        - docker-executor
+    script:
+        - npm run install-test
+        - npm run test
+    artifacts:
+        name: ${CI_COMMIT_REF_NAME}_test_artifacts
+        paths:
+            - test/artifacts
+        when: on_failure
+        expire_in: 3 days
+
+build:
+    image: f5devcentral/containthedocs:rpmbuild
+    stage: build
+    script:
+        - npm run install-production
+        - npm run build
+    artifacts:
+        name: mystique-$CI_BUILD_REF
+        paths:
+            - dist
+        expire_in: 1 month

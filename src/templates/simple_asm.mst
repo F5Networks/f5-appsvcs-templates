@@ -1,0 +1,41 @@
+{{!
+  This is a simple HTTP server hosted at port 80 using the existing ASM policy
+  specified by WAF policy path. Uses AS3 template: http.
+}}
+{
+  "class": "ADC",
+  "schemaVersion": "3.0.0",
+  "id": "5489432",
+  "label": "ASM_policy_existing",
+  "remark": "ASM_policy_existing",
+  "{{tenant_name}}": {
+    "class": "Tenant",
+    "{{application_name}}": {
+      "class": "Application",
+      "template": "http",
+      "serviceMain": {
+        "class": "Service_HTTP",
+        "virtualAddresses": [
+          "{{virtual_address}}"
+        ],
+        "snat": "auto",
+        "pool": "asm_pool",
+        "policyWAF": {
+          "bigip": "{{WAF_policy_path}}"
+        }
+      },
+      "asm_pool": {
+        "class": "Pool",
+        "monitors": [
+          "http"
+        ],
+        "members": [
+          {
+            "servicePort": {{server_port::integer}},
+            "serverAddresses": {{server_addresses::array}}
+          }
+        ]
+      }
+    }
+  }
+ }
