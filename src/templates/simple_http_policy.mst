@@ -32,7 +32,7 @@
           "members": [
             {
               "servicePort": 80,
-              "serverAddresses": {{server_addresses::array}}
+              "serverAddresses": {{server_addresses:array}}
             }
           ]
         },
@@ -44,7 +44,7 @@
           "members": [
             {
               "servicePort": 80,
-              "serverAddresses": {{alternative_server_addresses::array}}
+              "serverAddresses": {{alternative_server_addresses:array}}
             }
           ]
         },

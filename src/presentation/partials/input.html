@@ -1,0 +1,5 @@
+<ng-form name="input_form">
+  <input name="item_value" ng-model="item.value" required
+    ng-disabled="(item.value.length>0 && item.value==selectedApp) || (item.value.length>0 && item.value==selectedTenant)"></input>
+  <span class="text-danger" ng-show="input_form.item_value.$invalid">REQUIRED</span>
+</ng-form>

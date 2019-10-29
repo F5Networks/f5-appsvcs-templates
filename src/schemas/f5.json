@@ -1,15 +1,32 @@
 {
   "$schema": "http://json-schema.org/draft-07/hyper-schema",
   "definitions": {
+    "array": {
+      "items": {
+        "type": "string"
+      },
+      "default": ["10.0.0.1","10.0.0.2"],
+      "uiWidget": "array_input"
+    },
+    "boolean": {
+      "default": true,
+      "uiWidget": "yesno_radio_buttons"
+    },
+    "integer": {
+      "default": 0,
+      "uiWidget": "input"
+    },
     "ipv4": {
       "format": "ipv4",
-      "default": "10.0.0.1"
+      "default": "10.0.0.1",
+      "uiWidget": "input"
     },
     "port": {
       "type": "integer",
       "minimuim": 0,
       "maximum": 65535,
-      "default": 443
+      "default": 443,
+      "uiWidget": "input"
     },
     "service": {
       "type": "string",
@@ -20,14 +37,16 @@
         "Service_UDP",
         "Service_L4"
       ],
-      "default": "Service_HTTP"
+      "default": "Service_HTTP",
+      "uiWidget": "dropdown_menu"
     },
     "match_blob" : {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "default": ["*"]
+      "default": ["*"],
+      "uiWidget": "array"
     },
     "http_service": {
       "type": "string",
@@ -35,7 +54,8 @@
         "Service_HTTP",
         "Service_HTTPS"
       ],
-      "default": "Service_HTTP"
+      "default": "Service_HTTP",
+      "uiWidget": "dropdown_menu"
     },
     "basic_policy_matching_strategy": {
       "type": "string",
@@ -43,7 +63,8 @@
         "all-match",
         "best-match",
         "first-match"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "policy_condition": {
       "type": "string",
@@ -52,7 +73,8 @@
         "httpUri",
         "httpCookie",
         "sslExtension"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "policy_action": {
       "type": "string",
@@ -67,7 +89,8 @@
         "drop",
         "clientSsl",
         "persist"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "match_component": {
       "type": "string",
@@ -80,7 +103,8 @@
         "queryString",
         "scheme",
         "serverName"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "policy_condition_event": {
       "type": "string",
@@ -90,7 +114,8 @@
         "request",
         "proxy-response",
         "response"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "policy_action_event": {
       "type": "string",
@@ -100,7 +125,8 @@
         "request",
         "response",
         "server-connected"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "http_header": {
       "type":"string",
@@ -165,7 +191,8 @@
         "X-Robots-Tag",
         "X-UA-Compatible",
         "X-XSS-Protection"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     },
     "operands": {
       "type": "string",
@@ -174,7 +201,8 @@
         "starts-with",
         "ends-with",
         "contains"
-      ]
+      ],
+      "uiWidget": "dropdown_menu"
     }
   }
 }

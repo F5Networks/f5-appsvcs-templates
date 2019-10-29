@@ -30,13 +30,13 @@ Uses AS3 template: http.
         ],
         "members": [{
           "servicePort": 80,
-          "serverAddresses": {{server_addressses::array}}
+          "serverAddresses": {{server_addressses:array}}
         }]
       },
       "custom_irule": {
         "class": "iRule",
-        "remark": {{iRule_comment::text}},
-        "iRule": {{iRule_code::text}}
+        "remark": {{iRule_comment:text}},
+        "iRule": {{iRule_code:text}}
       }
     }
   }

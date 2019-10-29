@@ -29,8 +29,8 @@
             "http"
           ],
           "members": [{
-            "servicePort": {{server_port::integer}},
-            "serverAddresses": {{server_address::array}}
+            "servicePort": {{server_port:port:80}},
+            "serverAddresses": {{server_address:array}}
           }]
         },
         "webtls": {
@@ -41,8 +41,8 @@
         },
         "webcert": {
           "class": "Certificate",
-          "certificate": {{certificate::text}},
-          "privateKey": {{private_key::text}}
+          "certificate": {{certificate:text}},
+          "privateKey": {{private_key:text}}
         }
       }
     }
