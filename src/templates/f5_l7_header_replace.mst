@@ -20,7 +20,7 @@
         "VIP_Service_HTTP_{{virtual_port}}": {
           "class": "Service_HTTP",
           "virtualAddresses": [
-            {{virtual_address:f5:ipv4}}
+            {{virtual_address:ipv4}}
           ],
           "virtualPort": {{virtual_port}},
           "pool": "POOL_Service_HTTP_{{virtual_port}}",
@@ -29,28 +29,28 @@
         "POOL_Service_HTTP_{{virtual_port}}": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{server_addresses::array}},
-            "servicePort": {{service_port:f5:port}}
+            "serverAddresses": {{server_addresses:array}},
+            "servicePort": {{service_port:port}}
           }]
         },
         "EP_Service_HTTP_{{virtual_port}}" : {
           "class": "Endpoint_Policy",
-          "strategy" : {{matching:f5:basic_policy_matching_strategy}},
+          "strategy" : {{matching:basic_policy_matching_strategy}},
           "rules": [
             {
               "name": "EP_Service_HTTP_{{virtual_port}}",
               "conditions": [{
-                      "event": {{when_condition:f5:policy_condition_event}},
-                      "name": {{header_name:f5:http_header}},
+                      "event": {{when_condition:policy_condition_event}},
+                      "name": {{header_name:http_header}},
                       "all": {
-                        "operand": {{operand:f5:operands}},
-                        "values": {{match_condition_value:f5:match_blob}}
+                        "operand": {{operand:operands}},
+                        "values": {{match_condition_value:match_blob}}
                       }
                   }
               ],
               "actions": [{
                       "type": "httpHeader",
-                      "event": {{when_action:f5:policy_action_event}},
+                      "event": {{when_action:policy_action_event}},
                       "replace": {
                         "name": "{{header_name}}",
                         "value": "{{new_value}}"

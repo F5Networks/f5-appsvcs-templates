@@ -31,8 +31,8 @@
         ],
         "members": [
           {
-            "servicePort": {{server_port::integer}},
-            "serverAddresses": {{server_addresses::array}}
+            "servicePort": {{server_port:integer}},
+            "serverAddresses": {{server_addresses:array}}
           }
         ]
       }

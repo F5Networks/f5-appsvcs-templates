@@ -1,5 +1,5 @@
 {{!
- Simple TCP load balancer using the same port on client and server side.
+ Simple HTTPS load balancer using the same port on client and server side.
 }}
 {
   "class": "AS3",
@@ -21,15 +21,15 @@
           "virtualAddresses": [
             "{{virtual_address}}"
           ],
-          "virtualPort": {{virtual_port:f5:port}},
+          "virtualPort": {{virtual_port:port}},
           "pool": "POOL_Service_HTTPS_{{virtual_port}}",
           "serverTLS": "TLS_Service_HTTPS_{{virtual_port}}"
         },
         "POOL_Service_HTTPS_{{virtual_port}}": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{server_addresses::array}},
-            "servicePort": {{service_port:f5:port}}
+            "serverAddresses": {{server_addresses:array}},
+            "servicePort": {{service_port:port:80}}
           }]
         },
         "TLS_Service_HTTPS_{{virtual_port}}": {
@@ -40,8 +40,8 @@
         },
         "CERT_Service_HTTPS_{{virtual_port}}": {
           "class": "Certificate",
-          "certificate": {{certificate::text}},
-          "privateKey": {{private_key::text}}
+          "certificate": {{certificate:string}},
+          "privateKey": {{private_key:string}}
         }
       }
     }

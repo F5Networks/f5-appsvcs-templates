@@ -21,7 +21,7 @@ Uses AS3 template: udp.
           "virtualAddresses": [
             "{{virtual_address}}"
           ],
-          "virtualPort": {{virtual_port::integer}},
+          "virtualPort": {{virtual_port:integer}},
           "pool": "Pool1"
         },
         "Pool1": {
@@ -31,8 +31,8 @@ Uses AS3 template: udp.
           ],
           "members": [
             {
-              "serverAddresses": {{server_addresses::array}},
-              "servicePort": {{service_port::integer}}
+              "serverAddresses": {{server_addresses:array}},
+              "servicePort": {{service_port:integer}}
             }
           ]
         }

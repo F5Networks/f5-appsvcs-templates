@@ -21,32 +21,32 @@
           "virtualAddresses": [
             "{{virtual_address}}"
           ],
-          "virtualPort": {{virtual_port:f5:port}},
+          "virtualPort": {{virtual_port:port}},
           "pool": "POOL_Service_HTTP_{{virtual_port}}"
         },
         "POOL_Service_HTTP_{{virtual_port}}": {
           "class": "Pool",
           "members": [{
             "servicePort": {{virtual_port}},
-            "serverAddresses": {{server_addresses::array}}
+            "serverAddresses": {{server_addresses:array}}
           }]
         },
         "EP_Service_HTTP_{{virtualPort}}" : {
           "class": "Endpoint_Policy",
-          "strategy" : {{matching:f5:basic_policy_matching_strategy}},
+          "strategy" : {{matching:basic_policy_matching_strategy}},
           "rules": [
             {
               "name": "route_policy",
               "conditions": [{
-                  "type": {{condition:f5:policy_condition}},
-                  {{match_on:f5:match_component}}: {
-                      "values": {{match_string::array}}
+                  "type": {{condition:policy_condition}},
+                  {{match_on:match_component}}: {
+                      "values": {{match_string:array}}
                   }
                 }
               ],
               "actions": [{
-                  "type": {{action:f5:policy_action}},
-                  "event": {{when:f5:policy_action_event}}
+                  "type": {{action:policy_action}},
+                  "event": {{when:policy_action_event}}
                 }
               ]
             }

@@ -17,18 +17,18 @@
         "class": "Application",
         "template": "generic",
         "VIP_{{service_type}}_{{virtual_port}}": {
-          "class": {{service_type:f5:service}},
+          "class": {{service_type:service}},
           "virtualAddresses": [
-            {{virtual_address:f5:ipv4}}
+            {{virtual_address:ipv4}}
           ],
-          "virtualPort": {{virtual_port:f5:port}},
+          "virtualPort": {{virtual_port:port}},
           "pool": "POOL_{{service_type}}_{{virtual_port}}"
         },
         "POOL_{{service_type}}_{{virtual_port}}": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{server_addresses::array}},
-            "servicePort": {{service_port:f5:port}}
+            "serverAddresses": {{server_addresses:array}},
+            "servicePort": {{service_port:port}}
           }]
         }
       }

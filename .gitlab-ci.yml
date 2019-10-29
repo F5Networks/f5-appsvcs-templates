@@ -12,7 +12,6 @@ test:
     script:
         - npm run install-test
         - npm run lint
-        - npm run test
     artifacts:
         name: ${CI_COMMIT_REF_NAME}_test_artifacts
         paths:
