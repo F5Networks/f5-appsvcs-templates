@@ -11,7 +11,7 @@ rpmbuild -bb \
     --define "_name mystique" \
     --define "_version ${VERSION}" \
     --define "_release ${RELEASE}" \
-    build/project.spec
+    project.spec
 
 cd rpmbuild/RPMS/noarch
 rpmFile=$(ls -t *.rpm 2>/dev/null | head -1)
