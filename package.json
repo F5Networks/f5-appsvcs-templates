@@ -8,7 +8,8 @@
     "install-production": "npm install --production --no-optional",
     "lint": "eslint src test",
     "test": "mocha --recursive \"./test/*.js\"",
-    "build": "./build/rpmBuild.sh"
+    "build": "react-scripts build",
+    "postbuild": "mv build presentation"
   },
   "devDependencies": {
     "eslint": "^5.16.0",
@@ -16,9 +17,12 @@
     "eslint-plugin-import": "^2.17.3",
     "mocha": "^5.2.0"
   },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
   "dependencies": {
-    "ajv": "^6.5.0",
-    "mustache": "^3.1.0",
-    "uuid": "^3.3.3"
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "react-scripts": "3.2.0"
   }
 }

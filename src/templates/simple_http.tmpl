@@ -1,9 +1,12 @@
-{{!
-  The simplest example of an HTTP server load balanced to other servers at
-  port 80. Uses AS3 template: http.
-}}
-{{!ui-logic
-}}
+<title>
+Simple HTTP
+</title>
+
+<description>
+The simplest example of an HTTP server load balanced to other servers at port 80.
+</description>
+
+<declaration>
 {
   "class": "AS3",
   "action": "deploy",
@@ -14,16 +17,16 @@
     "id": "0123-4567-8910",
     "label": "Sample 1",
     "remark": "Basic HTTP with Monitor",
-    "{{Tenant_Name::Tenant1}}": {
+    "{{tenant_name::Tenant1}}": {
       "class": "Tenant",
-      "{{Application_Name::app1}}": {
+      "{{application_name::App1}}": {
         "class": "Application",
         "template": "http",
         "serviceMain": {
-          "class": "{{Service_Type:http_service}}",
-          "virtualAddresses": ["{{Virtual_Address:ipv4}}"],
+          "class": "{{service_type:dropdown_menu:Service_HTTP}}",
+          "virtualAddresses": ["{{virtual_address::10.1.1.1}}"],
           "pool": "web_pool",
-          "enable": {{Enable:boolean}}
+          "enable": {{enable:yesno_buttons:true}}
         },
         "web_pool": {
           "class": "Pool",
@@ -33,7 +36,7 @@
           "members": [
             {
               "servicePort": 80,
-              "serverAddresses": {{Server_Addresses:array}}
+              "serverAddresses": {{server_addresses:ip_array}}
             }
           ]
         }
@@ -41,3 +44,4 @@
     }
   }
 }
+</declaration>

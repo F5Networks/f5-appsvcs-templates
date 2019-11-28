@@ -1,0 +1,68 @@
+<title>
+Simple HTTP
+</title>
+
+<description>
+An example with a customized presentation.
+</description>
+
+<declaration>
+{
+  "class": "AS3",
+  "action": "deploy",
+  "persist": true,
+  "declaration": {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "0123-4567-8910",
+    "label": "Sample 1",
+    "remark": "Basic HTTP with Monitor",
+    "{{Tenant_Name::Tenant1}}": {
+      "class": "Tenant",
+      "{{Application_Name::app1}}": {
+        "class": "Application",
+        "template": "http",
+        "serviceMain": {
+          "class": "{{Service_Type:dropdown_menu:Service_HTTP}}",
+          "virtualAddresses": ["{{Virtual_Address:ipv4}}"],
+          "pool": "web_pool",
+          "enable": {{Enable:yesno_buttons:true}}
+        },
+        "web_pool": {
+          "class": "Pool",
+          "monitors": [
+            "http"
+          ],
+          "members": [
+            {
+              "servicePort": 80,
+              "serverAddresses": {{Server_Addresses:array}}
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+</declaration>
+
+<presentation>
+          <h2>CUSTOM UI</h2>
+          <table class="table table-condensed">
+            <tr>
+              <td align="right">Template Name</td>
+              <td><input ng-model="selectedForm" ng-disabled=true></input></td>
+            </tr>
+            <tr ng-repeat="item in formFields">
+              <td align="right">{{item.name}}</td>
+              <td ng-include="'widgets/textbox.html'"></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td>
+                <button ng-click="updateApp(selectedForm, appItems)">Submit</button>
+                <button ng-click="clearApp()">Cancel</button>
+              </td>
+            </tr>
+          </table>
+</presentation>
