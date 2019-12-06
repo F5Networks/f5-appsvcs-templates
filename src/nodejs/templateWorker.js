@@ -77,6 +77,35 @@ class TemplateWorker {
         return this.httpRequest(opts, payload);
     }
 
+    templateGet(fileName) {
+        let tmpl;
+        let fields = [];
+
+        try {
+            tmpl = fs.readFileSync(`${this.templatesDir}/${fileName}`, 'utf8');
+        } catch(err) {
+            return `Unable to read file ${this.templatesDir}/${fileName}. ${err}`;
+        }
+        // strip the file type suffix
+        let name = fileName.replace(/\.[^.]*?$/, '');
+        // parse remark from xml-style .tmpl file
+        let remark = tmpl.replace(/[\s\S]*<description>([\s\S]*?)<\/description>[\s\S]*/m, '$1');
+        // parse remark from mustache-style .mst file
+        if (remark === tmpl) remark = tmpl.match(/{{!.*?}}/);
+        // parse the declaration from the xml-style .tmpl file
+        let decl = tmpl.replace(/[\s\S]*<declaration>([\s\S]*?)<\/declaration>[\s\S]*/m, '$1')
+        // extract the mustache template fields from declaration
+        decl.match(/{{.*?}}/g).map(x => x.slice(2, -2).split(':'))
+            .forEach(x => {
+                fields.push({
+                    name: x[0],
+                    type: x[1],
+                    value: x[2]
+                });
+            });
+        return { name, remark, fields };
+    }
+
     // LX block status controls the ball color shown in the BIG-IP UI.
     // When at least one mustache app is deployed, set state to BOUND (green).
     // When all are deleted, set state to UNBOUND (gray).
@@ -127,40 +156,33 @@ class TemplateWorker {
         const path = restOperation.getUri().path.split('/');
         const resourceType = path[3];
         const resourceName = path[4] || null;
-        const appName = path[5] || null;
+        const resourceName2 = path[5] || null;
         let promises = [];
         let body = [];
-        let fields = [];
-        let tenants;
-        let apps;
-        let name;
-        let tmpl;
-        let remark;
-        let ui;
-        let decl;
 
         switch(resourceType) {
         case 'app-names':
             promises.push(this.httpGet('/mgmt/shared/appsvcs/declare')
                 .then((res) => {
                     try {
-                        decl = JSON.parse(res.body);
+                        let decl = JSON.parse(res.body);
                         // ignore AS3 classes that do not contain apps
-                        tenants = Object.keys(decl)
+                        let tenants = Object.keys(decl)
                             .filter(x => decl[x].class === 'Tenant');
                         tenants.forEach(tenant => {
-                            apps = Object.keys(decl[tenant])
+                            let apps = Object.keys(decl[tenant])
                                 .filter(x => decl[tenant][x].class === 'Application'
                                     && decl[tenant][x].constants !== undefined
                                     && decl[tenant][x].constants.template !== undefined);
                             apps.forEach(app => {
-                                tmpl = decl[tenant][app].constants.template;
+                                let ui;
+                                let tmpl = decl[tenant][app].constants.template;
                                 // check if a custom ui is present for this template
                                 try {
                                     fs.openSync(`${this.presentationDir}/${tmpl}/index.html`, 'r');
                                     ui = tmpl;
                                 } catch (err) {
-                                    ui = 'default';
+                                    ui = 'f5.default';
                                 }
                                 body.push({
                                     app,
@@ -177,30 +199,18 @@ class TemplateWorker {
                 })
             );
             break;
-        case 'app':
-            promises.push(this.httpGet('/mgmt/shared/appsvcs/declare')
-                .then((res) => {
-                    try {
-                        decl = JSON.parse(res.body);
-                        body = decl[resourceName][appName].constants;
-                        delete body.class;
-                    } catch (err) {
-                        body = `Unable to read AS3 declaration. ${err}`;
-                    }
-                })
-            );
-            break;
         case 'template-names':
             fs.readdirSync(this.templatesDir).forEach((template) => {
                 // read the file
-                tmpl = fs.readFileSync(`${this.templatesDir}/${template}`, 'utf8');
+                let tmpl = fs.readFileSync(`${this.templatesDir}/${template}`, 'utf8');
                 // parse remark from xml-style template.tmpl
-                remark = tmpl.replace(/[\s\S]*<description>([\s\S]*?)<\/description>[\s\S]*/m, '$1');
+                let remark = tmpl.replace(/[\s\S]*<description>([\s\S]*?)<\/description>[\s\S]*/m, '$1');
                 // parse remark from mustache-style template.mst
                 if (remark === tmpl) remark = tmpl.match(/{{!.*?}}/);
                 // strip the file type suffix
-                name = template.replace(/\.[^.]*?$/, '');
+                let name = template.replace(/\.[^.]*?$/, '');
                 // check if a custom ui is present for this template
+                let ui;
                 try {
                     fs.openSync(`${this.presentationDir}/${name}/index.html`, 'r');
                     ui = name;
@@ -214,30 +224,32 @@ class TemplateWorker {
                 });
             });
             break;
+        case 'app':
+            promises.push(this.httpGet('/mgmt/shared/appsvcs/declare')
+                .then((res) => {
+                    try {
+                        let decl = JSON.parse(res.body);
+                        let appDef = decl[resourceName][resourceName2].constants;
+                        delete appDef.class;
+                        let tmpl = this.templateGet(appDef.template);
+                        (tmpl.fields || []).forEach(item => {
+                            item.value = appDef.fields[item.name] || item.value;
+                        });
+                        body = {
+                            name: resourceName2,
+                            tenant: resourceName,
+                            template: appDef.template,
+                            remark: appDef.remark || '',
+                            fields: tmpl.fields || []
+                        };
+                    } catch (err) {
+                        body = `Unable to read AS3 declaration. ${err}`;
+                    }
+                })
+            );
+            break;
         case 'template':
-            try {
-                tmpl = fs.readFileSync(`${this.templatesDir}/${resourceName}`, 'utf8');
-            } catch(err) {
-                body = `Unable to read file ${this.templatesDir}/${resourceName}. ${err}`;
-            }
-            // strip the file type suffix
-            name = resourceName.replace(/\.[^.]*?$/, '');
-            // parse remark from xml-style .tmpl file
-            remark = tmpl.replace(/[\s\S]*<description>([\s\S]*?)<\/description>[\s\S]*/m, '$1');
-            // parse remark from mustache-style .mst file
-            if (remark === tmpl) remark = tmpl.match(/{{!.*?}}/);
-            // parse the declaration from the xml-style .tmpl file
-            decl = tmpl.replace(/[\s\S]*<declaration>([\s\S]*?)<\/declaration>[\s\S]*/m, '$1')
-            // extract the mustache template fields from declaration
-            decl.match(/{{.*?}}/g).map(x => x.slice(2, -2).split(':'))
-                .forEach(x => {
-                    fields.push({
-                        name: x[0],
-                        type: x[1],
-                        value: x[2]
-                    });
-                });
-            body = { name, remark, fields };
+            body = this.templateGet(resourceName);
             break;
         default:
             body = `/${resourceType} not recognized`;

@@ -5,7 +5,7 @@ export default class AppEdit extends Component {
         super(props)
         this.state = {
             notice: <p>Loading...</p>,
-            name: props.template.replace(/\.[^.]*?$/, ''),
+            name: '',
             remark: '',
             fields: []
         }
@@ -14,8 +14,14 @@ export default class AppEdit extends Component {
     }
 
     componentWillMount() {
-        var req = new XMLHttpRequest()
-        req.open('GET', `/mgmt/shared/mystique/template/${this.props.template}`)
+        let req = new XMLHttpRequest()
+        let url
+        if (this.props.tenant !== undefined && this.props.app !== undefined) {
+            url = `/mgmt/shared/mystique/app/${this.props.tenant}/${this.props.app}`
+        } else {
+            url = `/mgmt/shared/mystique/template/${this.props.template}`
+        }
+        req.open('GET', url)
         req.addEventListener('load', () => {
             this.setState(JSON.parse(req.responseText))
         })
