@@ -9,7 +9,6 @@ function Root() {
     return (
       <div>
         <h3>HOME</h3>
-        <h4>Template Menu</h4>
         <TemplateMenu />
       </div>
     )

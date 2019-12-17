@@ -18,6 +18,8 @@ function Root() {
 
 function QueryParamRouter() {
     let query = new URLSearchParams(useLocation().search)
-    let t = query.get('template')
-    return <AppEdit template={ t } />
+    let tmpl = query.get('template')
+    let tenant = query.get('tenant')
+    let app = query.get('app')
+    return <AppEdit template={ tmpl } tenant={ tenant } app={ app } />
 }
