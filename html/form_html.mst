@@ -1,0 +1,175 @@
+<!DOCTYPE html5>
+<html>
+  <head>
+    <title>{{template_name}}</title>
+  </head>
+  <script>
+    function addEntry(element, name) {
+    const pe = element.parentElement;
+    const newinput = document.createElement('input');
+    newinput.type = "text";
+    newinput.name = name;
+
+    const newdiv = document.createElement('div');
+    newdiv.className = "p_input";
+    newdiv.appendChild(newinput);
+    pe.insertBefore(newdiv, pe.lastElementChild);
+
+    }
+  </script>
+  <style>
+    body {
+    background-color: {{Background}};
+    color: {{Foreground}};
+    }
+
+    h2 {
+    color: {{Blue}};
+    }
+    select, input, textarea {
+    border:none;
+    background-image:none;
+    background-color:transparent;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    color: {{Foreground}};
+    background-color: {{Background}};
+    font-family: monospace;
+    padding: 3px;
+    margin: 1px;
+    border-bottom: solid;
+    border-width: 1px;
+    border-color: {{Blue}};
+    }
+    select:active, input:active, textarea:active {
+    background-color: {{Selection}};
+    }
+    textarea:focus, input:focus{
+    outline: none;
+    background-color: {{Selection}};
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .form_margin {
+      flex-grow: 2;
+    }
+
+    .form_container {
+      flex-grow: 1;
+      border-radius: 3px;
+      padding: 23px;
+      background-color: {{CurrentLine}};
+      border-color: {{CurrentLine}};
+      border: solid;
+      border-width: 1px;
+      opacity: .99;
+    }
+    .p_title {
+      vertical-align: text-top;
+      float: right;
+    }
+    .p_input {
+    }
+
+    .submit {
+      float: right;
+    }
+
+    .button, .submit {
+    width: 85px;
+    text-align: center;
+    border-radius: 8px;
+    border: solid;
+    border-width: 2px;
+    border-color: {{CurrentLine}};
+    background-color: {{Selection}};
+    color: {{Green}};
+    padding: 2px;
+    margin: 3px;
+    opacity: 1;
+    }
+
+    .submit:hover, .button:hover {
+    border-color: {{Green}};
+    cursor: pointer;
+    }
+
+    .submit:active, .button:active {
+    background-color: {{Blue}};
+    }
+
+    .description {
+      border: solid;
+      border-color: {{Blue}};
+      border-width: 0px 0px 0px 2px;
+      margin: 13px 0px 13px 0px;
+      padding: 5px 0px 5px 5px;
+      width: 400px;
+    }
+    a {
+    background-color: {{CurrentLine}};
+    border-radius: 13px;
+    margin: 3px;
+    color: {{Foreground}};
+    }
+
+    a:hover {
+    cursor: pointer;
+    background-color: {{Selection}};
+    }
+
+    a:active {
+    color: {{Yellow}};
+    }
+
+    a:visited {
+      color: {{Foreground}};
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div class="form_margin"></div>
+      <div class="form_container">
+      <form method="get" action=".">
+        <table width="100%">
+          <tr><td></td><td><h2>{{ template_name }}</h2>
+              <div class="description">
+                {{ template_description }}
+              </div>
+          </td></tr>
+
+          {{#form_items}}
+          <tr>
+            <td class="p_title"><div>{{name}}</div></td>
+            <td>
+              <div class="p_input">{{item_form_element}}</div>
+              {{#array}}
+              <div class="button" onclick="addEntry(this, '{{name}}')">+</div>
+              {{/array}}
+            </td>
+          </tr>
+          {{/form_items}}
+          <tr><td><div class="p_title">Async</div></td><td><input type="checkbox" name="async"></td></tr>
+        </table>
+        <input type="hidden" name="template" value="{{template_name}}"/>
+        <input type="hidden" name="post" value="true"/>
+        {{#application_name}}
+        <input type="hidden" name="application_name" value="{{application_name}}"/>
+        {{/application_name}}
+        <input class="submit" type="submit" value="Submit">
+      </form>
+      <div><a href="/iapps/mystique/?list"><tt>Templates</tt></a></div>
+      <div><a href="/iapps/mystique/?declaration"><tt>Applications</tt></a></div>
+      </div>
+      <div class="form_margin"></div>
+    </div>
+    <div style="position:absolute;bottom:0px;right:0px;z-index:-1;opacity:0.5;">
+      <img src="AS3_Robot.png" height="255" />
+    </div>
+  </body>
+</html>

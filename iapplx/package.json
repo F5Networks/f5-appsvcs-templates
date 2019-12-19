@@ -1,0 +1,33 @@
+{
+  "name": "mystique",
+  "version": "0.1.0-1",
+  "description": "",
+  "main": "nodejs/templateWorker.js",
+  "scripts": {
+    "test": "mocha --recursive \"./test/*.js\"",
+    "lint": "eslint nodejs test",
+    "build": "../scripts/rpmbuild.sh"
+  },
+  "keywords": [
+    "as3",
+    "f5",
+    "rest",
+    "api"
+  ],
+  "author": "F5 Networks",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
+    "eslint": "^5.16.0",
+    "mocha": "^6.2.2"
+  },
+  "eslintConfig": {
+    "extends": "@f5devcentral/eslint-config-f5-atg",
+    "rules": {
+      "no-control-regex": "off"
+    }
+  },
+  "dependencies": {
+    "mystique": "file:../core"
+  }
+}

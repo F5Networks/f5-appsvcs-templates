@@ -1,0 +1,125 @@
+<!DOCTYPE html5>
+<html>
+  <head>
+    <title>Partial View</title>
+  </head>
+  <style>
+    body {
+    background-color: {{Background}};
+    color: {{Foreground}};
+    font-family: monospace;
+    }
+
+    .container {
+    text-align: center;
+    margin: 0px 85px 0px 85px;
+    }
+
+    table {
+    width: 100%;
+    border-spacing: 0px;
+    }
+
+    td {
+    border: solid;
+    border-color: {{Orange}};
+    border-width: 0px 0px 2px 0px;
+    background-color: {{CurrentLine}};
+    padding: 13px;
+    }
+
+    input, textarea {
+    border:none;
+    background-image:none;
+    background-color:transparent;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    color: {{Foreground}};
+    background-color: {{CurrentLine}};
+    font-family: monospace;
+    }
+
+    input:hover, textarea:hover {
+    cursor: pointer;
+    border-color: {{Orange}};
+    }
+
+    input:active, textarea:active {
+    background-color: {{Selection}};
+    }
+
+    textarea:focus, input:focus{
+    outline: none;
+    background-color: {{Selection}};
+    }
+
+    .button, .submit {
+    width: 85px;
+    text-align: center;
+    border-radius: 8px;
+    border: solid;
+    border-width: 2px;
+    border-color: {{CurrentLine}};
+    background-color: {{Selection}};
+    color: {{Green}}
+    padding: 2px;
+    margin: 3px;
+    }
+
+    .submit:active, .button:active {
+    background-color: {{Orange}};
+    }
+
+    .group {
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+    }
+
+    .highlight {
+    border-right: solid;
+    border-color: {{Yellow}};
+    background-color: {{Selection}};
+    }
+
+    .timestamp {
+    color: {{Aqua}}
+    }
+
+    a {
+    background-color: {{CurrentLine}};
+    border-radius: 13px;
+    margin: 3px;
+    color: {{Foreground}};
+    }
+
+    a:hover {
+    cursor: pointer;
+    background-color: {{Selection}};
+    }
+
+    a:active {
+    color: {{Yellow}};
+    }
+
+    a:visited {
+      color: {{Foreground}};
+    }
+
+  </style>
+  <body>
+    <div class="container">
+    <table>
+      {{#table_rows}}
+        <tr>{{> row_values }}</tr>
+      {{/table_rows}}
+      {{^table_rows}}No Entries.{{/table_rows}}
+    </table>
+    <div>
+    <div><a href="/iapps/mystique/?list">Template List</a></div>
+    <div style="position:absolute;bottom:0px;right:0px;z-index:-1;opacity:0.5;">
+      <img src="AS3_Robot.png" height="255" />
+    </div>
+  </body>
+</html>

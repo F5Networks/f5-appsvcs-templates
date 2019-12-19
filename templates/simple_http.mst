@@ -1,0 +1,41 @@
+{{!
+  The simplest example of an HTTP server load balanced to other servers at
+  port 80. Uses AS3 template: http.
+}}
+{
+  "class": "AS3",
+  "action": "deploy",
+  "persist": true,
+  "declaration": {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "0123-4567-8910",
+    "label": "Sample 1",
+    "remark": "Basic HTTP with Monitor",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{application_name}}": {
+        "class": "Application",
+        "template": "http",
+        "serviceMain": {
+          "class": "Service_HTTP",
+          "virtualAddresses": ["{{virtual_address}}"],
+          "pool": "web_pool",
+          "enable": {{enable::boolean}}
+        },
+        "web_pool": {
+          "class": "Pool",
+          "monitors": [
+            "http"
+          ],
+          "members": [
+            {
+              "servicePort": 80,
+              "serverAddresses": {{server_addresses::array}}
+            }
+          ]
+        }
+      }
+    }
+  }
+}
