@@ -1,0 +1,23 @@
+image: node:8
+stages:
+    - test
+    - build
+test:
+    stage: test
+    tags:
+        - docker-executor
+    script:
+        - cd core && npm ci && npm run lint && npm test
+        - cd ../iapplx && npm ci && npm run lint && npm test
+build:
+    stage: build
+    image: f5devcentral/containthedocs:rpmbuild
+    script:
+        - cd core && npm ci && npm run build
+        - cd ../iapplx && npm ci && npm run build
+    artifacts:
+        name: mystique-$CI_BUILD_REF
+        paths:
+            - iappslx/dist
+        expire_in: 1 month
+    
