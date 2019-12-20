@@ -1,0 +1,15 @@
+parameters:
+  virtual_port:
+    title: Frontend Port
+    default: 80
+  virtual_address:
+    title: Frontend IP
+    default: 10.0.1.1
+  server_port:
+    title: Backend Port
+    default: 8080
+  server_addresses:
+    title: Backend Addresses
+    default:
+      - 10.0.2.1
+      - 10.0.2.2

@@ -14,25 +14,95 @@ This document is intended to describe Mystique's template set format.
 
 ### ./templates
 
-Each file in this directory is a different template option presented to the user.
+This directory contains a set of files containing templates and template fragments. These templates make up the bulk of the actual configuration posted to a target API (e.g. AS3). These files are annotated mustache templates or YAML with a template section containing a mustache style template text.
 
-Two file types are allowed in this directory:
-`.mst`
-`.yml`/`.yaml`
+By default, each file in this directory is a different template an end user can choose for a deployment. Each template's input schema is inferred from the annotated mustache files (or metadata provided in yaml) and a form may be presented from the schema.
 
-Each template is names according to the file name, minus the extension. If a directory structure exists inside `./templates`,
-the template names are prefixed with their path inside `./templates`
+Much of this specification is concerned with the addition of a type system to a mustache/handlebars style templating system. To streamline template authoring given a set of understood types, we provide a template annotation syntax that can be used to validate your templates and ensure the final product will conform to a desired output schema.
+
+---
+
+By default, each template is named according to the file name, minus the extension. If a directory structure exists inside `./templates`,
+the template names are prefixed with their path relative to `./templates`
+
+Templates can come in two file formats, mustache (`.mst`) and yaml (`.yml`/`.yaml`). The yaml files are a wrapper around the mustache templates for specifying template specific configuration metadata.
+
+### Mustache
 
 `.mst` are mustache templates and the raw text of the file should be treated as the template text. A small example:
 
-```
+```json
 {
-  "{{jsonPropertyName}}" : "{{jsonPropertyValue}}
+  "{{jsonPropertyName}}" : "{{jsonPropertyValue}}"
 }
 ```
 
+This example template has two parameters, `jsonPropertyName` and `jsonPropertyValue`. To render this template, we need a *view*. For this template, the view looks like this in javascript:
+
+```javascript
+{
+  jsonPropertyName: 'key',
+  jsonPropertyValue: 42
+}
+```
+
+The rendered template will look like this:
+
+```json
+{
+  "key" : "42"
+}
+```
+
+The core purpose of Mystique is to render these templates and turn configuration patterns into production configurations.
+
+An example AS3 Mustache Template (simplest case):
+
+```
+{{!
+Example of an HTTPS application using an ASM Policy. Provide a Virtual IP address
+and port along with a list of HTTP server IP addresses, port, and a HTTPS
+certificate and private key. Enter the path to an existing ASM policy (WAF) on
+BIG-IP to provide L7 security and logging features.
+}}
+{
+  "class": "AS3",
+  "action": "deploy",
+  "declaration": {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{application_name}}": {
+        "class": "Application",
+        "template": "https",
+        "serviceMain": {
+          "class": "Service_HTTPS",
+          "virtualPort": {{virtual_port}},
+          "virtualAddresses": [ "{{virtual_address}}" ],
+          "pool": "web_pool"
+        },
+        "web_pool": {
+          "class": "Pool",
+          "monitors": [
+            "http"
+          ],
+          "members": [{
+            "servicePort": {{server_port}},
+            "serverAddresses": {{server_addresses}}
+          }]
+        }
+      }
+    }
+  }
+}
+
+```
+
+### YAML
+
 `.yml` are YAML files and give the user more specification options,
-this is the full template specification. All mustache style templates can easily be converted to this format inside the templating system.
+this is the full template specification. Mustache templates can be converted to this format inside the templating system.
 
 ```yaml
 name: An Example YAML template
@@ -67,7 +137,7 @@ Two file types are allowed in this directory:
 `.json`
 `.yml`/`.yaml`
 
-The contents of this file is json schema that can be used by every template in the set.
+These files contain json schema that can be used by every template in the set.
 
 ```yaml
 $schema: http://...
@@ -102,17 +172,6 @@ definitionOverrides:
   propertyTwo:
     default: world
 ```
-
-### defaults.yml
-
-Yaml file specifying template wide overrides based on the variable names
-
-```YAML
-propertyOne: foo
-propertyTwo: bar
-propertyThree: baz
-```
-
 ---
 
 ## Template text

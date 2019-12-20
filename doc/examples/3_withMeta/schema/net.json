@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/hyper-schema",
+  "definitions": {
+    "ipv4": {
+      "type": "string",
+      "format": "ipv4",
+      "default": "121.0.0.1"
+    },
+    "ipv6": {
+      "type": "string",
+      "format": "ipv6",
+      "default": "::1"
+    },
+    "port": {
+      "type": "integer",
+      "minimuim": 0,
+      "maximum": 65535,
+      "default": 443
+    }
+  }
+}

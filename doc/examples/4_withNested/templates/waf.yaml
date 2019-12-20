@@ -1,0 +1,8 @@
+parameters:
+  Policy_Path:
+    type: string
+    default: /Common/myPolicy.xml
+template: |
+  "policyWAF" : {
+    "bigip": "{{Policy_Path}}"
+  },

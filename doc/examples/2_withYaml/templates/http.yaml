@@ -1,0 +1,47 @@
+name: HTTP Example Application
+description: |
+  Example of an HTTP application. Provide a virtual address and port along with
+  a list of HTTP server addresses and a port.
+parameters:
+  virtual_port:
+    default: 80
+  virtual_address:
+    default: 10.0.1.1
+  server_port:
+    default: 8080
+  server_addresses:
+    default:
+      - 10.0.2.1
+      - 10.0.2.2
+template: |
+  {
+    "class": "AS3",
+    "action": "deploy",
+    "declaration": {
+      "class": "ADC",
+      "schemaVersion": "3.0.0",
+      "{{tenant_name}}": {
+        "class": "Tenant",
+        "{{application_name}}": {
+          "class": "Application",
+          "template": "https",
+          "serviceMain": {
+            "class": "Service_HTTPS",
+            "virtualPort": {{virtual_port:net:port}},
+            "virtualAddresses": [ "{{virtual_address:net:ipv4}}" ],
+            "pool": "web_pool"
+          },
+          "web_pool": {
+            "class": "Pool",
+            "monitors": [
+              "http"
+            ],
+            "members": [{
+              "servicePort": {{server_port:net:ipv4}},
+              "serverAddresses": {{server_addresses::array}}
+            }]
+          }
+        }
+      }
+    }
+  }
