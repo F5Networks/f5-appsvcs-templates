@@ -6,7 +6,8 @@
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
     "lint": "eslint nodejs test",
-    "build": "../scripts/rpmbuild.sh"
+    "build": "../scripts/rpmbuild.sh",
+    "coverage": "nyc npm test"
   },
   "keywords": [
     "as3",
@@ -19,7 +20,8 @@
   "devDependencies": {
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "eslint": "^5.16.0",
-    "mocha": "^6.2.2"
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1"
   },
   "eslintConfig": {
     "extends": "@f5devcentral/eslint-config-f5-atg",

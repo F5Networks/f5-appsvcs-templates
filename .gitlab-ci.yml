@@ -1,14 +1,25 @@
 image: node:8
+
 stages:
     - test
     - build
-test:
+
+coverage:
     stage: test
     tags:
         - docker-executor
     script:
-        - cd core && npm ci && npm run lint && npm test
-        - cd ../iapplx && npm ci && npm run lint && npm test
+        - cd core && npm ci && npm run lint && npm run coverage
+        - cd ../iapplx && npm ci && npm run lint && npm run coverage
+        - cd .. && npm install -g nyc
+        - mkdir .nyc_output
+        - cp -r core/.nyc_output/* .nyc_output
+        - cp -r iapplx/.nyc_output/* .nyc_output
+        - npx nyc report -r html
+    artifacts:
+        paths:
+            - coverage
+
 build:
     stage: build
     image: f5devcentral/containthedocs:rpmbuild
@@ -20,4 +31,23 @@ build:
         paths:
             - iapplx/dist
         expire_in: 1 month
-    
+
+pages:
+    stage: build
+    environment:
+        name: staging
+        url: https://${CI_PROJECT_NAMESPACE}.pages.gitswarm.f5net.com/${CI_PROJECT_NAME}/
+    tags:
+        - cm-official-docker-executor
+    dependencies:
+        - coverage
+    script:
+       - PUBLIC_DIR='./public'
+       - COVERAGE_DOCS=${PUBLIC_DIR}/coverage-docs
+       - mkdir -p ${COVERAGE_DOCS}
+       - cp -R coverage/* ${COVERAGE_DOCS}
+    artifacts:
+        paths:
+            - public
+    only:
+        - develop
