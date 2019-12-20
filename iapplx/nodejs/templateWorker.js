@@ -244,8 +244,8 @@ TemplateWorker.prototype.onGet = function onGet(restOperation) {
             restOperation.setHeaders('Content-Type', 'text/html');
             this.logger.info('trying to return...');
             this.logger.info(templateEngine);
-            this.logger.info(templateEngine.form_html);
-            restOperation.setBody(templateEngine.form_html());
+            this.logger.info(templateEngine.formHtml);
+            restOperation.setBody(templateEngine.formHtml());
             this.completeRestOperation(restOperation);
         })
         .catch((e) => {
