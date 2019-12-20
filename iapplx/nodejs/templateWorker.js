@@ -8,8 +8,6 @@
 
 'use strict';
 
-const querystring = require('querystring');
-
 const mystique = require('mystique');
 
 const http = require('http');
@@ -37,12 +35,12 @@ TemplateWorker.prototype.httpOpts = {
     host: 'localhost',
     port: 8100,
     headers: {
-        Authorization: 'Basic ' + Buffer.from('admin:').toString('base64'),
+        Authorization: `Basic ${Buffer.from('admin:').toString('base64')}`,
         'Content-Type': 'application/json'
     }
 };
 
-TemplateWorker.prototype.onStart = function (success, error) {
+TemplateWorker.prototype.onStart = function onStart(success, error) {
     // if the logic in your onStart implementation encounters and error
     // then call the error callback function, otherwise call the success callback
     const err = false;
@@ -55,7 +53,7 @@ TemplateWorker.prototype.onStart = function (success, error) {
     }
 };
 
-TemplateWorker.prototype.onStartCompleted = function (success, error, state, errMsg) {
+TemplateWorker.prototype.onStartCompleted = function onStartCompleted(success, error, state, errMsg) {
     if (errMsg) {
         this.logger.severe(`TemplateWorker onStartCompleted error: something went wrong ${errMsg}`);
         error();
@@ -74,12 +72,11 @@ TemplateWorker.prototype.onStartCompleted = function (success, error, state, err
  * http handlers *
  **************** */
 
-const as3_html_view = (response) => {
+const as3HtmlView = (response) => {
     // we need to pre-process the declaration to make
     // it more suitable to build a mustache partial
     // build a list of tenants with a list of applications inside
 
-    const results = response.body.results;
     const declaration = response.body.declaration || response.body;
     const tenantList = Object.keys(declaration)
         .filter(k => declaration[k].class === 'Tenant')
@@ -91,7 +88,7 @@ const as3_html_view = (response) => {
             .filter(k => t[k].class === 'Application')
             .map(k => Object.assign(t[k], {
                 aname: k,
-                row: (count++ % 2) == 1
+                row: (count++ % 2) === 1 // eslint-disable-line no-plusplus
             }));
 
         // finally, we will take every object with a class
@@ -154,34 +151,33 @@ const as3_html_view = (response) => {
 
     // partial.row_values = tenantsRow;
 
-    const list_base = new HtmlTemplate('partial_html');
-    const artifact = list_base.render(view, partial);
+    const listBase = new HtmlTemplate('partial_html');
+    const artifact = listBase.render(view, partial);
 
     return artifact;
 };
 
-TemplateWorker.prototype.onGet = function (restOperation) {
+TemplateWorker.prototype.onGet = function onGet(restOperation) {
     const uri = restOperation.getUri();
     this.logger.info(uri);
-    const path_elements = uri.path.split('/');
-    this.logger.info(path_elements);
-    if (path_elements[3] === 'list') {
-        const list_html_template = new HtmlTemplate('list_html');
-        const list_html = view => list_html_template.render(view);
+    const pathElements = uri.path.split('/');
+    this.logger.info(pathElements);
+    if (pathElements[3] === 'list') {
+        const listHtmlTemplate = new HtmlTemplate('list_html');
+        const listHtml = view => listHtmlTemplate.render(view);
         this.logger.info('trying to list...');
         // list templates
-        return this.provider.list().then((template_list) => {
-            const list_html_view = {
-                list_items: template_list,
+        return this.provider.list().then((templateList) => {
+            const listHtmlView = {
+                list_items: templateList,
                 prop() { return this; }
             };
 
             restOperation.setHeaders('Content-Type', 'text/html');
-            restOperation.setBody(list_html(list_html_view));
+            restOperation.setBody(listHtml(listHtmlView));
             this.completeRestOperation(restOperation);
         }).catch((e) => {
             try {
-                const msg = JSON.parse(e.message);
                 restOperation.setBody({
                     code: 422,
                     message: e.message
@@ -199,7 +195,7 @@ TemplateWorker.prototype.onGet = function (restOperation) {
         });
     }
 
-    if (path_elements[3] === 'declaration') {
+    if (pathElements[3] === 'declaration') {
         const as3req = new ATRequest({
             ipaddress: 'localhost',
             username: 'admin',
@@ -209,9 +205,9 @@ TemplateWorker.prototype.onGet = function (restOperation) {
 
         return as3req.declaration()
             .then((response) => {
-                if (path_elements[4] && path_elements[5]) {
-                    const tenant = path_elements[4];
-                    const app = path_elements[5];
+                if (pathElements[4] && pathElements[5]) {
+                    const tenant = pathElements[4];
+                    const app = pathElements[5];
                     const declaration = response.body.declaration || response.body;
                     return this.provider.fetch(declaration[tenant][app].label)
                         .then((templateEngine) => {
@@ -219,7 +215,7 @@ TemplateWorker.prototype.onGet = function (restOperation) {
                             return templateEngine.loadWithDefaults(declaration[tenant][app].constants);
                         });
                 }
-                return as3_html_view(response);
+                return as3HtmlView(response);
             })
             .then((html) => {
                 restOperation.setHeaders('Content-Type', 'text/html');
@@ -236,14 +232,14 @@ TemplateWorker.prototype.onGet = function (restOperation) {
     }
 
     // display template html/schema
-    // as3-form-lx/template_name.json
+    // as3-form-lx/templateName.json
     // return schema
 
-    // as3-form-lx/template_name
-    // as3-form-lx/template_name.html
+    // as3-form-lx/templateName
+    // as3-form-lx/templateName.html
     // return html form
-    const template_name = path_elements[3] || 'f5_service';
-    return this.provider.fetch(template_name)
+    const templateName = pathElements[3] || 'f5_service';
+    return this.provider.fetch(templateName)
         .then((templateEngine) => {
             restOperation.setHeaders('Content-Type', 'text/html');
             this.logger.info('trying to return...');
@@ -261,33 +257,33 @@ TemplateWorker.prototype.onGet = function (restOperation) {
         });
 };
 
-TemplateWorker.prototype.onPost = function (restOperation) {
+TemplateWorker.prototype.onPost = function onPost(restOperation) {
     const body = restOperation.getBody();
     const uri = restOperation.getUri();
-    const path_elements = uri.path.split('/');
-    const template_name = path_elements[3];
+    const pathElements = uri.path.split('/');
+    const templateName = pathElements[3];
 
     // if x-http-form-encoded...
-    const completed_form = JSON.parse(body);
+    const completedForm = JSON.parse(body);
     this.logger.info(uri);
     this.logger.info(body);
-    this.logger.info(template_name);
-    const app_names = [];
-    let tenant_name = '';
+    this.logger.info(templateName);
+    const appNames = [];
+    let tenantName = '';
     const as3Req = new ATRequest({
         ipaddress: 'localhost',
         username: 'admin',
         password: '',
         port: 8100
     });
-    return this.provider.fetch(template_name)
+    return this.provider.fetch(templateName)
         .then((templateEngine) => {
         // execute :template
             this.logger.info('pre-render');
-            this.logger.info(completed_form);
-            const err = templateEngine.validate(completed_form);
+            this.logger.info(completedForm);
+            const err = templateEngine.validate(completedForm);
             if (err) throw new Error(`template validation failed: ${JSON.stringify(err)}`);
-            const rendered = templateEngine.render(completed_form);
+            const rendered = templateEngine.render(completedForm);
             this.logger.info(rendered);
             return Promise.all([rendered, as3Req.declaration()]);
         })
@@ -316,9 +312,9 @@ TemplateWorker.prototype.onPost = function (restOperation) {
                     this.logger.info(`stitching ${k}`);
                     this.logger.info(JSON.stringify(_newadc[k]));
                     console.log('stitch', Object.keys(_newadc[k]));
-                    tenant_name = k;
-                    app_names.push(Object.keys(_newadc[k]).filter(x => x !== 'class')[0]);
-                    console.log(app_names);
+                    tenantName = k;
+                    appNames.push(Object.keys(_newadc[k]).filter(x => x !== 'class')[0]);
+                    console.log(appNames);
                     if (_final[k]) Object.assign(_final[k], _newadc[k]);
                     else _final[k] = _newadc[k];
                 });
@@ -332,17 +328,9 @@ TemplateWorker.prototype.onPost = function (restOperation) {
 
             if (!response.body.results) throw new Error(`Report this irregular AS3 result:${JSON.stringify(response.body, null, 2)}`);
 
-            const view = {
-                table_rows: response.body.results || response.body
-            };
-            const partial = {
-                row_values: '<td>{{message}}</td>{{code}}<td>{{result}}</td>'
-            };
-            const list_base = new HtmlTemplate('partial_html');
-            const response_view = list_base.render(view, partial);
             restOperation.setBody({
-                tenant_name,
-                application_name: app_names[0],
+                tenantName,
+                application_name: appNames[0],
                 results: response.body.results.filter(x => x.tenant)
             });
             this.completeRestOperation(restOperation);
@@ -350,7 +338,6 @@ TemplateWorker.prototype.onPost = function (restOperation) {
         .catch((e) => {
             console.log(e.stack);
             try {
-                const msg = JSON.parse(e.message);
                 restOperation.setBody({
                     code: 422,
                     message: e.message
@@ -369,24 +356,24 @@ TemplateWorker.prototype.onPost = function (restOperation) {
 };
 
 // create new template file
-TemplateWorker.prototype.onPut = function (restOperation) {
+TemplateWorker.prototype.onPut = function onPut(restOperation) {
     this.state = restOperation.getBody();
     this.completeRestOperation(restOperation);
 };
 
 // update existing template file
-TemplateWorker.prototype.onPatch = function (restOperation) {
+TemplateWorker.prototype.onPatch = function onPatch(restOperation) {
     this.state = restOperation.getBody();
     this.completeRestOperation(restOperation);
 };
 
 // delete template file
-TemplateWorker.prototype.onDelete = function (restOperation) {
+TemplateWorker.prototype.onDelete = function onDelete(restOperation) {
     const uri = restOperation.getUri();
     this.logger.info(uri);
-    const path_elements = uri.path.split('/');
-    const tenant = path_elements[3];
-    const app = path_elements[4];
+    const pathElements = uri.path.split('/');
+    const tenant = pathElements[3];
+    const app = pathElements[4];
     const as3req = new ATRequest({
         ipaddress: 'localhost',
         username: 'admin',
@@ -407,7 +394,6 @@ TemplateWorker.prototype.onDelete = function (restOperation) {
         .catch((e) => {
             console.log(e.stack);
             try {
-                const msg = JSON.parse(e.message);
                 restOperation.setBody({
                     code: 422,
                     message: e.message
@@ -425,7 +411,7 @@ TemplateWorker.prototype.onDelete = function (restOperation) {
         });
 };
 
-TemplateWorker.prototype.httpRequest = function(opts, payload) {
+TemplateWorker.prototype.httpRequest = function httpRequest(opts, payload) {
     return new Promise((resolve, reject) => {
         const req = http.request(opts, (res) => {
             const buffer = [];
@@ -451,21 +437,21 @@ TemplateWorker.prototype.httpRequest = function(opts, payload) {
     });
 };
 
-TemplateWorker.prototype.httpGet = function(path) {
-    let opts = this.httpOpts;
+TemplateWorker.prototype.httpGet = function httpGet(path) {
+    const opts = this.httpOpts;
     opts.path = path;
     return this.httpRequest(opts);
 };
 
-TemplateWorker.prototype.httpPost = function(path, payload) {
-    let opts = this.httpOpts;
+TemplateWorker.prototype.httpPost = function httpPost(path, payload) {
+    const opts = this.httpOpts;
     opts.path = path;
     opts.method = 'POST';
     return this.httpRequest(opts, payload);
 };
 
-TemplateWorker.prototype.httpPatch = function(path, payload) {
-    let opts = this.httpOpts;
+TemplateWorker.prototype.httpPatch = function httpPatch(path, payload) {
+    const opts = this.httpOpts;
     opts.path = path;
     opts.method = 'PATCH';
     return this.httpRequest(opts, payload);
@@ -475,7 +461,7 @@ TemplateWorker.prototype.httpPatch = function(path, payload) {
 // When at least one mustache app is deployed, set state to BOUND (green).
 // When all are deleted, set state to UNBOUND (gray).
 // TODO: resolve(block.id), refactor as (state, blockName) and if blockName is undefined, use stored blockId.
-TemplateWorker.prototype.setLxBlockStatus = function(blockName, state) {
+TemplateWorker.prototype.setLxBlockStatus = function setLxBlockStatus(blockName, state) {
     const blockData = {
         name: blockName,
         state: state || 'UNBOUND',
@@ -489,15 +475,15 @@ TemplateWorker.prototype.setLxBlockStatus = function(blockName, state) {
 
     return this.httpGet('/shared/iapp/blocks')
         .then((res) => {
-            if (res.status == 200) {
-                let body = JSON.parse(res.body);
+            if (res.status === 200) {
+                const body = JSON.parse(res.body);
                 let noBlockFound = true;
-                body.items.forEach(block => {
+                body.items.forEach((block) => {
                     if (block.name === blockName) {
                         noBlockFound = false;
                         if (state !== undefined && state !== block.state) {
                             this.httpPatch(`/shared/iapp/blocks/${block.id}`, {
-                                state: state,
+                                state,
                                 presentationHtmlReference: blockData.presentationHtmlReference
                             });
                         }

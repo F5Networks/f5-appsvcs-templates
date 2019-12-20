@@ -1,3 +1,5 @@
+'use strict';
+
 process.AFL_TW_ROOT = '../';
 process.AFL_HE_ROOT_DIR = '../html/';
 const TemplateWorker = require('../nodejs/templateWorker.js');
@@ -19,9 +21,7 @@ describe('template worker tests', () => {
                 getUri: () => ({ path: '/a/b/list' }),
                 getBody: () => {}
             })
-                .then((result) => {
-                    done();
-                });
+                .then(() => done());
         },
         (e) => {
             console.log(e);
