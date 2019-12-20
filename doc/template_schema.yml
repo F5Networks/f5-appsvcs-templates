@@ -1,0 +1,33 @@
+$schema:
+$id: mystique_advanced_templates
+properties:
+  title:
+    type: string
+    description: |
+      This template's title
+  target:
+    type: string
+    description: |
+      API Target-- assumed to be AS3.
+  description:
+    type: string
+    description: |
+      A description of the template
+  schemas:
+    type: array
+    description: |
+      A list of schema files this template uses.
+      Type annotations can be skipped when the type can be inferred.
+  definitions:
+    type: object
+    description: |
+      A Dictionary of JSON schemas keyed by the name of the template
+      variable they are meant to operate on. This can be used to
+      provide template-scoped overrides to a specific variable
+  template:
+    type: string
+    description: |
+      A blob with the template text itself.
+required:
+  - title
+  - template
