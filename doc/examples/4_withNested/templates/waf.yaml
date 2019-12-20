@@ -1,4 +1,4 @@
-parameters:
+definitions:
   Policy_Path:
     type: string
     default: /Common/myPolicy.xml

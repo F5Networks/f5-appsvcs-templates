@@ -1,0 +1,33 @@
+$schema: http://json-schema.org/draft-07/schema#
+$id: mystique_templates_as_schema
+allOf:
+  - $ref: http://json-schema.org/draft-07/schema#
+  - properties:
+      template:
+        type: string
+        description: |
+          A blob with the template text itself. Field should be validated with a
+          custom format, using a successful mustache.parse and schema generation
+          as validation criteria.
+      allOf:
+        type: array
+        items:
+          $ref: #
+        desciption: |
+          If allOf is used, this template is a merger of all the rendered objects
+          of the templates listed
+      oneOf:
+        type: array
+        items:
+          $ref: #
+        desciption: |
+          If oneOf is used, this template is a choice of several templates
+      anyOf:
+        type: array
+        items:
+          $ref: #
+        description: |
+          anyOf also represents a choice of several templates
+    required:
+      - title
+      - template
