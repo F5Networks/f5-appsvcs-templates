@@ -36,7 +36,7 @@ pages:
     stage: build
     environment:
         name: staging
-        url: https://${CI_PROJECT_NAMESPACE}.pages.gitswarm.f5net.com/${CI_PROJECT_NAME}/
+        url: https://${CI_PROJECT_NAMESPACE}.${PAGES_DOMAIN}/${CI_PROJECT_NAME}/
     tags:
         - cm-official-docker-executor
     dependencies:
