@@ -1,10 +1,12 @@
+'use strict';
+
 const fs = require('fs');
 const Mustache = require('mustache');
 
 const HTML_ROOT_DIR = process.AFL_HE_ROOT_DIR || '/var/config/rest/iapps/mystique/html/';
 
 // style
-const solarized_colors = {
+const solarizedColors = {
     Base03: '#002b36',
     Base02: '#073642',
     Base01: '#586e75',
@@ -23,37 +25,37 @@ const solarized_colors = {
     Green: '#859900'
 };
 
-const tomorrow_solar_light = {
-    Background: solarized_colors.Base3,
-    CurrentLine: solarized_colors.Base2,
-    Selection: solarized_colors.Base3,
-    Foreground: solarized_colors.Base01,
-    Comment: solarized_colors.Base00,
-    Red: solarized_colors.Red,
-    Orange: solarized_colors.Orange,
-    Yellow: solarized_colors.Yellow,
-    Green: solarized_colors.Green,
-    Aqua: solarized_colors.Cyan,
-    Blue: solarized_colors.Blue,
-    Purple: solarized_colors.Violet
+const tomorrowSolarLight = {
+    Background: solarizedColors.Base3,
+    CurrentLine: solarizedColors.Base2,
+    Selection: solarizedColors.Base3,
+    Foreground: solarizedColors.Base01,
+    Comment: solarizedColors.Base00,
+    Red: solarizedColors.Red,
+    Orange: solarizedColors.Orange,
+    Yellow: solarizedColors.Yellow,
+    Green: solarizedColors.Green,
+    Aqua: solarizedColors.Cyan,
+    Blue: solarizedColors.Blue,
+    Purple: solarizedColors.Violet
 };
 
-const tomorrow_solar_dark = {
-    Background: solarized_colors.Base03,
-    CurrentLine: solarized_colors.Base02,
-    Selection: solarized_colors.Base03,
-    Foreground: solarized_colors.Base1,
-    Comment: solarized_colors.Base0,
-    Red: solarized_colors.Red,
-    Orange: solarized_colors.Orange,
-    Yellow: solarized_colors.Yellow,
-    Green: solarized_colors.Green,
-    Aqua: solarized_colors.Cyan,
-    Blue: solarized_colors.Blue,
-    Purple: solarized_colors.Violet
+const tomorrowSolarDark = {
+    Background: solarizedColors.Base03,
+    CurrentLine: solarizedColors.Base02,
+    Selection: solarizedColors.Base03,
+    Foreground: solarizedColors.Base1,
+    Comment: solarizedColors.Base0,
+    Red: solarizedColors.Red,
+    Orange: solarizedColors.Orange,
+    Yellow: solarizedColors.Yellow,
+    Green: solarizedColors.Green,
+    Aqua: solarizedColors.Cyan,
+    Blue: solarizedColors.Blue,
+    Purple: solarizedColors.Violet
 };
 
-const tomorrow_night = {
+const tomorrowNight = {
     Background: '#1d1f21',
     CurrentLine: '#282a2e',
     Selection: '#373b41',
@@ -83,7 +85,7 @@ const tomorrow = {
     Purple: '#8959a8'
 };
 
-const tomorrow_night_80s = {
+const tomorrowNight80s = {
     Background: '#2d2d2d',
     CurrentLine: '#393939',
     Selection: '#515151',
@@ -98,7 +100,7 @@ const tomorrow_night_80s = {
     Purple: '#cc99cc'
 };
 
-const tomorrow_night_blue = {
+const tomorrowNightBlue = {
     Background: '#002451',
     CurrentLine: '#00346e',
     Selection: '#003f8e',
@@ -113,7 +115,7 @@ const tomorrow_night_blue = {
     Purple: '#ebbbff'
 };
 
-const tomorrow_night_bright = {
+const tomorrowNightBright = {
     Background: '#000000',
     CurrentLine: '#2a2a2a',
     Selection: '#424242',
@@ -129,34 +131,34 @@ const tomorrow_night_bright = {
 };
 
 const themes = [
-    tomorrow_solar_light,
-    tomorrow_solar_dark,
-    tomorrow_night,
+    tomorrowSolarLight,
+    tomorrowSolarDark,
+    tomorrowNight,
     tomorrow,
-    tomorrow_night_80s,
-    tomorrow_night_blue,
-    tomorrow_night_bright
+    tomorrowNight80s,
+    tomorrowNightBlue,
+    tomorrowNightBright
 ];
 
-let current_theme = 0;
+let currentTheme = 0;
 const setTheme = (theme) => {
-    current_theme = theme % themes.length;
+    currentTheme = theme % themes.length;
 };
 
 const applyColors = function (view) {
-    return Object.assign(view, themes[current_theme]);
+    return Object.assign(view, themes[currentTheme]);
 };
 
 // used for rendering application views
-function HtmlTemplate(name, p) {
+function HtmlTemplate(name) {
     this.name = name;
     this.html_template = fs.readFileSync(`${HTML_ROOT_DIR}${name}.mst`).toString('utf8');
     return this;
 }
 
-HtmlTemplate.prototype.render = function (data, partial, create_view) {
+HtmlTemplate.prototype.render = function render(data, partial, createView) {
     // console.log(`rendering ${this.name}`);
-    const prepare = create_view || (d => d);
+    const prepare = createView || (d => d);
     const view = applyColors(prepare(data));
     return Mustache.render(this.html_template, view, partial);
 };

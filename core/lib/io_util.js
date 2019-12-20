@@ -1,3 +1,5 @@
+'use strict';
+
 const https = require('https');
 
 const makeRequest = (opts, body) => new Promise((resolve, reject) => {
@@ -8,13 +10,13 @@ const makeRequest = (opts, body) => new Promise((resolve, reject) => {
             buffer.push(data);
         });
         res.on('end', () => {
-            const raw_body = buffer.join('');
+            const rawBody = buffer.join('');
 
             resolve({
                 opts,
                 status: res.statusCode,
                 headers: res.headers,
-                body: raw_body
+                body: rawBody
             });
         });
     });
@@ -32,23 +34,23 @@ const makeRequest = (opts, body) => new Promise((resolve, reject) => {
     req.end();
 });
 
-function ResourceCache(async_fetch) {
+function ResourceCache(asyncFetch) {
     // used for caching AS3 TemplateEngine objects
     this.cached = {};
     this.cache_limit = 100;
-    this.async_fetch = async_fetch;
+    this.asyncFetch = asyncFetch;
     return this;
 }
 
-ResourceCache.prototype.fetch = function (key) {
+ResourceCache.prototype.fetch = function fetch(key) {
     return (() => {
         if (!this.cached[key]) {
-            return this.async_fetch(key)
+            return this.asyncFetch(key)
                 .then((resource) => {
                     this.cached[key] = resource;
-                    const all_keys = Object.keys(this.cached);
-                    const oldest_key = all_keys.shift();
-                    if (all_keys.length > this.cache_limit) delete this.cached[oldest_key];
+                    const allKeys = Object.keys(this.cached);
+                    const oldestKey = allKeys.shift();
+                    if (allKeys.length > this.cache_limit) delete this.cached[oldestKey];
                     return resource;
                 });
         }

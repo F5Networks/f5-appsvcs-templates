@@ -24,6 +24,9 @@
     "extends": "@f5devcentral/eslint-config-f5-atg",
     "rules": {
       "no-control-regex": "off"
+    },
+    "parserOptions": {
+        "ecmaVersion": 8
     }
   },
   "dependencies": {

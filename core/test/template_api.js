@@ -67,7 +67,7 @@ describe('template engine tests', function() {
   it('render template form'  , function() {
     const te = new TemplateEngine('sample', mustache_template);
     // check default form rendering
-    const f1 = te.form_html();
+    const f1 = te.formHtml();
     if( f1.indexOf('<input type="hidden" name="application_name" value="app_1"/>') >= 0)
       throw new Error('rogue application name injected into form');
 
@@ -88,7 +88,7 @@ describe('template engine tests', function() {
     // ensure original defaults are loaded
 
 
-    const f3 = te.form_html();
+    const f3 = te.formHtml();
     if ( f3.indexOf('myComponent') <= 0 )
       throw new Error('form not rendered as expected');
 

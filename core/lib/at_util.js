@@ -1,3 +1,5 @@
+'use strict';
+
 const https = require('http');
 
 const fetchKeysOfType = (t, d) => Object.keys(d).filter(k => d[k].class === t);
@@ -29,17 +31,17 @@ const makeRequest = (opts, body) => new Promise((resolve, reject) => {
             buffer.push(data);
         });
         res.on('end', () => {
-            const raw_body = buffer.join('');
+            const rawBody = buffer.join('');
             console.log(res.statusCode);
             console.log(res.headers);
-            console.log(raw_body);
-            const json_body = (() => {
+            console.log(rawBody);
+            const jsonBody = (() => {
                 if (res.statusCode === 204) return '';
                 try {
-                    return JSON.parse(raw_body);
+                    return JSON.parse(rawBody);
                 } catch (e) {
                     // eslint-disable-next-line no-console
-                    console.error(raw_body);
+                    console.error(rawBody);
                     // eslint-disable-next-line no-console
                     console.error(e);
                     return reject(new Error(`Invalid Response object from ${opts.path}`));
@@ -50,7 +52,7 @@ const makeRequest = (opts, body) => new Promise((resolve, reject) => {
                 opts,
                 status: res.statusCode,
                 headers: res.headers,
-                body: json_body
+                body: jsonBody
             });
         });
     });
@@ -68,7 +70,7 @@ const makeRequest = (opts, body) => new Promise((resolve, reject) => {
     req.end();
 });
 
-ATRequest.prototype.as3_info = function () {
+ATRequest.prototype.as3Info = function as3Info() {
     const device = this.device;
 
     const opts = {
@@ -81,7 +83,7 @@ ATRequest.prototype.as3_info = function () {
     return makeRequest(opts);
 };
 
-ATRequest.prototype.ts_info = function () {
+ATRequest.prototype.tsInfo = function tsInfo() {
     const device = this.device;
 
     const opts = {
@@ -94,7 +96,7 @@ ATRequest.prototype.ts_info = function () {
     return makeRequest(opts);
 };
 
-ATRequest.prototype.declaration = function (tenant) {
+ATRequest.prototype.declaration = function declaration(tenant) {
     const device = this.device;
     const t = tenant ? `/${tenant}` : '';
 
@@ -107,7 +109,7 @@ ATRequest.prototype.declaration = function (tenant) {
     };
 
     return makeRequest(opts).then((result) => {
-        if (result.status == 204) {
+        if (result.status === 204) {
             result.body = {
                 class: 'ADC',
                 schemaVersion: '3.11.0'
@@ -118,7 +120,7 @@ ATRequest.prototype.declaration = function (tenant) {
     });
 };
 
-ATRequest.prototype.declare = function (adc) {
+ATRequest.prototype.declare = function declare(adc) {
     const device = this.device;
     const opts = {
         host: device.ipaddress,

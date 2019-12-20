@@ -1,17 +1,19 @@
+'use strict';
+
 const Mustache = require('mustache');
 const Ajv = require('ajv');
 const uuid = require('uuid/v4');
 
 const ajv = new Ajv({ coerceTypes: 'array', useDefaults: true });
 
-Mustache.escape = function (text) {
+Mustache.escape = function escape(text) {
     return text;
 };
 
 // template variable names that cannot be used because
 // they have special meaning
 const ignored = [
-    'template_name',
+    'templateName',
     'uuid'
 ].reduce((acc, cur) => {
     acc[cur] = true;
@@ -41,20 +43,20 @@ const templateToParams = (template) => {
 
 // create schema for AS3 template
 const templateToSchema = (template, schema) => ((props) => {
-    const prop_schema = props.reduce((acc, cur) => {
+    const propSchema = props.reduce((acc, cur) => {
         if (cur[0] === 'name') {
             const param = cur[1].split(':');
             // console.log('templateToSchema');
             // console.log(props);
             // console.log(param);
             // console.log(schema);
-            let new_def;
+            let newDef;
             const definition = (() => {
                 if (param[1]) {
                     // handle schema type lookup
-                    new_def = schema[param[1]].definitions[param[2]];
-                    if (!new_def) throw new Error(`No schema definition for ${param[1]}/${param[2]}`);
-                    return new_def;
+                    newDef = schema[param[1]].definitions[param[2]];
+                    if (!newDef) throw new Error(`No schema definition for ${param[1]}/${param[2]}`);
+                    return newDef;
                 }
 
                 const primitives = [
@@ -66,37 +68,37 @@ const templateToSchema = (template, schema) => ((props) => {
                     'integer'
                 ];
 
-                new_def = { type: 'string' };
+                newDef = { type: 'string' };
 
                 if (param[2]) {
                     if (primitives.some(x => x === param[2])) {
-                        new_def.type = param[2];
+                        newDef.type = param[2];
                     }
 
                     if (param[2] === 'text') {
-                        new_def.contentMediaType = 'text/plain';
+                        newDef.contentMediaType = 'text/plain';
                     }
                 }
 
-                new_def.default = (() => {
-                    if (new_def.type === 'array') return ['10.0.1.1'];
-                    if (new_def.type === 'boolean') return true;
-                    if (new_def.type === 'number'
-                        || new_def.type === 'integer') return 131;
+                newDef.default = (() => {
+                    if (newDef.type === 'array') return ['10.0.1.1'];
+                    if (newDef.type === 'boolean') return true;
+                    if (newDef.type === 'number'
+                        || newDef.type === 'integer') return 131;
                     return 'myComponent';
                 })(param);
 
-                return new_def;
+                return newDef;
             })();
 
             // experimental: defaults for specific variable names
             // overrides what is in schema, currently.
-            const defaults_table = {
+            const defaultsTable = {
                 tenant_name: 'myTenant',
                 application_name: 'myApp',
                 server_port: 443
             };
-            if (defaults_table[param[0]]) definition.default = defaults_table[param[0]];
+            if (defaultsTable[param[0]]) definition.default = defaultsTable[param[0]];
 
             if ((!acc[param[0]] || param[1]) && !ignored[param[0]]) acc[param[0]] = definition;
         }
@@ -105,25 +107,24 @@ const templateToSchema = (template, schema) => ((props) => {
 
     return {
         type: 'object',
-        properties: prop_schema,
-        required: Object.keys(prop_schema)
+        properties: propSchema,
+        required: Object.keys(propSchema)
     };
 })(Mustache.parse(template).filter(x => x[0] !== 'text'));
 
-// const form_html_template = fs.readFileSync('../html/form_html.mst').toString('utf8');
 const HtmlTemplate = require('./html_engine.js').HtmlTemplate;
 
-const form_html_template = new HtmlTemplate('form_html');
+const formHtmlTemplate = new HtmlTemplate('form_html');
 
 // used for as3 templates
-function TemplateEngine(template_name, template_text, schemaSet) {
-    this.template_name = template_name;
+function TemplateEngine(templateName, templateText, schemaSet) {
+    this.templateName = templateName;
     this.schemaSet = schemaSet;
-    this.as3_template = template_text;
+    this.as3_template = templateText;
 
-    const schema_meta_data = templateToParams(this.as3_template);
-    this.as3_params_table = schema_meta_data.params;
-    this.template_description = schema_meta_data.description;
+    const schemaMetaData = templateToParams(this.as3_template);
+    this.as3_params_table = schemaMetaData.params;
+    this.template_description = schemaMetaData.description;
 
     this.as3_view_schema = templateToSchema(this.as3_template, schemaSet);
     this._validate = ajv.compile(this.as3_view_schema);
@@ -131,7 +132,7 @@ function TemplateEngine(template_name, template_text, schemaSet) {
     this.fillDefaults = () => Object.keys(this.as3_view_schema.properties)
         .map((prop) => {
             const defn = this.as3_view_schema.properties[prop];
-            const new_view = {
+            const newView = {
                 name: prop,
                 required: this.as3_view_schema.required.some(k => k === prop) ? 'required' : null,
                 type: (() => {
@@ -142,13 +143,13 @@ function TemplateEngine(template_name, template_text, schemaSet) {
                 value: defn.default,
                 options: defn.enum || []
             };
-            return new_view;
+            return newView;
         });
 
     // this is difficult to deal with because it has a function in it
     // hard to clone ... fix this, partials should be used
-    const form_html_view = {
-        template_name: this.template_name,
+    const formHtmlView = {
+        templateName: this.templateName,
         template_description: this.template_description,
         form_items: this.fillDefaults(),
         item_form_element() {
@@ -169,66 +170,64 @@ function TemplateEngine(template_name, template_text, schemaSet) {
             return `<input type="text" name="${this.name}" value="${this.value}" ${this.required}>`;
         }
     };
-    this.form_html_view = form_html_view;
-    this.form_html = (targets) => {
-        // const populated = Object.assign(form_html_view, { targets });
-        // console.log('o', populated);
-        delete form_html_view.application_name;
-        form_html_view.form_items = this.fillDefaults();
-        return form_html_template.render(form_html_view);
+    this.formHtmlView = formHtmlView;
+    this.formHtml = () => {
+        delete formHtmlView.application_name;
+        formHtmlView.form_items = this.fillDefaults();
+        return formHtmlTemplate.render(formHtmlView);
     };
     return this;
 }
 
-TemplateEngine.prototype.loadWithDefaults = function (defaults) {
+TemplateEngine.prototype.loadWithDefaults = function loadWithDefaults(defaults) {
     if (!defaults) throw new Error('TemplateEngine.loadWithDefaults: null defaults!');
-    const app_form_view = this.form_html_view;
-    app_form_view.form_items = this.fillDefaults();
-    app_form_view.form_items.forEach((e) => {
+    const appFormView = this.formHtmlView;
+    appFormView.form_items = this.fillDefaults();
+    appFormView.form_items.forEach((e) => {
         e.value = defaults[e.name];
     });
     // console.log('lwd1', defaults);
-    // console.log('lwd2', app_form_view);
-    app_form_view.application_name = defaults.application_name;
-    app_form_view.targets = [defaults.target];
-    // console.log(form_html_template.html_template);
-    // console.log(app_form_view);
+    // console.log('lwd2', appFormView);
+    appFormView.application_name = defaults.application_name;
+    appFormView.targets = [defaults.target];
+    // console.log(formHtmlTemplate.html_template);
+    // console.log(appFormView);
     // console.log('loadWithDefaults', defaults);
-    const app_edit_form = form_html_template.render(app_form_view);
-    // console.log(app_edit_form);
-    return app_edit_form;
+    const appEditForm = formHtmlTemplate.render(appFormView);
+    // console.log(appEditForm);
+    return appEditForm;
 };
 
-TemplateEngine.prototype.validate = function (input) {
+TemplateEngine.prototype.validate = function validate(input) {
     const valid = this._validate(input);
     if (valid) return null;
     return this._validate.errors;
 };
 
-TemplateEngine.prototype.render = function (input) {
+TemplateEngine.prototype.render = function render(input) {
     console.log('templat render input', input);
     const view = Object.keys(this.as3_view_schema.properties).reduce((acc, key) => {
         // //console.log(key);
         const text = input[key];
         // this translates simple variable names into
         // fully specified types for the template replacement
-        const view_param = this.as3_params_table[key];
-        if (!view_param) return acc;
-        const type_info = view_param.split(':');
+        const viewParam = this.as3_params_table[key];
+        if (!viewParam) return acc;
+        const typeInfo = viewParam.split(':');
 
-        if (type_info[2]) {
-            if (type_info[2] === 'number'
-                || type_info[2] === 'boolean') {
-                acc[view_param] = text;
+        if (typeInfo[2]) {
+            if (typeInfo[2] === 'number'
+                || typeInfo[2] === 'boolean') {
+                acc[viewParam] = text;
             } else {
-                acc[view_param] = JSON.stringify(text);
+                acc[viewParam] = JSON.stringify(text);
             }
         } else {
-            acc[view_param] = text;
+            acc[viewParam] = text;
         }
         return acc;
     }, {
-        template_name: this.template_name
+        templateName: this.templateName
     });
 
     Object.assign(view, input);
@@ -244,7 +243,7 @@ TemplateEngine.prototype.render = function (input) {
             return JSON.parse(text);
         } catch (e) {
             console.log(text);
-            throw new Error([`Rendered template is not valid jason${this.template_name}`, JSON.stringify(view), text].join('\n'));
+            throw new Error([`Rendered template is not valid jason${this.templateName}`, JSON.stringify(view), text].join('\n'));
         }
     })();
     console.log(text);
@@ -259,14 +258,14 @@ TemplateEngine.prototype.render = function (input) {
                     console.log('The rendered application name is authoritative:', a);
                     if (!input.application_name) input.application_name = a;
 
-                    const as3_constants = Object.assign({
+                    const as3Constants = Object.assign({
                         class: 'Constants',
                         application_name: a,
                         uuid: view.uuid
                     }, input);
 
-                    _adc[k][a].label = this.template_name;
-                    _adc[k][a].constants = as3_constants;
+                    _adc[k][a].label = this.templateName;
+                    _adc[k][a].constants = as3Constants;
 
                     console.log('_adc should have constants included');
                     console.log(_adc[k][a].constants);

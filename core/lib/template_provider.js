@@ -1,21 +1,23 @@
+'use strict';
+
 const fs = require('fs');
 
 const TemplateEngine = require('./template_engine.js').TemplateEngine;
 
-const io_util = require('./io_util.js');
+const ioUtil = require('./io_util.js');
 
-const ResourceCache = io_util.ResourceCache;
-const makeRequest = io_util.makeRequest;
+const ResourceCache = ioUtil.ResourceCache;
+const makeRequest = ioUtil.makeRequest;
 
 const FsSchemaProvider = require('./schema_provider.js').FsSchemaProvider;
 
-function FsTemplateProvider(template_root_path, schema_root_path) {
-    this.config_template_path = template_root_path;
-    this.config_schema_path = schema_root_path;
-    this.schema_provider = new FsSchemaProvider(schema_root_path);
+function FsTemplateProvider(templateRootPath, schemaRootPath) {
+    this.config_template_path = templateRootPath;
+    this.config_schema_path = schemaRootPath;
+    this.schema_provider = new FsSchemaProvider(schemaRootPath);
 
-    this.cache = new ResourceCache(template_name => new Promise((resolve, reject) => {
-        fs.readFile(`${template_root_path}/${template_name}.mst`, (err, data) => {
+    this.cache = new ResourceCache(templateName => new Promise((resolve, reject) => {
+        fs.readFile(`${templateRootPath}/${templateName}.mst`, (err, data) => {
             if (err) reject(err);
             else {
                 resolve(data.toString('utf8'));
@@ -26,38 +28,38 @@ function FsTemplateProvider(template_root_path, schema_root_path) {
             return this.schema_provider.schemaSet()
                 .then((schemas) => {
                     this.schemaSet = schemas;
-                    return new TemplateEngine(template_name, data, this.schemaSet);
+                    return new TemplateEngine(templateName, data, this.schemaSet);
                 });
         }
-        return new TemplateEngine(template_name, data, this.schemaSet);
+        return new TemplateEngine(templateName, data, this.schemaSet);
     }));
 
     return this;
 }
 
-FsTemplateProvider.prototype.fetch = function (key) {
+FsTemplateProvider.prototype.fetch = function fetch(key) {
     return this.cache.fetch(key);
 };
 
 // used for listing AS3 templates available
-FsTemplateProvider.prototype.list = function () {
+FsTemplateProvider.prototype.list = function list() {
     return new Promise((resolve, reject) => {
         fs.readdir(this.config_template_path, (err, data) => {
             if (err) reject(err);
 
-            const template_list = data.filter(x => x.endsWith('.mst'))
+            const templateList = data.filter(x => x.endsWith('.mst'))
                 .map(x => x.split('.')[0]);
-            resolve(template_list);
+            resolve(templateList);
         });
     });
 };
 
-function GitHubTemplateProvider(github_repo_path) {
-    this.github_repo_path = github_repo_path;
+function GitHubTemplateProvider(githubRepoPath) {
+    this.githubRepoPath = githubRepoPath;
 
     this.list_opts = {
         host: 'api.github.com',
-        path: `/repos/${github_repo_path}/contents/templates/simple`,
+        path: `/repos/${githubRepoPath}/contents/templates/simple`,
         headers: {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1521.3 Safari/537.36'
         }
@@ -71,30 +73,30 @@ function GitHubTemplateProvider(github_repo_path) {
         }
     };
 
-    this.cache = new ResourceCache((template_name) => {
-        this.fetch_opts.path = `/${this.github_repo_path}/master/templates/simple/${template_name}.mst`;
+    this.cache = new ResourceCache((templateName) => {
+        this.fetch_opts.path = `/${this.githubRepoPath}/master/templates/simple/${templateName}.mst`;
         return makeRequest(this.fetch_opts).then(result => result.body);
     });
 
     return this;
 }
 
-GitHubTemplateProvider.prototype.fetch = function (template_name) {
-    return this.cache.fetch(template_name);
+GitHubTemplateProvider.prototype.fetch = function fetch(templateName) {
+    return this.cache.fetch(templateName);
 };
 
-GitHubTemplateProvider.prototype.list = function () {
+GitHubTemplateProvider.prototype.list = function list() {
     return makeRequest(this.list_opts).then((result) => {
         if (result.status === '404') {
-            throw new Error(`Repository not found: ${this.github_repo_path}`);
+            throw new Error(`Repository not found: ${this.githubRepoPath}`);
         }
         return JSON.parse(result.body)
-            .map(file_meta => file_meta.name.split('.')[0]);
+            .map(fileMeta => fileMeta.name.split('.')[0]);
     });
 };
 
-function PostmanTemplateProvider(postman_collection) {
-    this.collection = postman_collection;
+function PostmanTemplateProvider(postmanCollection) {
+    this.collection = postmanCollection;
     return this;
 }
 
