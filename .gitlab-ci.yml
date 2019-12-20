@@ -13,11 +13,11 @@ build:
     stage: build
     image: f5devcentral/containthedocs:rpmbuild
     script:
-        - cd core && npm ci && npm run build
-        - cd ../iapplx && npm ci && npm run build
+        - npm install --global npm@5.10.0
+        - cd iapplx && npm run build
     artifacts:
         name: mystique-$CI_BUILD_REF
         paths:
-            - iappslx/dist
+            - iapplx/dist
         expire_in: 1 month
     

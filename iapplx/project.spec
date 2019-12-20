@@ -14,7 +14,8 @@ Framework for deploying configuration on BIG-IP using mustache templates
 
 %prep
 echo -n %{version}-%{release} > %{_builddir}/version
-cp -r %{main}/{nodejs,presentation} %{_builddir}
+cp -r %{main}/nodejs %{_builddir}
+cp -r %{main}/presentation %{_builddir}
 cp  %{main}/package*.json %{_builddir}
 npm pack %{main}/../core
 sed -i 's/..\/core/%{_mystiquepkg}/' %{_builddir}/package.json
