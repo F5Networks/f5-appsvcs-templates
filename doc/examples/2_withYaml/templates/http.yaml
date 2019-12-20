@@ -1,8 +1,8 @@
-name: HTTP Example Application
+title: HTTP Example Application
 description: |
   Example of an HTTP application. Provide a virtual address and port along with
   a list of HTTP server addresses and a port.
-parameters:
+definitions:
   virtual_port:
     default: 80
   virtual_address:

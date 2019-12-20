@@ -4,26 +4,27 @@ properties:
   title:
     type: string
     description: |
-      This template's title
-  target:
-    type: string
-    description: |
-      API Target-- assumed to be AS3.
+      This template's title (same as JSON-schema)
   description:
     type: string
     description: |
-      A description of the template
-  schemas:
-    type: array
-    description: |
-      A list of schema files this template uses.
-      Type annotations can be skipped when the type can be inferred.
+      A description of the template (same as JSON-schema)
   definitions:
     type: object
     description: |
       A Dictionary of JSON schemas keyed by the name of the template
       variable they are meant to operate on. This can be used to
       provide template-scoped overrides to a specific variable
+      (same as JSON-schema)
+  schemas:
+    type: array
+    description: |
+      A list of schema files this template uses.
+      Type annotations can be skipped when the type can be inferred.
+  target:
+    type: string
+    description: |
+      API Target-- assumed to be AS3.
   template:
     type: string
     description: |

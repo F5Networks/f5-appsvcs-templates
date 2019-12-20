@@ -1,4 +1,4 @@
-parameters:
+definitions:
   virtual_port:
     title: Frontend Port
     default: 80

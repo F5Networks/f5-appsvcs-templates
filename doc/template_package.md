@@ -105,9 +105,9 @@ BIG-IP to provide L7 security and logging features.
 this is the full template specification. Mustache templates can be converted to this format inside the templating system.
 
 ```yaml
-name: An Example YAML template
+title: An Example YAML template
 description: An Example
-parameters:
+definitions:
   jsonPropertyName:
     enum:
       - propertyOne
@@ -326,9 +326,9 @@ definitionOverrides:
 I may want to have the user input a number of values, make a calculation on those values, and insert the resulting evaluation into the template... how might this work?
 
 ```yaml
-name: An Example YAML template
+title: An Example YAML template
 description: An Example
-parameters:
+definitions:
   jsonPropertyName:
     enum:
       - propertyOne
