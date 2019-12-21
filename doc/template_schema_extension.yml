@@ -21,13 +21,16 @@ allOf:
         items:
           $ref: #
         desciption: |
-          If oneOf is used, this template is a choice of several templates
+          This template is an exclusive choice of several templates
+          (chicken or burger? Encrypted or Unencryupted?)
       anyOf:
         type: array
         items:
           $ref: #
         description: |
-          anyOf also represents a choice of several templates
+          Several templates that can be chosen together
+          (pickles? onions? lettuce? tomato?,
+           waf? endpoint policy? monitors? l4 policies?)
     required:
       - title
       - template
