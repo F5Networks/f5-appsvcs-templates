@@ -123,4 +123,19 @@ describe('templateEngine tests', function () {
         // const ymldata = 'title: foo';
         // assert.throws(() => Template.validate(ymldata));
     });
+    it('render', function () {
+        const mstdata = `
+            {{foo}}
+        `;
+        const view = {
+            foo: 'bar'
+        };
+        const reference = `
+            bar
+        `;
+        return Template.loadMst(schemaProvider, mstdata)
+            .then((tmpl) => {
+                assert.strictEqual(tmpl.render(view), reference);
+            });
+    });
 });
