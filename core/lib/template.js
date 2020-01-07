@@ -44,6 +44,7 @@ class Template {
         this._viewSchema = {};
         this.target = 'as3';
         this.templateText = '';
+        this.defaultView = {};
     }
 
     _loadTypeSchemas(schemaProvider, schemaList) {
@@ -182,6 +183,7 @@ class Template {
         if (yamldata.title) tmpl.title = yamldata.title;
         if (yamldata.description) tmpl.description = yamldata.description;
         if (yamldata.definitions) tmpl.definitions = yamldata.definitions;
+        if (yamldata.view) tmpl.defaultView = yamldata.view;
 
         return tmpl._loadTypeSchemas(schemaProvider, ['f5'])
             .then((typeSchemas) => {
@@ -210,7 +212,8 @@ class Template {
     }
 
     render(view) {
-        return Mustache.render(this.templateText, view);
+        const combView = Object.assign({}, this.defaultView, view);
+        return Mustache.render(this.templateText, combView);
     }
 }
 
