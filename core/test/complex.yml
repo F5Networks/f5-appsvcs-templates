@@ -1,0 +1,62 @@
+title: chat window
+view:
+  title: My Chat Window
+  chatlog:
+    - name: ricky
+      msg: it's not rocket appliances
+    - name: bubbles
+      msg: patrick swayze uses illegal parts
+    - name: ricky
+      msg: sebastian bach wants to buy our stuff
+  members:
+    - ricky
+    - julian
+    - bubbles
+    - cory
+    - trevor
+definitions:
+  chatroom:
+    template: |
+      <div class="rows">
+        {{#members}}
+        <div class="flexbox">
+        {{.}}
+        </div>
+        {{/members}}
+      </div>
+  chatlog:
+    template: |
+      <div class="container">
+        <div class="flexbox">{{name}}</div>
+        <div class="flexbox">{{msg}}</div>
+      </div>
+template: |
+  <!DOCTYPE html>
+  <html>
+    <style>
+      .container {
+        display: flex;
+      }
+      .rows {
+        display: flex;
+        flex-direction: column;
+      }
+      .flexbox {
+        flex-grow: 1;
+      }
+    </style>
+    <body>
+      <div><h1>{{title}}</h1></div>
+      <div class="container">
+        <div class="flexbox">
+          {{#chatlog}}
+          {{> chatlog }}
+          {{/chatlog}}
+        </div>
+        <div class="flexbox">
+          {{> chatroom }}
+        </div>
+      </div>
+      <a href="freeform.yml">next</a>
+    </body>
+  </html>
