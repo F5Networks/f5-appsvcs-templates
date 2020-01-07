@@ -212,8 +212,15 @@ class Template {
     }
 
     render(view) {
+        const partials = Object.keys(this.definitions).reduce((acc, curr) => {
+            const def = this.definitions[curr];
+            if (def.template) {
+                acc[curr] = def.template;
+            }
+            return acc;
+        }, {});
         const combView = Object.assign({}, this.defaultView, view);
-        return Mustache.render(this.templateText, combView);
+        return Mustache.render(this.templateText, combView, partials);
     }
 }
 
