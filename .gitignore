@@ -2,3 +2,4 @@ node_modules
 dist
 rpmbuild
 test-output.txt
+.nyc_output
