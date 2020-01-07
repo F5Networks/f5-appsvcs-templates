@@ -21,6 +21,7 @@ const mstWithTypes = `{
 
 describe('templateEngine tests', function () {
     const schemaProvider = new FsSchemaProvider('./../schemas');
+
     it('construct', function () {
         const tmpl = new Template();
         assert.ok(tmpl);
@@ -111,5 +112,15 @@ describe('templateEngine tests', function () {
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
+    });
+    it('fail_validation', function () {
+        const mstdata = `
+            {{foo}
+        `;
+        assert.throws(() => Template.validate(mstdata));
+
+        // should fail for missing template, but still passes as valid mustache
+        // const ymldata = 'title: foo';
+        // assert.throws(() => Template.validate(ymldata));
     });
 });

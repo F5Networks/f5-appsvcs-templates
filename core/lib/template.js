@@ -1,7 +1,35 @@
 'use strict';
 
+const Ajv = require('ajv');
 const Mustache = require('mustache');
 const yaml = require('js-yaml');
+
+const path = require('path');
+const fs = require('fs');
+
+// Setup validator
+const _templateSchemaPath = path.join(__dirname, 'template_schema.yml');
+const _validateSchema = (() => {
+    const data = fs.readFileSync(_templateSchemaPath, 'utf8');
+
+    const schema = yaml.safeLoad(data);
+    const validator = new Ajv();
+
+    // meta-schema uses a mustache format; just parse the string validate it
+    validator.addFormat('mustache', {
+        type: 'string',
+        validate(input) {
+            try {
+                Mustache.parse(input);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+    });
+
+    return validator.compile(schema);
+})();
 
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
@@ -133,6 +161,7 @@ class Template {
     }
 
     static loadMst(schemaProvider, msttext) {
+        this.validate(msttext);
         const tmpl = new this();
         tmpl.templateText = msttext;
         return tmpl._loadTypeSchemas(schemaProvider, ['f5'])
@@ -145,6 +174,7 @@ class Template {
     }
 
     static loadYaml(schemaProvider, yamltext) {
+        this.validate(yamltext);
         const tmpl = new this();
         const yamldata = yaml.safeLoad(yamltext);
         tmpl.templateText = yamldata.template;
@@ -159,6 +189,20 @@ class Template {
 
                 return tmpl;
             });
+    }
+
+    static isValid(tmpldata) {
+        return _validateSchema(tmpldata);
+    }
+
+    static getValidationErrors() {
+        return JSON.stringify(_validateSchema.errors, null, 2);
+    }
+
+    static validate(tmpldata) {
+        if (!this.isValid(tmpldata)) {
+            throw JSON.stringify(this.getValidationErrors(), null, 2);
+        }
     }
 
     getViewSchema() {
