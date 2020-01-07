@@ -7,7 +7,7 @@
   "description": "",
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
-    "lint": "eslint lib test",
+    "lint": "eslint lib test cli.js",
     "coverage": "nyc npm test"
   },
   "keywords": [
@@ -16,6 +16,9 @@
     "rest",
     "api"
   ],
+  "bin": {
+    "mystique": "./cli.js"
+  },
   "devDependencies": {
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "eslint": "^5.16.0",
@@ -35,6 +38,7 @@
     "ajv": "^6.10.2",
     "js-yaml": "^3.13.1",
     "mustache": "^3.1.0",
-    "uuid": "^3.3.3"
+    "uuid": "^3.3.3",
+    "yargs": "^15.1.0"
   }
 }
