@@ -35,6 +35,17 @@ const loadTemplate = (templatePath) => {
         });
 };
 
+const loadView = (viewPath) => {
+    if (!viewPath) return Promise.resolve({});
+    return fs.readFile(viewPath, 'utf8')
+        .then(viewData => JSON.parse(viewData));
+};
+
+const loadTemplateAndView = (templatePath, viewPath) => Promise.all([
+    loadTemplate(templatePath),
+    loadView(viewPath)
+]);
+
 const validateTemplate = templatePath => loadTemplate(templatePath)
     .then(() => {
         console.log(`template at ${templatePath} is valid`);
@@ -45,9 +56,24 @@ const templateToViewSchema = templatePath => loadTemplate(templatePath)
         console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
     });
 
-const renderTemplate = (templatePath, viewPath) => loadTemplate(templatePath)
-    .then((tmpl) => {
-        const view = (viewPath) ? JSON.parse(fs.readFileSync(viewPath, 'utf8')) : {};
+const validateViewData = (tmpl, view) => {
+    try {
+        tmpl.validateView(view);
+    } catch (e) {
+        console.error('view failed validation:');
+        console.error(`${e.message}`);
+        process.exit(1);
+    }
+};
+
+const validateView = (templatePath, viewPath) => loadTemplateAndView(templatePath, viewPath)
+    .then(([tmpl, view]) => {
+        validateViewData(tmpl, view);
+    });
+
+const renderTemplate = (templatePath, viewPath) => loadTemplateAndView(templatePath, viewPath)
+    .then(([tmpl, view]) => {
+        validateViewData(tmpl, view);
         console.log(tmpl.render(view));
     });
 
@@ -66,6 +92,15 @@ require('yargs')
                 describe: 'template file to parse'
             });
     }, argv => templateToViewSchema(argv.file))
+    .command('validateView <tmplFile> <viewFile>', 'validate supplied view with given template', (yargs) => {
+        yargs
+            .positional('tmplFile', {
+                describe: 'template to get view schema from'
+            })
+            .positional('viewFile', {
+                describe: 'view file validate'
+            });
+    }, argv => validateView(argv.tmplFile, argv.viewFile))
     .command('render <tmplFile> [viewFile]', 'render given template file with supplied view', (yargs) => {
         yargs
             .positional('tmplFile', {
