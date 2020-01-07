@@ -110,7 +110,6 @@ class Template {
                 } else {
                     acc.properties['.'] = true;
                 }
-                required.add(mstName);
                 break;
             }
             case '#': {
@@ -203,7 +202,7 @@ class Template {
 
     static validate(tmpldata) {
         if (!this.isValid(tmpldata)) {
-            throw JSON.stringify(this.getValidationErrors(), null, 2);
+            throw new Error(JSON.stringify(this.getValidationErrors(), null, 2));
         }
     }
 
@@ -220,6 +219,10 @@ class Template {
             return acc;
         }, {});
         const combView = Object.assign({}, this.defaultView, view);
+        const viewValidator = new Ajv().compile(this.getViewSchema());
+        if (!viewValidator(combView)) {
+            throw new Error(JSON.stringify(viewValidator.errors, null, 2));
+        }
         return Mustache.render(this.templateText, combView, partials);
     }
 }
