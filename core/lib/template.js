@@ -124,7 +124,7 @@ class Template {
                 label: 'raw'
             };
         }
-        schema.required = [...required];
+        schema.required = Array.from(required);
         return schema;
     }
 
