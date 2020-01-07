@@ -210,19 +210,33 @@ class Template {
         return this._viewSchema;
     }
 
-    render(view) {
-        const partials = Object.keys(this.definitions).reduce((acc, curr) => {
+    _getCombinedView(view) {
+        return Object.assign({}, this.defaultView, view);
+    }
+
+    _getPartials() {
+        return Object.keys(this.definitions).reduce((acc, curr) => {
             const def = this.definitions[curr];
             if (def.template) {
                 acc[curr] = def.template;
             }
             return acc;
         }, {});
-        const combView = Object.assign({}, this.defaultView, view);
+    }
+
+    validateView(view) {
+        const combView = this._getCombinedView(view);
+
         const viewValidator = new Ajv().compile(this.getViewSchema());
         if (!viewValidator(combView)) {
             throw new Error(JSON.stringify(viewValidator.errors, null, 2));
         }
+    }
+
+    render(view) {
+        this.validateView(view);
+        const partials = this._getPartials();
+        const combView = this._getCombinedView(view);
         return Mustache.render(this.templateText, combView, partials);
     }
 }
