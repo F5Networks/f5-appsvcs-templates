@@ -4,15 +4,11 @@ const Ajv = require('ajv');
 const Mustache = require('mustache');
 const yaml = require('js-yaml');
 
-const path = require('path');
-const fs = require('fs');
+const _templateSchemaData = require('./template_schema').schema;
 
 // Setup validator
-const _templateSchemaPath = path.join(__dirname, 'template_schema.yml');
 const _validateSchema = (() => {
-    const data = fs.readFileSync(_templateSchemaPath, 'utf8');
-
-    const schema = yaml.safeLoad(data);
+    const schema = yaml.safeLoad(_templateSchemaData);
     const validator = new Ajv();
 
     // meta-schema uses a mustache format; just parse the string validate it

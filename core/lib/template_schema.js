@@ -1,3 +1,6 @@
+'use strict';
+
+const schema = `
 $schema: http://json-schema.org/draft-07/schema#
 $id: templateSchema
 title: tempateSchema schema definition
@@ -41,7 +44,7 @@ description: |
   schema that represents the input schema to the templates
 
   HTML Templating Example:
-  ```yaml
+  \`\`\`yaml
     view:
       message: Hello!
     definitions:
@@ -54,7 +57,7 @@ description: |
       <html>
         {{> body}}
       </html>
-  ```
+  \`\`\`
 
   A templateSchema object is any object that passes this schema. In short,
   these objects are valid json schema with a required 'template' property that
@@ -77,3 +80,8 @@ description: |
   The top level schema generated from parsing the mustache template will be used
   to validate the view object. This schema can then be used to validate other
   views used to render the template.
+`;
+
+module.exports = {
+    schema
+};
