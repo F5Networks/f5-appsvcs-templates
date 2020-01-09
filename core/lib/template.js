@@ -105,11 +105,7 @@ class Template {
             }
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
-                if (partial.properties) {
-                    acc.properties[mstName] = partial;
-                } else {
-                    acc.properties['.'] = true;
-                }
+                Object.assign(acc.properties, partial.properties);
                 break;
             }
             case '#': {
