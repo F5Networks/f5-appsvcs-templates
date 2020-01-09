@@ -45,12 +45,16 @@ class Template {
 
     _loadTypeSchemas(schemaProvider, schemaList) {
         const schemas = {};
-        return Promise.all(schemaList.map(
-            item => schemaProvider.fetch(item)
-                .then((schema) => {
-                    schemas[item] = JSON.parse(schema);
-                })
-        )).then(() => schemas);
+        if (schemaProvider) {
+            return Promise.all(schemaList.map(
+                item => schemaProvider.fetch(item)
+                    .then((schema) => {
+                        schemas[item] = JSON.parse(schema);
+                    })
+            )).then(() => schemas);
+        }
+
+        return Promise.resolve({});
     }
 
     _descriptionFromTemplate() {
