@@ -42,7 +42,7 @@ describe('templateEngine tests', function () {
 
         return Template.loadMst(schemaProvider, mstdata)
             .then((tmpl) => {
-                reference._viewSchema = tmpl.getViewSchema();
+                reference._viewSchema = tmpl._viewSchema;
                 assert.ok(tmpl);
                 assert.deepStrictEqual(tmpl, reference);
             });
@@ -92,7 +92,9 @@ describe('templateEngine tests', function () {
                 'array_variable',
                 'boolean_variable',
                 'number_variable'
-            ]
+            ],
+            title: '',
+            description: ''
         };
         return Template.loadMst(schemaProvider, mstWithTypes)
             .then((tmpl) => {

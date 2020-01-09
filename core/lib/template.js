@@ -203,7 +203,10 @@ class Template {
     }
 
     getViewSchema() {
-        return this._viewSchema;
+        return Object.assign({}, this._viewSchema, {
+            title: this.title,
+            description: this.description
+        });
     }
 
     _getCombinedView(view) {
