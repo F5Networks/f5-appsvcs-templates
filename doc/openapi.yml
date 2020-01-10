@@ -1,0 +1,266 @@
+openapi: "3.0.0"
+info:
+  version: 0.1.0
+  title: F5 Template API
+  license:
+    name: MIT
+  description: |
+    This is a proposed API for F5 project Mystique. It has three major sections:
+    
+    ### Template Deployment
+      How the templates are listed, schema retrieved, and deployed.
+    ### Task Visibility
+      Visibility into task status once a template has been deployed.
+    ### Package Management
+      The ability to add and remove new templates and template sets.
+paths:
+  /template:
+    get:
+      summary: List all templates
+      operationId: listTemplates
+      tags:
+        - templates
+      responses:
+        '200':
+          description: An array of template names
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/TemplateList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Instantiate a template, this runs a task
+      description: |
+        This is the main method to deploy a templated application. The parameters posted will be used
+        to render a template, and that template will get posted to AS3.
+        
+        The call to AS3 may be async, so this endpoint must also be async. A task will be returned upon
+        successful parameter submission that can track the progress of the deployment.
+      operationId: createTemplate
+      tags:
+        - templates
+      requestBody:
+        description: A description of the template task
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      responses:
+        '201':
+          description: |
+            Template Job Submitted Successfully, check the provided task id to get the status of
+            the deployment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskCreation"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /template/{templateName}:
+    get:
+      summary: get the specified template
+      tags:
+        - templates
+      parameters:
+        - name: templateName
+          in: path
+          required: true
+          description: The name of the template to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A template object
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/TemplateSchema"
+  /tasks:
+    get:
+      summary: List all running and completed tasks
+      operationId: listTasks
+      tags:
+        - tasks
+      responses:
+        '200':
+          description: An array of tasks and their status
+          content:
+            application/json:    
+              schema:
+                $ref: "#/components/schemas/TaskList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{taskId}:
+    get:
+      summary: Info for a specific template task
+      operationId: showTaskById
+      tags:
+        - tasks
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: The id of the task to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /packages:
+    get:
+      summary: Info about installed packages
+      description: |
+        GET /packages will retrieve the list of template packages currently installed in the system
+      tags: 
+        - package management
+      responses:
+        '200':
+          description: a list of installed packages, versions, installation dates, etc
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PackageList"
+    post:
+      summary: Upload a new package
+      tags:
+        - package management
+      requestBody:
+        description: A template spec or zip containing template specs
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateSchema'
+          multipart/form-data:
+            schema:
+              description: a zip file containing template schema or mustache files
+      responses:
+        '200':
+          description: upload a new package, either a zipfile or a single template specifiation
+  /packages/{packageName}:
+    delete:
+      summary: Removes an installed package
+      description:
+        DELETE /packages/{packageName} will remove an installed package specified by its name.
+      tags:
+        - package management
+      parameters:
+        - name: packageName
+          in: path
+          required: true
+          description: The name of the package to remove
+          schema:
+            type: string
+      responses:
+        '200':
+          description: package removed successfully
+components:
+  schemas:
+    Task:
+      type: object
+      required:
+        - name
+        - parameters
+      properties:
+        name:
+          description: must be valid template in the system
+          type: string
+        parameters:
+          description: object must comform to specified template's schema
+          type: object
+    TaskCreation:
+      allOf:
+        - $ref: "#/components/schemas/Task"
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The taskID of this task
+          type: string
+    TaskList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Task"
+    TemplateSchema:
+      description: A template specification
+      properties:
+        template:
+          type: string
+          format: mustache
+        anyOf:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateSchema"
+        allOf:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateSchema"
+        oneOf:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateSchema"
+        properties:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/TemplateSchema"
+    TemplateList:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+      example:
+        - name: httpTemplate
+        - name: httpsTemplate
+    PackageList:
+      type: array
+      items: 
+        type: object
+        properties:
+          name:
+            description: the name of this package
+            type: string
+          version:
+            description: the package version
+            type: string
+          installed_on: 
+            description: date the package was installed
+            type: string
+            format: date-time
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
