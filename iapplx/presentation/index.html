@@ -1,112 +1,29 @@
-<html>
-<script>
 
-function addEntry(element, name) {
-const pe = element.parentElement;
-const newinput = document.createElement('input');
-newinput.type = "text";
-newinput.name = name;
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-const newdiv = document.createElement('div');
-newdiv.className = "p_input";
-newdiv.appendChild(newinput);
-pe.insertBefore(newdiv, pe.lastElementChild);
+        <link rel="stylesheet" href="css/spectre.min.css">
+        <link rel="stylesheet" href="css/all.min.css">
 
-}
+        <title>Mystique</title>
+    </head>
+    <body>
+        <div id="tmpl-btns">Templates: </div>
+        <div>
+            <div id="form-div"></div>
+            <button type="button" class="btn" id="view-tmpl-btn">View Template</button>
+            <button type="button" class="btn" id="view-schema-btn">View Schema</button>
+            <button type="button" class="btn btn-primary" id="form-btn">Submit</button>
+        </div>
+        <div>
+            <p>Output:</p>
+            <pre id="output"></pre>
+        </div>
 
-
-var req = new XMLHttpRequest();
-req.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-        console.log(req.responseText);
-      try {
-        const data = JSON.parse(req.responseText);
-
-        if( data.tenant_name ) {
-          console.log('found data.tenant_name');
-          document.body.innerHTML = `
-            <h1><tt><a href="/iapps/mystique/?application_name=${data.application_name}&tenant_name=${data.tenant_name}">${data.tenant_name}/${data.application_name}</a></tt></h1>
-            <h1>${data.results.map(r => r.tenant + ' ' + r.message).join('<br/>')}</h1>
-            <div><a href="/iapps/mystique/?list"><tt>Templates</tt></a></div>
-            <div><a href="/iapps/mystique/?declaration"><tt>Applications</tt></a></div>
-          `;
-        } else if (data.body) {
-          console.log('found data.body');
-          let q = window.location.search.substring(1).split('&')
-            .map(x => x.split('='))
-            .reduce((a, c) => {
-              a[c[0]] = c[1];
-              return a;
-            }, {});
-
-          document.body.innerHTML = `
-            <h1><tt>DELETE ${q.tenant_name}/${q.application_name}</tt></h1>
-            <h1>${data.body.results.map(r => r.tenant + ' ' + r.message).join('<br/>') }</h1>
-            <div><a href="/iapps/mystique/?list"><tt>Templates</tt></a></div>
-            <div><a href="/iapps/mystique/?declaration"><tt>Applications</tt></a></div>
-          `;
-        } else {
-          console.log('else ... why?');
-          document.body.innerHTML = `
-          <h1>Error: ${data.code}</h1>
-          <h2>
-          <tt>${data.message}</tt>
-          <br/>
-          <br/>
-          <div><a href="/iapps/mystique/?list"><tt>Templates</tt></a></div>
-          <div><a href="/iapps/mystique/?declaration"><tt>Applications</tt></a></div>
-          `;
-        }
-
-      } catch(e) {
-        console.log(e);
-       document.body.innerHTML = req.responseText;
-     }
-    }
-};
-
-var method = 'GET';
-let action = 'list';
-var body = '';
-
-console.log(window.location.search);
-
-if( window.location.search ) {
-  let q = window.location.search.substring(1).split('&')
-    .map(x => x.split('='))
-    .reduce((a, c) => {
-      a[c[0]] = c[1];
-      return a;
-    }, {});
-    console.log(q);
-
-    if( q.post ) {
-      method = 'POST';
-      Object.keys(q).forEach(k => {
-        if( q[k] === 'on' )
-          q[k] = true;
-      });
-      body = JSON.stringify(q);
-    }
-
-    if( q.hasOwnProperty('declaration') ) {
-      action = 'declaration'
-    }
-
-    if( q.template )
-      action = q.template
-
-    if( q.delete ) {
-      action = `${q.tenant_name}/${q.application_name}`
-      method = 'DELETE';
-    } else if( q.application_name && q.tenant_name && !q.template) {
-      action = `declaration/${q.tenant_name}/${q.application_name}`
-    }
-}
-
-req.open(method, "/mgmt/shared/mystique/"+action, true);
-req.send(body);
-</script>
-<body>
-</body>
+        <script src="js/jsoneditor.min.js"></script>
+        <script src="bundle.js"></script>
+    </body>
 </html>

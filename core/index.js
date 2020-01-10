@@ -1,9 +1,9 @@
-const at_util = require('./lib/at_util');
-const template_provider = require('./lib/template_provider');
-const html_engine = require('./lib/html_engine');
+'use strict';
+
+const FsSchemaProvider = require('./lib/schema_provider').FsSchemaProvider;
+const Template = require('./lib/template').Template;
 
 module.exports = {
-  at_util,
-    template_provider,
-    html_engine
+    FsSchemaProvider,
+    Template
 };

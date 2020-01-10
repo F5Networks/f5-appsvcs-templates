@@ -19,7 +19,7 @@ const mstWithTypes = `{
     "duplicate_key": "{{variable1}}"
 `;
 
-describe('templateEngine tests', function () {
+describe('Template class tests', function () {
     const schemaProvider = new FsSchemaProvider('./../schemas');
 
     it('construct', function () {
@@ -66,6 +66,19 @@ describe('templateEngine tests', function () {
         return Template.loadYaml(schemaProvider, ymldata)
             .then((tmpl) => {
                 assert.ok(tmpl);
+            });
+    });
+    it('from_json', function () {
+        return Template.loadMst(null, mstWithTypes)
+            .then((tmpl) => {
+                const jsondata = JSON.stringify(tmpl);
+                let jsontmpl = Template.fromJson(jsondata);
+                console.log(jsondata);
+                console.log(jsontmpl);
+                assert.deepEqual(jsontmpl, tmpl);
+
+                jsontmpl = Template.fromJson(JSON.parse(jsondata));
+                assert.deepEqual(jsontmpl, tmpl);
             });
     });
     it('missing_dscription', function () {

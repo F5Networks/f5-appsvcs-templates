@@ -188,6 +188,15 @@ class Template {
             });
     }
 
+    static fromJson(obj) {
+        if (typeof obj === 'string') {
+            obj = JSON.parse(obj);
+        }
+        const tmpl = new this();
+        Object.assign(tmpl, obj);
+        return tmpl;
+    }
+
     static isValid(tmpldata) {
         return _validateSchema(tmpldata);
     }
@@ -226,7 +235,9 @@ class Template {
     validateView(view) {
         const combView = this._getCombinedView(view);
 
-        const viewValidator = new Ajv().compile(this.getViewSchema());
+        const viewValidator = new Ajv({
+            unknownFormats: 'ignore'
+        }).compile(this.getViewSchema());
         if (!viewValidator(combView)) {
             throw new Error(JSON.stringify(viewValidator.errors, null, 2));
         }

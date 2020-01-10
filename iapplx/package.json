@@ -1,5 +1,5 @@
 {
-  "name": "mystique",
+  "name": "f5-mystique",
   "version": "0.1.0-1",
   "author": "F5 Networks",
   "license": "Apache-2.0",
@@ -8,7 +8,7 @@
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
     "lint": "eslint nodejs test",
-    "build": "../scripts/rpmbuild.sh",
+    "build": "cd presentation && npm ci && npm run build && cd .. && ../scripts/rpmbuild.sh",
     "coverage": "nyc npm test"
   },
   "keywords": [

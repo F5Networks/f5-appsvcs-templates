@@ -15,13 +15,15 @@ Framework for deploying configuration on BIG-IP using mustache templates
 %prep
 echo -n %{version}-%{release} > %{_builddir}/version
 cp -r %{main}/nodejs %{_builddir}
-cp -r %{main}/presentation %{_builddir}
 cp  %{main}/package*.json %{_builddir}
 npm pack %{main}/../core
 sed -i 's/..\/core/%{_mystiquepkg}/' %{_builddir}/package.json
 npm install --only=prod --no-optional
 rm %{_builddir}/%{_mystiquepkg}
-cp -r %{main}/../html %{_builddir}
+mkdir -p %{_builddir}/presentation
+cp %{main}/presentation/*.html %{_builddir}/presentation
+cp %{main}/presentation/bundle.js %{_builddir}/presentation
+cp -r %{main}/presentation/{css,js,webfonts} %{_builddir}/presentation
 cp -r %{main}/../schemas %{_builddir}
 cp -r %{main}/../templates %{_builddir}
 
