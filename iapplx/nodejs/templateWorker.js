@@ -1,9 +1,8 @@
 'use strict';
 
-const fs = require('fs');
 const http = require('http');
 
-const { Template, FsSchemaProvider } = require('mystique');
+const { FsSchemaProvider, FsTemplateProvider } = require('mystique');
 
 const projectName = 'f5-mystique';
 
@@ -20,6 +19,7 @@ class TemplateWorker {
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${projectName}`;
         this.schemaProvider = new FsSchemaProvider(schemasPath);
+        this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
 
         this.httpOpts = {
             host: 'localhost',
@@ -150,44 +150,20 @@ class TemplateWorker {
 
     getTemplates(restOperation, tmplid) {
         if (tmplid) {
-            let useMst = 0;
-            let tmplpath = `${templatesPath}/${tmplid}.yml`;
-            if (!fs.existsSync(tmplpath)) {
-                tmplpath = `${templatesPath}/${tmplid}.mst`;
-                if (fs.existsSync(tmplpath)) {
-                    useMst = 1;
-                } else {
-                    return this.genRestResponse(restOperation, 404,
-                        `could not find a template with id "${tmplid}"`);
-                }
-            }
-
-            const tmpldata = fs.readFileSync(tmplpath, 'utf8');
-            return Template[(useMst) ? 'loadMst' : 'loadYaml'](this.schemaProvider, tmpldata)
+            return this.templateProvider.fetch(tmplid)
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
                     restOperation.setHeaders('Content-Type', 'text/json');
                     restOperation.setBody(tmpl);
                     this.completeRestOperation(restOperation);
-                });
+                }).catch(e => this.genRestResponse(restOperation, 404, e.message));
         }
 
-        const templates = new Set();
-        fs.readdirSync(templatesPath).forEach((item) => {
-            const tmplExt = item.split('.').pop();
-            let tmplName = '';
-            if (tmplExt === 'mst' || tmplExt === 'yml') {
-                tmplName = item.slice(0, -4);
-            } else if (tmplExt === 'yaml') {
-                tmplName = item.slice(0, -5);
-            }
-            if (tmplName) {
-                templates.add(tmplName);
-            }
-        });
-        restOperation.setBody(Array.from(templates));
-        this.completeRestOperation(restOperation);
-        return Promise.resolve();
+        return this.templateProvider.list()
+            .then((templates) => {
+                restOperation.setBody(templates);
+                this.completeRestOperation(restOperation);
+            });
     }
 
     onGet(restOperation) {

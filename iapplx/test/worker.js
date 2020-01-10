@@ -104,4 +104,15 @@ describe('template worker tests', function () {
                 assert.notEqual(tmpl, {});
             });
     });
+    it('get_template_item_with_schema', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('templates/f5_https');
+        return worker.onGet(op)
+            .then(() => {
+                const tmpl = op.body;
+                assert.notEqual(op.body.code, 404);
+                assert.notEqual(tmpl, {});
+                assert.notEqual(tmpl.getViewSchema(), {});
+            });
+    });
 });
