@@ -17,8 +17,6 @@
     "rest",
     "api"
   ],
-  "author": "F5 Networks",
-  "license": "Apache-2.0",
   "devDependencies": {
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "eslint": "^5.16.0",
@@ -30,6 +28,12 @@
     "rules": {
       "no-control-regex": "off"
     }
+  },
+  "nyc": {
+    "all": true,
+    "include": [
+      "nodejs/**/*.js"
+    ]
   },
   "dependencies": {
     "mystique": "file:../core"

@@ -34,6 +34,12 @@
       "ecmaVersion": 8
     }
   },
+  "nyc": {
+    "all": true,
+    "include": [
+      "lib/**/*.js"
+    ]
+  },
   "dependencies": {
     "ajv": "^6.10.2",
     "js-yaml": "^3.13.1",
