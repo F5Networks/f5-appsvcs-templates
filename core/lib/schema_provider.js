@@ -35,11 +35,6 @@ FsSchemaProvider.prototype.schemaList = function schemaList() {
     });
 };
 
-FsSchemaProvider.prototype.schemaSet = function schemaSet() {
-    return this.cache.fetch('f5')
-        .then(result => ({ f5: JSON.parse(result) }));
-};
-
 module.exports = {
     FsSchemaProvider
 };

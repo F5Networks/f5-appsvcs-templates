@@ -2,19 +2,13 @@
 
 const fs = require('fs');
 
-const TemplateEngine = require('./template_engine.js').TemplateEngine;
-
 const ioUtil = require('./io_util.js');
 
 const ResourceCache = ioUtil.ResourceCache;
 const makeRequest = ioUtil.makeRequest;
 
-const FsSchemaProvider = require('./schema_provider.js').FsSchemaProvider;
-
-function FsTemplateProvider(templateRootPath, schemaRootPath) {
+function FsTemplateProvider(templateRootPath) {
     this.config_template_path = templateRootPath;
-    this.config_schema_path = schemaRootPath;
-    this.schema_provider = new FsSchemaProvider(schemaRootPath);
 
     this.cache = new ResourceCache(templateName => new Promise((resolve, reject) => {
         fs.readFile(`${templateRootPath}/${templateName}.mst`, (err, data) => {
@@ -23,15 +17,6 @@ function FsTemplateProvider(templateRootPath, schemaRootPath) {
                 resolve(data.toString('utf8'));
             }
         });
-    }).then((data) => {
-        if (!this.schemaSet) {
-            return this.schema_provider.schemaSet()
-                .then((schemas) => {
-                    this.schemaSet = schemas;
-                    return new TemplateEngine(templateName, data, this.schemaSet);
-                });
-        }
-        return new TemplateEngine(templateName, data, this.schemaSet);
     }));
 
     return this;
