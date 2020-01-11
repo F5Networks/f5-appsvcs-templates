@@ -2,10 +2,8 @@
 
 const fs = require('fs');
 
-const ioUtil = require('./io_util.js');
+const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
-
-const ResourceCache = ioUtil.ResourceCache;
 
 function FsTemplateProvider(templateRootPath, schemaProvider) {
     this.config_template_path = templateRootPath;

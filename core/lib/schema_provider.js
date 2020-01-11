@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 
-const ResourceCache = require('./io_util.js').ResourceCache;
+const ResourceCache = require('./resource_cache').ResourceCache;
 
 function FsSchemaProvider(schemaRootPath) {
     this.schema_path = schemaRootPath;
