@@ -22,8 +22,7 @@ FsSchemaProvider.prototype.fetch = function fetch(key) {
     return this.cache.fetch(key);
 };
 
-// used for listing AS3 templates available
-FsSchemaProvider.prototype.schemaList = function schemaList() {
+FsSchemaProvider.prototype.list = function schemaList() {
     return new Promise((resolve, reject) => {
         fs.readdir(this.schema_path, (err, data) => {
             if (err) reject(err);
