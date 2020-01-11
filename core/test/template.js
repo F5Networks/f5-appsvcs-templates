@@ -1,5 +1,6 @@
 /* eslint-disable prefer-arrow-callback */
 /* eslint-disable func-names */
+/* eslint-disable no-console */
 
 'use strict';
 
