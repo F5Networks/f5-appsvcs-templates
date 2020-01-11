@@ -4,3 +4,4 @@ rpmbuild
 test-output.txt
 .nyc_output
 bundle.js*
+coverage
