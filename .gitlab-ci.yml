@@ -2,7 +2,7 @@ image: node:8
 
 stages:
     - test
-    - build
+    - publish
 
 coverage:
     stage: test
@@ -21,7 +21,7 @@ coverage:
             - coverage
 
 build:
-    stage: build
+    stage: test
     image: f5devcentral/containthedocs:rpmbuild
     script:
         - npm install --global npm@5.10.0
@@ -33,7 +33,7 @@ build:
         expire_in: 1 month
 
 pages:
-    stage: build
+    stage: publish
     environment:
         name: staging
         url: https://${CI_PROJECT_NAMESPACE}.${PAGES_DOMAIN}/${CI_PROJECT_NAME}/
