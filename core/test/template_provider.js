@@ -16,9 +16,16 @@ describe('template provider tests', function () {
         const provider = new FsTemplateProvider(templatesPath);
         assert.ok(provider);
     });
-    it('load_single', function () {
+    it('load_single_mst', function () {
         const provider = new FsTemplateProvider(templatesPath);
         return provider.fetch('simple_http')
+            .then((tmpl) => {
+                assert.ok(tmpl);
+            });
+    });
+    it('load_single_yml', function () {
+        const provider = new FsTemplateProvider('test');
+        return provider.fetch('complex')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
@@ -30,6 +37,14 @@ describe('template provider tests', function () {
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
+    });
+    it('load_single_bad', function () {
+        const provider = new FsTemplateProvider(templatesPath);
+        return provider.fetch('does_not_exist')
+            .then(() => {
+                assert(false);
+            })
+            .catch(() => {});
     });
     it('load_list', function () {
         const provider = new FsTemplateProvider(templatesPath);
