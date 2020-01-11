@@ -9,13 +9,7 @@ coverage:
     tags:
         - docker-executor
     script:
-        - cd core && npm ci && npm run lint && npm run coverage
-        - cd ../iapplx && npm ci && npm run lint && npm run coverage
-        - cd .. && npm install -g nyc
-        - mkdir .nyc_output
-        - cp -r core/.nyc_output/* .nyc_output
-        - cp -r iapplx/.nyc_output/* .nyc_output
-        - npx nyc report -r html
+        - ./scripts/run-tests.sh
     artifacts:
         paths:
             - coverage
