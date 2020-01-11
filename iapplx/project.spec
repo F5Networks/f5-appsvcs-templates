@@ -23,7 +23,9 @@ rm %{_builddir}/%{_mystiquepkg}
 mkdir -p %{_builddir}/presentation
 cp %{main}/presentation/*.html %{_builddir}/presentation
 cp %{main}/presentation/bundle.js %{_builddir}/presentation
-cp -r %{main}/presentation/{css,js,webfonts} %{_builddir}/presentation
+cp -r %{main}/presentation/css %{_builddir}/presentation
+cp -r %{main}/presentation/js %{_builddir}/presentation
+cp -r %{main}/presentation/webfonts %{_builddir}/presentation
 cp -r %{main}/../schemas %{_builddir}
 cp -r %{main}/../templates %{_builddir}
 
