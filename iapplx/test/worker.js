@@ -41,21 +41,25 @@ const patchWorker = (worker) => {
         log: console.log
     };
     worker.prototype.completedRestOp = false;
-    worker.prototype._onGet = worker.prototype.onGet;
-    worker.prototype.onGet = function (op) {
-        this.completedRestOp = false;
-        return this._onGet(op)
-            .then(() => {
-                if (!this.completedRestOp) {
-                    throw Error('failed to call completeRestOperation() in onGet()');
-                }
-            });
-    };
     worker.prototype.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
         console.log(JSON.stringify(op, null, 2));
         this.completedRestOp = true;
     };
+    const ensureCompletedOp = (fn) => {
+        worker.prototype[`_${fn}`] = worker.prototype[fn];
+        worker.prototype[fn] = function (op) {
+            this.completedRestOp = false;
+            return this[`_${fn}`](op)
+                .then(() => {
+                    if (!this.completedRestOp) {
+                        throw Error(`failed to call completeRestOperation() in ${fn}()`);
+                    }
+                });
+        };
+    };
+    ensureCompletedOp('onGet');
+    ensureCompletedOp('onPost');
 };
 
 describe('template worker tests', function () {
