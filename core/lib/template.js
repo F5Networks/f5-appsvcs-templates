@@ -243,11 +243,15 @@ class Template {
         }
     }
 
+    _getCleanTemplateText() {
+        return this.templateText.replace(/{{([_a-zA-Z0-9]+):.*}}/g, '{{$1}}');
+    }
+
     render(view) {
         this.validateView(view);
         const partials = this._getPartials();
         const combView = this._getCombinedView(view);
-        return Mustache.render(this.templateText, combView, partials);
+        return Mustache.render(this._getCleanTemplateText(), combView, partials);
     }
 }
 
