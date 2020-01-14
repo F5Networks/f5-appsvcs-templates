@@ -119,4 +119,23 @@ describe('template worker tests', function () {
                 assert.notEqual(tmpl.getViewSchema(), {});
             });
     });
+    it('post_bad_end_point', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('bad');
+        return worker.onPost(op)
+            .then(() => {
+                assert.equal(op.body.code, 404);
+            });
+    });
+    it('post_app_bad_tmplid', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+            name: 'foobar'
+        });
+        return worker.onPost(op)
+            .then(() => {
+                assert.equal(op.body.code, 500);
+            });
+    });
 });
