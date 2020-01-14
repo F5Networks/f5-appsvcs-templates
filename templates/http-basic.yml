@@ -1,0 +1,87 @@
+view:
+  # required fields
+  tenant: demo_tenant # required
+  app: demo_app # required
+  virtual_addr: 10.7.1.2 # required
+
+  # misc optional fields
+  virtual_port: 4430 # default 443
+  hostname: www.demohost.com # specifies HTTP/1.1 host header if defined, otherwise use HTTP/1.0 monitor
+
+  # pool spec
+  use_pool: true # pool none if false
+  pool: demo_pool # names existing pool if defined, otherwise create new
+
+  # monitor spec
+  use_monitor: true # monitor none if false
+  monitor: demo_monitor # names existing monitor if defined, otherwise create new
+  send_string: /
+  expected_response: OK
+
+  # tcp profile spec
+  clientside_network: wan # enum lan or wan, default wan
+  serverside_network: lan # enum lan or wan, default lan
+
+  # tls profile spec
+  use_tls_server: true
+  tls_server_profile: demo_tls_client # names existing profile if defined, otherwise create new
+  tls_certificate: demo_cert # required if use_tls_server true and tls_server_profile undefined
+  use_tls_client: true
+  tls_client_profile: demo_tls_client # names existing profile if defined, otherwise create new
+
+  # compression profile spec
+  use_compression: true
+  compression: demo_compression # names existing profile if defined, otherwise create new
+
+definitions:
+  irule_ref:
+    template: |
+      "iRules": [
+        "choose_pool"
+      ],
+  irule_def:
+    template: |
+      "choose_pool": {
+        "class": "iRule",
+        "remark": "choose private pool based on IP",
+        "iRule": "when CLIENT_ACCEPTED {\nif {[IP::client_addr] starts_with \"10.\"} {\n pool `*pvt_pool`\n }\n}"
+      }
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
+    "{{tenant}}": {
+      "class": "Tenant",
+      "{{app}}": {
+        "class": "Application",
+        "template": "https",
+        "serviceMain": {
+          "class": "Service_HTTPS",
+          "virtualAddresses": ["{{virtual_addr}}"],
+          "virtualPort":
+            {{#virtual_port}}
+              {{virtual_port}}
+            {{/virtual_port}},
+          "pool": "{{app}}_pool",
+          "profileHTTPCompression": "basic",
+          "profileTCP": {
+            "bigip": "/Common/mptcp-mobile-optimized"
+          }
+        },
+        "dfl_pool": {
+          "class": "Pool",
+          "monitors": [
+            "http"
+          ],
+          "members": [{
+            "servicePort": 80,
+            "serverAddresses": [
+              "192.0.3.10",
+              "192.0.3.11"
+            ]
+          }]
+        }
+      }
+    }
+  }
