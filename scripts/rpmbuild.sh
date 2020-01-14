@@ -12,6 +12,8 @@ MYSTIQUE_PKG_VER=$(node -e "console.log(require('./../core/package.json').versio
 MYSTIQUE_PKG=${MYSTIQUE_PKG_NAME}-${MYSTIQUE_PKG_VER}.tgz
 OUTPUT_DIR=${MAINDIR}/dist
 
+rm -rf rpmbuild
+
 rpmbuild -bb \
     --define "main ${MAINDIR}" \
     --define '_topdir %{main}/rpmbuild' \
