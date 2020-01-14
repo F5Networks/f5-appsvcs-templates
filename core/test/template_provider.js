@@ -18,7 +18,7 @@ describe('template provider tests', function () {
     });
     it('load_single_mst', function () {
         const provider = new FsTemplateProvider(templatesPath);
-        return provider.fetch('simple_http')
+        return provider.fetch('simple_udp')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });

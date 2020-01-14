@@ -100,7 +100,7 @@ describe('template worker tests', function () {
     });
     it('get_template_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/simple_https');
+        const op = new RestOp('templates/simple_udp');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
