@@ -4,7 +4,11 @@
 
 'use strict';
 
-const assert = require('assert').strict;
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+
+chai.use(chaiAsPromised);
+const assert = chai.assert;
 
 const { FsSchemaProvider } = require('../lib/schema_provider');
 const { FsTemplateProvider } = require('../lib/template_provider');
@@ -30,6 +34,13 @@ describe('template provider tests', function () {
                 assert.ok(tmpl);
             });
     });
+    it('load_single_yaml', function () {
+        const provider = new FsTemplateProvider('test');
+        return provider.fetch('simple')
+            .then((tmpl) => {
+                assert.ok(tmpl);
+            });
+    });
     it('load_single_with_schema', function () {
         const schemaProvider = new FsSchemaProvider('./../schemas');
         const provider = new FsTemplateProvider(templatesPath, schemaProvider);
@@ -40,18 +51,29 @@ describe('template provider tests', function () {
     });
     it('load_single_bad', function () {
         const provider = new FsTemplateProvider(templatesPath);
-        return provider.fetch('does_not_exist')
-            .then(() => {
-                assert(false);
-            })
-            .catch(() => {});
+        return assert.isRejected(provider.fetch('does_not_exist'));
     });
     it('load_list', function () {
         const provider = new FsTemplateProvider(templatesPath);
         return provider.list()
             .then((templates) => {
                 assert.ok(templates);
-                assert.notEqual(templates.length, 0);
+                assert.notStrictEqual(templates.length, 0);
+            })
+            .then(() => {
+                provider.config_template_path = './test';
+                return provider.list();
+            })
+            .then((templates) => {
+                assert.ok(templates);
+                assert.notStrictEqual(templates.length, 0);
             });
+    });
+    it('bad_tmpl_path', function () {
+        const provider = new FsTemplateProvider('bad/path');
+        return Promise.all([
+            assert.isRejected(provider.list()),
+            assert.isRejected(provider.fetch('simple_udp'))
+        ]);
     });
 });
