@@ -36,6 +36,7 @@
     ]
   },
   "dependencies": {
+    "js-yaml": "^3.13.1",
     "mystique": "file:../core"
   }
 }

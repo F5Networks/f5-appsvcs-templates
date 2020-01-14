@@ -1,5 +1,7 @@
 'use strict';
 
+const yaml = require('js-yaml');
+
 const { Template } = require('mystique');
 
 const endPointUrl = '/mgmt/shared/f5-mystique';
@@ -82,8 +84,26 @@ const newEditor = (tmplid) => {
             document.getElementById('view-schema-btn').onclick = () => {
                 dispOutput(JSON.stringify(tmpl.getViewSchema(), null, 2));
             }
+            document.getElementById('view-render-btn').onclick = () => {
+                dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
+            };
             document.getElementById('form-btn').onclick = () => {
-                dispOutput(tmpl.render(editor.getValue()));
+                const data = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: tmplid,
+                        parameters: editor.getValue()
+                    })
+                };
+                dispOutput(JSON.stringify(data, null, 2));
+                fetch(`${endPointUrl}/applications`, data)
+                    .then(response => response.json())
+                    .then((result) => {
+                        dispOutput(JSON.stringify(result, null, 2));
+                    });
             };
         })
         .catch(e => dispOutput(`Error loading editor:\n${e.message}`));

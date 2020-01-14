@@ -1,6 +1,7 @@
 'use strict';
 
 const http = require('http');
+const yaml = require('js-yaml');
 
 const { FsSchemaProvider, FsTemplateProvider } = require('mystique');
 
@@ -9,7 +10,6 @@ const projectName = 'f5-mystique';
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = `${configPath}/templates`;
 const schemasPath = `${configPath}/schemas`;
-
 
 class TemplateWorker {
     constructor() {
@@ -181,6 +181,43 @@ class TemplateWorker {
             }
         } catch (e) {
             return this.genRestResponse(restOperation, 500, e.message);
+        }
+    }
+
+    postApplications(restOperation, data) {
+        const tmplid = data.name;
+        const tmplView = data.parameters;
+        return this.templateProvider.fetch(tmplid)
+            .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
+            .then(declaration => this.httpPost('/mgmt/shared/appsvcs/declare?async=true', declaration))
+            .then((response) => {
+                if (response.status >= 300) {
+                    return this.genRestResponse(restOperation, response.status, response.body);
+                }
+                return this.genRestResponse(restOperation, 200, {
+                    id: response.body.id,
+                    name: tmplid,
+                    parameters: tmplView
+                });
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.message));
+    }
+
+    onPost(restOperation) {
+        const body = restOperation.getBody();
+        const uri = restOperation.getUri();
+        const pathElements = uri.path.split('/');
+        const collection = pathElements[3];
+
+        try {
+            switch (collection) {
+            case 'applications':
+                return this.postApplications(restOperation, body);
+            default:
+                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
+            }
+        } catch (e) {
+            return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
         }
     }
 }
