@@ -69,7 +69,6 @@ class Template {
         const primitives = [
             'boolean',
             'object',
-            'array',
             'number',
             'string',
             'integer',

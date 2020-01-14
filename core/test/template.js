@@ -14,7 +14,11 @@ const mstWithTypes = `{
     "name" : "test template",
     "default" : "{{variable1}}",
     "string_type" : {{string_variable::string}},
-    "array_type" : {{array_variable::array}},
+    "array_type" : [
+      {{#array_variable}}
+        "{{.}}",
+      {{/array_variable}}
+    ],
     "boolean_type" : {{boolean_variable::boolean}},
     "number_type" : {{number_variable::number}},
     "duplicate_key": "{{variable1}}"
@@ -96,7 +100,12 @@ describe('Template class tests', function () {
             properties: {
                 variable1: { type: 'string' },
                 string_variable: { type: 'string' },
-                array_variable: { type: 'array' },
+                array_variable: {
+                    type: 'array',
+                    items: {
+                        type: 'string'
+                    }
+                },
                 boolean_variable: { type: 'boolean' },
                 number_variable: { type: 'number' }
             },

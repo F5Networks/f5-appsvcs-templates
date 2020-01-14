@@ -31,7 +31,11 @@ Uses AS3 template: udp.
           ],
           "members": [
             {
-              "serverAddresses": {{server_addresses::array}},
+              "serverAddresses": [
+                {{#server_addresses}}
+                  "{{.}}",
+                {{/server_addresses}}
+              ],
               "servicePort": {{service_port::integer}}
             }
           ]
