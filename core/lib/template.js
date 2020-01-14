@@ -112,13 +112,11 @@ class Template {
                 const items = this._handleParsed(curr[4]);
                 acc.properties[mstName] = {
                     type: 'array',
-                    items,
-                    label: 'iterator'
+                    items
                 };
                 if (items.properties && Object.keys(items.properties) < 1) {
                     acc.properties.items = {
-                        type: 'string',
-                        label: 'primitive array member'
+                        type: 'string'
                     };
                 }
                 required.add(mstName);
@@ -138,14 +136,12 @@ class Template {
         });
         if (schema.properties['.'] && Object.keys(schema.properties).length === 1) {
             return {
-                type: 'string',
-                label: 'dot reference'
+                type: 'string'
             };
         }
         if (Object.keys(schema.properties).length < 1) {
             return {
-                type: 'string',
-                label: 'raw'
+                type: 'string'
             };
         }
         schema.required = Array.from(required);
