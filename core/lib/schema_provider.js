@@ -8,10 +8,8 @@ function FsSchemaProvider(schemaRootPath) {
     this.schema_path = schemaRootPath;
     this.cache = new ResourceCache(schemaName => new Promise((resolve, reject) => {
         fs.readFile(`${schemaRootPath}/${schemaName}.json`, (err, data) => {
-            if (err) reject(err);
-            else {
-                resolve(data.toString('utf8'));
-            }
+            if (err) return reject(err);
+            return resolve(data.toString('utf8'));
         });
     }));
 
@@ -25,11 +23,11 @@ FsSchemaProvider.prototype.fetch = function fetch(key) {
 FsSchemaProvider.prototype.list = function schemaList() {
     return new Promise((resolve, reject) => {
         fs.readdir(this.schema_path, (err, data) => {
-            if (err) reject(err);
+            if (err) return reject(err);
 
             const list = data.filter(x => x.endsWith('.json'))
                 .map(x => x.split('.')[0]);
-            resolve(list);
+            return resolve(list);
         });
     });
 };

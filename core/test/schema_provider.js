@@ -4,7 +4,11 @@
 
 'use strict';
 
-const assert = require('assert').strict;
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+
+chai.use(chaiAsPromised);
+const assert = chai.assert;
 
 const { FsSchemaProvider } = require('../lib/schema_provider');
 
@@ -24,18 +28,21 @@ describe('template provider tests', function () {
     });
     it('load_single_bad', function () {
         const provider = new FsSchemaProvider(schemasPath);
-        return provider.fetch('does_not_exist')
-            .then(() => {
-                assert(false);
-            })
-            .catch(() => {});
+        return assert.isRejected(provider.fetch('does_not_exist'));
     });
     it('load_list', function () {
         const provider = new FsSchemaProvider(schemasPath);
         return provider.list()
             .then((templates) => {
                 assert.ok(templates);
-                assert.notEqual(templates.length, 0);
+                assert.notStrictEqual(templates.length, 0);
             });
+    });
+    it('bad_schema_path', function () {
+        const provider = new FsSchemaProvider('bad/path');
+        return Promise.all([
+            assert.isRejected(provider.list()),
+            assert.isRejected(provider.fetch('f5'))
+        ]);
     });
 });
