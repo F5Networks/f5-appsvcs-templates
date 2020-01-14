@@ -59,10 +59,7 @@ template: |
         "serviceMain": {
           "class": "Service_HTTPS",
           "virtualAddresses": ["{{virtual_addr}}"],
-          "virtualPort":
-            {{#virtual_port}}
-              {{virtual_port}}
-            {{/virtual_port}},
+          "virtualPort": {{virtual_port::integer}},
           "pool": "{{app}}_pool",
           "profileHTTPCompression": "basic",
           "profileTCP": {
