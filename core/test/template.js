@@ -163,4 +163,11 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
+    it('load_partials', function () {
+        const ymldata = fs.readFileSync('./test/complex.yml', 'utf8');
+        return Template.loadYaml(null, ymldata)
+            .then((tmpl) => {
+                assert.notStrictEqual(tmpl._getPartials(), {});
+            });
+    });
 });
