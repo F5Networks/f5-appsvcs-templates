@@ -1,9 +1,8 @@
 'use strict';
 
-const http = require('http');
 const yaml = require('js-yaml');
 
-const { FsSchemaProvider, FsTemplateProvider } = require('mystique');
+const { FsSchemaProvider, FsTemplateProvider, httpUtils } = require('mystique');
 
 const projectName = 'f5-mystique';
 
@@ -20,64 +19,6 @@ class TemplateWorker {
         this.WORKER_URI_PATH = `shared/${projectName}`;
         this.schemaProvider = new FsSchemaProvider(schemasPath);
         this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
-
-        this.httpOpts = {
-            host: 'localhost',
-            port: 8100,
-            headers: {
-                Authorization: `Basic ${Buffer.from('admin:').toString('base64')}`,
-                'Content-Type': 'application/json'
-            }
-        };
-    }
-
-    /**
-     * HTTP request utilities
-     */
-    httpRequest(opts, payload) {
-        return new Promise((resolve, reject) => {
-            const req = http.request(opts, (res) => {
-                const buffer = [];
-                res.setEncoding('utf8');
-                res.on('data', (data) => {
-                    buffer.push(data);
-                });
-                res.on('end', () => {
-                    resolve({
-                        status: res.statusCode,
-                        headers: res.headers,
-                        body: buffer.join('')
-                    });
-                });
-            });
-
-            req.on('error', (e) => {
-                reject(new Error(`${opts.host}:${e.message}`));
-            });
-
-            if (payload) req.write(JSON.stringify(payload));
-            req.end();
-        });
-    }
-
-    httpGet(path) {
-        const opts = this.httpOpts;
-        opts.path = path;
-        return this.httpRequest(opts);
-    }
-
-    httpPost(path, payload) {
-        const opts = this.httpOpts;
-        opts.path = path;
-        opts.method = 'POST';
-        return this.httpRequest(opts, payload);
-    }
-
-    httpPatch(path, payload) {
-        const opts = this.httpOpts;
-        opts.path = path;
-        opts.method = 'PATCH';
-        return this.httpRequest(opts, payload);
     }
 
     /**
@@ -113,16 +54,16 @@ class TemplateWorker {
             }
         };
 
-        return this.httpGet('/shared/iapp/blocks')
+        return httpUtils.makeGet('/shared/iapp/blocks')
             .then((res) => {
                 if (res.status === 200) {
-                    const body = JSON.parse(res.body);
+                    const body = res.body;
                     let noBlockFound = true;
                     body.items.forEach((block) => {
                         if (block.name === blockName) {
                             noBlockFound = false;
                             if (state !== undefined && state !== block.state) {
-                                this.httpPatch(`/shared/iapp/blocks/${block.id}`, {
+                                httpUtils.makePatch(`/shared/iapp/blocks/${block.id}`, {
                                     state,
                                     presentationHtmlReference: blockData.presentationHtmlReference
                                 });
@@ -130,7 +71,7 @@ class TemplateWorker {
                         }
                     });
                     if (noBlockFound) {
-                        this.httpPost('/shared/iapp/blocks', blockData);
+                        httpUtils.makePost('/shared/iapp/blocks', blockData);
                     }
                 }
             });
@@ -189,7 +130,7 @@ class TemplateWorker {
         const tmplView = data.parameters;
         return this.templateProvider.fetch(tmplid)
             .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
-            .then(declaration => this.httpPost('/mgmt/shared/appsvcs/declare?async=true', declaration))
+            .then(declaration => httpUtils.makePost('/mgmt/shared/appsvcs/declare?async=true', declaration))
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
