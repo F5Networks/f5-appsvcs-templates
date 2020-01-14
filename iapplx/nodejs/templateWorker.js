@@ -2,7 +2,9 @@
 
 const yaml = require('js-yaml');
 
-const { FsSchemaProvider, FsTemplateProvider, httpUtils } = require('mystique');
+const {
+    FsSchemaProvider, FsTemplateProvider, httpUtils, AS3Driver
+} = require('mystique');
 
 const projectName = 'f5-mystique';
 
@@ -19,6 +21,7 @@ class TemplateWorker {
         this.WORKER_URI_PATH = `shared/${projectName}`;
         this.schemaProvider = new FsSchemaProvider(schemasPath);
         this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
+        this.driver = new AS3Driver();
     }
 
     /**
@@ -130,7 +133,7 @@ class TemplateWorker {
         const tmplView = data.parameters;
         return this.templateProvider.fetch(tmplid)
             .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
-            .then(declaration => httpUtils.makePost('/mgmt/shared/appsvcs/declare?async=true', declaration))
+            .then(declaration => this.driver.createApplication(tmplid, declaration))
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
