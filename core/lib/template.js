@@ -109,15 +109,25 @@ class Template {
             }
             case '#': {
                 const items = this._handleParsed(curr[4]);
-                acc.properties[mstName] = {
-                    type: 'array',
-                    items
-                };
-                if (items.properties && Object.keys(items.properties) < 1) {
-                    acc.properties.items = {
-                        type: 'string'
+                const dotItems = curr[4].filter(item => item[0] === 'name' && item[1] === '.');
+                const asArray = dotItems.length !== 0;
+                if (asArray) {
+                    acc.properties[mstName] = {
+                        type: 'array',
+                        items
                     };
+                    if (items.properties && Object.keys(items.properties) < 1) {
+                        acc.properties.items = {
+                            type: 'string'
+                        };
+                    }
+                } else {
+                    acc.properties[mstName] = {
+                        type: 'boolean'
+                    };
+                    Object.assign(acc.properties, items.properties);
                 }
+
                 required.add(mstName);
                 break;
             }
