@@ -2,7 +2,7 @@
 
 const yaml = require('js-yaml');
 
-const { Template } = require('mystique');
+const { Template, guiUtils } = require('mystique');
 
 const endPointUrl = '/mgmt/shared/f5-mystique';
 
@@ -22,23 +22,6 @@ const dispOutput = (output) => {
 
 let editor = null;
 
-const injectFormatsIntoSchema = (schema) => {
-    Object.values(schema).forEach((item) => {
-        if (item !== null && typeof item === 'object') {
-            if (item.type === 'boolean') {
-                item.format = 'checkbox';
-            } else if (item.type === 'array') {
-                item.format = 'table';
-            } else if (item.type === 'text') {
-                item.type = 'string';
-                item.format = 'text';
-            }
-
-            injectFormatsIntoSchema(item);
-        }
-    });
-};
-
 const newEditor = (tmplid) => {
     const formElement = document.getElementById('form-div');
     if (editor) {
@@ -54,9 +37,8 @@ const newEditor = (tmplid) => {
             dispOutput(`Creating editor with schema:\n${JSON.stringify(schema, null, 2)}`);
 
             // Prep the schema for JSON editor
-            schema.title = schema.title || 'Template';
-            injectFormatsIntoSchema(schema);
-            dispOutput(`Injected formats into schema:\n${JSON.stringify(schema, null, 2)}`);
+            guiUtils.modSchemaForJSONEditor(schema);
+            dispOutput(`Schema modified for the editor:\n${JSON.stringify(schema, null, 2)}`);
 
             // Create a new editor
             editor = new JSONEditor(formElement, {

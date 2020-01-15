@@ -76,6 +76,7 @@ class Template {
         ];
 
         const required = new Set();
+        const dependencies = {};
         const schema = parsed.reduce((acc, curr) => {
             const [mstType, mstName] = [curr[0], curr[1]];
             switch (mstType) {
@@ -94,6 +95,11 @@ class Template {
                     if (!acc.properties[defName]) {
                         throw new Error(`No definition for ${defType} in ${schemaName} schema`);
                     }
+                } else if (defType === 'text') {
+                    acc.properties[defName] = {
+                        type: 'string',
+                        format: 'text'
+                    };
                 } else {
                     acc.properties[defName] = {
                         type: defType
@@ -125,7 +131,12 @@ class Template {
                     acc.properties[mstName] = {
                         type: 'boolean'
                     };
-                    Object.assign(acc.properties, items.properties);
+                    if (items.properties) {
+                        Object.keys(items.properties).forEach((item) => {
+                            dependencies[item] = [mstName];
+                        });
+                        Object.assign(acc.properties, items.properties);
+                    }
                 }
 
                 required.add(mstName);
@@ -154,6 +165,9 @@ class Template {
             };
         }
         schema.required = Array.from(required);
+        if (dependencies && Object.keys(dependencies).length > 0) {
+            schema.dependencies = dependencies;
+        }
         return schema;
     }
 

@@ -5,6 +5,7 @@ const { FsTemplateProvider } = require('./lib/template_provider');
 const Template = require('./lib/template').Template;
 const httpUtils = require('./lib/http_utils');
 const { NullDriver, AS3Driver} = require('./lib/drivers');
+const guiUtils = require('./lib/gui_utils');
 
 module.exports = {
     FsSchemaProvider,
@@ -12,5 +13,6 @@ module.exports = {
     Template,
     httpUtils,
     NullDriver,
-    AS3Driver
+    AS3Driver,
+    guiUtils
 };
