@@ -19,4 +19,4 @@ for project in "${projects[@]}"; do
     cp -r "${project}"/.nyc_output/* .nyc_output
 done
 
-npx nyc report -r html
+npx nyc report -r html -r text
