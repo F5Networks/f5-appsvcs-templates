@@ -133,7 +133,7 @@ class TemplateWorker {
         const tmplView = data.parameters;
         return this.templateProvider.fetch(tmplid)
             .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
-            .then(declaration => this.driver.createApplication(tmplid, declaration))
+            .then(declaration => this.driver.createApplication(declaration))
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);

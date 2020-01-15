@@ -7,7 +7,8 @@ class NullDriver {
         this._apps = {};
     }
 
-    createApplication(appName, appDef) {
+    createApplication(appDef) {
+        const appName = appDef.name;
         this._apps[appName] = appDef;
         return Promise.resolve({
         });
@@ -24,8 +25,7 @@ class NullDriver {
 
 class AS3Driver {
     constructor() {
-        this._endpoint = '/mgmt/shared/appsvcs/declare?async=true';
-        this._apps = {};
+        this._endpoint = '/mgmt/shared/appsvcs/declare';
     }
 
     _getKeysByClass(obj, className) {
@@ -33,39 +33,72 @@ class AS3Driver {
     }
 
     _getDeclTenants(declaration) {
-        const decl = declaration.declaration || declaration;
-        return this._getKeysByClass(decl, 'Tenant').reduce((acc, curr) => {
-            acc[curr] = decl[curr];
-            return acc;
-        }, {});
+        return this._getKeysByClass(declaration, 'Tenant');
     }
 
-    _getDeclaration() {
-        const _declarationStub = {
-            class: 'ADC',
-            schemaVersion: '3.0.0'
-        };
-        return Object.keys(this._apps).reduce((acc, curr) => {
-            const appDef = this._apps[curr];
-            const tenants = this._getDeclTenants(appDef);
-            Object.keys(tenants).forEach((tenant) => {
-                acc[tenant] = Object.assign({}, acc[tenant] || {}, tenants[tenant]);
+    _getDeclApps(declaration) {
+        const apps = [];
+        this._getDeclTenants(declaration).forEach((tenant) => {
+            this._getKeysByClass(declaration[tenant], 'Application').forEach((app) => {
+                apps.push(`${tenant}:${app}`);
             });
-            return acc;
-        }, _declarationStub);
+        });
+        return apps;
     }
 
-    createApplication(appName, appDef) {
-        this._apps[appName] = appDef;
-        return httpUtils.makePost(this._endpoint, this._getDeclaration());
+    _stitchDecl(declaration, appDef) {
+        const tenantList = this._getDeclTenants(appDef);
+        if (tenantList.length === 0) {
+            throw new Error('Did not find a tenant class in the application declaration');
+        } else if (tenantList.length > 1) {
+            throw new Error('Only one tenant class is supported for application declarations');
+        }
+        const appList = this._getDeclApps(appDef);
+        if (appList.length === 0) {
+            throw new Error('Did not find an application class in the application declaration');
+        } else if (appList.length > 1) {
+            throw new Error('Only one application class is supported for application declaration');
+        }
+
+        const [tenantName, appName] = appList[0].split(':');
+        if (!declaration[tenantName]) {
+            declaration[tenantName] = {
+                class: 'Tenant'
+            };
+        }
+        declaration[tenantName][appName] = appDef[tenantName][appName];
+        return declaration;
+    }
+
+    _getDecl() {
+        return httpUtils.makeGet(this._endpoint)
+            .then(res => res.body.declaration || res.body)
+            .then((decl) => {
+                if (Object.keys(decl).length === 0) {
+                    return {
+                        class: 'ADC',
+                        schemaVersion: '3.0.0'
+                    };
+                }
+                return decl;
+            });
+    }
+
+    createApplication(appDef) {
+        appDef = appDef.declaration || appDef;
+        return this._getDecl()
+            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, this._stitchDecl(decl, appDef)));
     }
 
     listApplications() {
-        return Promise.resolve(Object.keys(this._apps));
+        return this._getDecl()
+            .then(decl => this._getDeclApps(decl));
     }
 
     getApplication(appName) {
-        return Promise.resolve(this._apps[appName]);
+        const [tenant, app] = appName.split(':');
+        return this._getDecl()
+            .then(decl => decl[tenant][app]);
     }
 }
 
