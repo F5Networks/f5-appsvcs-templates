@@ -65,7 +65,8 @@ template: |
           {{#use_compression}}
             {{#compression}}
           "profileHTTPCompression": "{{compression}}",
-            {{#!compression}}
+            {{/compression}}
+            {{^compression}}
           "profileHTTPCompression": "basic",
             {{/compression}}
           {{/use_compression}}
