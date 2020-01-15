@@ -3,6 +3,7 @@ view:
   tenant: demo_tenant # required
   app: demo_app # required
   virtual_addr: 10.7.1.2 # required
+  use_irules: true
 
   # misc optional fields
   virtual_port: 4430 # default 443
@@ -61,11 +62,23 @@ template: |
           "virtualAddresses": ["{{virtual_addr}}"],
           "virtualPort": {{virtual_port::integer}},
           "pool": "{{app}}_pool",
+          {{#use_compression}}
+            {{#compression}}
+          "profileHTTPCompression": "{{compression}}",
+            {{#!compression}}
           "profileHTTPCompression": "basic",
+            {{/compression}}
+          {{/use_compression}}
           "profileTCP": {
             "bigip": "/Common/mptcp-mobile-optimized"
           }
+          {{#use_irules}},
+            {{> irule_ref}}
+          {{/use_irules}}
         },
+        {{#use_irules}}
+          {{> irule_def}},
+        {{/use_irules}}
         "dfl_pool": {
           "class": "Pool",
           "monitors": [
