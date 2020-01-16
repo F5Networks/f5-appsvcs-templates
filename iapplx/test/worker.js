@@ -193,7 +193,7 @@ describe('template worker info tests', function () {
                 assert.equal(op.body.code, 404);
             });
     });
-    it('post_app_bad_tmplid', function () {
+    it('post_apps_bad_tmplid', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('applications');
         op.setBody({
@@ -202,6 +202,27 @@ describe('template worker info tests', function () {
         return worker.onPost(op)
             .then(() => {
                 assert.equal(op.body.code, 500);
+            });
+    });
+    it('post_apps', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+            name: 'simple_udp_defaults',
+            parameters: {}
+        });
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3stub);
+        nock(host)
+            .persist()
+            .post(`${as3ep}?async=true`)
+            .reply(202, {});
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.body.code, 202);
             });
     });
 });
