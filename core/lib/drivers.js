@@ -85,15 +85,17 @@ class AS3Driver {
 
         const tenantList = this._getDeclTenants(appDef);
         if (tenantList.length === 0) {
-            throw new Error('Did not find a tenant class in the application declaration');
-        } else if (tenantList.length > 1) {
-            throw new Error('Only one tenant class is supported for application declarations');
+            return Promise.reject(new Error('Did not find a tenant class in the application declaration'));
+        }
+        if (tenantList.length > 1) {
+            return Promise.reject(new Error('Only one tenant class is supported for application declarations'));
         }
         const appList = this._getDeclApps(appDef);
         if (appList.length === 0) {
-            throw new Error('Did not find an application class in the application declaration');
-        } else if (appList.length > 1) {
-            throw new Error('Only one application class is supported for application declaration');
+            return Promise.reject(new Error('Did not find an application class in the application declaration'));
+        }
+        if (appList.length > 1) {
+            return Promise.reject(new Error('Only one application class is supported for application declaration'));
         }
 
         const [tenantName, appName] = appList[0].split(':');
