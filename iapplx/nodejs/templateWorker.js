@@ -158,7 +158,7 @@ class TemplateWorker {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
                 }
-                return this.genRestResponse(restOperation, 200, {
+                return this.genRestResponse(restOperation, response.status, {
                     id: response.body.id,
                     name: tmplid,
                     parameters: tmplView
