@@ -147,6 +147,18 @@ describe('template worker info tests', function () {
                 assert.deepEqual(op.body, ['mystique:app']);
             });
     });
+    it('get_apps_empty', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications');
+        nock(host)
+            .get(as3ep)
+            .reply(204, '');
+        return worker.onGet(op)
+            .then(() => {
+                assert.notEqual(op.body.code, 404);
+                assert.deepEqual(op.body, []);
+            });
+    });
     it('get_apps_item_bad', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('applications/foobar');
