@@ -17,9 +17,10 @@ echo -n %{version}-%{release} > %{_builddir}/version
 cp -r %{main}/nodejs %{_builddir}
 cp  %{main}/package*.json %{_builddir}
 npm pack %{main}/../core
-sed -i 's/..\/core/%{_mystiquepkg}/' %{_builddir}/package.json
+sed -i'bu.json' 's/..\/core/%{_mystiquepkg}/' %{_builddir}/package.json
 npm install --only=prod --no-optional
 rm %{_builddir}/%{_mystiquepkg}
+rm %{_builddir}/package*.json
 mkdir -p %{_builddir}/presentation
 cp %{main}/presentation/*.html %{_builddir}/presentation
 cp %{main}/presentation/bundle.js %{_builddir}/presentation
