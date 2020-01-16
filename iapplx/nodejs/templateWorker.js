@@ -144,7 +144,7 @@ class TemplateWorker {
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
         } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.message);
+            return this.genRestResponse(restOperation, 500, e.statck);
         }
     }
 
@@ -164,7 +164,7 @@ class TemplateWorker {
                     parameters: tmplView
                 });
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.message));
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     onPost(restOperation) {
