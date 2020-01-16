@@ -61,7 +61,7 @@ const newEditor = (tmplid) => {
 
             // Hook up buttons
             document.getElementById('view-tmpl-btn').onclick = () => {
-                dispOutput(tmpl.text);
+                dispOutput(tmpl.templateText);
             }
             document.getElementById('view-schema-btn').onclick = () => {
                 dispOutput(JSON.stringify(tmpl.getViewSchema(), null, 2));
