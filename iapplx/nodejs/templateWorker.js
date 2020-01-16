@@ -151,9 +151,13 @@ class TemplateWorker {
     postApplications(restOperation, data) {
         const tmplid = data.name;
         const tmplView = data.parameters;
+        const metadata = {
+            template: tmplid,
+            view: tmplView
+        };
         return this.templateProvider.fetch(tmplid)
             .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
-            .then(declaration => this.driver.createApplication(declaration))
+            .then(declaration => this.driver.createApplication(declaration, metadata))
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
