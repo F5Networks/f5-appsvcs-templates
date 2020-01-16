@@ -73,6 +73,10 @@ describe('template worker info tests', function () {
 
     patchWorker(TemplateWorker);
 
+    afterEach(function () {
+        nock.cleanAll();
+    });
+
     it('info', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('info');
@@ -137,7 +141,10 @@ describe('template worker info tests', function () {
                 mystique: {
                     class: 'Tenant',
                     app: {
-                        class: 'Application'
+                        class: 'Application',
+                        constants: {
+                            mystique: {}
+                        }
                     }
                 }
             }));
@@ -180,13 +187,19 @@ describe('template worker info tests', function () {
     it('get_apps_item', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('applications/mystique:app');
+        const appData = {
+            foo: 'bar'
+        };
         nock(host)
             .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
                 mystique: {
                     class: 'Tenant',
                     app: {
-                        class: 'Application'
+                        class: 'Application',
+                        constants: {
+                            mystique: appData
+                        }
                     }
                 }
             }));
@@ -194,7 +207,7 @@ describe('template worker info tests', function () {
             .then(() => {
                 const tmpl = op.body;
                 assert.notEqual(op.body.code, 404);
-                assert.notEqual(tmpl, {});
+                assert.notEqual(tmpl, appData);
             });
     });
     it('post_bad_end_point', function () {

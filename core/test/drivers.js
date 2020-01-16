@@ -41,7 +41,16 @@ describe('AS3 Driver tests', function () {
         class: 'ADC',
         schemaVersion: '3.0.0'
     };
-    const as3WithApp = Object.assign({}, as3stub, appDef);
+    const as3WithApp = (() => {
+        const tmp = Object.assign({}, as3stub, appDef);
+        tmp.tenantName.appName.constants = {
+            class: 'Constants',
+            mystique: {
+                foo: 'bar'
+            }
+        };
+        return tmp;
+    })();
 
     const host = 'http://localhost:8100';
 
@@ -71,6 +80,30 @@ describe('AS3 Driver tests', function () {
 
         return assert.becomes(driver._getDecl(), as3stub);
     });
+    it('list_apps_empty', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3stub);
+        return assert.becomes(driver.listApplications(), []);
+    });
+    it('list_apps', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3WithApp);
+        return assert.becomes(driver.listApplications(), ['tenantName:appName']);
+    });
+    it('get_app', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3WithApp);
+        return assert.becomes(driver.getApplication('tenantName:appName'), { foo: 'bar' });
+    });
     it('add_app', function () {
         const driver = new AS3Driver();
         nock(host)
@@ -80,21 +113,13 @@ describe('AS3 Driver tests', function () {
 
         nock(host)
             .persist()
-            .post(as3ep)
+            .post(as3ep, as3WithApp)
             .query(true)
             .reply(202, {});
 
-        return assert.becomes(driver.listApplications(), [])
-            .then(() => driver.createApplication(appDef))
-            .then(() => {
-                nock.cleanAll();
-                nock(host)
-                    .persist()
-                    .get(as3ep)
-                    .reply(200, as3WithApp);
-            })
-            .then(() => assert.becomes(driver.listApplications(), ['tenantName:appName']))
-            .then(() => assert.becomes(driver.getApplication('tenantName:appName'), appDef.tenantName.appName));
+        return assert.isFulfilled(driver.createApplication(appDef, {
+            foo: 'bar'
+        }));
     });
     it('get_app_bad', function () {
         const driver = new AS3Driver();
