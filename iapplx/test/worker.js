@@ -7,6 +7,7 @@
 process.AFL_TW_ROOT = '../';
 
 const assert = require('assert').strict;
+const nock = require('nock');
 
 const TemplateWorker = require('../nodejs/templateWorker.js');
 
@@ -62,8 +63,16 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onPost');
 };
 
-describe('template worker tests', function () {
+describe('template worker info tests', function () {
+    const host = 'http://localhost:8100';
+    const as3ep = '/mgmt/shared/appsvcs/declare';
+    const as3stub = {
+        class: 'ADC',
+        schemaVersion: '3.0.0'
+    };
+
     patchWorker(TemplateWorker);
+
     it('info', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('info');
@@ -117,6 +126,63 @@ describe('template worker tests', function () {
                 assert.notEqual(op.body.code, 404);
                 assert.notEqual(tmpl, {});
                 assert.notEqual(tmpl.getViewSchema(), {});
+            });
+    });
+    it('get_apps', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications');
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                mystique: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application'
+                    }
+                }
+            }));
+        return worker.onGet(op)
+            .then(() => {
+                assert.notEqual(op.body.code, 404);
+                assert.deepEqual(op.body, ['mystique:app']);
+            });
+    });
+    it('get_apps_item_bad', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications/foobar');
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                mystique: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application'
+                    }
+                }
+            }));
+        return worker.onGet(op)
+            .then(() => {
+                assert.equal(op.body.code, 404);
+            });
+    });
+    it('get_apps_item', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications/mystique:app');
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                mystique: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application'
+                    }
+                }
+            }));
+        return worker.onGet(op)
+            .then(() => {
+                const tmpl = op.body;
+                assert.notEqual(op.body.code, 404);
+                assert.notEqual(tmpl, {});
             });
     });
     it('post_bad_end_point', function () {

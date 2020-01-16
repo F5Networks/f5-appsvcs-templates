@@ -110,6 +110,24 @@ class TemplateWorker {
             });
     }
 
+    getApplications(restOperation, appid) {
+        if (appid) {
+            return this.driver.getApplication(appid)
+                .then((appDef) => {
+                    restOperation.setHeaders('Content-Type', 'text/json');
+                    restOperation.setBody(appDef);
+                    this.completeRestOperation(restOperation);
+                })
+                .catch(e => this.genRestResponse(restOperation, 404, e.message));
+        }
+
+        return this.driver.listApplications()
+            .then((appsList) => {
+                restOperation.setBody(appsList);
+                this.completeRestOperation(restOperation);
+            });
+    }
+
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
@@ -120,6 +138,8 @@ class TemplateWorker {
                 return this.genRestResponse(restOperation, 200, '');
             case 'templates':
                 return this.getTemplates(restOperation, itemid);
+            case 'applications':
+                return this.getApplications(restOperation, itemid);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }

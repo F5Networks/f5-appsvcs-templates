@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "js-yaml": "^3.13.1",
-    "mystique": "file:../core"
+    "mystique": "file:../core",
+    "nock": "^11.7.2"
   }
 }
