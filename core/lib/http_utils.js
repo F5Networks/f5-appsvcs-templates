@@ -22,10 +22,11 @@ const makeRequest = (opts, payload) => {
             });
             res.on('end', () => {
                 let body = buffer.join('');
+                body = body || '{}';
                 try {
                     body = JSON.parse(body);
                 } catch (e) {
-                    return reject(new Error(`Invalid response object from ${combOpts.path}`));
+                    return reject(new Error(`Invalid response object from ${combOpts.method} to ${combOpts.path}`));
                 }
                 return resolve({
                     status: res.statusCode,

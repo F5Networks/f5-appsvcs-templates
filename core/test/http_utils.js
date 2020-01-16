@@ -25,6 +25,16 @@ describe('HTTP utils tests', function () {
                 assert.strictEqual(result.status, 200);
             });
     });
+    it('get_empty_string', function () {
+        nock(endpoint)
+            .get('/resource')
+            .reply(200, '');
+        return httpUtils.makeGet('/resource')
+            .then((result) => {
+                assert.strictEqual(result.status, 200);
+                assert.deepStrictEqual(result.body, {});
+            });
+    });
     it('post', function () {
         const sendBody = {
             foo: 'bar'
