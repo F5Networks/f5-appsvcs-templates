@@ -97,8 +97,19 @@ class AS3Driver {
 
     getApplication(appName) {
         const [tenant, app] = appName.split(':');
+        if (!app) {
+            return Promise.reject(new Error(`missing app portion of application name: ${appName}`));
+        }
         return this._getDecl()
-            .then(decl => decl[tenant][app]);
+            .then((decl) => {
+                if (!decl[tenant]) {
+                    return Promise.reject(new Error(`no tenant found for tenant name: ${tenant}`));
+                }
+                if (!decl[tenant][app]) {
+                    return Promise.reject(new Error(`could not find application ${appName}`));
+                }
+                return decl[tenant][app];
+            });
     }
 }
 

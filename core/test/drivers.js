@@ -96,4 +96,15 @@ describe('AS3 Driver tests', function () {
             .then(() => assert.becomes(driver.listApplications(), ['tenantName:appName']))
             .then(() => assert.becomes(driver.getApplication('tenantName:appName'), appDef.tenantName.appName));
     });
+    it('get_app_bad', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3WithApp);
+
+        return assert.isRejected(driver.getApplication('missingSep', /missing app protion/))
+            .then(() => assert.isRejected(driver.getApplication('badTenent:appName', /no tenent found/)))
+            .then(() => assert.isRejected(driver.getApplication('tenantName:badApp', /could not find app/)));
+    });
 });
