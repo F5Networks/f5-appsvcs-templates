@@ -104,7 +104,7 @@ describe('AS3 Driver tests', function () {
             .reply(200, as3WithApp);
         return assert.becomes(driver.getApplication('tenantName:appName'), { foo: 'bar' });
     });
-    it('add_app', function () {
+    it('create_app', function () {
         const driver = new AS3Driver();
         nock(host)
             .persist()
@@ -120,6 +120,40 @@ describe('AS3 Driver tests', function () {
         return assert.isFulfilled(driver.createApplication(appDef, {
             foo: 'bar'
         }));
+    });
+    it('create_app_bad', function () {
+        const driver = new AS3Driver();
+
+        return assert.isRejected(driver.createApplication(appDef, { class: 'Application' }), /cannot contain the class key/)
+            .then(() => assert.isRejected(driver.createApplication({
+                appName: {
+                    class: 'Application'
+                }
+            }), /Did not find a tenant/))
+            .then(() => assert.isRejected(driver.createApplication({
+                tenantName1: {
+                    class: 'Tenant'
+                },
+                tenantName2: {
+                    class: 'Tenant'
+                }
+            }), /Only one tenant/))
+            .then(() => assert.isRejected(driver.createApplication({
+                tenantName: {
+                    class: 'Tenant'
+                }
+            }), /Did not find an application/))
+            .then(() => assert.isRejected(driver.createApplication({
+                tenantName: {
+                    class: 'Tenant',
+                    appName1: {
+                        class: 'Application'
+                    },
+                    appName2: {
+                        class: 'Application'
+                    }
+                }
+            }), /Only one application/));
     });
     it('get_app_bad', function () {
         const driver = new AS3Driver();
