@@ -11,7 +11,27 @@
         <title>Mystique</title>
     </head>
     <body>
+        <template id="page-home">
+            <a href="#apps">List Deployed Applications</a><br>
+            <a href="#create">Deploy New Application</a>
+        </template>
+
+        <template id="page-apps">
+            <div>
+                <a href="#">Back</a>
+            </div>
+            <ul id="applist">
+            </ul>
+            <div>
+                <p>Output:</p>
+                <pre id="output"></pre>
+            </div>
+        </template>
+
         <template id="page-create">
+            <div>
+                <a href="#">Back</a>
+            </div>
             <div id="tmpl-btns">Templates: </div>
             <div>
                 <div id="form-div"></div>

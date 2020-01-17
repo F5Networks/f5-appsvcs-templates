@@ -95,18 +95,6 @@ const newEditor = (tmplid) => {
         .catch(e => dispOutput(`Error loading editor:\n${e.message}`));
 };
 
-const addTmplBtns = (tmplList) => {
-    const elem = document.getElementById('tmpl-btns');
-    tmplList.forEach((item) => {
-        const btn = document.createElement('button');
-        btn.innerText = item;
-        btn.addEventListener('click', () => {
-            newEditor(item);
-        });
-        elem.appendChild(btn);
-    });
-};
-
 // Setup basic routing
 
 const routes = {};
@@ -122,6 +110,9 @@ function router() {
     const pageId = `#page-${routeInfo.pageName}`;
     const pageTmpl = document.querySelector(pageId);
 
+    while (elem.firstChild) {
+        elem.firstChild.remove();
+    }
     elem.appendChild(document.importNode(pageTmpl.content, true));
 
     if (routeInfo.pageFunc) {
@@ -134,7 +125,34 @@ window.addEventListener('load', router);
 
 
 // Define routes
-route('/', 'create', () => {
+route('/', 'home');
+route('apps', 'apps', () => {
+    outputElem =  document.getElementById('output');
+    const listElem = document.getElementById('applist');
+    dispOutput('Fetching applications list');
+    getJSON('applications')
+        .then((appsList) => {
+            appsList.forEach((appName) => {
+                const li = document.createElement('li');
+                li.innerText = appName;
+                listElem.appendChild(li);
+            });
+            dispOutput('');
+        })
+        .catch(e => dispOutput(e.message));
+});
+route('create', 'create', () => {
+    const addTmplBtns = (tmplList) => {
+        const elem = document.getElementById('tmpl-btns');
+        tmplList.forEach((item) => {
+            const btn = document.createElement('button');
+            btn.innerText = item;
+            btn.addEventListener('click', () => {
+                newEditor(item);
+            });
+            elem.appendChild(btn);
+        });
+    };
     outputElem =  document.getElementById('output');
     dispOutput('Fetching templates');
     getJSON('templates')
