@@ -13,20 +13,24 @@ const getJSON = endPoint => fetch(`${endPointUrl}/${endPoint}`).then((data) => {
     return data.json();
 });
 
-const outputElem = document.getElementById('output');
+let editor = null;
+
+let outputElem;
 
 const dispOutput = (output) => {
     console.log(output);
-    outputElem.innerText = output;
+    if (outputElem) {
+        outputElem.innerText = output;
+    }
 };
 
-let editor = null;
 
 const newEditor = (tmplid) => {
     const formElement = document.getElementById('form-div');
     if (editor) {
         editor.destroy();
     }
+
     dispOutput(`Loading template: ${tmplid}`);
     getJSON(`templates/${tmplid}`)
         .then((data) => {
@@ -103,10 +107,40 @@ const addTmplBtns = (tmplList) => {
     });
 };
 
-dispOutput('Fetching templates');
-getJSON('templates')
-    .then((data) => {
-        addTmplBtns(data);
-        dispOutput('');
-    })
-    .catch(e => dispOutput(e.message));
+// Setup basic routing
+
+const routes = {};
+function route(path, pageName, pageFunc) {
+    routes[path] = { pageName, pageFunc };
+}
+
+function router() {
+    const url = location.hash.slice(1) || '/';
+    const routeInfo = routes[url];
+    const elem = document.getElementById('app');
+
+    const pageId = `#page-${routeInfo.pageName}`;
+    const pageTmpl = document.querySelector(pageId);
+
+    elem.appendChild(document.importNode(pageTmpl.content, true));
+
+    if (routeInfo.pageFunc) {
+        routeInfo.pageFunc();
+    }
+}
+
+window.addEventListener('hashchange', router);
+window.addEventListener('load', router);
+
+
+// Define routes
+route('/', 'create', () => {
+    outputElem =  document.getElementById('output');
+    dispOutput('Fetching templates');
+    getJSON('templates')
+        .then((data) => {
+            addTmplBtns(data);
+            dispOutput('');
+        })
+        .catch(e => dispOutput(e.message));
+});

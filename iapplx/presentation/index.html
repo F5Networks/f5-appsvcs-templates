@@ -11,18 +11,22 @@
         <title>Mystique</title>
     </head>
     <body>
-        <div id="tmpl-btns">Templates: </div>
-        <div>
-            <div id="form-div"></div>
-            <button type="button" class="btn" id="view-tmpl-btn">View Template</button>
-            <button type="button" class="btn" id="view-schema-btn">View Schema</button>
-            <button type="button" class="btn" id="view-render-btn">View Rendered</button>
-            <button type="button" class="btn btn-primary" id="form-btn">Submit</button>
-        </div>
-        <div>
-            <p>Output:</p>
-            <pre id="output"></pre>
-        </div>
+        <template id="page-create">
+            <div id="tmpl-btns">Templates: </div>
+            <div>
+                <div id="form-div"></div>
+                <button type="button" class="btn" id="view-tmpl-btn">View Template</button>
+                <button type="button" class="btn" id="view-schema-btn">View Schema</button>
+                <button type="button" class="btn" id="view-render-btn">View Rendered</button>
+                <button type="button" class="btn btn-primary" id="form-btn">Submit</button>
+            </div>
+            <div>
+                <p>Output:</p>
+                <pre id="output"></pre>
+            </div>
+        </template>
+
+        <div id="app"></div>
 
         <script src="js/jsoneditor.min.js"></script>
         <script src="bundle.js"></script>
