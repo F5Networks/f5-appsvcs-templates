@@ -41,16 +41,18 @@ describe('AS3 Driver tests', function () {
         class: 'ADC',
         schemaVersion: '3.0.0'
     };
-    const as3WithApp = (() => {
-        const tmp = Object.assign({}, as3stub, appDef);
-        tmp.tenantName.appName.constants = {
-            class: 'Constants',
-            mystique: {
-                foo: 'bar'
+    const as3WithApp = Object.assign({}, as3stub, {
+        tenantName: {
+            class: 'Tenant',
+            appName: {
+                class: 'Application',
+                constants: {
+                    class: 'Constants',
+                    mystique: { foo: 'bar' }
+                }
             }
-        };
-        return tmp;
-    })();
+        }
+    });
 
     const host = 'http://localhost:8100';
 
@@ -62,7 +64,7 @@ describe('AS3 Driver tests', function () {
         const driver = new AS3Driver();
         const decl = Object.assign({}, as3stub);
         driver._stitchDecl(decl, appDef);
-        assert.deepStrictEqual(decl, as3WithApp);
+        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef));
     });
     it('get_decl', function () {
         const driver = new AS3Driver();

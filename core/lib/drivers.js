@@ -76,6 +76,7 @@ class AS3Driver {
     }
 
     createApplication(appDef, metaData) {
+        appDef = JSON.parse(JSON.stringify(appDef)); // copy appDef to avoid modifying it
         appDef = appDef.declaration || appDef;
         metaData = metaData || {};
 
@@ -98,6 +99,7 @@ class AS3Driver {
             return Promise.reject(new Error('Only one application class is supported for application declaration'));
         }
 
+        // Add constants
         const [tenantName, appName] = appList[0].split(':');
         if (!appDef[tenantName][appName].constants) {
             appDef[tenantName][appName].constants = {
@@ -107,8 +109,10 @@ class AS3Driver {
         Object.assign(appDef[tenantName][appName].constants, {
             [this._constkey]: metaData
         });
+
         return this._getDecl()
-            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, this._stitchDecl(decl, appDef)));
+            .then(decl => this._stitchDecl(decl, appDef))
+            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));
     }
 
     listApplications() {
