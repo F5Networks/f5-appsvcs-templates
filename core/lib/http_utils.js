@@ -48,7 +48,7 @@ const makeRequest = (opts, payload) => {
 const makeGet = path => makeRequest({
     path,
     method: 'GET'
-}, {});
+});
 
 const makePost = (path, payload) => makeRequest({
     path,

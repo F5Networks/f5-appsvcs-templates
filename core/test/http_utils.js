@@ -5,8 +5,11 @@
 'use strict';
 
 const nock = require('nock');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
 
-const assert = require('assert');
+chai.use(chaiAsPromised);
+const assert = chai.assert;
 
 const httpUtils = require('../lib/http_utils');
 
@@ -34,6 +37,12 @@ describe('HTTP utils tests', function () {
                 assert.strictEqual(result.status, 200);
                 assert.deepStrictEqual(result.body, {});
             });
+    });
+    it('get_bad_response', function () {
+        nock(endpoint)
+            .get('/resource')
+            .reply(500, '{foo');
+        assert.isRejected(httpUtils.makeGet('/resource'), /Invalid response object/);
     });
     it('post', function () {
         const sendBody = {
