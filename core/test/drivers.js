@@ -162,10 +162,18 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
-            .reply(200, as3WithApp);
+            .reply(404, as3WithApp);
 
         return assert.isRejected(driver.getApplication('missingSep', /missing app protion/))
             .then(() => assert.isRejected(driver.getApplication('badTenent:appName', /no tenent found/)))
             .then(() => assert.isRejected(driver.getApplication('tenantName:badApp', /could not find app/)));
+    });
+    it('get_app_unmanaged', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3ep)
+            .reply(404, Object.assign({}, as3stub, appDef));
+
+        return assert.isRejected(driver.getApplication('tenantName:appName', /application is not managed/));
     });
 });
