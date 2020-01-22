@@ -1,0 +1,52 @@
+{
+  "name": "mystique",
+  "version": "0.1.0",
+  "author": "F5 Networks",
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "description": "",
+  "scripts": {
+    "test": "mocha --recursive \"./test/*.js\"",
+    "lint": "eslint lib test cli.js",
+    "coverage": "nyc npm test"
+  },
+  "keywords": [
+    "as3",
+    "f5",
+    "rest",
+    "api"
+  ],
+  "bin": {
+    "mystique": "./cli.js"
+  },
+  "devDependencies": {
+    "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
+    "eslint": "^5.16.0",
+    "mocha": "^6.2.2",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "nock": "^11.7.2",
+    "nyc": "^14.1.1"
+  },
+  "eslintConfig": {
+    "extends": "@f5devcentral/eslint-config-f5-atg",
+    "rules": {
+      "no-control-regex": "off"
+    },
+    "parserOptions": {
+      "ecmaVersion": 8
+    }
+  },
+  "nyc": {
+    "all": true,
+    "include": [
+      "lib/**/*.js"
+    ]
+  },
+  "dependencies": {
+    "ajv": "^6.10.2",
+    "js-yaml": "^3.13.1",
+    "mustache": "^3.1.0",
+    "yargs": "^15.1.0"
+  }
+}

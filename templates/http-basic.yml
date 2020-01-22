@@ -39,7 +39,7 @@ definitions:
     template: |
       "iRules": [
         "choose_pool"
-      ],
+      ]
   irule_def:
     template: |
       "choose_pool": {

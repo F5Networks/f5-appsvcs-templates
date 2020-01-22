@@ -5,6 +5,7 @@ if [ -z "${projects[*]}" ]; then
     projects=(
         core
         iapplx
+        templates
     )
 fi
 
