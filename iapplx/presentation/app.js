@@ -103,16 +103,27 @@ function route(path, pageName, pageFunc) {
 }
 
 function router() {
-    const url = location.hash.slice(1) || '/';
+    const rawUrl = location.hash.slice(1) || '/';
+    const url = rawUrl.replace(/\/application.*?\/edit/, '/');
     const routeInfo = routes[url];
     const elem = document.getElementById('app');
 
-    const pageId = `#page-${routeInfo.pageName}`;
-    const pageTmpl = document.querySelector(pageId);
-
+    // Remove old content
     while (elem.firstChild) {
         elem.firstChild.remove();
     }
+
+    // Error on unknown route
+    if (!routeInfo) {
+        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl})`;
+        elem.innerText = msg;
+        console.error(msg);
+        return;
+    }
+
+    // Load new page
+    const pageId = `#page-${routeInfo.pageName}`;
+    const pageTmpl = document.querySelector(pageId);
     elem.appendChild(document.importNode(pageTmpl.content, true));
 
     if (routeInfo.pageFunc) {
