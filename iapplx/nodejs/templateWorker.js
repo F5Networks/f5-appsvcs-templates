@@ -2,9 +2,12 @@
 
 const yaml = require('js-yaml');
 
-const {
-    FsSchemaProvider, FsTemplateProvider, httpUtils, AS3Driver
-} = require('mystique');
+const mystique = require('mystique');
+
+const FsSchemaProvider = mystique.FsSchemaProvider;
+const FsTemplateProvider = mystique.FsTemplateProvider;
+const httpUtils = mystique.httpUtils;
+const AS3Driver = mystique.AS3Driver;
 
 const projectName = 'f5-mystique';
 
@@ -131,7 +134,8 @@ class TemplateWorker {
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
-        const [collection, itemid] = [pathElements[3], pathElements[4]];
+        const collection = pathElements[3];
+        const itemid = pathElements[4];
         try {
             switch (collection) {
             case 'info':
