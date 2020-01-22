@@ -21,6 +21,7 @@
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "eslint": "^5.16.0",
     "mocha": "^6.2.2",
+    "nock": "^11.7.2",
     "nyc": "^14.1.1"
   },
   "eslintConfig": {
@@ -37,7 +38,6 @@
   },
   "dependencies": {
     "js-yaml": "^3.13.1",
-    "mystique": "file:../core",
-    "nock": "^11.7.2"
+    "mystique": "file:../core"
   }
 }
