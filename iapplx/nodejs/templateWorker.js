@@ -115,7 +115,11 @@ class TemplateWorker {
 
     getApplications(restOperation, appid) {
         if (appid) {
-            return this.driver.getApplication(appid)
+            const uri = restOperation.getUri();
+            const pathElements = uri.path.split('/');
+            const tenant = pathElements[4];
+            const app = pathElements[5];
+            return this.driver.getApplication(tenant, app)
                 .then((appDef) => {
                     restOperation.setHeaders('Content-Type', 'text/json');
                     restOperation.setBody(appDef);

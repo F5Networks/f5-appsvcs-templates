@@ -23,7 +23,7 @@ describe('Null Driver tests', function () {
         return assert.becomes(driver.listApplications(), [])
             .then(() => driver.createApplication(appDef))
             .then(() => assert.becomes(driver.listApplications(), ['appy']))
-            .then(() => assert.becomes(driver.getApplication('appy'), appDef));
+            .then(() => assert.becomes(driver.getApplication(null, 'appy'), appDef));
     });
 });
 
@@ -96,7 +96,7 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3WithApp);
-        return assert.becomes(driver.listApplications(), ['tenantName:appName']);
+        return assert.becomes(driver.listApplications(), [['tenantName', 'appName']]);
     });
     it('get_app', function () {
         const driver = new AS3Driver();
@@ -104,7 +104,7 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3WithApp);
-        return assert.becomes(driver.getApplication('tenantName:appName'), { foo: 'bar' });
+        return assert.becomes(driver.getApplication('tenantName', 'appName'), { foo: 'bar' });
     });
     it('create_app', function () {
         const driver = new AS3Driver();
@@ -164,9 +164,8 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .reply(404, as3WithApp);
 
-        return assert.isRejected(driver.getApplication('missingSep', /missing app protion/))
-            .then(() => assert.isRejected(driver.getApplication('badTenent:appName', /no tenent found/)))
-            .then(() => assert.isRejected(driver.getApplication('tenantName:badApp', /could not find app/)));
+        return assert.isRejected(driver.getApplication('badTenent', 'appName'), /no tenant found/)
+            .then(() => assert.isRejected(driver.getApplication('tenantName', 'badApp'), /could not find app/));
     });
     it('get_app_unmanaged', function () {
         const driver = new AS3Driver();
@@ -174,6 +173,6 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .reply(404, Object.assign({}, as3stub, appDef));
 
-        return assert.isRejected(driver.getApplication('tenantName:appName', /application is not managed/));
+        return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);
     });
 });

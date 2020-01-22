@@ -143,9 +143,9 @@ route('apps', 'apps', () => {
     dispOutput('Fetching applications list');
     getJSON('applications')
         .then((appsList) => {
-            appsList.forEach((appName) => {
+            appsList.forEach((appPair) => {
                 const li = document.createElement('li');
-                li.innerText = appName;
+                li.innerText = appPair.join('/');
                 listElem.appendChild(li);
             });
             dispOutput('');

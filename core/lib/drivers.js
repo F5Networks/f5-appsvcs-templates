@@ -18,8 +18,8 @@ class NullDriver {
         return Promise.resolve(Object.keys(this._apps));
     }
 
-    getApplication(appName) {
-        return Promise.resolve(this._apps[appName]);
+    getApplication(_tenant, app) {
+        return Promise.resolve(this._apps[app]);
     }
 }
 
@@ -43,7 +43,7 @@ class AS3Driver {
             this._getKeysByClass(declaration[tenant], 'Application').forEach((app) => {
                 const appDef = declaration[tenant][app];
                 if (!onlyMystique || (appDef.constants && appDef.constants[this._constkey])) {
-                    apps.push(`${tenant}:${app}`);
+                    apps.push([tenant, app]);
                 }
             });
         });
@@ -51,7 +51,7 @@ class AS3Driver {
     }
 
     _stitchDecl(declaration, appDef) {
-        const [tenantName, appName] = this._getDeclApps(appDef)[0].split(':');
+        const [tenantName, appName] = this._getDeclApps(appDef)[0];
         if (!declaration[tenantName]) {
             declaration[tenantName] = {
                 class: 'Tenant'
@@ -100,7 +100,7 @@ class AS3Driver {
         }
 
         // Add constants
-        const [tenantName, appName] = appList[0].split(':');
+        const [tenantName, appName] = appList[0];
         if (!appDef[tenantName][appName].constants) {
             appDef[tenantName][appName].constants = {
                 class: 'Constants'
@@ -120,21 +120,17 @@ class AS3Driver {
             .then(decl => this._getDeclApps(decl, true));
     }
 
-    getApplication(appName) {
-        const [tenant, app] = appName.split(':');
-        if (!app) {
-            return Promise.reject(new Error(`missing app portion of application name: ${appName}`));
-        }
+    getApplication(tenant, app) {
         return this._getDecl()
             .then((decl) => {
                 if (!decl[tenant]) {
                     return Promise.reject(new Error(`no tenant found for tenant name: ${tenant}`));
                 }
                 if (!decl[tenant][app]) {
-                    return Promise.reject(new Error(`could not find application ${appName}`));
+                    return Promise.reject(new Error(`could not find application ${tenant}/${app}`));
                 }
                 if (!decl[tenant][app].constants || !decl[tenant][app].constants[this._constkey]) {
-                    return Promise.reject(new Error(`application is not managed by Mystique: ${appName}`));
+                    return Promise.reject(new Error(`application is not managed by Mystique: ${tenant}/${app}`));
                 }
                 return decl[tenant][app].constants[this._constkey];
             });

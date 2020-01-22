@@ -151,7 +151,7 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.body.code, 404);
-                assert.deepEqual(op.body, ['mystique:app']);
+                assert.deepEqual(op.body, [['mystique', 'app']]);
             });
     });
     it('get_apps_empty', function () {
@@ -186,7 +186,7 @@ describe('template worker info tests', function () {
     });
     it('get_apps_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('applications/mystique:app');
+        const op = new RestOp('applications/mystique/app');
         const appData = {
             foo: 'bar'
         };
