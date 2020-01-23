@@ -123,6 +123,21 @@ describe('AS3 Driver tests', function () {
             foo: 'bar'
         }));
     });
+    it('delete_app', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3WithApp);
+
+        nock(host)
+            .persist()
+            .post(as3ep, as3stub)
+            .query(true)
+            .reply(202, {});
+
+        return assert.isFulfilled(driver.deleteApplication('tenantName', 'appName'));
+    });
     it('create_app_bad', function () {
         const driver = new AS3Driver();
 

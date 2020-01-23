@@ -14,6 +14,11 @@ class NullDriver {
         });
     }
 
+    deleteApplication(tenant, app) {
+        delete this._apps[app];
+        return Promise.resolve();
+    }
+
     listApplications() {
         return Promise.resolve(Object.keys(this._apps));
     }
@@ -115,6 +120,32 @@ class AS3Driver {
             .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));
     }
 
+    _validateTenantApp(decl, tenant, app) {
+        if (!decl[tenant]) {
+            return Promise.reject(new Error(`no tenant found for tenant name: ${tenant}`));
+        }
+        if (!decl[tenant][app]) {
+            return Promise.reject(new Error(`could not find application ${tenant}/${app}`));
+        }
+        if (!decl[tenant][app].constants || !decl[tenant][app].constants[this._constkey]) {
+            return Promise.reject(new Error(`application is not managed by Mystique: ${tenant}/${app}`));
+        }
+        return Promise.resolve(decl);
+    }
+
+    deleteApplication(tenant, app) {
+        return this._getDecl()
+            .then(decl => this._validateTenantApp(decl, tenant, app))
+            .then((decl) => {
+                delete decl[tenant][app];
+                if (this._getKeysByClass(decl[tenant], 'Application').length === 0) {
+                    delete decl[tenant];
+                }
+                return Promise.resolve(decl);
+            })
+            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));
+    }
+
     listApplications() {
         return this._getDecl()
             .then(decl => this._getDeclApps(decl, true));
@@ -122,18 +153,8 @@ class AS3Driver {
 
     getApplication(tenant, app) {
         return this._getDecl()
-            .then((decl) => {
-                if (!decl[tenant]) {
-                    return Promise.reject(new Error(`no tenant found for tenant name: ${tenant}`));
-                }
-                if (!decl[tenant][app]) {
-                    return Promise.reject(new Error(`could not find application ${tenant}/${app}`));
-                }
-                if (!decl[tenant][app].constants || !decl[tenant][app].constants[this._constkey]) {
-                    return Promise.reject(new Error(`application is not managed by Mystique: ${tenant}/${app}`));
-                }
-                return decl[tenant][app].constants[this._constkey];
-            });
+            .then(decl => this._validateTenantApp(decl, tenant, app))
+            .then(decl => Promise.resolve(decl[tenant][app].constants[this._constkey]));
     }
 }
 
