@@ -1,5 +1,5 @@
 {
-  "name": "f5-mystique",
+  "name": "f5-fast",
   "version": "0.1.0-1",
   "author": "F5 Networks",
   "license": "Apache-2.0",
@@ -43,6 +43,6 @@
   },
   "dependencies": {
     "js-yaml": "^3.13.1",
-    "mystique": "file:../core"
+    "@f5devcentral/fast": "file:../core"
   }
 }

@@ -28,10 +28,11 @@ class NullDriver {
     }
 }
 
+const AS3DriverConstantsKey = 'fast';
+
 class AS3Driver {
     constructor() {
         this._endpoint = '/mgmt/shared/appsvcs/declare';
-        this._constkey = 'mystique';
     }
 
     _getKeysByClass(obj, className) {
@@ -42,12 +43,12 @@ class AS3Driver {
         return this._getKeysByClass(declaration, 'Tenant');
     }
 
-    _getDeclApps(declaration, onlyMystique) {
+    _getDeclApps(declaration, onlyManaged) {
         const apps = [];
         this._getDeclTenants(declaration).forEach((tenant) => {
             this._getKeysByClass(declaration[tenant], 'Application').forEach((app) => {
                 const appDef = declaration[tenant][app];
-                if (!onlyMystique || (appDef.constants && appDef.constants[this._constkey])) {
+                if (!onlyManaged || (appDef.constants && appDef.constants[AS3DriverConstantsKey])) {
                     apps.push([tenant, app]);
                 }
             });
@@ -112,7 +113,7 @@ class AS3Driver {
             };
         }
         Object.assign(appDef[tenantName][appName].constants, {
-            [this._constkey]: metaData
+            [AS3DriverConstantsKey]: metaData
         });
 
         return this._getDecl()
@@ -127,8 +128,8 @@ class AS3Driver {
         if (!decl[tenant][app]) {
             return Promise.reject(new Error(`could not find application ${tenant}/${app}`));
         }
-        if (!decl[tenant][app].constants || !decl[tenant][app].constants[this._constkey]) {
-            return Promise.reject(new Error(`application is not managed by Mystique: ${tenant}/${app}`));
+        if (!decl[tenant][app].constants || !decl[tenant][app].constants[AS3DriverConstantsKey]) {
+            return Promise.reject(new Error(`application is not managed by FAST: ${tenant}/${app}`));
         }
         return Promise.resolve(decl);
     }
@@ -154,11 +155,12 @@ class AS3Driver {
     getApplication(tenant, app) {
         return this._getDecl()
             .then(decl => this._validateTenantApp(decl, tenant, app))
-            .then(decl => Promise.resolve(decl[tenant][app].constants[this._constkey]));
+            .then(decl => Promise.resolve(decl[tenant][app].constants[AS3DriverConstantsKey]));
     }
 }
 
 module.exports = {
     NullDriver,
-    AS3Driver
+    AS3Driver,
+    AS3DriverConstantsKey
 };

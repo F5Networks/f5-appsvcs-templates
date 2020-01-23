@@ -1,5 +1,5 @@
 {
-  "name": "mystique",
+  "name": "@f5devcentral/fast",
   "version": "0.1.0",
   "author": "F5 Networks",
   "license": "Apache-2.0",
@@ -17,7 +17,7 @@
     "api"
   ],
   "bin": {
-    "mystique": "./cli.js"
+    "fast": "./cli.js"
   },
   "devDependencies": {
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",

@@ -9,12 +9,14 @@ rm -rf "${tmpdir}"
 mkdir "${tmpdir}"
 cp "${src}"/package* "${tmpdir}"/
 pushd "${tmpdir}"
-mystique_path="${src}"/../core
-npm pack "${mystique_path}"
-mystique_pkg_name=$(node -e "console.log(require('${mystique_path}/package.json').name);")
-mystique_pkg_ver=$(node -e "console.log(require('${mystique_path}/package.json').version)")
-mystique_pkg=${mystique_pkg_name}-${mystique_pkg_ver}.tgz
-sed -i'.bu' "s/file:\.\.\/core/file:${mystique_pkg}/" package.json
+module_path="${src}"/../core
+npm pack "${module_path}"
+module_pkg_name=$(node -e "console.log(require('${module_path}/package.json').name);")
+module_pkg_name=${module_pkg_name//@}
+module_pkg_name=${module_pkg_name//\//-}
+module_pkg_ver=$(node -e "console.log(require('${module_path}/package.json').version)")
+module_pkg=${module_pkg_name}-${module_pkg_ver}.tgz
+sed -i'.bu' "s%file:\.\./core%file:${module_pkg}%" package.json
 npm install --prod --no-optional
 popd
 

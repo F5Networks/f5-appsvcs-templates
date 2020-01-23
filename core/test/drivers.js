@@ -11,7 +11,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { NullDriver, AS3Driver } = require('../lib/drivers');
+const { NullDriver, AS3Driver, AS3DriverConstantsKey } = require('../lib/drivers');
 
 describe('Null Driver tests', function () {
     it('add_app', function () {
@@ -48,7 +48,7 @@ describe('AS3 Driver tests', function () {
                 class: 'Application',
                 constants: {
                     class: 'Constants',
-                    mystique: { foo: 'bar' }
+                    [AS3DriverConstantsKey]: { foo: 'bar' }
                 }
             }
         }
@@ -96,6 +96,7 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3WithApp);
+        console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplications(), [['tenantName', 'appName']]);
     });
     it('get_app', function () {

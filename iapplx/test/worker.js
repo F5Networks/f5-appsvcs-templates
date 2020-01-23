@@ -9,6 +9,10 @@ process.AFL_TW_ROOT = '../';
 const assert = require('assert').strict;
 const nock = require('nock');
 
+const fast = require('@f5devcentral/fast');
+
+const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
+
 const TemplateWorker = require('../nodejs/templateWorker.js');
 
 class RestOp {
@@ -139,12 +143,12 @@ describe('template worker info tests', function () {
         nock(host)
             .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
-                mystique: {
+                tenant: {
                     class: 'Tenant',
                     app: {
                         class: 'Application',
                         constants: {
-                            mystique: {}
+                            [AS3DriverConstantsKey]: {}
                         }
                     }
                 }
@@ -152,7 +156,7 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.body.code, 404);
-                assert.deepEqual(op.body, [['mystique', 'app']]);
+                assert.deepEqual(op.body, [['tenant', 'app']]);
             });
     });
     it('get_apps_empty', function () {
@@ -173,7 +177,7 @@ describe('template worker info tests', function () {
         nock(host)
             .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
-                mystique: {
+                tenant: {
                     class: 'Tenant',
                     app: {
                         class: 'Application'
@@ -187,19 +191,19 @@ describe('template worker info tests', function () {
     });
     it('get_apps_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('applications/mystique/app');
+        const op = new RestOp('applications/tenant/app');
         const appData = {
             foo: 'bar'
         };
         nock(host)
             .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
-                mystique: {
+                tenant: {
                     class: 'Tenant',
                     app: {
                         class: 'Application',
                         constants: {
-                            mystique: appData
+                            [AS3DriverConstantsKey]: appData
                         }
                     }
                 }
@@ -257,7 +261,7 @@ describe('template worker info tests', function () {
         nock(host)
             .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
-                mystique: {
+                tenant: {
                     class: 'Tenant',
                     app: {
                         class: 'Application'
@@ -271,16 +275,16 @@ describe('template worker info tests', function () {
     });
     it('delete_app', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('applications/mystique/app');
+        const op = new RestOp('applications/tenant/app');
         nock(host)
             .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
-                mystique: {
+                tenant: {
                     class: 'Tenant',
                     app: {
                         class: 'Application',
                         constants: {
-                            mystique: {}
+                            [AS3DriverConstantsKey]: {}
                         }
                     }
                 }

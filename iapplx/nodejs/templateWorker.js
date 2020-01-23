@@ -2,14 +2,16 @@
 
 const yaml = require('js-yaml');
 
-const mystique = require('mystique');
+const fast = require('@f5devcentral/fast');
 
-const FsSchemaProvider = mystique.FsSchemaProvider;
-const FsTemplateProvider = mystique.FsTemplateProvider;
-const httpUtils = mystique.httpUtils;
-const AS3Driver = mystique.AS3Driver;
+const FsSchemaProvider = fast.FsSchemaProvider;
+const FsTemplateProvider = fast.FsTemplateProvider;
+const httpUtils = fast.httpUtils;
+const AS3Driver = fast.AS3Driver;
 
-const projectName = 'f5-mystique';
+const endpointName = 'fast';
+const projectName = `f5-${endpointName}`;
+const mainBlockName = 'F5 Application Services Templates';
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = `${configPath}/templates`;
@@ -21,7 +23,7 @@ class TemplateWorker {
 
         this.isPublic = true;
         this.isPassThrough = true;
-        this.WORKER_URI_PATH = `shared/${projectName}`;
+        this.WORKER_URI_PATH = `shared/${endpointName}`;
         this.schemaProvider = new FsSchemaProvider(schemasPath);
         this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
         this.driver = new AS3Driver();
@@ -35,7 +37,7 @@ class TemplateWorker {
             this.logger.severe(`TemplateWorker onStartCompleted error: something went wrong ${errMsg}`);
             error();
         }
-        this.setLxBlockStatus(projectName)
+        this.setLxBlockStatus(mainBlockName)
             .then(() => {
                 this.logger.fine(`TemplateWorker state loaded: ${JSON.stringify(state)}`);
                 success();
@@ -46,7 +48,7 @@ class TemplateWorker {
     }
 
     // LX block status controls the ball color shown in the BIG-IP UI.
-    // When at least one mustache app is deployed, set state to BOUND (green).
+    // When at least one FAST app is deployed, set state to BOUND (green).
     // When all are deleted, set state to UNBOUND (gray).
     setLxBlockStatus(blockName, state) {
         const blockData = {

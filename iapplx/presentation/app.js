@@ -2,9 +2,9 @@
 
 const yaml = require('js-yaml');
 
-const { Template, guiUtils } = require('mystique');
+const { Template, guiUtils } = require('@f5devcentral/fast');
 
-const endPointUrl = '/mgmt/shared/f5-mystique';
+const endPointUrl = '/mgmt/shared/fast';
 
 const getJSON = endPoint => fetch(`${endPointUrl}/${endPoint}`).then((data) => {
     if (!data.ok) {
