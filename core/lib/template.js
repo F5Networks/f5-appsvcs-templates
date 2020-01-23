@@ -237,8 +237,8 @@ class Template {
         });
     }
 
-    _getCombinedView(view) {
-        return Object.assign({}, this.defaultView, view);
+    getCombinedView(view) {
+        return Object.assign({}, this.defaultView, view || {});
     }
 
     _getPartials() {
@@ -252,7 +252,7 @@ class Template {
     }
 
     validateView(view) {
-        const combView = this._getCombinedView(view);
+        const combView = this.getCombinedView(view);
 
         const viewValidator = new Ajv({
             unknownFormats: 'ignore'
@@ -269,7 +269,7 @@ class Template {
     render(view) {
         this.validateView(view);
         const partials = this._getPartials();
-        const combView = this._getCombinedView(view);
+        const combView = this.getCombinedView(view);
         return Mustache.render(this._getCleanTemplateText(), combView, partials);
     }
 }

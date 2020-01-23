@@ -25,7 +25,7 @@ const dispOutput = (output) => {
 };
 
 
-const newEditor = (tmplid) => {
+const newEditor = (tmplid, view) => {
     const formElement = document.getElementById('form-div');
     if (editor) {
         editor.destroy();
@@ -59,7 +59,7 @@ const newEditor = (tmplid) => {
 
             // Load with defaults
             editor.on('ready', () => {
-                editor.setValue(tmpl.defaultView);
+                editor.setValue(tmpl.getCombinedView(view));
                 dispOutput('Editor ready');
             });
 
@@ -103,9 +103,10 @@ function route(path, pageName, pageFunc) {
 }
 
 function router() {
-    const rawUrl = location.hash.slice(1) || '/';
-    const url = rawUrl.replace(/\/application.*?\/edit/, '/');
-    const routeInfo = routes[url];
+    const rawUrl = location.hash.slice(1) || '';
+    const url = rawUrl.replace(/\/application.*?\/edit/, '');
+    const urlParts = url.split('/');
+    const routeInfo = routes[urlParts[0]];
     const elem = document.getElementById('app');
 
     // Remove old content
@@ -115,7 +116,7 @@ function router() {
 
     // Error on unknown route
     if (!routeInfo) {
-        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl})`;
+        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${routes.keys().join(',')})`;
         elem.innerText = msg;
         console.error(msg);
         return;
@@ -127,7 +128,7 @@ function router() {
     elem.appendChild(document.importNode(pageTmpl.content, true));
 
     if (routeInfo.pageFunc) {
-        routeInfo.pageFunc();
+        routeInfo.pageFunc(urlParts.slice(1).join('/'));
     }
 }
 
@@ -136,7 +137,7 @@ window.addEventListener('load', router);
 
 
 // Define routes
-route('/', 'home');
+route('', 'home');
 route('apps', 'apps', () => {
     outputElem =  document.getElementById('output');
     const listElem = document.getElementById('applist');
@@ -144,13 +145,33 @@ route('apps', 'apps', () => {
     getJSON('applications')
         .then((appsList) => {
             appsList.forEach((appPair) => {
+                const appPairStr = `${appPair.join('/')}`;
                 const li = document.createElement('li');
                 li.innerText = appPair.join('/');
                 listElem.appendChild(li);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('btn');
+                deleteBtn.classList.add('btn-error');
+                deleteBtn.innerText = 'Delete';
+                deleteBtn.addEventListener('click', () => {
+                    dispOutput(`Deleting ${appPairStr}`);
+                    fetch(`${endPointUrl}/applications/${appPairStr}`, {
+                        method: 'DELETE',
+                    });
+                });
+                li.appendChild(deleteBtn);
+
+                const modifyBtn = document.createElement('a');
+                modifyBtn.classList.add('btn');
+                modifyBtn.classList.add('btn-primary');
+                modifyBtn.innerText = 'Modify';
+                modifyBtn.href = `#modify/${appPairStr}`;
+                li.appendChild(modifyBtn);
             });
             dispOutput('');
         })
-        .catch(e => dispOutput(e.message));
+        .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
 });
 route('create', 'create', () => {
     const addTmplBtns = (tmplList) => {
@@ -170,6 +191,15 @@ route('create', 'create', () => {
         .then((data) => {
             addTmplBtns(data);
             dispOutput('');
+        })
+        .catch(e => dispOutput(e.message));
+});
+route('modify', 'create', (appID) => {
+    outputElem =  document.getElementById('output');
+    dispOutput(`Fetching app data for ${appID}`);
+    getJSON(`applications/${appID}`)
+        .then((appData) => {
+            newEditor(appData.template, appData.view);
         })
         .catch(e => dispOutput(e.message));
 });
