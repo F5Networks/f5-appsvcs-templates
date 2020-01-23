@@ -2,11 +2,11 @@ definitions:
   irule_ref:
     template: |
       "iRules": [
-        "choose_pool"
+        "iRule1"
       ]
   irule_def:
     template: |
-      "choose_pool": {
+      "iRule1": {
         "class": "iRule",
         "remark": "choose private pool based on IP",
         "iRule": "when CLIENT_ACCEPTED {\nif {[IP::client_addr] starts_with \"10.\"} {\n pool `*pvt_pool`\n }\n}"
@@ -25,7 +25,7 @@ template: |
           "class": "Service_HTTPS",
           "virtualAddresses": ["{{virtual_addr}}"],
           "virtualPort": {{virtual_port::integer}},
-          "pool": "{{app}}_pool",
+          "pool": "pool1",
           {{#use_compression}}
             {{#compression}}
           "profileHTTPCompression": "{{compression}}",
@@ -44,7 +44,7 @@ template: |
         {{#use_irules}}
           {{> irule_def}},
         {{/use_irules}}
-        "dfl_pool": {
+        "pool1": {
           "class": "Pool",
           "monitors": [
             "http"
@@ -52,8 +52,8 @@ template: |
           "members": [{
             "servicePort": 80,
             "serverAddresses": [
-              "192.0.3.10",
-              "192.0.3.11"
+              "10.1.1.1",
+              "10.1.1.2"
             ]
           }]
         }

@@ -4,23 +4,15 @@
 
 'use strict';
 
-const fs = require('fs');
-const assert = require('assert');
-const { execSync } = require('child_process');
+const util = require('./util');
 
-const writeAndRender = function (view) {
-    const tmplFile = 'http-basic.yml';
-    const viewFile = 'tmp.json';
-    const cmd = `mystique render ${tmplFile} ${viewFile}`;
-    fs.writeFileSync(viewFile, JSON.stringify(view, null, 2));
-    return JSON.parse(execSync(cmd).toString());
-};
+const template = 'http-basic.yml';
 
 const view = {
     tenant: 't1',
     app: 'app1',
     virtual_addr: '10.1.1.1',
-    use_irules: false,
+    use_irules: true,
 
     // misc optional fields
     virtual_port: 4430,
@@ -52,42 +44,59 @@ const view = {
     compression: '/Common/demo_compression'
 };
 
-const assertAS3Service = function (decl) {
-    assert(typeof decl === 'object'
-        && decl.class === 'ADC'
-        && decl.t1.class === 'Tenant'
-        && decl.t1.app1.class === 'Application'
-        && decl.t1.app1.serviceMain.class === 'Service_HTTPS');
+const expected = {
+    class: 'ADC',
+    schemaVersion: '3.0.0',
+    id: 'urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7',
+    t1: {
+        class: 'Tenant',
+        app1: {
+            class: 'Application',
+            template: 'https',
+            serviceMain: {
+                class: 'Service_HTTPS',
+                virtualAddresses: ['10.1.1.1'],
+                virtualPort: 4430,
+                pool: 'pool1',
+                profileHTTPCompression: '/Common/demo_compression',
+                profileTCP: {
+                    bigip: '/Common/mptcp-mobile-optimized'
+                },
+                iRules: ['iRule1']
+            },
+            pool1: {
+                class: 'Pool',
+                monitors: [
+                    'http'
+                ],
+                members: [{
+                    servicePort: 80,
+                    serverAddresses: ['10.1.1.1', '10.1.1.2']
+                }]
+            },
+            iRule1: {
+                class: 'iRule',
+                remark: 'choose private pool based on IP',
+                iRule: 'when CLIENT_ACCEPTED {\nif {[IP::client_addr] starts_with "10."} {\n pool `*pvt_pool`\n }\n}'
+            }
+        }
+    }
 };
 
 describe('http-basic template', function () {
-    let decl;
-    let svc;
-    it('valid JSON with AS3 class heirarchy', () => {
-        decl = writeAndRender(view);
-        assertAS3Service(decl);
-    });
-    it('virtual address & port', () => {
-        svc = decl.t1.app1.serviceMain;
-        assert(svc.virtualAddresses[0] === '10.1.1.1'
-            && svc.virtualPort === 4430);
-    });
-    it('no irules', () => { assert(svc.iRules === undefined); });
+    util.assertRendering(template, view, expected);
 });
 
 describe('http-basic with irules', function () {
-    let decl;
-    let svc;
-    it('valid JSON with AS3 class heirarchy', () => {
-        view.use_irules = true;
-        decl = writeAndRender(view);
-        // console.log(JSON.stringify(decl, null, 2));
-        assertAS3Service(decl);
+    before(() => {
+        // remove irule
+        view.use_irules = false;
+        delete expected.t1.app1.serviceMain.iRules;
+        delete expected.t1.app1.iRule1;
     });
-    it('virtual address & port', () => {
-        svc = decl.t1.app1.serviceMain;
-        assert(svc.virtualAddresses[0] === '10.1.1.1'
-            && svc.virtualPort === 4430);
-    });
-    it('irule', () => { assert(svc.iRules[0] === 'choose_pool'); });
+    util.assertRendering(template, view, expected);
+});
+
+describe('clean up', function () {
+    util.cleanUp();
 });
