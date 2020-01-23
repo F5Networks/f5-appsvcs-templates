@@ -18,9 +18,11 @@ sed -i'.bu' "s/file:\.\.\/core/file:${mystique_pkg}/" package.json
 npm install --prod --no-optional
 popd
 
-prevpwd=$(pwd)
-pushd "${src}"
-npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" -D
-popd
+# Skip Babel for now. The Babel version runs, but it is buggier.
+cp -rp "${tmpdir}"/node_modules "${target}"
+# prevpwd=$(pwd)
+# pushd "${src}"
+# npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" -D --source-maps true
+# popd
 
 rm -rf "${tmpdir}"
