@@ -5,5 +5,8 @@ module.exports = {
         ['@babel/preset-env', {
             targets: { node: '4.8.0' }
         }]
+    ],
+    ignore: [
+        '*/avj/*'
     ]
 };
