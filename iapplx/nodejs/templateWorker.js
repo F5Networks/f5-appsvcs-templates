@@ -26,7 +26,7 @@ class TemplateWorker {
         this.WORKER_URI_PATH = `shared/${endpointName}`;
         this.schemaProvider = new FsSchemaProvider(schemasPath);
         this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
-        this.driver = new AS3Driver();
+        this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
     }
 
     /**

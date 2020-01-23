@@ -69,8 +69,8 @@ const patchWorker = (worker) => {
 };
 
 describe('template worker info tests', function () {
-    const host = 'http://localhost:8100';
-    const as3ep = '/mgmt/shared/appsvcs/declare';
+    const host = 'http://localhost:8105';
+    const as3ep = '/shared/appsvcs/declare';
     const as3stub = {
         class: 'ADC',
         schemaVersion: '3.0.0'
