@@ -139,9 +139,6 @@ class AS3Driver {
             .then(decl => this._validateTenantApp(decl, tenant, app))
             .then((decl) => {
                 delete decl[tenant][app];
-                if (this._getKeysByClass(decl[tenant], 'Application').length === 0) {
-                    delete decl[tenant];
-                }
                 return Promise.resolve(decl);
             })
             .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));

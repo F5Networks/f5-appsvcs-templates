@@ -133,7 +133,7 @@ describe('AS3 Driver tests', function () {
 
         nock(host)
             .persist()
-            .post(as3ep, as3stub)
+            .post(as3ep)
             .query(true)
             .reply(202, {});
 
