@@ -103,7 +103,7 @@ class TemplateWorker {
                     restOperation.setHeaders('Content-Type', 'text/json');
                     restOperation.setBody(tmpl);
                     this.completeRestOperation(restOperation);
-                }).catch(e => this.genRestResponse(restOperation, 404, e.message));
+                }).catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
         return this.templateProvider.list()
@@ -125,7 +125,7 @@ class TemplateWorker {
                     restOperation.setBody(appDef);
                     this.completeRestOperation(restOperation);
                 })
-                .catch(e => this.genRestResponse(restOperation, 404, e.message));
+                .catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
         return this.driver.listApplications()
