@@ -1,5 +1,6 @@
 'use strict';
 
+const url = require('url');
 const httpUtils = require('./http_utils');
 
 class NullDriver {
@@ -31,8 +32,11 @@ class NullDriver {
 const AS3DriverConstantsKey = 'fast';
 
 class AS3Driver {
-    constructor() {
-        this._endpoint = '/mgmt/shared/appsvcs/declare';
+    constructor(endPointUrl) {
+        endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
+        const declareurl = url.parse(`${endPointUrl}/declare`);
+
+        this._declareOpts = Object.assign({}, declareurl);
     }
 
     _getKeysByClass(obj, className) {
@@ -68,7 +72,10 @@ class AS3Driver {
     }
 
     _getDecl() {
-        return httpUtils.makeGet(this._endpoint)
+        const opts = Object.assign({}, this._declareOpts, {
+            method: 'GET'
+        });
+        return httpUtils.makeRequest(opts)
             .then(res => res.body.declaration || res.body)
             .then((decl) => {
                 if (Object.keys(decl).length === 0) {
@@ -79,6 +86,14 @@ class AS3Driver {
                 }
                 return decl;
             });
+    }
+
+    _postDecl(decl) {
+        const opts = Object.assign({}, this._declareOpts, {
+            method: 'POST',
+            path: `${this._declareOpts.path}?async=true`
+        });
+        return httpUtils.makeRequest(opts, decl);
     }
 
     createApplication(appDef, metaData) {
@@ -118,7 +133,7 @@ class AS3Driver {
 
         return this._getDecl()
             .then(decl => this._stitchDecl(decl, appDef))
-            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));
+            .then(decl => this._postDecl(decl));
     }
 
     _validateTenantApp(decl, tenant, app) {
@@ -141,7 +156,7 @@ class AS3Driver {
                 delete decl[tenant][app];
                 return Promise.resolve(decl);
             })
-            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));
+            .then(decl => this._postDecl(decl));
     }
 
     listApplications() {
