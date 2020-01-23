@@ -61,6 +61,7 @@ const patchWorker = (worker) => {
     };
     ensureCompletedOp('onGet');
     ensureCompletedOp('onPost');
+    ensureCompletedOp('onDelete');
 };
 
 describe('template worker info tests', function () {
@@ -248,6 +249,49 @@ describe('template worker info tests', function () {
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.body.code, 202);
+            });
+    });
+    it('delete_app_bad', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications/foobar');
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                mystique: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application'
+                    }
+                }
+            }));
+        return worker.onDelete(op)
+            .then(() => {
+                assert.equal(op.body.code, 404);
+            });
+    });
+    it('delete_app', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('applications/mystique/app');
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                mystique: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application',
+                        constants: {
+                            mystique: {}
+                        }
+                    }
+                }
+            }));
+        nock(host)
+            .persist()
+            .post(`${as3ep}?async=true`)
+            .reply(202, {});
+        return worker.onDelete(op)
+            .then(() => {
+                assert.notEqual(op.body.code, 404);
             });
     });
 });

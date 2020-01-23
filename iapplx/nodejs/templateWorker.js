@@ -196,6 +196,43 @@ class TemplateWorker {
             return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
         }
     }
+
+    deleteApplications(restOperation, appid) {
+        const uri = restOperation.getUri();
+        const pathElements = uri.path.split('/');
+        const tenant = pathElements[4];
+        const app = pathElements[5];
+
+        if (!appid) {
+            return this.genRestResponse(restOperation, 405, 'DELETE is only supported for individual applications');
+        }
+
+        return this.driver.deleteApplication(tenant, app)
+            .then((result) => {
+                restOperation.setHeaders('Content-Type', 'text/json');
+                restOperation.setBody(result);
+                this.completeRestOperation(restOperation);
+            })
+            .catch(e => this.genRestResponse(restOperation, 404, e.stack));
+    }
+
+    onDelete(restOperation) {
+        const uri = restOperation.getUri();
+        const pathElements = uri.path.split('/');
+        const collection = pathElements[3];
+        const itemid = pathElements[4];
+
+        try {
+            switch (collection) {
+            case 'applications':
+                return this.deleteApplications(restOperation, itemid);
+            default:
+                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
+            }
+        } catch (e) {
+            return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
+        }
+    }
 }
 
 module.exports = TemplateWorker;
