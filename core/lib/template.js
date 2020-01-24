@@ -7,25 +7,24 @@ const yaml = require('js-yaml');
 const _templateSchemaData = require('./template_schema').schema;
 
 // Setup validator
-const _validateSchema = (() => {
-    const schema = yaml.safeLoad(_templateSchemaData);
-    const validator = new Ajv();
+const tmplSchema = yaml.safeLoad(_templateSchemaData);
+const validator = new Ajv();
 
-    // meta-schema uses a mustache format; just parse the string validate it
-    validator.addFormat('mustache', {
-        type: 'string',
-        validate(input) {
-            try {
-                Mustache.parse(input);
-                return true;
-            } catch (e) {
-                return false;
-            }
+// meta-schema uses a mustache format; just parse the string validate it
+validator.addFormat('mustache', {
+    type: 'string',
+    validate(input) {
+        try {
+            Mustache.parse(input);
+            return true;
+        } catch (e) {
+            // TODO find a better way to report issues here
+            console.log(e); /* eslint-disable-line no-console */
+            return false;
         }
-    });
-
-    return validator.compile(schema);
-})();
+    }
+});
+const _validateSchema = validator.compile(tmplSchema);
 
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
