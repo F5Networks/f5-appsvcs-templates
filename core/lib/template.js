@@ -226,7 +226,7 @@ class Template {
 
     static validate(tmpldata) {
         if (!this.isValid(tmpldata)) {
-            throw new Error(JSON.stringify(this.getValidationErrors(), null, 2));
+            throw new Error(this.getValidationErrors());
         }
     }
 
