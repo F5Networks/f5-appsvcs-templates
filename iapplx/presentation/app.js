@@ -34,6 +34,9 @@ const newEditor = (tmplid, view) => {
     dispOutput(`Loading template: ${tmplid}`);
     getJSON(`templates/${tmplid}`)
         .then((data) => {
+            if (data.code) {
+                return Promise.reject(new Error(`Error loading template "${tmplid}":\n${data.message}`));
+            }
             return Template.fromJson(data);
         })
         .then((tmpl) => {
