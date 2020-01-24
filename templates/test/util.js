@@ -41,7 +41,7 @@ const assertRendering = function (template, view, expected) {
 };
 
 const cleanUp = function () {
-    it('remove temp file', () => {
+    it('temp file', () => {
         fs.unlinkSync(tempView);
     });
 };

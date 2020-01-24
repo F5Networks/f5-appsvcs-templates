@@ -19,11 +19,10 @@ const view = {
     hostname: 'www.example.com',
 
     // pool spec
-    use_pool: true,
-    pool: 'demo_pool',
+    do_pool: true,
 
     // monitor spec
-    use_monitor: true,
+    do_monitor: true,
     monitor: 'demo_monitor',
     send_string: '/',
     expected_response: 'OK',
@@ -33,15 +32,15 @@ const view = {
     serverside_network: 'lan',
 
     // tls profile spec
-    use_tls_server: true,
+    do_tls_server: true,
     tls_server_profile: 'demo_tls_client',
     tls_certificate: 'demo_cert',
-    use_tls_client: true,
+    do_tls_client: true,
     tls_client_profile: 'demo_tls_client',
 
     // compression profile spec
-    use_compression: true,
-    compression: '/Common/demo_compression'
+    do_compression: true,
+    compression_profile: '/Common/demo_compression'
 };
 
 const expected = {
@@ -57,14 +56,12 @@ const expected = {
                 class: 'Service_HTTPS',
                 virtualAddresses: ['10.1.1.1'],
                 virtualPort: 4430,
-                pool: 'pool1',
-                profileHTTPCompression: '/Common/demo_compression',
-                profileTCP: {
-                    bigip: '/Common/mptcp-mobile-optimized'
+                pool: {
+                    use: 'app1_pool'
                 },
-                iRules: ['iRule1']
+                profileHTTPCompression: '/Common/demo_compression'
             },
-            pool1: {
+            app1_pool: {
                 class: 'Pool',
                 monitors: [
                     'http'
@@ -73,11 +70,6 @@ const expected = {
                     servicePort: 80,
                     serverAddresses: ['10.1.1.1', '10.1.1.2']
                 }]
-            },
-            iRule1: {
-                class: 'iRule',
-                remark: 'choose private pool based on IP',
-                iRule: 'when CLIENT_ACCEPTED {\nif {[IP::client_addr] starts_with "10."} {\n pool `*pvt_pool`\n }\n}'
             }
         }
     }
@@ -87,12 +79,13 @@ describe('http-basic template', function () {
     util.assertRendering(template, view, expected);
 });
 
-describe('http-basic with irules', function () {
+describe('http-basic with basic compression', function () {
     before(() => {
-        // remove irule
-        view.use_irules = false;
-        delete expected.t1.app1.serviceMain.iRules;
-        delete expected.t1.app1.iRule1;
+        // remove view properties
+        delete view.compression_profile;
+
+        // remove corresponding declaration properties
+        expected.t1.app1.serviceMain.profileHTTPCompression = 'basic';
     });
     util.assertRendering(template, view, expected);
 });
