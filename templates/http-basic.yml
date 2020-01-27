@@ -16,13 +16,7 @@ definitions:
             "monitors": [
               "http"
             ],
-            "members": [{
-              "servicePort": 80,
-              "serverAddresses": [
-                "10.1.1.1",
-                "10.1.1.2"
-              ]
-            }]
+            "members": {{pool_members}}
           },
         {{/pool_name}}
       {{/do_pool}}
@@ -54,12 +48,14 @@ definitions:
   service_main_compression_def:
     template: |
       {{#do_compression}}
-        {{#compression_profile}}
-          "profileHTTPCompression": "{{compression_profile}}",
-        {{/compression_profile}}
-        {{^compression_profile}}
+        {{#compression_profile_name}}
+          "profileHTTPCompression": {
+            "bigip": "{{compression_profile_name}}"
+          },
+        {{/compression_profile_name}}
+        {{^compression_profile_name}}
           "profileHTTPCompression": "basic",
-        {{/compression_profile}}
+        {{/compression_profile_name}}
       {{/do_compression}}
 template: |
   {

@@ -12,7 +12,6 @@ const view = {
     tenant: 't1',
     app: 'app1',
     virtual_addr: '10.1.1.1',
-    use_irules: true,
 
     // misc optional fields
     virtual_port: 4430,
@@ -20,6 +19,10 @@ const view = {
 
     // pool spec
     do_pool: true,
+    pool_members: [{
+        servicePort: 80,
+        serverAddresses: ['10.1.1.1', '10.1.1.2']
+    }],
 
     // monitor spec
     do_monitor: true,
@@ -39,8 +42,7 @@ const view = {
     tls_client_profile: 'demo_tls_client',
 
     // compression profile spec
-    do_compression: true,
-    compression_profile: '/Common/demo_compression'
+    do_compression: true
 };
 
 const expected = {
@@ -59,7 +61,7 @@ const expected = {
                 pool: {
                     use: 'app1_pool'
                 },
-                profileHTTPCompression: '/Common/demo_compression'
+                profileHTTPCompression: 'basic'
             },
             app1_pool: {
                 class: 'Pool',
@@ -76,20 +78,26 @@ const expected = {
 };
 
 describe('http-basic template', function () {
-    util.assertRendering(template, view, expected);
-});
-
-describe('http-basic with basic compression', function () {
-    before(() => {
-        // remove view properties
-        delete view.compression_profile;
-
-        // remove corresponding declaration properties
-        expected.t1.app1.serviceMain.profileHTTPCompression = 'basic';
+    describe('new pool and profiles', function () {
+        util.assertRendering(template, view, expected);
     });
-    util.assertRendering(template, view, expected);
-});
 
-describe('clean up', function () {
-    util.cleanUp();
+    describe('existing pool and profiles', function () {
+        before(() => {
+            // remove view properties
+            delete view.pool_members;
+            view.pool_name = '/Common/pool1';
+            view.compression_profile_name = '/Common/compression1';
+
+            // remove corresponding declaration properties
+            delete expected.t1.app1.app1_pool;
+            expected.t1.app1.serviceMain.pool = { bigip: '/Common/pool1' };
+            expected.t1.app1.serviceMain.profileHTTPCompression = { bigip: '/Common/compression1' };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('clean up', function () {
+        util.cleanUp();
+    });
 });
