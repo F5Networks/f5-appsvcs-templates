@@ -4,6 +4,7 @@ set -eux
 src="$1"
 target="$2"
 tmpdir="_tmpnodemodules_"
+skip_babel=${SKIP_BABEL:-0}
 
 rm -rf "${tmpdir}"
 mkdir "${tmpdir}"
@@ -20,11 +21,13 @@ sed -i'.bu' "s%file:\.\./core%file:${module_pkg}%" package.json
 npm install --prod --no-optional
 popd
 
-# Skip Babel for now. The Babel version runs, but it is buggier.
-cp -rp "${tmpdir}"/node_modules "${target}"
-# prevpwd=$(pwd)
-# pushd "${src}"
-# npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" -D --source-maps true
-# popd
+if [[ $skip_babel == 1 ]]; then
+    cp -rp "${tmpdir}"/node_modules "${target}"
+else
+    prevpwd=$(pwd)
+    pushd "${src}"
+    npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" --copy-files --copy-ignored
+    popd
+fi
 
 rm -rf "${tmpdir}"

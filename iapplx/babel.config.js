@@ -7,6 +7,8 @@ module.exports = {
         }]
     ],
     ignore: [
-        '*/avj/*'
+        // Add whitelisted modules to sped up builds
+        '**/ajv/**',
+        '**/mustache/**'
     ]
 };
