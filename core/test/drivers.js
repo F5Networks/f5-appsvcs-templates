@@ -37,9 +37,16 @@ describe('AS3 Driver tests', function () {
         }
     };
     const as3ep = '/mgmt/shared/appsvcs/declare';
+    const as3TaskEp = '/mgmt/shared/appsvcs/task';
     const as3stub = {
         class: 'ADC',
         schemaVersion: '3.0.0'
+    };
+    const appMetadata = {
+        template: 'foo',
+        view: {
+            bar: 'baz'
+        }
     };
     const as3WithApp = Object.assign({}, as3stub, {
         tenantName: {
@@ -48,7 +55,7 @@ describe('AS3 Driver tests', function () {
                 class: 'Application',
                 constants: {
                     class: 'Constants',
-                    [AS3DriverConstantsKey]: { foo: 'bar' }
+                    [AS3DriverConstantsKey]: appMetadata
                 }
             }
         }
@@ -106,7 +113,7 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3WithApp);
-        return assert.becomes(driver.getApplication('tenantName', 'appName'), { foo: 'bar' });
+        return assert.becomes(driver.getApplication('tenantName', 'appName'), appMetadata);
     });
     it('create_app', function () {
         const driver = new AS3Driver();
@@ -122,9 +129,7 @@ describe('AS3 Driver tests', function () {
             .query(true)
             .reply(202, {});
 
-        return assert.isFulfilled(driver.createApplication(appDef, {
-            foo: 'bar'
-        }));
+        return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
     });
     it('delete_app', function () {
         const driver = new AS3Driver();
@@ -192,5 +197,67 @@ describe('AS3 Driver tests', function () {
             .reply(404, Object.assign({}, as3stub, appDef));
 
         return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);
+    });
+    it('get_empty_tasks', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: []
+            });
+
+        return assert.becomes(driver.getTasks(), []);
+    });
+    it('get_tasks', function () {
+        const driver = new AS3Driver();
+        driver._task_ids.unshift('foo1');
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                    {
+                        id: 'foo1',
+                        results: [{
+                            code: 200,
+                            message: 'in progress'
+                        }],
+                        declaration: {}
+                    },
+                    {
+                        id: 'foo2',
+                        results: [{
+                            code: 200,
+                            message: 'success'
+                        }],
+                        declaration: Object.assign({}, as3WithApp, {
+                            id: `${AS3DriverConstantsKey}-tenantName-appName-0`
+                        })
+                    },
+                    {
+                        id: 'foo3',
+                        results: [{
+                            code: 200,
+                            message: 'success'
+                        }],
+                        declaration: as3WithApp
+                    }
+                ]
+            });
+        return assert.becomes(driver.getTasks(), [
+            {
+                id: 'foo1',
+                code: 200,
+                message: 'in progress',
+                name: '',
+                parameters: {}
+            },
+            {
+                id: 'foo2',
+                code: 200,
+                message: 'success',
+                name: appMetadata.template,
+                parameters: appMetadata.view
+            }
+        ]);
     });
 });

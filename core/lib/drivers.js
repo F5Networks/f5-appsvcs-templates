@@ -36,9 +36,12 @@ class AS3Driver {
     constructor(endPointUrl) {
         endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
         const declareurl = url.parse(`${endPointUrl}/declare`);
+        const tasksUrl = url.parse(`${endPointUrl}/task`);
 
         this._declareOpts = Object.assign({}, declareurl);
+        this._taskOopts = Object.assign({}, tasksUrl);
         this._static_id = '';
+        this._task_ids = [];
     }
 
     _getKeysByClass(obj, className) {
@@ -79,6 +82,10 @@ class AS3Driver {
         return declaration;
     }
 
+    _appFromDecl(declaration, tenant, app) {
+        return declaration[tenant][app].constants[AS3DriverConstantsKey];
+    }
+
     _getDecl() {
         const opts = Object.assign({}, this._declareOpts, {
             method: 'GET'
@@ -101,7 +108,11 @@ class AS3Driver {
             method: 'POST',
             path: `${this._declareOpts.path}?async=true`
         });
-        return httpUtils.makeRequest(opts, decl);
+        return httpUtils.makeRequest(opts, decl)
+            .then((result) => {
+                this._task_ids.unshift(result.body.id);
+                return result;
+            });
     }
 
     createApplication(appDef, metaData) {
@@ -176,7 +187,38 @@ class AS3Driver {
     getApplication(tenant, app) {
         return this._getDecl()
             .then(decl => this._validateTenantApp(decl, tenant, app))
-            .then(decl => Promise.resolve(decl[tenant][app].constants[AS3DriverConstantsKey]));
+            .then(decl => Promise.resolve(this._appFromDecl(decl, tenant, app)));
+    }
+
+    getTasks() {
+        const opts = Object.assign({}, this._taskOopts, {
+            method: 'GET'
+        });
+        const itemMatch = item => (
+            (item.declaration.id && item.declaration.id.startsWith(AS3DriverConstantsKey))
+            || this._task_ids.includes(item.id)
+        );
+        const as3ToFAST = (item) => {
+            const task = {
+                id: item.id,
+                code: item.results[0].code,
+                message: item.results[0].message,
+                name: '',
+                parameters: {}
+            };
+            if (item.declaration.id) {
+                const idParts = item.declaration.id.split('-');
+                const [tenant, app] = idParts.slice(1, 3);
+                if (item.declaration[tenant]) {
+                    const appDef = this._appFromDecl(item.declaration, tenant, app);
+                    task.name = appDef.template;
+                    task.parameters = appDef.view;
+                }
+            }
+            return task;
+        };
+        return httpUtils.makeRequest(opts)
+            .then(result => result.body.items.filter(itemMatch).map(as3ToFAST));
     }
 }
 
