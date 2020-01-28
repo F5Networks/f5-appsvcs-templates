@@ -71,6 +71,7 @@ const patchWorker = (worker) => {
 describe('template worker info tests', function () {
     const host = 'http://localhost:8105';
     const as3ep = '/shared/appsvcs/declare';
+    const as3TaskEp = '/shared/appsvcs/task';
     const as3stub = {
         class: 'ADC',
         schemaVersion: '3.0.0'
@@ -213,6 +214,68 @@ describe('template worker info tests', function () {
                 const tmpl = op.body;
                 assert.notEqual(op.body.code, 404);
                 assert.notEqual(tmpl, appData);
+            });
+    });
+    it('get_tasks', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('tasks');
+        worker.driver._task_ids.unshift('foo1');
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                    {
+                        id: 'foo1',
+                        results: [{
+                            code: 200,
+                            message: 'in progress'
+                        }],
+                        declaration: {}
+                    }
+                ]
+            });
+        return worker.onGet(op)
+            .then(() => {
+                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.body.code, 500);
+                assert.deepEqual(op.body, [{
+                    id: 'foo1',
+                    code: 200,
+                    message: 'in progress',
+                    name: '',
+                    parameters: {}
+                }]);
+            });
+    });
+    it('get_tasks_item', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('tasks/foo1');
+        worker.driver._task_ids.unshift('foo1');
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                    {
+                        id: 'foo1',
+                        results: [{
+                            code: 200,
+                            message: 'in progress'
+                        }],
+                        declaration: {}
+                    }
+                ]
+            });
+        return worker.onGet(op)
+            .then(() => {
+                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.body.code, 500);
+                assert.deepEqual(op.body, {
+                    id: 'foo1',
+                    code: 200,
+                    message: 'in progress',
+                    name: '',
+                    parameters: {}
+                });
             });
     });
     it('post_bad_end_point', function () {

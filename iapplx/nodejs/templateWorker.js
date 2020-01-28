@@ -137,6 +137,29 @@ class TemplateWorker {
             });
     }
 
+    getTasks(restOperation, taskid) {
+        if (taskid) {
+            return this.driver.getTasks()
+                .then(taskList => taskList.filter(x => x.id === taskid))
+                .then((taskList) => {
+                    if (taskList.length === 0) {
+                        return this.genRestResponse(restOperation, 404, `unknown task ID: ${taskid}`);
+                    }
+                    restOperation.setBody(taskList[0]);
+                    this.completeRestOperation(restOperation);
+                    return Promise.resolve();
+                })
+                .catch(e => this.genRestResponse(restOperation, 404, e.stack));
+        }
+
+        return this.driver.getTasks()
+            .then((tasksList) => {
+                restOperation.setBody(tasksList);
+                this.completeRestOperation(restOperation);
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
@@ -150,6 +173,8 @@ class TemplateWorker {
                 return this.getTemplates(restOperation, itemid);
             case 'applications':
                 return this.getApplications(restOperation, itemid);
+            case 'tasks':
+                return this.getTasks(restOperation, itemid);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
