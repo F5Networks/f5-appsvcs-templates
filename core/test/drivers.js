@@ -63,8 +63,9 @@ describe('AS3 Driver tests', function () {
     it('app_stitching', function () {
         const driver = new AS3Driver();
         const decl = Object.assign({}, as3stub);
+        driver._static_id = 'STATIC';
         driver._stitchDecl(decl, appDef);
-        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef));
+        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef, { id: 'STATIC' }));
     });
     it('get_decl', function () {
         const driver = new AS3Driver();
@@ -109,6 +110,7 @@ describe('AS3 Driver tests', function () {
     });
     it('create_app', function () {
         const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
         nock(host)
             .persist()
             .get(as3ep)
@@ -116,7 +118,7 @@ describe('AS3 Driver tests', function () {
 
         nock(host)
             .persist()
-            .post(as3ep, as3WithApp)
+            .post(as3ep, Object.assign({}, as3WithApp, { id: 'STATIC' }))
             .query(true)
             .reply(202, {});
 

@@ -1,6 +1,7 @@
 'use strict';
 
 const url = require('url');
+const uuid4 = require('uuid/v4');
 const httpUtils = require('./http_utils');
 
 class NullDriver {
@@ -37,6 +38,7 @@ class AS3Driver {
         const declareurl = url.parse(`${endPointUrl}/declare`);
 
         this._declareOpts = Object.assign({}, declareurl);
+        this._static_id = '';
     }
 
     _getKeysByClass(obj, className) {
@@ -60,6 +62,10 @@ class AS3Driver {
         return apps;
     }
 
+    _createUuid(tenantName, appName) {
+        return this._static_id || `${AS3DriverConstantsKey}-${tenantName}-${appName}-${uuid4()}`;
+    }
+
     _stitchDecl(declaration, appDef) {
         const [tenantName, appName] = this._getDeclApps(appDef)[0];
         if (!declaration[tenantName]) {
@@ -68,6 +74,8 @@ class AS3Driver {
             };
         }
         declaration[tenantName][appName] = appDef[tenantName][appName];
+
+        declaration.id = this._createUuid(tenantName, appName);
         return declaration;
     }
 
@@ -154,6 +162,7 @@ class AS3Driver {
             .then(decl => this._validateTenantApp(decl, tenant, app))
             .then((decl) => {
                 delete decl[tenant][app];
+                decl.id = this._createUuid(tenant, app);
                 return Promise.resolve(decl);
             })
             .then(decl => this._postDecl(decl));
