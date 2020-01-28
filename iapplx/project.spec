@@ -18,6 +18,7 @@ echo -n %{version}-%{release} > %{_builddir}/version
 # REST worker
 mkdir -p %{_builddir}/nodejs
 cp -r %{main}/nodejs %{_builddir}
+cp %{main}/package.json %{_builddir}
 %{main}/../scripts/copy-node-modules.sh %{main} %{_builddir}/node_modules
 # Presentation layer
 mkdir -p %{_builddir}/presentation

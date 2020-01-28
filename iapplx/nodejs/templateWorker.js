@@ -9,6 +9,8 @@ const FsTemplateProvider = fast.FsTemplateProvider;
 const httpUtils = fast.httpUtils;
 const AS3Driver = fast.AS3Driver;
 
+const pkg = require('../package.json');
+
 const endpointName = 'fast';
 const projectName = `f5-${endpointName}`;
 const mainBlockName = 'F5 Application Services Templates';
@@ -97,6 +99,27 @@ class TemplateWorker {
         return Promise.resolve();
     }
 
+    getInfo(restOperation) {
+        const info = {
+            version: pkg.version,
+            as3Info: {}
+        };
+
+        return httpUtils.makeGet('/mgmt/shared/appsvcs/info')
+            .then((response) => {
+                if (response.status < 300) {
+                    info.as3Info = response.body;
+                }
+                restOperation.setBody(info);
+                this.completeRestOperation(restOperation);
+            })
+            .catch((e) => {
+                console.error(e); /* eslint-disable-line no-console */
+                restOperation.setBody(info);
+                this.completeRestOperation(restOperation);
+            });
+    }
+
     getTemplates(restOperation, tmplid) {
         if (tmplid) {
             return this.templateProvider.fetch(tmplid)
@@ -168,7 +191,7 @@ class TemplateWorker {
         try {
             switch (collection) {
             case 'info':
-                return this.genRestResponse(restOperation, 200, '');
+                return this.getInfo(restOperation);
             case 'templates':
                 return this.getTemplates(restOperation, itemid);
             case 'applications':
