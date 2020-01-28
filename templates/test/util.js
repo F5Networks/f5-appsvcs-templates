@@ -13,7 +13,9 @@ const tempView = 'tmp.json';
 const render = function (template, view) {
     const cmd = `mystique render ${template} ${tempView}`;
     fs.writeFileSync(tempView, JSON.stringify(view, null, 2));
-    return JSON.parse(execSync(cmd).toString());
+    const output = execSync(cmd).toString();
+    // console.log(output);
+    return JSON.parse(output);
 };
 
 const compare = function (expected, actual, parent) {

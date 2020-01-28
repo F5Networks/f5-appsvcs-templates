@@ -13,13 +13,25 @@ definitions:
         {{^pool_name}}
           "{{app}}_pool": {
             "class": "Pool",
-            "monitors": [
-              "http"
-            ],
-            "members": {{pool_members}}
+            "loadBalancingMethod": "round-robin",
+            "members": [{
+               "serverAddresses": ["10.2.1.1", "10.2.1.2"],
+               "servicePort": 80
+            }],
+            "monitors": ["http"]
           },
         {{/pool_name}}
       {{/do_pool}}
+  application_snat_def:
+    template: |
+      {{#do_snat}}
+        {{^snat_pool_name}}
+          "{{app}}_snatpool": {
+            "class": "SNAT",
+            "members": ["10.3.1.1", "10.3.1.2"]
+          },
+        {{/snat_pool_name}}
+      {{/do_snat}}
   service_main_class_def:
     template: |
       {{#do_tls_server}}
@@ -45,6 +57,18 @@ definitions:
       {{^do_pool}}
         "pool": "none",
       {{/do_pool}}
+  service_main_caching_def:
+    template: |
+      {{#do_caching}}
+        {{#caching_profile_name}}
+          "profileHTTPCaching": {
+            "bigip": "{{caching_profile_name}}"
+          },
+        {{/caching_profile_name}}
+        {{^caching_profile_name}}
+          "profileHTTPCaching": "basic",
+        {{/caching_profile_name}}
+      {{/do_caching}}
   service_main_compression_def:
     template: |
       {{#do_compression}}
@@ -68,9 +92,11 @@ template: |
         "class": "Application",
         {{> application_template_def}}
         {{> application_pool_def}}
+        {{> application_snat_def}}
         "serviceMain": {
           {{> service_main_class_def}}
           {{> service_main_pool_def}}
+          {{> service_main_caching_def}}
           {{> service_main_compression_def}}
           "virtualAddresses": ["{{virtual_addr}}"],
           "virtualPort": {{virtual_port::integer}}
