@@ -217,6 +217,9 @@ class TemplateWorker {
         return this.templateProvider.fetch(tmplid)
             .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
             .then(declaration => this.driver.createApplication(declaration, metadata))
+            .catch(e => Promise.reject(
+                this.genRestResponse(restOperation, 400, `unable to load template: ${tmplid}\n${e.stack}`)
+            ))
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
