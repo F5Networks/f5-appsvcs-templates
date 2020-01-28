@@ -19,9 +19,14 @@ class RestOp {
     constructor(uri) {
         this.uri = uri;
         this.body = '';
+        this.status = 200;
     }
 
     setHeaders() {}
+
+    setStatusCode(status) {
+        this.status = status;
+    }
 
     setBody(body) {
         this.body = body;
@@ -88,8 +93,8 @@ describe('template worker info tests', function () {
         const op = new RestOp('info');
         return worker.onGet(op)
             .then(() => {
-                assert.notEqual(op.body.code, 404);
-                assert.notEqual(op.body.code, 500);
+                assert.notEqual(op.status, 404);
+                assert.notEqual(op.status, 500);
             });
     });
     it('get_bad_end_point', function () {
@@ -97,7 +102,7 @@ describe('template worker info tests', function () {
         const op = new RestOp('bad');
         return worker.onGet(op)
             .then(() => {
-                assert.equal(op.body.code, 404);
+                assert.equal(op.status, 404);
             });
     });
     it('get_templates', function () {
@@ -106,7 +111,7 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 const templates = op.body;
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
                 assert.notEqual(templates.length, 0);
             });
     });
@@ -115,7 +120,7 @@ describe('template worker info tests', function () {
         const op = new RestOp('templates/foobar');
         return worker.onGet(op)
             .then(() => {
-                assert.equal(op.body.code, 404);
+                assert.equal(op.status, 404);
             });
     });
     it('get_template_item', function () {
@@ -124,7 +129,7 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
                 assert.notEqual(tmpl, {});
             });
     });
@@ -134,7 +139,7 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
                 assert.notEqual(tmpl, {});
                 assert.notEqual(tmpl.getViewSchema(), {});
             });
@@ -157,7 +162,7 @@ describe('template worker info tests', function () {
             }));
         return worker.onGet(op)
             .then(() => {
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
                 assert.deepEqual(op.body, [['tenant', 'app']]);
             });
     });
@@ -169,7 +174,7 @@ describe('template worker info tests', function () {
             .reply(204, '');
         return worker.onGet(op)
             .then(() => {
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
                 assert.deepEqual(op.body, []);
             });
     });
@@ -188,7 +193,7 @@ describe('template worker info tests', function () {
             }));
         return worker.onGet(op)
             .then(() => {
-                assert.equal(op.body.code, 404);
+                assert.equal(op.status, 404);
             });
     });
     it('get_apps_item', function () {
@@ -213,7 +218,7 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
                 assert.notEqual(tmpl, appData);
             });
     });
@@ -237,8 +242,8 @@ describe('template worker info tests', function () {
             });
         return worker.onGet(op)
             .then(() => {
-                assert.notEqual(op.body.code, 404);
-                assert.notEqual(op.body.code, 500);
+                assert.notEqual(op.status, 404);
+                assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, [{
                     id: 'foo1',
                     code: 200,
@@ -268,8 +273,8 @@ describe('template worker info tests', function () {
             });
         return worker.onGet(op)
             .then(() => {
-                assert.notEqual(op.body.code, 404);
-                assert.notEqual(op.body.code, 500);
+                assert.notEqual(op.status, 404);
+                assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, {
                     id: 'foo1',
                     code: 200,
@@ -284,7 +289,7 @@ describe('template worker info tests', function () {
         const op = new RestOp('bad');
         return worker.onPost(op)
             .then(() => {
-                assert.equal(op.body.code, 404);
+                assert.equal(op.status, 404);
             });
     });
     it('post_apps_bad_tmplid', function () {
@@ -295,7 +300,7 @@ describe('template worker info tests', function () {
         });
         return worker.onPost(op)
             .then(() => {
-                assert.equal(op.body.code, 500);
+                assert.equal(op.status, 500);
             });
     });
     it('post_apps', function () {
@@ -316,7 +321,7 @@ describe('template worker info tests', function () {
         return worker.onPost(op)
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.body.code, 202);
+                assert.equal(op.status, 202);
             });
     });
     it('delete_app_bad', function () {
@@ -334,7 +339,7 @@ describe('template worker info tests', function () {
             }));
         return worker.onDelete(op)
             .then(() => {
-                assert.equal(op.body.code, 404);
+                assert.equal(op.status, 404);
             });
     });
     it('delete_app', function () {
@@ -359,7 +364,7 @@ describe('template worker info tests', function () {
             .reply(202, {});
         return worker.onDelete(op)
             .then(() => {
-                assert.notEqual(op.body.code, 404);
+                assert.notEqual(op.status, 404);
             });
     });
 });

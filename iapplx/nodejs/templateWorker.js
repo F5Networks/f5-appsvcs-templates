@@ -91,6 +91,7 @@ class TemplateWorker {
      * HTTP/REST handlers
      */
     genRestResponse(restOperation, code, message) {
+        restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
             message
