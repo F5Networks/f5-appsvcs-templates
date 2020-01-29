@@ -60,6 +60,8 @@ pages:
        - PUBLIC_DOCS=${PUBLIC_DIR}/public-docs
        - COVERAGE_DOCS=${PUBLIC_DIR}/coverage-docs
        - mkdir -p ${COVERAGE_DOCS}
+       - mkdir -p ${PUBLIC_DIR}
+       - mkdir -p ${PUBLIC_DOCS}
        - cp docs/index.html ${PUBLIC_DIR}/index.html
        - cp -R docs/_build/html/* ${PUBLIC_DOCS}
        - cp -R coverage/* ${COVERAGE_DOCS}
