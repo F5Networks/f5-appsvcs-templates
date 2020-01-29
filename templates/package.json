@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "js-yaml": "^3.13.1",
-    "mystique": "file:../core",
+    "f5-fast": "file:../core",
     "nock": "^11.7.2"
   }
 }
