@@ -60,9 +60,7 @@ template: |
       </ul>
       <div class="container">
         <div class="flexbox">
-          {{#chatlog}}
           {{> chatlog }}
-          {{/chatlog}}
         </div>
         <div class="flexbox">
           {{> chatroom }}
