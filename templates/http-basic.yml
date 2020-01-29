@@ -1,52 +1,86 @@
-view:
-  # required fields
-  tenant: demo_tenant # required
-  app: demo_app # required
-  virtual_addr: 10.7.1.2 # required
-  use_irules: true
-
-  # misc optional fields
-  virtual_port: 4430 # default 443
-  hostname: www.demohost.com # specifies HTTP/1.1 host header if defined, otherwise use HTTP/1.0 monitor
-
-  # pool spec
-  use_pool: true # pool none if false
-  pool: demo_pool # names existing pool if defined, otherwise create new
-
-  # monitor spec
-  use_monitor: true # monitor none if false
-  monitor: demo_monitor # names existing monitor if defined, otherwise create new
-  send_string: /
-  expected_response: OK
-
-  # tcp profile spec
-  clientside_network: wan # enum lan or wan, default wan
-  serverside_network: lan # enum lan or wan, default lan
-
-  # tls profile spec
-  use_tls_server: true
-  tls_server_profile: demo_tls_client # names existing profile if defined, otherwise create new
-  tls_certificate: demo_cert # required if use_tls_server true and tls_server_profile undefined
-  use_tls_client: true
-  tls_client_profile: demo_tls_client # names existing profile if defined, otherwise create new
-
-  # compression profile spec
-  use_compression: true
-  compression: demo_compression # names existing profile if defined, otherwise create new
-
 definitions:
-  irule_ref:
+  application_template_def:
     template: |
-      "iRules": [
-        "choose_pool"
-      ],
-  irule_def:
+      {{#do_tls_server}}
+        "template": "https",
+      {{/do_tls_server}}
+      {{^do_tls_server}}
+        "template": "http",
+      {{/do_tls_server}}
+  application_pool_def:
     template: |
-      "choose_pool": {
-        "class": "iRule",
-        "remark": "choose private pool based on IP",
-        "iRule": "when CLIENT_ACCEPTED {\nif {[IP::client_addr] starts_with \"10.\"} {\n pool `*pvt_pool`\n }\n}"
-      }
+      {{#do_pool}}
+        {{^pool_name}}
+          "{{app}}_pool": {
+            "class": "Pool",
+            "loadBalancingMethod": "round-robin",
+            "members": [{
+               "serverAddresses": ["10.2.1.1", "10.2.1.2"],
+               "servicePort": 80
+            }],
+            "monitors": ["http"]
+          },
+        {{/pool_name}}
+      {{/do_pool}}
+  application_snat_def:
+    template: |
+      {{#do_snat}}
+        {{^snat_pool_name}}
+          "{{app}}_snatpool": {
+            "class": "SNAT",
+            "members": ["10.3.1.1", "10.3.1.2"]
+          },
+        {{/snat_pool_name}}
+      {{/do_snat}}
+  service_main_class_def:
+    template: |
+      {{#do_tls_server}}
+        "class": "Service_HTTPS",
+      {{/do_tls_server}}
+      {{^do_tls_server}}
+        "class": "Service_HTTP",
+      {{/do_tls_server}}
+  service_main_pool_def:
+    template: |
+      {{#do_pool}}
+        {{#pool_name}}
+          "pool": {
+            "bigip": "{{pool_name}}"
+          },
+        {{/pool_name}}
+        {{^pool_name}}
+          "pool": {
+            "use": "{{app}}_pool"
+          },
+        {{/pool_name}}
+      {{/do_pool}}
+      {{^do_pool}}
+        "pool": "none",
+      {{/do_pool}}
+  service_main_caching_def:
+    template: |
+      {{#do_caching}}
+        {{#caching_profile_name}}
+          "profileHTTPCaching": {
+            "bigip": "{{caching_profile_name}}"
+          },
+        {{/caching_profile_name}}
+        {{^caching_profile_name}}
+          "profileHTTPCaching": "basic",
+        {{/caching_profile_name}}
+      {{/do_caching}}
+  service_main_compression_def:
+    template: |
+      {{#do_compression}}
+        {{#compression_profile_name}}
+          "profileHTTPCompression": {
+            "bigip": "{{compression_profile_name}}"
+          },
+        {{/compression_profile_name}}
+        {{^compression_profile_name}}
+          "profileHTTPCompression": "basic",
+        {{/compression_profile_name}}
+      {{/do_compression}}
 template: |
   {
     "class": "ADC",
@@ -56,42 +90,16 @@ template: |
       "class": "Tenant",
       "{{app}}": {
         "class": "Application",
-        "template": "https",
+        {{> application_template_def}}
+        {{> application_pool_def}}
+        {{> application_snat_def}}
         "serviceMain": {
-          "class": "Service_HTTPS",
+          {{> service_main_class_def}}
+          {{> service_main_pool_def}}
+          {{> service_main_caching_def}}
+          {{> service_main_compression_def}}
           "virtualAddresses": ["{{virtual_addr}}"],
-          "virtualPort": {{virtual_port::integer}},
-          "pool": "{{app}}_pool",
-          {{#use_compression}}
-            {{#compression}}
-          "profileHTTPCompression": "{{compression}}",
-            {{/compression}}
-            {{^compression}}
-          "profileHTTPCompression": "basic",
-            {{/compression}}
-          {{/use_compression}}
-          "profileTCP": {
-            "bigip": "/Common/mptcp-mobile-optimized"
-          }
-          {{#use_irules}},
-            {{> irule_ref}}
-          {{/use_irules}}
-        },
-        {{#use_irules}}
-          {{> irule_def}},
-        {{/use_irules}}
-        "dfl_pool": {
-          "class": "Pool",
-          "monitors": [
-            "http"
-          ],
-          "members": [{
-            "servicePort": 80,
-            "serverAddresses": [
-              "192.0.3.10",
-              "192.0.3.11"
-            ]
-          }]
+          "virtualPort": {{virtual_port::integer}}
         }
       }
     }

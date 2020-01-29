@@ -5,6 +5,7 @@ if [ -z "${projects[*]}" ]; then
     projects=(
         core
         iapplx
+        templates
     )
 fi
 
@@ -13,7 +14,9 @@ mkdir .nyc_output
 for project in "${projects[@]}"; do
     pushd "${project}"
     npm ci
-    npm run lint
+    if [ "${project}" != "templates" ]; then
+        npm run lint
+    fi
     npm run coverage
     popd
     cp -r "${project}"/.nyc_output/* .nyc_output
