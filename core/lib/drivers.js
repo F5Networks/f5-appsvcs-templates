@@ -25,6 +25,10 @@ class NullDriver {
         return Promise.resolve(Object.keys(this._apps));
     }
 
+    listApplications() {
+        return Promise.resolve(Object.values(this._apps));
+    }
+
     getApplication(_tenant, app) {
         return Promise.resolve(this._apps[app]);
     }
@@ -83,7 +87,10 @@ class AS3Driver {
     }
 
     _appFromDecl(declaration, tenant, app) {
-        return declaration[tenant][app].constants[AS3DriverConstantsKey];
+        return Object.assign({}, declaration[tenant][app].constants[AS3DriverConstantsKey], {
+            tenant,
+            name: app
+        });
     }
 
     _getDecl() {
@@ -182,6 +189,14 @@ class AS3Driver {
     listApplicationNames() {
         return this._getDecl()
             .then(decl => this._getDeclApps(decl, true));
+    }
+
+    listApplications() {
+        return this._getDecl()
+            .then((decl) => {
+                const appList = this._getDeclApps(decl, true);
+                return appList.map(([tenantName, appName]) => this._appFromDecl(decl, tenantName, appName));
+            });
     }
 
     getApplication(tenant, app) {

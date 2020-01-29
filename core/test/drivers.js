@@ -23,6 +23,7 @@ describe('Null Driver tests', function () {
         return assert.becomes(driver.listApplicationNames(), [])
             .then(() => driver.createApplication(appDef))
             .then(() => assert.becomes(driver.listApplicationNames(), ['appy']))
+            .then(() => assert.becomes(driver.listApplications(), [{ name: 'appy' }]))
             .then(() => assert.becomes(driver.getApplication(null, 'appy'), appDef));
     });
 });
@@ -44,6 +45,8 @@ describe('AS3 Driver tests', function () {
     };
     const appMetadata = {
         template: 'foo',
+        tenant: 'tenantName',
+        name: 'appName',
         view: {
             bar: 'baz'
         }
@@ -90,13 +93,22 @@ describe('AS3 Driver tests', function () {
 
         return assert.becomes(driver._getDecl(), as3stub);
     });
-    it('list_apps_empty', function () {
+    it('list_app_names_empty', function () {
         const driver = new AS3Driver();
         nock(host)
             .persist()
             .get(as3ep)
             .reply(200, as3stub);
         return assert.becomes(driver.listApplicationNames(), []);
+    });
+    it('list_app_names', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3WithApp);
+        console.log(JSON.stringify(as3WithApp, null, 2));
+        return assert.becomes(driver.listApplicationNames(), [['tenantName', 'appName']]);
     });
     it('list_apps', function () {
         const driver = new AS3Driver();
@@ -105,7 +117,7 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .reply(200, as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
-        return assert.becomes(driver.listApplicationNames(), [['tenantName', 'appName']]);
+        return assert.becomes(driver.listApplications(), [appMetadata]);
     });
     it('get_app', function () {
         const driver = new AS3Driver();
