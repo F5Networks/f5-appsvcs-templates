@@ -119,7 +119,7 @@ function router() {
 
     // Error on unknown route
     if (!routeInfo) {
-        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${routes.keys().join(',')})`;
+        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${Object.keys(routes).join(',')})`;
         elem.innerText = msg;
         console.error(msg);
         return;
@@ -144,20 +144,33 @@ route('', 'apps', () => {
     outputElem =  document.getElementById('output');
     const listElem = document.getElementById('applist');
     let count = 0;
+    let lastTenant = '';
     dispOutput('Fetching applications list');
     getJSON('applications')
         .then((appsList) => {
+            listElem.innerHTML = '';
             appsList.forEach((appPair) => {
                 const appPairStr = `${appPair.join('/')}`;
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if ( count++ % 2 ) row.classList.add('zebraRow');
+                if (count++ % 2) row.classList.add('zebraRow');
 
-                const appTitle = document.createElement('div');
-                appTitle.innerText = appPairStr;
-                appTitle.classList.add('appListTitle');
-                row.appendChild(appTitle);
+                const appTenant = document.createElement('div');
+                if (appPair[0] !== lastTenant) {
+                    const divider = document.createElement('hr');
+                    if (count % 2) divider.classList.add('zebraRow');
+                    listElem.appendChild(divider);
+                    appTenant.innerText = appPair[0];
+                    lastTenant = appPair[0];
+                }
+                appTenant.classList.add('appListTitle');
+                row.appendChild(appTenant);
+
+                const appName= document.createElement('div');
+                appName.innerText = appPair[1];
+                appName.classList.add('appListTitle');
+                row.appendChild(appName);
 
                 const modifyBtn = document.createElement('a');
                 modifyBtn.classList.add('btn');
@@ -192,6 +205,9 @@ route('create', 'create', () => {
         const elem = document.getElementById('tmpl-btns');
         tmplList.forEach((item) => {
             const btn = document.createElement('button');
+            btn.classList.add('btn');
+            btn.classList.add('btn-primary');
+            btn.classList.add('appListEntry');
             btn.innerText = item;
             btn.addEventListener('click', () => {
                 newEditor(item);
@@ -216,4 +232,10 @@ route('modify', 'create', (appID) => {
             newEditor(appData.template, appData.view);
         })
         .catch(e => dispOutput(e.message));
+});
+route('tasks', 'tasks', () => {
+
+});
+route('api', 'api', () => {
+
 });
