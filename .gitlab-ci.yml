@@ -57,8 +57,11 @@ pages:
         - coverage
     script:
        - PUBLIC_DIR='./public'
+       - PUBLIC_DOCS=${PUBLIC_DIR}/public-docs
        - COVERAGE_DOCS=${PUBLIC_DIR}/coverage-docs
        - mkdir -p ${COVERAGE_DOCS}
+       - cp docs/index.html ${PUBLIC_DIR}/index.html
+       - cp -R docs/_build/html/* ${PUBLIC_DOCS}
        - cp -R coverage/* ${COVERAGE_DOCS}
     artifacts:
         paths:
