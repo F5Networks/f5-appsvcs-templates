@@ -180,4 +180,15 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
+    it('render_inverted_section', function () {
+        const mstdata = '{{^skip_foo}}foo{{/skip_foo}}{{^skip_bar}}bar{{/skip_bar}}';
+        const view = { skip_foo: true };
+        const reference = 'bar';
+
+        return Template.loadMst(null, mstdata)
+            .then((tmpl) => {
+                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                assert.strictEqual(tmpl.render(view), reference);
+            });
+    });
 });
