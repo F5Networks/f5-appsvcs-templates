@@ -11,7 +11,7 @@ const { execSync } = require('child_process');
 const tempView = 'tmp.json';
 
 const render = function (template, view) {
-    const cmd = `mystique render ${template} ${tempView}`;
+    const cmd = `fast render ${template} ${tempView}`;
     fs.writeFileSync(tempView, JSON.stringify(view, null, 2));
     const output = execSync(cmd).toString();
     // console.log(output);
