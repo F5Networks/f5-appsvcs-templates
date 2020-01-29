@@ -172,6 +172,12 @@ class Template {
 
     _viewSchemaFromTemplate(typeSchemas) {
         this._viewSchema = this._handleParsed(Mustache.parse(this.templateText), typeSchemas);
+
+        // If we just ended up with an empty string type, then we have no types and we
+        // should return an empty object instead.
+        if (this._viewSchema.type === 'string' && !this._viewSchema.properties) {
+            this._viewSchema.type = 'object';
+        }
     }
 
     static loadMst(schemaProvider, msttext) {

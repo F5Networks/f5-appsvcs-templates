@@ -14,6 +14,9 @@ view:
     - bubbles
     - cory
     - trevor
+  array_section:
+    - a
+    - b
 definitions:
   chatroom:
     template: |
@@ -47,6 +50,14 @@ template: |
     </style>
     <body>
       <div><h1>{{title}}</h1></div>
+      {{^skip_section}}
+      <div>Skip Me</div>
+      {{/skip_section}}
+      <ul>
+        {{#array_section}}
+        <li>{{.}}</li>
+        {{/array_section}}
+      </ul>
       <div class="container">
         <div class="flexbox">
           {{#chatlog}}

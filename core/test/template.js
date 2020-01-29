@@ -170,4 +170,14 @@ describe('Template class tests', function () {
                 assert.notStrictEqual(tmpl._getPartials(), {});
             });
     });
+    it('render_empty_template', function () {
+        const mstdata = '';
+        const view = {};
+        const reference = '';
+
+        return Template.loadMst(null, mstdata)
+            .then((tmpl) => {
+                assert.strictEqual(tmpl.render(view), reference);
+            });
+    });
 });
