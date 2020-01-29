@@ -233,9 +233,49 @@ route('modify', 'create', (appID) => {
         })
         .catch(e => dispOutput(e.message));
 });
+
 route('tasks', 'tasks', () => {
+  console.log('Fetching AS3 Tasks Endpoint');
+    fetch('/mgmt/shared/appsvcs/task')
+        .then((data) => {
+            return data.json();
+        })
+        .then((data)=> {
+            const taskList = document.getElementById('task-list');
+
+            data.items.forEach((item) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('appListRow');
+
+                const idDiv = document.createElement('div');
+                idDiv.classList.add('appListTitle');
+                idDiv.innerText = item.id;
+                rowDiv.appendChild(idDiv);
+
+                const statusDiv = document.createElement('div');
+                const changes = item.results.filter((r) => r.message !== 'no change');
+                if (changes.length === 0) {
+                    statusDiv.innerText = 'no change';
+                } else {
+                    changes.forEach((change) => {
+                        const cDiv = document.createElement('div');
+                        cDiv.innerText = `${change.tenant}:${change.message}`;
+                        statusDiv.appendChild(cDiv);
+                    });
+                }
+
+                rowDiv.appendChild(statusDiv);
+
+                taskList.appendChild(rowDiv);
+            });
+
+        });
+});
+
+route('api', 'api', () => {
 
 });
-route('api', 'api', () => {
+
+route('templates', 'templates', () => {
 
 });
