@@ -24,6 +24,7 @@ cp %{main}/package.json %{_builddir}
 mkdir -p %{_builddir}/presentation
 cp %{main}/presentation/*.html %{_builddir}/presentation
 cp %{main}/presentation/bundle.js %{_builddir}/presentation
+cp -r %{main}/presentation/img %{_builddir}/presentation
 cp -r %{main}/presentation/css %{_builddir}/presentation
 cp -r %{main}/presentation/js %{_builddir}/presentation
 cp -r %{main}/presentation/webfonts %{_builddir}/presentation

@@ -119,7 +119,7 @@ function router() {
 
     // Error on unknown route
     if (!routeInfo) {
-        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${routes.keys().join(',')})`;
+        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${Object.keys(routes).join(',')})`;
         elem.innerText = msg;
         console.error(msg);
         return;
@@ -140,19 +140,47 @@ window.addEventListener('load', router);
 
 
 // Define routes
-route('', 'home');
-route('apps', 'apps', () => {
+route('', 'apps', () => {
     outputElem =  document.getElementById('output');
     const listElem = document.getElementById('applist');
+    let count = 0;
+    let lastTenant = '';
     dispOutput('Fetching applications list');
     getJSON('applications')
         .then((appsList) => {
+            listElem.innerHTML = '';
             appsList.forEach((appPair) => {
                 const appPairStr = `${appPair.join('/')}`;
-                const li = document.createElement('li');
-                li.innerText = appPair.join('/');
-                listElem.appendChild(li);
 
+                const row = document.createElement('div');
+                row.classList.add('appListRow');
+                if (count++ % 2) row.classList.add('zebraRow');
+
+                const appTenant = document.createElement('div');
+                if (appPair[0] !== lastTenant) {
+                    const divider = document.createElement('hr');
+                    if (count % 2) divider.classList.add('zebraRow');
+                    listElem.appendChild(divider);
+                    appTenant.innerText = appPair[0];
+                    lastTenant = appPair[0];
+                }
+                appTenant.classList.add('appListTitle');
+                row.appendChild(appTenant);
+
+                const appName= document.createElement('div');
+                appName.innerText = appPair[1];
+                appName.classList.add('appListTitle');
+                row.appendChild(appName);
+
+                const modifyBtn = document.createElement('a');
+                modifyBtn.classList.add('btn');
+                modifyBtn.classList.add('btn-primary');
+                modifyBtn.innerText = 'Modify';
+                modifyBtn.href = `#modify/${appPairStr}`;
+                modifyBtn.classList.add('appListEntry');
+                row.appendChild(modifyBtn);
+
+                listElem.appendChild(row);
                 const deleteBtn = document.createElement('button');
                 deleteBtn.classList.add('btn');
                 deleteBtn.classList.add('btn-error');
@@ -163,14 +191,10 @@ route('apps', 'apps', () => {
                         method: 'DELETE',
                     });
                 });
-                li.appendChild(deleteBtn);
+                deleteBtn.classList.add('appListEntry');
+                row.appendChild(deleteBtn);
 
-                const modifyBtn = document.createElement('a');
-                modifyBtn.classList.add('btn');
-                modifyBtn.classList.add('btn-primary');
-                modifyBtn.innerText = 'Modify';
-                modifyBtn.href = `#modify/${appPairStr}`;
-                li.appendChild(modifyBtn);
+
             });
             dispOutput('');
         })
@@ -181,6 +205,9 @@ route('create', 'create', () => {
         const elem = document.getElementById('tmpl-btns');
         tmplList.forEach((item) => {
             const btn = document.createElement('button');
+            btn.classList.add('btn');
+            btn.classList.add('btn-primary');
+            btn.classList.add('appListEntry');
             btn.innerText = item;
             btn.addEventListener('click', () => {
                 newEditor(item);
@@ -205,4 +232,50 @@ route('modify', 'create', (appID) => {
             newEditor(appData.template, appData.view);
         })
         .catch(e => dispOutput(e.message));
+});
+
+route('tasks', 'tasks', () => {
+  console.log('Fetching AS3 Tasks Endpoint');
+    fetch('/mgmt/shared/appsvcs/task')
+        .then((data) => {
+            return data.json();
+        })
+        .then((data)=> {
+            const taskList = document.getElementById('task-list');
+
+            data.items.forEach((item) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('appListRow');
+
+                const idDiv = document.createElement('div');
+                idDiv.classList.add('appListTitle');
+                idDiv.innerText = item.id;
+                rowDiv.appendChild(idDiv);
+
+                const statusDiv = document.createElement('div');
+                const changes = item.results.filter((r) => r.message !== 'no change');
+                if (changes.length === 0) {
+                    statusDiv.innerText = 'no change';
+                } else {
+                    changes.forEach((change) => {
+                        const cDiv = document.createElement('div');
+                        cDiv.innerText = `${change.tenant}:${change.message}`;
+                        statusDiv.appendChild(cDiv);
+                    });
+                }
+
+                rowDiv.appendChild(statusDiv);
+
+                taskList.appendChild(rowDiv);
+            });
+
+        });
+});
+
+route('api', 'api', () => {
+
+});
+
+route('templates', 'templates', () => {
+
 });

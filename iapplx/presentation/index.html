@@ -10,18 +10,98 @@
 
         <title>F5 Application Services Templates</title>
     </head>
+    <style>
+    body {
+      background-color: #eae9e5;
+      padding: 21px;
+      margin: 0px;
+      border: 0px;
+    }
+    hr {
+      margin: 0px;
+    }
+    .appList {
+      width: 67%;
+    }
+    .appListRow {
+      padding: 1px 34px 1px 0px;
+      display: flex;
+    }
+    .appListTitle {
+      flex: 2;
+      padding: 5px 0px 2px 8px;
+      font-size: .8em;
+      font-weight: bold;
+    }
+    .appListEntry {
+      margin: 0px 13px 0px 13px;
+      flex: 1;
+      padding: 0px;
+      font-size: .8em;
+      height: auto;
+    }
+    .zebraRow {
+      background-color: #deddd9;
+    }
+    .navBar {
+      display: flex;
+      width: 67%;
+      margin-bottom: 21px;
+    }
+    .btn-nav {
+      height: 34px;
+      padding: 2px 5px 2px 5px;
+      flex: 1;
+      text-align: center;
+    }
+    .selected-nav {
+      height: 34px;
+      padding: 2px 5px 2px 5px;
+      flex: 1;
+      text-align: center;
+      background-color: #eae9e5;
+    }
+    .btn {
+      border-radius: 3px;
+      background-color: #deddd9;
+    }
+    .contentWrapper {
+      margin: 0px;
+      padding: 0px;
+    }
+    .header {
+      height: 55px;
+      margin-bottom: 21px;
+    }
+    .headerLogo {
+      float: left;
+      margin-right: 13px;
+    }
+
+    .headerTitle {
+      color: #333;
+      font-size: 2em;
+    }
+    </style>
     <body>
-        <template id="page-home">
-            <a class="btn" href="#apps">List Deployed Applications</a><br>
-            <a class="btn" href="#create">Deploy New Application</a>
-        </template>
+      <div class="header">
+        <div class="headerLogo"><img src="img/as3robot.png" height="55px"/></div>
+        <div class="headerTitle">F5 Application Services Templates</div>
+      </div>
+      <div class="contentWrapper">
 
         <template id="page-apps">
-            <div>
-                <a class="btn" href="#">Back</a>
+            <div class="navBar">
+                <div class="selected-nav">Application List</div>
+                <a class="btn btn-nav" href="#create">Deploy New Application</a>
+                <a class="btn btn-nav" href="#templates">Template List</a>
+                <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
+                <a class="btn btn-nav" href="#api">API</a>
             </div>
-            <ul id="applist">
-            </ul>
+
+            <div id="applist" class="appList">
+              Loading, please wait...
+            </div>
             <div>
                 <p>Output:</p>
                 <pre id="output"></pre>
@@ -29,10 +109,15 @@
         </template>
 
         <template id="page-create">
-            <div>
-                <a class="btn" href="#">Back</a>
+            <div class="navBar">
+                <a class="btn btn-nav" href="#">Application List</a>
+                <div class="selected-nav">Deploy New Application</div>
+                <a class="btn btn-nav" href="#templates">Template List</a>
+                <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
+                <a class="btn btn-nav" href="#api">API</a>
             </div>
-            <div id="tmpl-btns">Templates: </div>
+
+            <div id="tmpl-btns" class="navBar"></div>
             <div>
                 <div id="form-div"></div>
                 <button type="button" class="btn" id="view-tmpl-btn">View Template</button>
@@ -46,9 +131,46 @@
             </div>
         </template>
 
+        <template id="page-templates">
+          <div class="navBar">
+              <a class="btn btn-nav" href="#">Application List</a>
+              <a class="btn btn-nav" href="#create">Deploy New Application</a>
+              <div class="selected-nav">Template List</div>
+              <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
+              <a class="btn btn-nav" href="#api">API</a>
+          </div>
+
+          <div id="template-list">Template List</div>
+        </template>
+
+        <template id="page-tasks">
+          <div class="navBar">
+              <a class="btn btn-nav" href="#">Application List</a>
+              <a class="btn btn-nav" href="#create">Deploy New Application</a>
+              <a class="btn btn-nav" href="#templates">Template List</a>
+              <div class="selected-nav">Recent Deployments</div>
+              <a class="btn btn-nav" href="#api">API</a>
+          </div>
+          <div id="task-list" class="appList"></div>
+        </template>
+
+        <template id="page-api">
+          <div class="navBar">
+              <a class="btn btn-nav" href="#">Application List</a>
+              <a class="btn btn-nav" href="#create">Deploy New Application</a>
+              <a class="btn btn-nav" href="#templates">Template List</a>
+              <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
+              <div class="selected-nav" href="#api">API</div>
+          </div>
+
+          <div id="api-docs">Swagger Docs</div>
+        </template>
+
         <div id="app"></div>
 
-        <script src="js/jsoneditor.min.js"></script>
-        <script src="bundle.js"></script>
+      </div>
+
+      <script src="js/jsoneditor.min.js"></script>
+      <script src="bundle.js"></script>
     </body>
 </html>
