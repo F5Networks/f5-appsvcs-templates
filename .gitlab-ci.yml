@@ -2,6 +2,7 @@ image: node:13-buster-slim
 
 stages:
     - test
+    - build
     - publish
 
 coverage:
@@ -25,6 +26,26 @@ build:
             - iapplx/dist
         expire_in: 1 month
 
+create_docs:
+  image: ${CONTAINTHEDOCS_IMAGE}
+  stage: build
+  allow_failure: true
+  script:
+    - make html
+    - echo "Checking grammar and style"
+    # Runs the grammar check on everything except the /docs/drafts directory
+    - vale --glob='*.rst' .
+    - echo "Checking links"
+    - make linkcheck
+
+  tags:
+    - cm-official-docker-executor
+  artifacts:
+    expire_in: 1 week
+    name: sphinx-docs_$CI_BUILD_REF
+    paths:
+      - docs/_build/html
+
 pages:
     stage: publish
     environment:
@@ -44,3 +65,4 @@ pages:
             - public
     only:
         - develop
+        - doc-setup
