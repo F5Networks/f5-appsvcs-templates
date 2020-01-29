@@ -210,9 +210,11 @@ class TemplateWorker {
     postApplications(restOperation, data) {
         const tmplid = data.name;
         const tmplView = data.parameters;
+        const currentTime = new Date();
         const metadata = {
             template: tmplid,
-            view: tmplView
+            view: tmplView,
+            lastModified: currentTime.toISOString()
         };
         return this.templateProvider.fetch(tmplid)
             .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
