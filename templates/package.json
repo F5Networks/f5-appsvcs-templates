@@ -43,7 +43,6 @@
   },
   "dependencies": {
     "js-yaml": "^3.13.1",
-    "f5-fast": "file:../core",
-    "nock": "^11.7.2"
+    "@f5devcentral/fast": "file:../core"
   }
 }
