@@ -154,7 +154,7 @@ class TemplateWorker {
                 .catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
-        return this.driver.listApplicationNames()
+        return this.driver.listApplications()
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);

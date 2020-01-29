@@ -149,7 +149,8 @@ route('', 'apps', () => {
     getJSON('applications')
         .then((appsList) => {
             listElem.innerHTML = '';
-            appsList.forEach((appPair) => {
+            appsList.forEach((app) => {
+                const appPair = [app.tenant, app.name];
                 const appPairStr = `${appPair.join('/')}`;
 
                 const row = document.createElement('div');

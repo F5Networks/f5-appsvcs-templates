@@ -167,7 +167,10 @@ describe('template worker info tests', function () {
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.status, 404);
-                assert.deepEqual(op.body, [['tenant', 'app']]);
+                assert.deepEqual(op.body, [{
+                    name: 'app',
+                    tenant: 'tenant'
+                }]);
             });
     });
     it('get_apps_empty', function () {
