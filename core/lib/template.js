@@ -141,17 +141,9 @@ class Template {
                 required.add(mstName);
                 break;
             }
-            case '^':
-                if (!acc.properties[mstName]) {
-                    acc.properties[mstName] = {
-                        type: 'boolean'
-                    };
-                    // required.add(mstName);
-                }
-
-                break;
             case '!':
             case 'text':
+            case '^':
                 // skip
                 break;
             default:
