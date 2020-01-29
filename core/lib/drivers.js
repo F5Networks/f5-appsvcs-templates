@@ -1,5 +1,7 @@
 'use strict';
 
+const url = require('url');
+const uuid4 = require('uuid/v4');
 const httpUtils = require('./http_utils');
 
 class NullDriver {
@@ -14,19 +16,32 @@ class NullDriver {
         });
     }
 
+    deleteApplication(tenant, app) {
+        delete this._apps[app];
+        return Promise.resolve();
+    }
+
     listApplications() {
         return Promise.resolve(Object.keys(this._apps));
     }
 
-    getApplication(appName) {
-        return Promise.resolve(this._apps[appName]);
+    getApplication(_tenant, app) {
+        return Promise.resolve(this._apps[app]);
     }
 }
 
+const AS3DriverConstantsKey = 'fast';
+
 class AS3Driver {
-    constructor() {
-        this._endpoint = '/mgmt/shared/appsvcs/declare';
-        this._constkey = 'mystique';
+    constructor(endPointUrl) {
+        endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
+        const declareurl = url.parse(`${endPointUrl}/declare`);
+        const tasksUrl = url.parse(`${endPointUrl}/task`);
+
+        this._declareOpts = Object.assign({}, declareurl);
+        this._taskOopts = Object.assign({}, tasksUrl);
+        this._static_id = '';
+        this._task_ids = [];
     }
 
     _getKeysByClass(obj, className) {
@@ -37,32 +52,45 @@ class AS3Driver {
         return this._getKeysByClass(declaration, 'Tenant');
     }
 
-    _getDeclApps(declaration, onlyMystique) {
+    _getDeclApps(declaration, onlyManaged) {
         const apps = [];
         this._getDeclTenants(declaration).forEach((tenant) => {
             this._getKeysByClass(declaration[tenant], 'Application').forEach((app) => {
                 const appDef = declaration[tenant][app];
-                if (!onlyMystique || (appDef.constants && appDef.constants[this._constkey])) {
-                    apps.push(`${tenant}:${app}`);
+                if (!onlyManaged || (appDef.constants && appDef.constants[AS3DriverConstantsKey])) {
+                    apps.push([tenant, app]);
                 }
             });
         });
         return apps;
     }
 
+    _createUuid(tenantName, appName) {
+        return this._static_id || `${AS3DriverConstantsKey}-${tenantName}-${appName}-${uuid4()}`;
+    }
+
     _stitchDecl(declaration, appDef) {
-        const [tenantName, appName] = this._getDeclApps(appDef)[0].split(':');
+        const [tenantName, appName] = this._getDeclApps(appDef)[0];
         if (!declaration[tenantName]) {
             declaration[tenantName] = {
                 class: 'Tenant'
             };
         }
         declaration[tenantName][appName] = appDef[tenantName][appName];
+
+        declaration.id = this._createUuid(tenantName, appName);
         return declaration;
     }
 
+    _appFromDecl(declaration, tenant, app) {
+        return declaration[tenant][app].constants[AS3DriverConstantsKey];
+    }
+
     _getDecl() {
-        return httpUtils.makeGet(this._endpoint)
+        const opts = Object.assign({}, this._declareOpts, {
+            method: 'GET'
+        });
+        return httpUtils.makeRequest(opts)
             .then(res => res.body.declaration || res.body)
             .then((decl) => {
                 if (Object.keys(decl).length === 0) {
@@ -72,6 +100,18 @@ class AS3Driver {
                     };
                 }
                 return decl;
+            });
+    }
+
+    _postDecl(decl) {
+        const opts = Object.assign({}, this._declareOpts, {
+            method: 'POST',
+            path: `${this._declareOpts.path}?async=true`
+        });
+        return httpUtils.makeRequest(opts, decl)
+            .then((result) => {
+                this._task_ids.unshift(result.body.id);
+                return result;
             });
     }
 
@@ -100,19 +140,43 @@ class AS3Driver {
         }
 
         // Add constants
-        const [tenantName, appName] = appList[0].split(':');
+        const [tenantName, appName] = appList[0];
         if (!appDef[tenantName][appName].constants) {
             appDef[tenantName][appName].constants = {
                 class: 'Constants'
             };
         }
         Object.assign(appDef[tenantName][appName].constants, {
-            [this._constkey]: metaData
+            [AS3DriverConstantsKey]: metaData
         });
 
         return this._getDecl()
             .then(decl => this._stitchDecl(decl, appDef))
-            .then(decl => httpUtils.makePost(`${this._endpoint}?async=true`, decl));
+            .then(decl => this._postDecl(decl));
+    }
+
+    _validateTenantApp(decl, tenant, app) {
+        if (!decl[tenant]) {
+            return Promise.reject(new Error(`no tenant found for tenant name: ${tenant}`));
+        }
+        if (!decl[tenant][app]) {
+            return Promise.reject(new Error(`could not find application ${tenant}/${app}`));
+        }
+        if (!decl[tenant][app].constants || !decl[tenant][app].constants[AS3DriverConstantsKey]) {
+            return Promise.reject(new Error(`application is not managed by FAST: ${tenant}/${app}`));
+        }
+        return Promise.resolve(decl);
+    }
+
+    deleteApplication(tenant, app) {
+        return this._getDecl()
+            .then(decl => this._validateTenantApp(decl, tenant, app))
+            .then((decl) => {
+                delete decl[tenant][app];
+                decl.id = this._createUuid(tenant, app);
+                return Promise.resolve(decl);
+            })
+            .then(decl => this._postDecl(decl));
     }
 
     listApplications() {
@@ -120,28 +184,46 @@ class AS3Driver {
             .then(decl => this._getDeclApps(decl, true));
     }
 
-    getApplication(appName) {
-        const [tenant, app] = appName.split(':');
-        if (!app) {
-            return Promise.reject(new Error(`missing app portion of application name: ${appName}`));
-        }
+    getApplication(tenant, app) {
         return this._getDecl()
-            .then((decl) => {
-                if (!decl[tenant]) {
-                    return Promise.reject(new Error(`no tenant found for tenant name: ${tenant}`));
+            .then(decl => this._validateTenantApp(decl, tenant, app))
+            .then(decl => Promise.resolve(this._appFromDecl(decl, tenant, app)));
+    }
+
+    getTasks() {
+        const opts = Object.assign({}, this._taskOopts, {
+            method: 'GET'
+        });
+        const itemMatch = item => (
+            (item.declaration.id && item.declaration.id.startsWith(AS3DriverConstantsKey))
+            || this._task_ids.includes(item.id)
+        );
+        const as3ToFAST = (item) => {
+            const task = {
+                id: item.id,
+                code: item.results[0].code,
+                message: item.results[0].message,
+                name: '',
+                parameters: {}
+            };
+            if (item.declaration.id) {
+                const idParts = item.declaration.id.split('-');
+                const [tenant, app] = idParts.slice(1, 3);
+                if (item.declaration[tenant]) {
+                    const appDef = this._appFromDecl(item.declaration, tenant, app);
+                    task.name = appDef.template;
+                    task.parameters = appDef.view;
                 }
-                if (!decl[tenant][app]) {
-                    return Promise.reject(new Error(`could not find application ${appName}`));
-                }
-                if (!decl[tenant][app].constants || !decl[tenant][app].constants[this._constkey]) {
-                    return Promise.reject(new Error(`application is not managed by Mystique: ${appName}`));
-                }
-                return decl[tenant][app].constants[this._constkey];
-            });
+            }
+            return task;
+        };
+        return httpUtils.makeRequest(opts)
+            .then(result => result.body.items.filter(itemMatch).map(as3ToFAST));
     }
 }
 
 module.exports = {
     NullDriver,
-    AS3Driver
+    AS3Driver,
+    AS3DriverConstantsKey
 };

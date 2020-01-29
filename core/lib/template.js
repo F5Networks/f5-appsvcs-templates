@@ -7,25 +7,24 @@ const yaml = require('js-yaml');
 const _templateSchemaData = require('./template_schema').schema;
 
 // Setup validator
-const _validateSchema = (() => {
-    const schema = yaml.safeLoad(_templateSchemaData);
-    const validator = new Ajv();
+const tmplSchema = yaml.safeLoad(_templateSchemaData);
+const validator = new Ajv();
 
-    // meta-schema uses a mustache format; just parse the string validate it
-    validator.addFormat('mustache', {
-        type: 'string',
-        validate(input) {
-            try {
-                Mustache.parse(input);
-                return true;
-            } catch (e) {
-                return false;
-            }
+// meta-schema uses a mustache format; just parse the string validate it
+validator.addFormat('mustache', {
+    type: 'string',
+    validate(input) {
+        try {
+            Mustache.parse(input);
+            return true;
+        } catch (e) {
+            // TODO find a better way to report issues here
+            console.log(e); /* eslint-disable-line no-console */
+            return false;
         }
-    });
-
-    return validator.compile(schema);
-})();
+    }
+});
+const _validateSchema = validator.compile(tmplSchema);
 
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
@@ -226,7 +225,7 @@ class Template {
 
     static validate(tmpldata) {
         if (!this.isValid(tmpldata)) {
-            throw new Error(JSON.stringify(this.getValidationErrors(), null, 2));
+            throw new Error(this.getValidationErrors());
         }
     }
 
@@ -237,8 +236,8 @@ class Template {
         });
     }
 
-    _getCombinedView(view) {
-        return Object.assign({}, this.defaultView, view);
+    getCombinedView(view) {
+        return Object.assign({}, this.defaultView, view || {});
     }
 
     _getPartials() {
@@ -252,7 +251,7 @@ class Template {
     }
 
     validateView(view) {
-        const combView = this._getCombinedView(view);
+        const combView = this.getCombinedView(view);
 
         const viewValidator = new Ajv({
             unknownFormats: 'ignore'
@@ -269,7 +268,7 @@ class Template {
     render(view) {
         this.validateView(view);
         const partials = this._getPartials();
-        const combView = this._getCombinedView(view);
+        const combView = this.getCombinedView(view);
         return Mustache.render(this._getCleanTemplateText(), combView, partials);
     }
 }

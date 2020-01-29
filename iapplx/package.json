@@ -1,5 +1,5 @@
 {
-  "name": "f5-mystique",
+  "name": "f5-fast",
   "version": "0.1.0-1",
   "author": "F5 Networks",
   "license": "Apache-2.0",
@@ -8,7 +8,9 @@
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
     "lint": "eslint nodejs test",
-    "build": "cd presentation && npm ci && npm run build && cd .. && ../scripts/rpmbuild.sh",
+    "buildgui": "cd presentation && npm ci && npm run build",
+    "buildrpm": "../scripts/rpmbuild.sh",
+    "build": "npm run buildgui && npm run buildrpm",
     "coverage": "nyc npm test"
   },
   "keywords": [
@@ -18,9 +20,13 @@
     "api"
   ],
   "devDependencies": {
+    "@babel/cli": "^7.8.3",
+    "@babel/core": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "eslint": "^5.16.0",
     "mocha": "^6.2.2",
+    "nock": "^11.7.2",
     "nyc": "^14.1.1"
   },
   "eslintConfig": {
@@ -37,7 +43,6 @@
   },
   "dependencies": {
     "js-yaml": "^3.13.1",
-    "mystique": "file:../core",
-    "nock": "^11.7.2"
+    "@f5devcentral/fast": "file:../core"
   }
 }

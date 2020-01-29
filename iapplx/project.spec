@@ -13,20 +13,21 @@ Framework for deploying configuration on BIG-IP using mustache templates
 %define IAPP_INSTALL_DIR /var/config/rest/iapps/%{name}
 
 %prep
+# Metadata
 echo -n %{version}-%{release} > %{_builddir}/version
+# REST worker
+mkdir -p %{_builddir}/nodejs
 cp -r %{main}/nodejs %{_builddir}
-cp  %{main}/package*.json %{_builddir}
-npm pack %{main}/../core
-sed -i'bu.json' 's/..\/core/%{_mystiquepkg}/' %{_builddir}/package.json
-npm install --only=prod --no-optional
-rm %{_builddir}/%{_mystiquepkg}
-rm %{_builddir}/package*.json
+cp %{main}/package.json %{_builddir}
+%{main}/../scripts/copy-node-modules.sh %{main} %{_builddir}/node_modules
+# Presentation layer
 mkdir -p %{_builddir}/presentation
 cp %{main}/presentation/*.html %{_builddir}/presentation
 cp %{main}/presentation/bundle.js %{_builddir}/presentation
 cp -r %{main}/presentation/css %{_builddir}/presentation
 cp -r %{main}/presentation/js %{_builddir}/presentation
 cp -r %{main}/presentation/webfonts %{_builddir}/presentation
+# Data files
 cp -r %{main}/../schemas %{_builddir}
 cp -r %{main}/../templates %{_builddir}
 
