@@ -17,6 +17,12 @@
       margin: 0px;
       border: 0px;
     }
+    iframe {
+      width: 100%;
+      height: 100%;
+      overflow-y: hidden;
+      overflow-x: hidden;
+    }
     hr {
       margin: 0px;
     }
@@ -68,6 +74,7 @@
     .contentWrapper {
       margin: 0px;
       padding: 0px;
+      height: 600px;
     }
     .header {
       height: 55px;
@@ -162,11 +169,10 @@
               <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
               <div class="selected-nav" href="#api">API</div>
           </div>
-
-          <div id="api-docs">Swagger Docs</div>
+          <iframe src="apidoc.html"></iframe>
         </template>
 
-        <div id="app"></div>
+        <div id="app" style="height:100%"></div>
 
       </div>
 
