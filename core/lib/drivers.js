@@ -21,7 +21,7 @@ class NullDriver {
         return Promise.resolve();
     }
 
-    listApplications() {
+    listApplicationNames() {
         return Promise.resolve(Object.keys(this._apps));
     }
 
@@ -179,7 +179,7 @@ class AS3Driver {
             .then(decl => this._postDecl(decl));
     }
 
-    listApplications() {
+    listApplicationNames() {
         return this._getDecl()
             .then(decl => this._getDeclApps(decl, true));
     }

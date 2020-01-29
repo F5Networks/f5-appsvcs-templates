@@ -20,9 +20,9 @@ describe('Null Driver tests', function () {
             name: 'appy'
         };
 
-        return assert.becomes(driver.listApplications(), [])
+        return assert.becomes(driver.listApplicationNames(), [])
             .then(() => driver.createApplication(appDef))
-            .then(() => assert.becomes(driver.listApplications(), ['appy']))
+            .then(() => assert.becomes(driver.listApplicationNames(), ['appy']))
             .then(() => assert.becomes(driver.getApplication(null, 'appy'), appDef));
     });
 });
@@ -96,7 +96,7 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3stub);
-        return assert.becomes(driver.listApplications(), []);
+        return assert.becomes(driver.listApplicationNames(), []);
     });
     it('list_apps', function () {
         const driver = new AS3Driver();
@@ -105,7 +105,7 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .reply(200, as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
-        return assert.becomes(driver.listApplications(), [['tenantName', 'appName']]);
+        return assert.becomes(driver.listApplicationNames(), [['tenantName', 'appName']]);
     });
     it('get_app', function () {
         const driver = new AS3Driver();
