@@ -1,25 +1,48 @@
 openapi: "3.0.0"
 info:
   version: 0.1.0
-  title: F5 Template API
+  title: F5 Application Services API
   license:
     name: MIT
   description: |
-    This is a proposed API for F5 project Mystique. It has three major sections:
+    # F5 Application Services Templates (*FAST*)
 
-    ### Template Deployment
-      How the templates are listed, schema retrieved, and deployed.
-    ### Task Visibility
-      Visibility into task status once a template has been deployed.
-    ### Package Management
-      The ability to add and remove new templates and template sets.
+    This is the documentation for the FAST templating extension. This document
+    catalogs the API endpoints exposed by the extension.
+
+    ## Application Management
+
+    These are endpoints related to managing the lifecycle of your applications.
+    These endpoints help you create, edit, and query the applications managed by
+    FAST.
+
+    ## Task Tracking
+
+    When an application is created in may not happen instantly. A task is run to
+    deploy the AS3 declaration. These endpoints are for retrieving information
+    about currently running and previously run tasks. These endpoints will report
+    the success or failure of a particular deployment action, such as creating
+    or editing an application.
+
+    ## Package Management
+
+    This is the API for loading and unloading new template sets into the system.
+
+    ## Template Management
+
+    This is the API for Querying templates that are loaded into the system.
+
+    ## FAST Extension
+
+    These endpoints are related to management of the FAST Extension itself,
+    for getting debug information or software version information.
 servers:
  - url: /mgmt/shared/fast
 tags:
  - name: Application Management
- - name: Template Management
  - name: Task Tracking
  - name: Package Management
+ - name: Template Management
  - name: FAST Extension
 paths:
   /applications:
@@ -29,6 +52,7 @@ paths:
       summary: Fetch List of FAST Applications
       description: |
         Responds with a list of applications that are currently deployed in the system.
+      operationId: getAllApplications
       responses:
         '200':
           description: OK
@@ -40,7 +64,7 @@ paths:
 
         The call to AS3 may be async, so this endpoint must also be async. A task will be returned upon
         successful parameter submission that can track the progress of the deployment.
-      operationId: createTemplate
+      operationId: createApplication
       tags:
         - Application Management
       requestBody:
@@ -69,11 +93,12 @@ paths:
                 $ref: "#/components/schemas/Error"
   /applications/{appName}:
     get:
-      tags:
-        - Application Management
       summary: Fetch an individual application
       description: |
         Fetches the detail view of an individual mystique application
+      operationId: getApplication
+      tags:
+        - Application Management
       parameters:
         - name: appName
           in: path
@@ -87,7 +112,7 @@ paths:
   /templates:
     get:
       summary: List all templates
-      operationId: listTemplates
+      operationId: listAllTemplates
       tags:
         - Template Management
       responses:
@@ -106,6 +131,7 @@ paths:
   /templates/{templateName}:
     get:
       summary: get the specified template
+      operationId: getTemplate
       tags:
         - Template Management
       parameters:
@@ -125,7 +151,7 @@ paths:
   /tasks:
     get:
       summary: List all running and completed tasks
-      operationId: listTasks
+      operationId: listAllTasks
       tags:
         - Task Tracking
       responses:
@@ -175,6 +201,7 @@ paths:
       summary: Info about installed packages
       description: |
         GET /packages will retrieve the list of template packages currently installed in the system
+      operationId: listAllTemplateSets
       tags:
         - Package Management
       responses:
@@ -186,6 +213,7 @@ paths:
                 $ref: "#/components/schemas/PackageList"
     post:
       summary: Upload a new package
+      operationId: uploadTemplates
       tags:
         - Package Management
       requestBody:
@@ -206,6 +234,7 @@ paths:
       summary: Removes an installed package
       description:
         DELETE /packages/{setName} will remove an installed package specified by its name.
+      operationId: getTemplateSet
       tags:
         - Package Management
       parameters:
@@ -225,6 +254,7 @@ paths:
         This endpoint returns data pertaining to the version of FAST currently in use, as well as
         loaded template sets and other information useful for debug. This endpoint is recommended for
         use when verifying that FAST is installed and ready to use.
+      operationId: getInfo
       tags:
        - FAST Extension
       responses:
