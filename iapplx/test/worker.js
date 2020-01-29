@@ -91,8 +91,8 @@ describe('template worker info tests', function () {
     it('info', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('info');
-        nock(host)
-            .get('/shared/appsvcs/info')
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/info')
             .reply(200, {});
 
         return worker.onGet(op)
