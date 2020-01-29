@@ -7,9 +7,6 @@ FULL_VERSION=$(node -e "console.log(require('./package.json').version)")
 VERSION=$(echo $FULL_VERSION | cut -d - -f 1)
 RELEASE=$(echo $FULL_VERSION | cut -d - -f 2)
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
-MYSTIQUE_PKG_NAME=$(node -e "console.log(require('./../core/package.json').name);")
-MYSTIQUE_PKG_VER=$(node -e "console.log(require('./../core/package.json').version)")
-MYSTIQUE_PKG=${MYSTIQUE_PKG_NAME}-${MYSTIQUE_PKG_VER}.tgz
 OUTPUT_DIR=${MAINDIR}/dist
 
 rm -rf rpmbuild
@@ -20,7 +17,6 @@ rpmbuild -bb \
     --define "_name ${PKG_NAME}" \
     --define "_version ${VERSION}" \
     --define "_release ${RELEASE}" \
-    --define "_mystiquepkg ${MYSTIQUE_PKG}" \
     project.spec
 
 cd rpmbuild/RPMS/noarch

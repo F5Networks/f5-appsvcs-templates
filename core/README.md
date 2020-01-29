@@ -1,4 +1,4 @@
-# Mystique SDK
+# F5 Application Services Templates (FAST) SDK
 
 This module provides a framework for handling templates.
 
@@ -16,23 +16,23 @@ This module provides a framework for handling templates.
 This module is not currently on NPM, and as such needs to be installed via a file path:
 
 ```bash
-npm install path/to/mystique/core
+npm install path/to/fast/core
 ```
 
 ## CLI
 
-A command line interface is provided via a `mystique` binary.
-The help text is provided below and can also be accessed via `mystique --help`:
+A command line interface is provided via a `fast` binary.
+The help text is provided below and can also be accessed via `fast --help`:
 
 
 ```
-mystique <command>
+fast <command>
 
 Commands:
-  mystique validate <file>                      validate given template file
-  mystique schema <file>                        get view schema for given template file
-  mystique validateView <tmplFile> <viewFile>   validate supplied view with given template
-  mystique render <tmplFile> [viewFile]         render given template file with supplied view
+  fast validate <file>                      validate given template file
+  fast schema <file>                        get view schema for given template file
+  fast validateView <tmplFile> <viewFile>   validate supplied view with given template
+  fast render <tmplFile> [viewFile]         render given template file with supplied view
 
 Options:
   --help     Show help                                                              [boolean]
@@ -42,7 +42,7 @@ Options:
 For more information on a given command use the `--help` flag combined with a command:
 
 ```bash
-mystique <command> --help
+fast <command> --help
 ```
 
 The CLI can also be accessed by executing `cli.js`.

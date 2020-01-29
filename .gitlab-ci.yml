@@ -1,4 +1,4 @@
-image: node:8
+image: node:13-buster-slim
 
 stages:
     - test
@@ -16,10 +16,9 @@ coverage:
 
 build:
     stage: test
-    image: f5devcentral/containthedocs:rpmbuild
     script:
-        - npm install --global npm@5.10.0
-        - cd iapplx && npm run build
+        - apt-get update && apt-get install -y rpm
+        - cd iapplx && npm ci && npm run build
     artifacts:
         name: mystique-$CI_BUILD_REF
         paths:

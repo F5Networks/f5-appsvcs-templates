@@ -11,7 +11,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { NullDriver, AS3Driver } = require('../lib/drivers');
+const { NullDriver, AS3Driver, AS3DriverConstantsKey } = require('../lib/drivers');
 
 describe('Null Driver tests', function () {
     it('add_app', function () {
@@ -23,7 +23,7 @@ describe('Null Driver tests', function () {
         return assert.becomes(driver.listApplications(), [])
             .then(() => driver.createApplication(appDef))
             .then(() => assert.becomes(driver.listApplications(), ['appy']))
-            .then(() => assert.becomes(driver.getApplication('appy'), appDef));
+            .then(() => assert.becomes(driver.getApplication(null, 'appy'), appDef));
     });
 });
 
@@ -37,9 +37,16 @@ describe('AS3 Driver tests', function () {
         }
     };
     const as3ep = '/mgmt/shared/appsvcs/declare';
+    const as3TaskEp = '/mgmt/shared/appsvcs/task';
     const as3stub = {
         class: 'ADC',
         schemaVersion: '3.0.0'
+    };
+    const appMetadata = {
+        template: 'foo',
+        view: {
+            bar: 'baz'
+        }
     };
     const as3WithApp = Object.assign({}, as3stub, {
         tenantName: {
@@ -48,7 +55,7 @@ describe('AS3 Driver tests', function () {
                 class: 'Application',
                 constants: {
                     class: 'Constants',
-                    mystique: { foo: 'bar' }
+                    [AS3DriverConstantsKey]: appMetadata
                 }
             }
         }
@@ -63,8 +70,9 @@ describe('AS3 Driver tests', function () {
     it('app_stitching', function () {
         const driver = new AS3Driver();
         const decl = Object.assign({}, as3stub);
+        driver._static_id = 'STATIC';
         driver._stitchDecl(decl, appDef);
-        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef));
+        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef, { id: 'STATIC' }));
     });
     it('get_decl', function () {
         const driver = new AS3Driver();
@@ -96,7 +104,8 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3WithApp);
-        return assert.becomes(driver.listApplications(), ['tenantName:appName']);
+        console.log(JSON.stringify(as3WithApp, null, 2));
+        return assert.becomes(driver.listApplications(), [['tenantName', 'appName']]);
     });
     it('get_app', function () {
         const driver = new AS3Driver();
@@ -104,10 +113,11 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .reply(200, as3WithApp);
-        return assert.becomes(driver.getApplication('tenantName:appName'), { foo: 'bar' });
+        return assert.becomes(driver.getApplication('tenantName', 'appName'), appMetadata);
     });
     it('create_app', function () {
         const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
         nock(host)
             .persist()
             .get(as3ep)
@@ -115,13 +125,26 @@ describe('AS3 Driver tests', function () {
 
         nock(host)
             .persist()
-            .post(as3ep, as3WithApp)
+            .post(as3ep, Object.assign({}, as3WithApp, { id: 'STATIC' }))
             .query(true)
             .reply(202, {});
 
-        return assert.isFulfilled(driver.createApplication(appDef, {
-            foo: 'bar'
-        }));
+        return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
+    });
+    it('delete_app', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3WithApp);
+
+        nock(host)
+            .persist()
+            .post(as3ep)
+            .query(true)
+            .reply(202, {});
+
+        return assert.isFulfilled(driver.deleteApplication('tenantName', 'appName'));
     });
     it('create_app_bad', function () {
         const driver = new AS3Driver();
@@ -164,9 +187,8 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .reply(404, as3WithApp);
 
-        return assert.isRejected(driver.getApplication('missingSep', /missing app protion/))
-            .then(() => assert.isRejected(driver.getApplication('badTenent:appName', /no tenent found/)))
-            .then(() => assert.isRejected(driver.getApplication('tenantName:badApp', /could not find app/)));
+        return assert.isRejected(driver.getApplication('badTenent', 'appName'), /no tenant found/)
+            .then(() => assert.isRejected(driver.getApplication('tenantName', 'badApp'), /could not find app/));
     });
     it('get_app_unmanaged', function () {
         const driver = new AS3Driver();
@@ -174,6 +196,68 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .reply(404, Object.assign({}, as3stub, appDef));
 
-        return assert.isRejected(driver.getApplication('tenantName:appName', /application is not managed/));
+        return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);
+    });
+    it('get_empty_tasks', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: []
+            });
+
+        return assert.becomes(driver.getTasks(), []);
+    });
+    it('get_tasks', function () {
+        const driver = new AS3Driver();
+        driver._task_ids.unshift('foo1');
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                    {
+                        id: 'foo1',
+                        results: [{
+                            code: 200,
+                            message: 'in progress'
+                        }],
+                        declaration: {}
+                    },
+                    {
+                        id: 'foo2',
+                        results: [{
+                            code: 200,
+                            message: 'success'
+                        }],
+                        declaration: Object.assign({}, as3WithApp, {
+                            id: `${AS3DriverConstantsKey}-tenantName-appName-0`
+                        })
+                    },
+                    {
+                        id: 'foo3',
+                        results: [{
+                            code: 200,
+                            message: 'success'
+                        }],
+                        declaration: as3WithApp
+                    }
+                ]
+            });
+        return assert.becomes(driver.getTasks(), [
+            {
+                id: 'foo1',
+                code: 200,
+                message: 'in progress',
+                name: '',
+                parameters: {}
+            },
+            {
+                id: 'foo2',
+                code: 200,
+                message: 'success',
+                name: appMetadata.template,
+                parameters: appMetadata.view
+            }
+        ]);
     });
 });
