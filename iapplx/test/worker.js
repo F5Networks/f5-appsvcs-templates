@@ -91,6 +91,9 @@ describe('template worker info tests', function () {
     it('info', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('info');
+        nock(host)
+            .get('/shared/appsvcs/info')
+            .reply(200, {})
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.status, 404);
