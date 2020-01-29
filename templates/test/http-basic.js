@@ -131,15 +131,15 @@ describe('http-basic template', function () {
         before(() => {
             // remove view properties
             delete view.pool_members;
-            delete view.snat_pool_members;
+            // delete view.snat_pool_members;
             view.pool_name = '/Common/pool1';
-            view.snat_pool_name = '/Common/snatpool1';
+            // view.snat_pool_name = '/Common/snatpool1';
             view.caching_profile_name = '/Common/caching1';
             view.compression_profile_name = '/Common/compression1';
 
             // remove corresponding declaration properties
             delete expected.t1.app1.app1_pool;
-            delete expected.t1.app1.app1_snatpool;
+            // delete expected.t1.app1.app1_snatpool;
             expected.t1.app1.serviceMain.pool = { bigip: '/Common/pool1' };
             expected.t1.app1.serviceMain.profileHTTPCaching = { bigip: '/Common/caching1' };
             expected.t1.app1.serviceMain.profileHTTPCompression = { bigip: '/Common/compression1' };
