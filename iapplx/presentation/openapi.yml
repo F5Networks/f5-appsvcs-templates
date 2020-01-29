@@ -6,46 +6,47 @@ info:
     name: MIT
   description: |
     This is a proposed API for F5 project Mystique. It has three major sections:
-    
+
     ### Template Deployment
       How the templates are listed, schema retrieved, and deployed.
     ### Task Visibility
       Visibility into task status once a template has been deployed.
     ### Package Management
       The ability to add and remove new templates and template sets.
+servers:
+ - url: /mgmt/shared/fast
+tags:
+ - name: Application Management
+ - name: Template Management
+ - name: Task Tracking
+ - name: Package Management
+ - name: FAST Extension
 paths:
-  /template:
+  /applications:
     get:
-      summary: List all templates
-      operationId: listTemplates
       tags:
-        - templates
+        - Application Management
+      summary: Fetch List of FAST Applications
+      description: |
+        Responds with a list of applications that are currently deployed in the system.
       responses:
         '200':
-          description: An array of template names
-          content:
-            application/json:    
-              schema:
-                $ref: "#/components/schemas/TemplateList"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          description: OK
     post:
-      summary: Instantiate a template, this runs a task
+      summary: Create an application from a template
       description: |
         This is the main method to deploy a templated application. The parameters posted will be used
         to render a template, and that template will get posted to AS3.
-        
+
         The call to AS3 may be async, so this endpoint must also be async. A task will be returned upon
         successful parameter submission that can track the progress of the deployment.
       operationId: createTemplate
       tags:
-        - templates
+        - Application Management
       requestBody:
-        description: A description of the template task
+        description: |
+          A task definition, including the name of the template to run and the parameters needed
+          to render and post the output.
         required: true
         content:
           application/json:
@@ -66,11 +67,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /template/{templateName}:
+  /applications/{appName}:
+    get:
+      tags:
+        - Application Management
+      summary: Fetch an individual application
+      description: |
+        Fetches the detail view of an individual mystique application
+      parameters:
+        - name: appName
+          in: path
+          required: true
+          description: The name of the app to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /templates:
+    get:
+      summary: List all templates
+      operationId: listTemplates
+      tags:
+        - Template Management
+      responses:
+        '200':
+          description: An array of template names
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateList"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /templates/{templateName}:
     get:
       summary: get the specified template
       tags:
-        - templates
+        - Template Management
       parameters:
         - name: templateName
           in: path
@@ -82,7 +119,7 @@ paths:
         '200':
           description: A template object
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/TemplateSchema"
   /tasks:
@@ -90,12 +127,12 @@ paths:
       summary: List all running and completed tasks
       operationId: listTasks
       tags:
-        - tasks
+        - Task Tracking
       responses:
         '200':
           description: An array of tasks and their status
           content:
-            application/json:    
+            application/json:
               schema:
                 $ref: "#/components/schemas/TaskList"
         default:
@@ -106,10 +143,13 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}:
     get:
-      summary: Info for a specific template task
-      operationId: showTaskById
+      summary: Get information about a specific task
+      description: |
+        Get detailed information about a specific task. Tasks are tracked on a best effort basis,
+        an interupption in service to the iControl LX platform may result in lost results.
+      operationId: getTask
       tags:
-        - tasks
+        - Task Tracking
       parameters:
         - name: taskId
           in: path
@@ -119,24 +159,24 @@ paths:
             type: string
       responses:
         '200':
-          description: Expected response to a valid request
+          description: An array of tasks and their status
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Task"
+                $ref: "#/components/schemas/TaskList"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /packages:
+  /templatesets:
     get:
       summary: Info about installed packages
       description: |
         GET /packages will retrieve the list of template packages currently installed in the system
-      tags: 
-        - package management
+      tags:
+        - Package Management
       responses:
         '200':
           description: a list of installed packages, versions, installation dates, etc
@@ -147,7 +187,7 @@ paths:
     post:
       summary: Upload a new package
       tags:
-        - package management
+        - Package Management
       requestBody:
         description: A template spec or zip containing template specs
         required: true
@@ -161,15 +201,15 @@ paths:
       responses:
         '200':
           description: upload a new package, either a zipfile or a single template specifiation
-  /packages/{packageName}:
+  /templatesets/{setName}:
     delete:
       summary: Removes an installed package
       description:
-        DELETE /packages/{packageName} will remove an installed package specified by its name.
+        DELETE /packages/{setName} will remove an installed package specified by its name.
       tags:
-        - package management
+        - Package Management
       parameters:
-        - name: packageName
+        - name: setName
           in: path
           required: true
           description: The name of the package to remove
@@ -178,6 +218,18 @@ paths:
       responses:
         '200':
           description: package removed successfully
+  /info:
+    get:
+      summary: Information about the FAST Extension
+      description: |
+        This endpoint returns data pertaining to the version of FAST currently in use, as well as
+        loaded template sets and other information useful for debug. This endpoint is recommended for
+        use when verifying that FAST is installed and ready to use.
+      tags:
+       - FAST Extension
+      responses:
+        '200':
+          description: OK
 components:
   schemas:
     Task:
@@ -240,7 +292,7 @@ components:
         - name: httpsTemplate
     PackageList:
       type: array
-      items: 
+      items:
         type: object
         properties:
           name:
@@ -249,7 +301,7 @@ components:
           version:
             description: the package version
             type: string
-          installed_on: 
+          installed_on:
             description: date the package was installed
             type: string
             format: date-time
