@@ -93,7 +93,8 @@ describe('template worker info tests', function () {
         const op = new RestOp('info');
         nock(host)
             .get('/shared/appsvcs/info')
-            .reply(200, {})
+            .reply(200, {});
+
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.status, 404);
