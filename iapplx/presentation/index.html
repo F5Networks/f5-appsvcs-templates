@@ -10,18 +10,78 @@
 
         <title>F5 Application Services Templates</title>
     </head>
+    <style>
+    body {
+      background-color: #eae9e5;
+      padding: 21px;
+      margin: 0px;
+      border: 0px;
+    }
+    .appList {
+      width: 67%;
+    }
+    .appListRow {
+      padding: 5px 34px 5px 0px;
+      display: flex;
+    }
+    .appListTitle {
+      width: 50%;
+      padding: 5px 0px 5px 34px;
+    }
+    .appListEntry {
+      margin: 5px 13px 5px 13px;
+      flex-grow: 1;
+    }
+    .zebraRow {
+      background-color: #deddd9;
+    }
+    .navBar {
+      display: flex;
+    }
+    .btn-nav {
+      height: 34px;
+      padding: 2px 5px 2px 5px;
+      background-color: #deddd9;
+      flex-grow: 1;
+    }
+    .btn {
+      border-radius: 3px;
+    }
+    .contentWrapper {
+      margin: 13px;
+      padding: 8px;
+    }
+    .header {
+      height: 55px;
+    }
+    .headerLogo {
+      float: left;
+      margin-right: 13px;
+    }
+
+    .headerTitle {
+      color: #333;
+      font-size: 2em;
+    }
+
+
+
+    </style>
     <body>
-        <template id="page-home">
-            <a class="btn" href="#apps">List Deployed Applications</a><br>
-            <a class="btn" href="#create">Deploy New Application</a>
-        </template>
+      <div class="header">
+        <div class="headerLogo"><img src="img/as3robot.png" height="55px"/></div>
+        <div class="headerTitle"><i>FAST</i>: F5 Application Services Templates</div>
+      </div>
+      <div class="contentWrapper">
 
         <template id="page-apps">
-            <div>
-                <a class="btn" href="#">Back</a>
+            <div class="navBar">
+                <a class="btn btn-nav" href="#create">Deploy New Application</a>
+                <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
             </div>
-            <ul id="applist">
-            </ul>
+
+            <div id="applist" class="appList">
+            </div>
             <div>
                 <p>Output:</p>
                 <pre id="output"></pre>
@@ -29,9 +89,11 @@
         </template>
 
         <template id="page-create">
-            <div>
-                <a class="btn" href="#">Back</a>
+            <div class="navBar">
+                <a class="btn btn-nav" href="#">Application List</a>
+                <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
             </div>
+
             <div id="tmpl-btns">Templates: </div>
             <div>
                 <div id="form-div"></div>
@@ -48,7 +110,9 @@
 
         <div id="app"></div>
 
-        <script src="js/jsoneditor.min.js"></script>
-        <script src="bundle.js"></script>
+      </div>
+
+      <script src="js/jsoneditor.min.js"></script>
+      <script src="bundle.js"></script>
     </body>
 </html>

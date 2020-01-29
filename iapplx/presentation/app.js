@@ -140,19 +140,34 @@ window.addEventListener('load', router);
 
 
 // Define routes
-route('', 'home');
-route('apps', 'apps', () => {
+route('', 'apps', () => {
     outputElem =  document.getElementById('output');
     const listElem = document.getElementById('applist');
+    let count = 0;
     dispOutput('Fetching applications list');
     getJSON('applications')
         .then((appsList) => {
             appsList.forEach((appPair) => {
                 const appPairStr = `${appPair.join('/')}`;
-                const li = document.createElement('li');
-                li.innerText = appPair.join('/');
-                listElem.appendChild(li);
 
+                const row = document.createElement('div');
+                row.classList.add('appListRow');
+                if ( count++ % 2 ) row.classList.add('zebraRow');
+
+                const appTitle = document.createElement('div');
+                appTitle.innerText = appPairStr;
+                appTitle.classList.add('appListTitle');
+                row.appendChild(appTitle);
+
+                const modifyBtn = document.createElement('a');
+                modifyBtn.classList.add('btn');
+                modifyBtn.classList.add('btn-primary');
+                modifyBtn.innerText = 'Modify';
+                modifyBtn.href = `#modify/${appPairStr}`;
+                modifyBtn.classList.add('appListEntry');
+                row.appendChild(modifyBtn);
+
+                listElem.appendChild(row);
                 const deleteBtn = document.createElement('button');
                 deleteBtn.classList.add('btn');
                 deleteBtn.classList.add('btn-error');
@@ -163,14 +178,10 @@ route('apps', 'apps', () => {
                         method: 'DELETE',
                     });
                 });
-                li.appendChild(deleteBtn);
+                deleteBtn.classList.add('appListEntry');
+                row.appendChild(deleteBtn);
 
-                const modifyBtn = document.createElement('a');
-                modifyBtn.classList.add('btn');
-                modifyBtn.classList.add('btn-primary');
-                modifyBtn.innerText = 'Modify';
-                modifyBtn.href = `#modify/${appPairStr}`;
-                li.appendChild(modifyBtn);
+
             });
             dispOutput('');
         })
