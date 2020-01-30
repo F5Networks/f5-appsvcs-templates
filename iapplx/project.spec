@@ -31,12 +31,12 @@ cp -r %{main}/presentation/webfonts %{_builddir}/presentation
 # Data files
 cp -r %{main}/../schemas %{_builddir}
 cp -r %{main}/../templates %{_builddir}
-rm -r %{_builddir}/templates/{node_modules,*.json}
+rm -rf %{_builddir}/templates/{node_modules,*.json}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{IAPP_INSTALL_DIR}
-cp -rf %{_builddir}/* $RPM_BUILD_ROOT%{IAPP_INSTALL_DIR}
+cp -r %{_builddir}/* $RPM_BUILD_ROOT%{IAPP_INSTALL_DIR}
 
 %clean rm -rf $RPM_BUILD_ROOT
 
