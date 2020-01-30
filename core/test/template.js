@@ -150,7 +150,7 @@ describe('Template class tests', function () {
     });
     it('render', function () {
         const mstdata = `
-            {{foo}}
+            {{foo::string}}
         `;
         const view = {
             foo: 'bar'
@@ -168,6 +168,22 @@ describe('Template class tests', function () {
         return Template.loadYaml(null, ymldata)
             .then((tmpl) => {
                 assert.notStrictEqual(tmpl._getPartials(), {});
+            });
+    });
+    it('render_partial_with_type', function () {
+        const ymldata = `
+            view:
+                numb: 5
+            definitions:
+                numbpartial:
+                    template: |
+                        numb={{numb::integer}}
+            template: |
+                {{> numbpartial}}
+        `;
+        return Template.loadYaml(null, ymldata)
+            .then((tmpl) => {
+                assert.strictEqual(tmpl.render(), 'numb=5\n');
             });
     });
     it('render_empty_template', function () {

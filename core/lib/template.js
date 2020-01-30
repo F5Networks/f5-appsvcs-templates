@@ -251,7 +251,7 @@ class Template {
         return Object.keys(this.definitions).reduce((acc, curr) => {
             const def = this.definitions[curr];
             if (def.template) {
-                acc[curr] = def.template;
+                acc[curr] = this._cleanTemplateText(def.template);
             }
             return acc;
         }, {});
@@ -268,15 +268,15 @@ class Template {
         }
     }
 
-    _getCleanTemplateText() {
-        return this.templateText.replace(/{{([_a-zA-Z0-9]+):.*}}/g, '{{$1}}');
+    _cleanTemplateText(text) {
+        return text.replace(/{{([_a-zA-Z0-9]+):.*}}/g, '{{$1}}');
     }
 
     render(view) {
         this.validateView(view);
         const partials = this._getPartials();
         const combView = this.getCombinedView(view);
-        return Mustache.render(this._getCleanTemplateText(), combView, partials);
+        return Mustache.render(this._cleanTemplateText(this.templateText), combView, partials);
     }
 }
 
