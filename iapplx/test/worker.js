@@ -209,24 +209,23 @@ describe('template worker info tests', function () {
         const appData = {
             foo: 'bar'
         };
-        nock(host)
-            .get(as3ep)
+        const as3App = {
+            class: 'Application',
+            constants: {
+                [AS3DriverConstantsKey]: appData
+            }
+        };
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/declare')
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
-                    app: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: appData
-                        }
-                    }
+                    app: as3App
                 }
             }));
         return worker.onGet(op)
             .then(() => {
-                const tmpl = op.body;
-                assert.notEqual(op.status, 404);
-                assert.notEqual(tmpl, appData);
+                assert.deepEqual(op.body, as3App);
             });
     });
     it('get_tasks', function () {

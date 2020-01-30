@@ -126,7 +126,6 @@ class TemplateWorker {
             return this.templateProvider.fetch(tmplid)
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
-                    restOperation.setHeaders('Content-Type', 'text/json');
                     restOperation.setBody(tmpl);
                     this.completeRestOperation(restOperation);
                 }).catch(e => this.genRestResponse(restOperation, 404, e.stack));
@@ -145,10 +144,10 @@ class TemplateWorker {
             const pathElements = uri.path.split('/');
             const tenant = pathElements[4];
             const app = pathElements[5];
-            return this.driver.getApplication(tenant, app)
-                .then((appDef) => {
-                    restOperation.setHeaders('Content-Type', 'text/json');
-                    restOperation.setBody(appDef);
+            return httpUtils.makeGet('/mgmt/shared/appsvcs/declare')
+                .then((resp) => {
+                    const decl = resp.body;
+                    restOperation.setBody(decl[tenant][app]);
                     this.completeRestOperation(restOperation);
                 })
                 .catch(e => this.genRestResponse(restOperation, 404, e.stack));
