@@ -31,9 +31,10 @@ create_docs:
   stage: build
   allow_failure: true
   script:
+    - cd docs
+    - pip install -r requirements.txt
     - make html
     - echo "Checking grammar and style"
-    # Runs the grammar check on everything except the /docs/drafts directory
     - vale --glob='*.rst' .
     - echo "Checking links"
     - make linkcheck
@@ -70,9 +71,8 @@ pages:
             - public
     only:
         - develop
-        - doc-setup
 
-Publish docs to staging:
+docs_to_staging:
   image: ${CONTAINTHEDOCS_IMAGE}
   stage: publish
   environment:
@@ -106,7 +106,6 @@ docs_to_production:
   dependencies:
     - create_docs
   script:
-  # Uncomment and set to create desired version format
     - aws s3 sync docs/_build/html s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest
     - aws s3 cp versions.json s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/versions.json
     # create invalidation to clear cloudfront cache
