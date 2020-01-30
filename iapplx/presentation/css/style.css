@@ -1,0 +1,78 @@
+body {
+  background-color: #eae9e5;
+  padding: 21px;
+  margin: 0px;
+  border: 0px;
+}
+iframe {
+  width: 100%;
+  height: 100%;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+hr {
+  margin: 0px;
+}
+.appList {
+  width: 67%;
+}
+.appListRow {
+  padding: 1px 34px 1px 0px;
+  display: flex;
+}
+.appListTitle {
+  flex: 2;
+  padding: 5px 0px 2px 8px;
+  font-size: .8em;
+  font-weight: bold;
+}
+.appListEntry {
+  margin: 0px 13px 0px 13px;
+  flex: 1;
+  padding: 0px;
+  font-size: .8em;
+  height: auto;
+}
+.zebraRow {
+  background-color: #deddd9;
+}
+.navBar {
+  display: flex;
+  width: 67%;
+  margin-bottom: 21px;
+}
+.btn-nav {
+  height: 34px;
+  padding: 2px 5px 2px 5px;
+  flex: 1;
+  text-align: center;
+}
+.selected-nav {
+  height: 34px;
+  padding: 2px 5px 2px 5px;
+  flex: 1;
+  text-align: center;
+  background-color: #eae9e5;
+}
+.btn {
+  border-radius: 3px;
+  background-color: #deddd9;
+}
+.contentWrapper {
+  margin: 0px;
+  padding: 0px;
+  height: 600px;
+}
+.header {
+  height: 55px;
+  margin-bottom: 21px;
+}
+.headerLogo {
+  float: left;
+  margin-right: 13px;
+}
+
+.headerTitle {
+  color: #333;
+  font-size: 2em;
+}
