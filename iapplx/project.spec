@@ -31,7 +31,7 @@ cp -r %{main}/presentation/webfonts %{_builddir}/presentation
 # Data files
 cp -r %{main}/../schemas %{_builddir}
 cp -r %{main}/../templates %{_builddir}
-rm -rf %{_builddir}/{node_modules,*.json}
+rm -r %{_builddir}/templates/{node_modules,*.json}
 
 %install
 rm -rf $RPM_BUILD_ROOT
