@@ -9,6 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
+set SCRIPTSDIR=..\scripts
 
 if "%1" == "" goto help
 
@@ -43,31 +44,7 @@ if "%1" == "preview" (
 if "%1" == "test" (
 	echo.Running test script.
 	echo.View results below.
-	./scripts/build/test-docs.sh
-	if errorlevel 1 exit /b 1
-	goto end
-)
-if "%1" == "docker-html" (
-	echo.Running test script in docker.
-	echo.View results below.
-	./scripts/build/docker-docs.sh make html
-	if errorlevel 1 exit /b 1
-	goto end
-)
-if "%1" == "docker-preview" (
-	echo.Running sphinx-autobuild in docker.
-	DOCKER_RUN_ARGS="-p 127.0.0.1:8000:8000" ./scripts/build/docker-docs.sh \
-
-	if errorlevel 1 exit /b 1
-	echo.
-	echo.Build finished. View live edits at:
-	echo.  http://127.0.0.1:8000/index.html
-	goto end
-)
-if "%1" == "docker-test" (
-	echo.Running test script in docker.
-	echo.View results below.
-	./scripts/build/build/docker-docs.sh ./scripts/build/test-docs.sh
+	%SCRIPTSDIR%/test-docs.sh
 	if errorlevel 1 exit /b 1
 	goto end
 )
