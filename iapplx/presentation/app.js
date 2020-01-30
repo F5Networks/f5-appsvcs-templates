@@ -105,11 +105,38 @@ function route(path, pageName, pageFunc) {
     routes[path] = { pageName, pageFunc };
 }
 
+const navTitles = {}
+function addRouteToHeader(topRoute, title) {
+    navTitles[topRoute] = title;
+    return title;
+}
+
 function router() {
     const rawUrl = location.hash.slice(1) || '';
     const url = rawUrl.replace(/\/application.*?\/edit/, '');
     const urlParts = url.split('/');
     const routeInfo = routes[urlParts[0]];
+
+    // render header menu
+    const navBar = document.getElementById('navBar');
+    navBar.innerHTML = '';
+
+    Object.keys(navTitles).forEach((k) => {
+        let d;
+        if (k !== urlParts[0]) {
+            d = document.createElement('a');
+            d.classList.add('btn-nav');
+            d.classList.add('btn');
+            d.href = `#${k}`
+        } else {
+            d = document.createElement('div');
+            d.classList.add('selected-nav');
+        }
+        d.innerText = navTitles[k];
+        navBar.appendChild(d);
+    });
+
+    // render app
     const elem = document.getElementById('app');
 
     // Remove old content
@@ -139,6 +166,13 @@ window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
 
+// tabbed navigation menu items
+addRouteToHeader('', 'Application List');
+addRouteToHeader('create', 'Deploy');
+addRouteToHeader('templates', 'Templates');
+addRouteToHeader('tasks', 'Deploy Log');
+addRouteToHeader('api', 'API');
+
 // Define routes
 route('', 'apps', () => {
     outputElem =  document.getElementById('output');
@@ -148,14 +182,20 @@ route('', 'apps', () => {
     dispOutput('Fetching applications list');
     getJSON('applications')
         .then((appsList) => {
-            listElem.innerHTML = '';
+            listElem.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Tenant</div>
+              <div class="appListTitle">Application</div>
+              <div class="appListTitle">Template</div>
+              <div class="appListEntry"></div>
+              <div class="appListEntry"></div>
+            </div>`;
             appsList.forEach((app) => {
                 const appPair = [app.tenant, app.name];
                 const appPairStr = `${appPair.join('/')}`;
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if (count++ % 2) row.classList.add('zebraRow');
+                if (++count%2) row.classList.add('zebraRow');
 
                 const appTenant = document.createElement('div');
                 if (appPair[0] !== lastTenant) {
@@ -172,6 +212,11 @@ route('', 'apps', () => {
                 appName.innerText = appPair[1];
                 appName.classList.add('appListTitle');
                 row.appendChild(appName);
+
+                const appTemplate = document.createElement('div');
+                appTemplate.innerText = app.template;
+                appTemplate.classList.add('appListTitle');
+                row.appendChild(appTemplate);
 
                 const modifyBtn = document.createElement('a');
                 modifyBtn.classList.add('btn');
@@ -243,31 +288,50 @@ route('tasks', 'tasks', () => {
         })
         .then((data)=> {
             const taskList = document.getElementById('task-list');
+            taskList.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Task ID</div>
+              <div class="appListTitle">Tenant</div>
+              <div class="appListTitle">Result</div>
+            </div>`
+            taskList.appendChild(document.createElement('hr'));
 
+            let count = 0;
             data.items.forEach((item) => {
                 const rowDiv = document.createElement('div');
                 rowDiv.classList.add('appListRow');
+                if (++count%2) rowDiv.classList.add('zebraRow');
 
                 const idDiv = document.createElement('div');
                 idDiv.classList.add('appListTitle');
                 idDiv.innerText = item.id;
                 rowDiv.appendChild(idDiv);
 
+                const tenantDiv = document.createElement('div');
+                tenantDiv.classList.add('appListTitle');
+
                 const statusDiv = document.createElement('div');
+                statusDiv.classList.add('appListTitle');
+
                 const changes = item.results.filter((r) => r.message !== 'no change');
                 if (changes.length === 0) {
                     statusDiv.innerText = 'no change';
                 } else {
                     changes.forEach((change) => {
-                        const cDiv = document.createElement('div');
-                        cDiv.innerText = `${change.tenant}:${change.message}`;
-                        statusDiv.appendChild(cDiv);
+                        const tDiv = document.createElement('div');
+                        tDiv.innerText = `${change.tenant}`
+                        const mDiv = document.createElement('div');
+                        mDiv.innerText = `${change.message}
+                        ${change.response || ''}`;
+                        tenantDiv.appendChild(tDiv);
+                        statusDiv.appendChild(mDiv);
                     });
                 }
 
+                rowDiv.appendChild(tenantDiv);
                 rowDiv.appendChild(statusDiv);
 
                 taskList.appendChild(rowDiv);
+                taskList.appendChild(document.createElement('hr'));
             });
 
         });
@@ -278,5 +342,54 @@ route('api', 'api', () => {
 });
 
 route('templates', 'templates', () => {
+    console.log('Fetching Template Table Data.');
+    const templateDiv = document.getElementById('template-list');
+    Promise.all([getJSON('applications'),
+        getJSON('templates')])
+        .then((data) => {
+            templateDiv.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Templates</div>
+              <div class="appListTitle">Applications</div>
+            </div>`;
+            const applications = data[0];
+            const templates = data[1];
 
+            // build dictionary of app lists, keyed by template
+            const appDict = applications.reduce((a, c) => {
+                if (c.template) {
+                    if(!a[c.template])
+                        a[c.template] = [];
+                    a[c.template].push(c);
+                }
+                return a;
+            }, {});
+            let count = 0;
+            templates.forEach((tname) => {
+                const row = document.createElement('div');
+                row.classList.add('appListRow');
+                if (++count%2) {
+                    row.classList.add('zebraRow');
+                }
+
+                const name = document.createElement('div');
+                name.innerText = tname;
+                name.classList.add('appListTitle');
+                row.appendChild(name);
+
+                const applist = document.createElement('div');
+                applist.classList.add('appListTitle');
+                if (appDict[tname]) {
+                    appDict[tname].forEach((app) => {
+                        const appDiv = document.createElement('div');
+                        appDiv.innerText = app.tenant + ' ' + app.name;
+                        applist.appendChild(appDiv);
+                    });
+                }
+                row.appendChild(applist);
+
+                templateDiv.appendChild(document.createElement('hr'));
+                templateDiv.appendChild(row);
+            });
+            templateDiv.appendChild(document.createElement('hr'));
+        });
 });
