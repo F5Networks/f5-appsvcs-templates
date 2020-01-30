@@ -312,5 +312,55 @@ route('api', 'api', () => {
 });
 
 route('templates', 'templates', () => {
+    console.log('Fetching Template Table Data.');
+    const templateDiv = document.getElementById('template-list');
+    Promise.all([getJSON('applications'),
+        getJSON('templates')])
+        .then((data) => {
+            templateDiv.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Templates</div>
+              <div class="appListTitle">Applications</div>
+            </div>`;
+            console.log(data);
+            const applications = data[0];
+            const templates = data[1];
 
+            // build dictionary of app lists, keyed by template
+            const appDict = applications.reduce((a, c) => {
+                if (c.template) {
+                    if(!a[c.template])
+                        a[c.template] = [];
+                    a[c.template].push(c);
+                }
+                return a;
+            }, {});
+            let count = 0;
+            templates.forEach((tname) => {
+                const row = document.createElement('div');
+                row.classList.add('appListRow');
+                if (++count%2) {
+                    row.classList.add('zebraRow');
+                }
+
+                const name = document.createElement('div');
+                name.innerText = tname;
+                name.classList.add('appListTitle');
+                row.appendChild(name);
+
+                const applist = document.createElement('div');
+                applist.classList.add('appListTitle');
+                if (appDict[tname]) {
+                    appDict[tname].forEach((app) => {
+                        const appDiv = document.createElement('div');
+                        appDiv.innerText = app.tenant + ' ' + app.name;
+                        applist.appendChild(appDiv);
+                    });
+                }
+                row.appendChild(applist);
+
+                templateDiv.appendChild(document.createElement('hr'));
+                templateDiv.appendChild(row);
+            });
+            templateDiv.appendChild(document.createElement('hr'));
+        });
 });
