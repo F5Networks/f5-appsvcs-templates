@@ -2,6 +2,7 @@ image: node:13-buster-slim
 
 stages:
     - test
+    - build
     - publish
 
 coverage:
@@ -25,6 +26,23 @@ build:
             - iapplx/dist
         expire_in: 1 month
 
+create_docs:
+  image: ${CONTAINTHEDOCS_IMAGE}
+  stage: build
+  allow_failure: true
+  script:
+    - cd docs
+    - pip install -r requirements.txt
+    - make html
+    - make test
+  tags:
+    - cm-official-docker-executor
+  artifacts:
+    expire_in: 1 week
+    name: sphinx-docs_$CI_BUILD_REF
+    paths:
+      - docs/_build/html
+
 pages:
     stage: publish
     environment:
@@ -34,13 +52,58 @@ pages:
         - cm-official-docker-executor
     dependencies:
         - coverage
+        - create_docs
     script:
        - PUBLIC_DIR='./public'
+       - PUBLIC_DOCS=${PUBLIC_DIR}/public-docs
        - COVERAGE_DOCS=${PUBLIC_DIR}/coverage-docs
        - mkdir -p ${COVERAGE_DOCS}
+       - mkdir -p ${PUBLIC_DIR}
+       - mkdir -p ${PUBLIC_DOCS}
+       - cp docs/index.html ${PUBLIC_DIR}/index.html
+       - cp -R docs/_build/html/* ${PUBLIC_DOCS}
        - cp -R coverage/* ${COVERAGE_DOCS}
     artifacts:
         paths:
             - public
     only:
         - develop
+
+docs_to_staging:
+  image: ${CONTAINTHEDOCS_IMAGE}
+  stage: publish
+  environment:
+    name: staging
+    url: https://clouddocs.f5networks.net/products/extensions/f5-appsvcs-templates/latest
+  tags:
+    - cm-official-docker-executor
+  only:
+    - docs-staging
+  dependencies:
+    - create_docs
+  script:
+    - aws s3 sync docs/_build/html s3://clouddocs.f5networks.net/products/extensions/f5-appsvcs-templates/latest
+    - aws s3 cp versions.json s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/versions.json
+    # create invalidation to clear cloudfront cache
+    - aws cloudfront create-invalidation --distribution-id $AWS_DIST --paths /products/extensions/f5-appsvcs-templates/latest
+
+# Publish docs to clouddocs.f5.com
+docs_to_production:
+  image: ${CONTAINTHEDOCS_IMAGE}
+  stage: publish
+  environment:
+    name: production
+    url: https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest
+  only:
+  # Currently will only deploy to clouddocs.f5.com on commits to docs-latest
+  # fill in desired release branch name and uncomment to add deployment from a branch
+    - docs-latest
+  tags:
+    - cm-official-docker-executor
+  dependencies:
+    - create_docs
+  script:
+    - aws s3 sync docs/_build/html s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest
+    - aws s3 cp versions.json s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/versions.json
+    # create invalidation to clear cloudfront cache
+    - aws cloudfront create-invalidation --distribution-id $AWS_DIST --paths /products/extensions/f5-appsvcs-templates/latest
