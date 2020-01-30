@@ -52,6 +52,7 @@ pages:
         - cm-official-docker-executor
     dependencies:
         - coverage
+        - create_docs
     script:
        - PUBLIC_DIR='./public'
        - PUBLIC_DOCS=${PUBLIC_DIR}/public-docs
