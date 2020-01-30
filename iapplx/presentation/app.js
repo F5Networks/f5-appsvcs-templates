@@ -105,11 +105,38 @@ function route(path, pageName, pageFunc) {
     routes[path] = { pageName, pageFunc };
 }
 
+const navTitles = {}
+function addRouteToHeader(topRoute, title) {
+    navTitles[topRoute] = title;
+    return title;
+}
+
 function router() {
     const rawUrl = location.hash.slice(1) || '';
     const url = rawUrl.replace(/\/application.*?\/edit/, '');
     const urlParts = url.split('/');
     const routeInfo = routes[urlParts[0]];
+
+    // render header menu
+    const navBar = document.getElementById('navBar');
+    navBar.innerHTML = '';
+
+    Object.keys(navTitles).forEach((k) => {
+        let d;
+        if (k !== urlParts[0]) {
+            d = document.createElement('a');
+            d.classList.add('btn-nav');
+            d.classList.add('btn');
+            d.href = `#${k}`
+        } else {
+            d = document.createElement('div');
+            d.classList.add('selected-nav');
+        }
+        d.innerText = navTitles[k];
+        navBar.appendChild(d);
+    });
+
+    // render app
     const elem = document.getElementById('app');
 
     // Remove old content
@@ -138,6 +165,13 @@ function router() {
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
+
+// tabbed navigation menu items
+addRouteToHeader('', 'Application List');
+addRouteToHeader('create', 'Deploy');
+addRouteToHeader('templates', 'Templates');
+addRouteToHeader('tasks', 'Deploy Log');
+addRouteToHeader('api', 'API');
 
 // Define routes
 route('', 'apps', () => {

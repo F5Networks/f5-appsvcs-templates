@@ -96,19 +96,11 @@
         <div class="headerTitle">F5 Application Services Templates</div>
       </div>
       <div class="contentWrapper">
+        <div id="navBar" class="navBar"></div>
+
 
         <template id="page-apps">
-            <div class="navBar">
-                <div class="selected-nav">Application List</div>
-                <a class="btn btn-nav" href="#create">Deploy New Application</a>
-                <a class="btn btn-nav" href="#templates">Template List</a>
-                <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
-                <a class="btn btn-nav" href="#api">API</a>
-            </div>
-
-            <div id="applist" class="appList">
-              Loading, please wait...
-            </div>
+            <div id="applist" class="appList"></div>
             <div>
                 <p>Output:</p>
                 <pre id="output"></pre>
@@ -116,14 +108,6 @@
         </template>
 
         <template id="page-create">
-            <div class="navBar">
-                <a class="btn btn-nav" href="#">Application List</a>
-                <div class="selected-nav">Deploy New Application</div>
-                <a class="btn btn-nav" href="#templates">Template List</a>
-                <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
-                <a class="btn btn-nav" href="#api">API</a>
-            </div>
-
             <div id="tmpl-btns" class="navBar"></div>
             <div>
                 <div id="form-div"></div>
@@ -139,37 +123,15 @@
         </template>
 
         <template id="page-templates">
-          <div class="navBar">
-              <a class="btn btn-nav" href="#">Application List</a>
-              <a class="btn btn-nav" href="#create">Deploy New Application</a>
-              <div class="selected-nav">Template List</div>
-              <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
-              <a class="btn btn-nav" href="#api">API</a>
-          </div>
-
           <div id="template-list">Template List</div>
         </template>
 
         <template id="page-tasks">
-          <div class="navBar">
-              <a class="btn btn-nav" href="#">Application List</a>
-              <a class="btn btn-nav" href="#create">Deploy New Application</a>
-              <a class="btn btn-nav" href="#templates">Template List</a>
-              <div class="selected-nav">Recent Deployments</div>
-              <a class="btn btn-nav" href="#api">API</a>
-          </div>
           <div id="task-list" class="appList"></div>
         </template>
 
         <template id="page-api">
-          <div class="navBar">
-              <a class="btn btn-nav" href="#">Application List</a>
-              <a class="btn btn-nav" href="#create">Deploy New Application</a>
-              <a class="btn btn-nav" href="#templates">Template List</a>
-              <a class="btn btn-nav" href="#tasks">Recent Deployments</a>
-              <div class="selected-nav" href="#api">API</div>
-          </div>
-          <iframe src="apidoc.html"></iframe>
+            <iframe src="apidoc.html"></iframe>
         </template>
 
         <div id="app" style="height:100%"></div>
