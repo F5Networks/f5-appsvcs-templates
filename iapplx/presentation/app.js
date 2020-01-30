@@ -182,14 +182,20 @@ route('', 'apps', () => {
     dispOutput('Fetching applications list');
     getJSON('applications')
         .then((appsList) => {
-            listElem.innerHTML = '';
+            listElem.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Tenant</div>
+              <div class="appListTitle">Application</div>
+              <div class="appListTitle">Template</div>
+              <div class="appListEntry"></div>
+              <div class="appListEntry"></div>
+            </div>`;
             appsList.forEach((app) => {
                 const appPair = [app.tenant, app.name];
                 const appPairStr = `${appPair.join('/')}`;
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if (count++ % 2) row.classList.add('zebraRow');
+                if (++count%2) row.classList.add('zebraRow');
 
                 const appTenant = document.createElement('div');
                 if (appPair[0] !== lastTenant) {
@@ -206,6 +212,11 @@ route('', 'apps', () => {
                 appName.innerText = appPair[1];
                 appName.classList.add('appListTitle');
                 row.appendChild(appName);
+
+                const appTemplate = document.createElement('div');
+                appTemplate.innerText = app.template;
+                appTemplate.classList.add('appListTitle');
+                row.appendChild(appTemplate);
 
                 const modifyBtn = document.createElement('a');
                 modifyBtn.classList.add('btn');
@@ -321,7 +332,6 @@ route('templates', 'templates', () => {
               <div class="appListTitle">Templates</div>
               <div class="appListTitle">Applications</div>
             </div>`;
-            console.log(data);
             const applications = data[0];
             const templates = data[1];
 
