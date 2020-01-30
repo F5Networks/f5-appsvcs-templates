@@ -113,7 +113,7 @@ class Template {
                 break;
             }
             case '#': {
-                const items = this._handleParsed(curr[4]);
+                const items = this._handleParsed(curr[4], typeSchemas);
                 const dotItems = curr[4].filter(item => item[0] === 'name' && item[1] === '.');
                 const asArray = dotItems.length !== 0;
                 if (asArray) {
