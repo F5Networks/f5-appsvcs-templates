@@ -104,7 +104,9 @@ class Template {
                         type: defType
                     };
                 }
-                required.add(defName);
+                if (acc.properties[defName].default === undefined) {
+                    required.add(defName);
+                }
                 break;
             }
             case '>': {
@@ -244,7 +246,15 @@ class Template {
     }
 
     getCombinedView(view) {
-        return Object.assign({}, this.defaultView, view || {});
+        const typeProps = this.getViewSchema().properties;
+        const typeDefaults = typeProps && Object.keys(typeProps).reduce((acc, key) => {
+            const value = typeProps[key];
+            if (value.default !== undefined) {
+                acc[key] = value.default;
+            }
+            return acc;
+        }, {});
+        return Object.assign({}, typeDefaults || {}, this.defaultView, view || {});
     }
 
     _getPartials() {
