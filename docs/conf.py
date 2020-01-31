@@ -124,8 +124,7 @@ html_theme_path = f5_sphinx_theme.get_html_theme_path()
 # documentation.
 #
 html_theme_options = {
-    'next_prev_link': True,
-    'version_selector': True
+    'next_prev_link': True
 }
 
 
