@@ -373,4 +373,12 @@ describe('template worker info tests', function () {
                 assert.notEqual(op.status, 404);
             });
     });
+    it('delete_bad_end_point', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('bad');
+        return worker.onDelete(op)
+            .then(() => {
+                assert.equal(op.status, 404);
+            });
+    });
 });
