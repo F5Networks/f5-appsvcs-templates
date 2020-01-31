@@ -33,6 +33,9 @@ create_docs:
   script:
     - cd docs
     - pip install -r requirements.txt
+    - if [ "$CI_COMMIT_REF_NAME" = "docs-staging" ] || [ "$CI_COMMIT_REF_NAME" = "docs-latest" ]; then
+    -   rm -rf docs/_templates
+    - fi
     - make html
     - make test
   tags:
