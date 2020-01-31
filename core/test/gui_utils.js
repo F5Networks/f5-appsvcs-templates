@@ -41,4 +41,19 @@ describe('GUI utils test', function () {
         console.log(JSON.stringify(schema, null, 2));
         assert.deepStrictEqual(schema.properties.foo.options.dependencies, { useFoo: true });
     });
+    it('filter_extra_props', function () {
+        const schema = {
+            properties: {
+                foo: { type: 'string' }
+            }
+        };
+        const view = {
+            foo: 'bar',
+            baz: 0
+        };
+        const filteredView = guiUtils.filterExtraProperties(view, schema);
+        assert.deepStrictEqual(filteredView, { foo: 'bar' });
+
+        assert.deepStrictEqual(guiUtils.filterExtraProperties(view, {}), {});
+    });
 });

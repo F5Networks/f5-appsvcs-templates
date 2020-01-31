@@ -62,7 +62,7 @@ const newEditor = (tmplid, view) => {
 
             // Load with defaults
             editor.on('ready', () => {
-                editor.setValue(tmpl.getCombinedView(view));
+                editor.setValue(guiUtils.filterExtraProperties(tmpl.getCombinedView(view)));
                 dispOutput('Editor ready');
             });
 

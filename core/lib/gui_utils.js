@@ -36,8 +36,21 @@ const modSchemaForJSONEditor = (schema) => {
     addDepsToSchema(schema);
 };
 
+const filterExtraProperties = (view, schema) => {
+    if (!schema.properties) {
+        return {};
+    }
+    return Object.keys(view).reduce((acc, curr) => {
+        if (schema.properties[curr] !== undefined) {
+            acc[curr] = view[curr];
+        }
+        return acc;
+    }, {});
+};
+
 module.exports = {
     injectFormatsIntoSchema,
     addDepsToSchema,
-    modSchemaForJSONEditor
+    modSchemaForJSONEditor,
+    filterExtraProperties
 };
