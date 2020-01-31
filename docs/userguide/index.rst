@@ -4,8 +4,8 @@ This User Guide contains information on Mystique and how to install and use it.
 
 .. _about:
 
-About
------
+About F5 Application Templates
+------------------------------
 
 
 
@@ -13,6 +13,13 @@ About
 User Guide Index
 ----------------
 
+.. toctree::
+   :maxdepth: 2
+   :includehidden:
+   :glob:
+
+   using-app-templates
+   formatting
 
 
 
