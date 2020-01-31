@@ -10,6 +10,9 @@ const assert = require('assert').strict;
 const FsSchemaProvider = require('../lib/schema_provider').FsSchemaProvider;
 const Template = require('../lib/template').Template;
 
+
+const templatesPath = './test/templatesets/test';
+
 const mstWithTypes = `{
     "name" : "test template",
     "default" : "{{variable1}}",
@@ -25,7 +28,7 @@ const mstWithTypes = `{
 `;
 
 describe('Template class tests', function () {
-    const schemaProvider = new FsSchemaProvider('./../schemas');
+    const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
 
     it('construct', function () {
         const tmpl = new Template();
@@ -125,14 +128,14 @@ describe('Template class tests', function () {
             });
     });
     it('load_complex_mustache', function () {
-        const mstdata = fs.readFileSync('./../templates/f5_https.mst', 'utf8');
+        const mstdata = fs.readFileSync('./../templates/f5-debug/f5_https.mst', 'utf8');
         return Template.loadMst(schemaProvider, mstdata)
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
     });
     it('load_complex_yaml', function () {
-        const ymldata = fs.readFileSync('./test/complex.yml', 'utf8');
+        const ymldata = fs.readFileSync(`${templatesPath}/complex.yml`, 'utf8');
         return Template.loadYaml(schemaProvider, ymldata)
             .then((tmpl) => {
                 assert.ok(tmpl);
@@ -164,7 +167,7 @@ describe('Template class tests', function () {
             });
     });
     it('load_partials', function () {
-        const ymldata = fs.readFileSync('./test/complex.yml', 'utf8');
+        const ymldata = fs.readFileSync(`${templatesPath}/complex.yml`, 'utf8');
         return Template.loadYaml(null, ymldata)
             .then((tmpl) => {
                 assert.notStrictEqual(tmpl._getPartials(), {});

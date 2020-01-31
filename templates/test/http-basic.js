@@ -6,7 +6,7 @@
 
 const util = require('./util');
 
-const template = 'http-basic.yml';
+const template = 'f5-debug/http-basic.yml';
 
 const view = {
     tenant_name: 't1',

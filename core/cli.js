@@ -10,7 +10,7 @@ const path = require('path');
 const Template = require('./lib/template').Template;
 const FsSchemaProvider = require('./lib/schema_provider').FsSchemaProvider;
 
-const schemaPath = path.join(__dirname, '..', 'schemas');
+const schemaPath = path.join(__dirname, '..', 'templates', 'f5-debug');
 const schemaProvider = new FsSchemaProvider(schemaPath);
 
 const loadTemplate = (templatePath) => {

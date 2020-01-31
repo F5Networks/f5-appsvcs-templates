@@ -4,7 +4,8 @@
 
 'use strict';
 
-process.AFL_TW_ROOT = '../';
+process.AFL_TW_ROOT = '../templates';
+process.AFL_TW_TS = '../templates';
 
 const assert = require('assert').strict;
 const nock = require('nock');
@@ -129,7 +130,7 @@ describe('template worker info tests', function () {
     });
     it('get_template_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/simple_udp');
+        const op = new RestOp('templates/f5-debug/simple_udp');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -139,7 +140,7 @@ describe('template worker info tests', function () {
     });
     it('get_template_item_with_schema', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/f5_https');
+        const op = new RestOp('templates/f5-debug/f5_https');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -313,7 +314,7 @@ describe('template worker info tests', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: 'simple_udp_defaults',
+            name: 'f5-debug/simple_udp_defaults',
             parameters: {}
         });
         nock(host)

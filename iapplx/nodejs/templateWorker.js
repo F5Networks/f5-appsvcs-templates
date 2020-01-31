@@ -16,8 +16,7 @@ const projectName = `f5-${endpointName}`;
 const mainBlockName = 'F5 Application Services Templates';
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
-const templatesPath = `${configPath}/templates`;
-const schemasPath = `${configPath}/schemas`;
+const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
 
 class TemplateWorker {
     constructor() {
@@ -26,7 +25,7 @@ class TemplateWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.schemaProvider = new FsSchemaProvider(schemasPath);
+        this.schemaProvider = new FsSchemaProvider(`${templatesPath}/f5-debug`);
         this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
     }
@@ -123,6 +122,10 @@ class TemplateWorker {
 
     getTemplates(restOperation, tmplid) {
         if (tmplid) {
+            const uri = restOperation.getUri();
+            const pathElements = uri.path.split('/');
+            tmplid = pathElements.slice(4, 6).join('/');
+
             return this.templateProvider.fetch(tmplid)
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
@@ -135,7 +138,8 @@ class TemplateWorker {
             .then((templates) => {
                 restOperation.setBody(templates);
                 this.completeRestOperation(restOperation);
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     getApplications(restOperation, appid) {

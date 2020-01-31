@@ -28,10 +28,9 @@ cp -r %{main}/presentation/img %{_builddir}/presentation
 cp -r %{main}/presentation/css %{_builddir}/presentation
 cp -r %{main}/presentation/js %{_builddir}/presentation
 cp -r %{main}/presentation/webfonts %{_builddir}/presentation
-# Data files
-cp -r %{main}/../schemas %{_builddir}
-cp -r %{main}/../templates %{_builddir}
-rm -rf %{_builddir}/templates/{node_modules,*.json}
+# Default template set
+mkdir -p %{_builddir}/templatesets/
+cp -r %{main}/../templates/f5-debug %{_builddir}/templatesets
 
 %install
 rm -rf $RPM_BUILD_ROOT

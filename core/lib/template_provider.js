@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 
 const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
@@ -41,20 +42,29 @@ FsTemplateProvider.prototype.fetch = function fetch(key) {
 
 FsTemplateProvider.prototype.list = function list() {
     return new Promise((resolve, reject) => {
-        fs.readdir(this.config_template_path, (err, data) => {
-            if (err) reject(err);
-            resolve(data);
+        fs.readdir(this.config_template_path, (err, files) => {
+            if (err) return reject(err);
+            return resolve(files.filter(x => fs.lstatSync(path.join(this.config_template_path, x)).isDirectory()));
         });
-    }).then(data => data.filter(x => x.endsWith('.yml') || x.endsWith('.yaml') || x.endsWith('.mst')).map((x) => {
-        const tmplExt = x.split('.').pop();
-        let tmplName = '';
-        if (tmplExt === 'mst' || tmplExt === 'yml') {
-            tmplName = x.slice(0, -4);
-        } else if (tmplExt === 'yaml') {
-            tmplName = x.slice(0, -5);
-        }
-        return tmplName;
-    }));
+    }).then(sets => Promise.all(sets.map(setName => new Promise((resolve, reject) => {
+        fs.readdir(path.join(this.config_template_path, setName), (err, files) => {
+            if (err) return reject(err);
+            return resolve(
+                files
+                    .filter(x => x.endsWith('.yml') || x.endsWith('.yaml') || x.endsWith('.mst'))
+                    .map((x) => {
+                        const tmplExt = x.split('.').pop();
+                        let tmplName = '';
+                        if (tmplExt === 'mst' || tmplExt === 'yml') {
+                            tmplName = x.slice(0, -4);
+                        } else if (tmplExt === 'yaml') {
+                            tmplName = x.slice(0, -5);
+                        }
+                        return `${setName}/${tmplName}`;
+                    })
+            );
+        });
+    })))).then(sets => sets.reduce((acc, curr) => acc.concat(curr), []));
 };
 
 module.exports = {

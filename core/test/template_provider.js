@@ -13,7 +13,7 @@ const assert = chai.assert;
 const { FsSchemaProvider } = require('../lib/schema_provider');
 const { FsTemplateProvider } = require('../lib/template_provider');
 
-const templatesPath = './../templates';
+const templatesPath = './test/templatesets';
 
 describe('template provider tests', function () {
     it('construct', function () {
@@ -21,30 +21,31 @@ describe('template provider tests', function () {
         assert.ok(provider);
     });
     it('load_single_mst', function () {
-        const provider = new FsTemplateProvider(templatesPath);
-        return provider.fetch('simple_udp')
+        const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
+        const provider = new FsTemplateProvider(templatesPath, schemaProvider);
+        return provider.fetch('test/simple_udp')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
     });
     it('load_single_yml', function () {
-        const provider = new FsTemplateProvider('test');
-        return provider.fetch('complex')
+        const provider = new FsTemplateProvider(templatesPath);
+        return provider.fetch('test/complex')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
     });
     it('load_single_yaml', function () {
-        const provider = new FsTemplateProvider('test');
-        return provider.fetch('simple')
+        const provider = new FsTemplateProvider(templatesPath);
+        return provider.fetch('test/simple')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
     });
     it('load_single_with_schema', function () {
-        const schemaProvider = new FsSchemaProvider('./../schemas');
+        const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
         const provider = new FsTemplateProvider(templatesPath, schemaProvider);
-        return provider.fetch('f5_https')
+        return provider.fetch('test/simple_udp')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
@@ -56,14 +57,6 @@ describe('template provider tests', function () {
     it('load_list', function () {
         const provider = new FsTemplateProvider(templatesPath);
         return provider.list()
-            .then((templates) => {
-                assert.ok(templates);
-                assert.notStrictEqual(templates.length, 0);
-            })
-            .then(() => {
-                provider.config_template_path = './test';
-                return provider.list();
-            })
             .then((templates) => {
                 assert.ok(templates);
                 assert.notStrictEqual(templates.length, 0);
