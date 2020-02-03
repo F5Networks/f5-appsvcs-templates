@@ -16,12 +16,7 @@ definitions:
             "loadBalancingMethod": "{{pool_lb_method}}",
             "members": [{
                "serverAddresses": ["10.2.1.1", "10.2.1.2"],
-               {{#do_tls_client}}
-                 "servicePort": {{pool_port:f5:port_secure}}
-               {{/do_tls_client}}
-               {{^do_tls_client}}
-                 "servicePort": {{pool_port:f5:port}}
-               {{/do_tls_client}}
+               "servicePort": {{pool_port:f5:port}}
             }],
             "monitors": ["http"]
           },
@@ -125,14 +120,11 @@ template: |
           {{> service_snat_def}}
           {{> service_caching_def}}
           {{> service_compression_def}}
-          "virtualAddresses": ["{{virtual_addr}}"],
           {{#do_tls_server}}
-            "virtualPort": {{virtual_port:f5:secure_port}},
+            "redirect80": {{redirect80::boolean}},
           {{/do_tls_server}}
-          {{^do_tls_server}}
-            "virtualPort": {{virtual_port:f5:port}},
-          {{/do_tls_server}}
-          "redirect80": {{redirect80::boolean}}
+          "virtualAddresses": ["{{virtual_addr}}"],
+          "virtualPort": {{virtual_port:f5:port}}
         }
       }
     }

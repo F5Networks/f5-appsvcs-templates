@@ -25,7 +25,7 @@ const view = {
     do_pool_priority_groups: false,
     pool_name: undefined,
     pool_members: ['10.2.1.1', '10.2.1.2'],
-    pool_port: 80,
+    pool_port: 443,
     pool_lb_method: 'round-robin',
     pool_slow_ramp: 10,
 
@@ -112,7 +112,7 @@ const expected = {
             app1_pool: {
                 class: 'Pool',
                 members: [{
-                    servicePort: 80,
+                    servicePort: 443,
                     serverAddresses: ['10.2.1.1', '10.2.1.2']
                 }],
                 loadBalancingMethod: 'round-robin',
@@ -127,12 +127,27 @@ const expected = {
 };
 
 describe('http-basic template', function () {
-    describe('new pool and profiles', function () {
+    describe('tls bridging with new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('existing pool and profiles', function () {
+    describe('tls offload with new pool, snatpool, and profiles', function () {
         before(() => {
+            // unset tls client
+            view.do_tls_client = false;
+
+            // default pool port
+            view.pool_port = 80;
+            expected.t1.app1.app1_pool.members[0].servicePort = 80;
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('tls bridging with existing pool, snatpool, and profiles', function () {
+        before(() => {
+            // reset tls client
+            view.do_tls_client = true;
+
             // existing pool
             delete view.pool_members;
             view.pool_name = '/Common/pool1';
@@ -154,11 +169,40 @@ describe('http-basic template', function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('automap and other defaults', function () {
+    describe('tls bridging with snat automap and default profiles', function () {
         before(() => {
+            // default https virtual port
+            view.virtual_port = 443;
+            expected.t1.app1.serviceMain.virtualPort = 443;
+
             // snat automap
             delete view.snat_pool_name;
             expected.t1.app1.serviceMain.snat = 'auto';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('tls offload with defaults', function () {
+        before(() => {
+            // no tls client
+            view.do_tls_client = false;
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('unencrypted http with defaults', function () {
+        before(() => {
+            // no tls server
+            view.do_tls_server = false;
+
+            // no https
+            delete expected.t1.app1.serviceMain.redirect80;
+            expected.t1.app1.template = 'http';
+            expected.t1.app1.serviceMain.class = 'Service_HTTP';
+
+            // default http virtual port
+            view.virtual_port = 80;
+            expected.t1.app1.serviceMain.virtualPort = 80;
         });
         util.assertRendering(template, view, expected);
     });

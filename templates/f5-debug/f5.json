@@ -9,12 +9,6 @@
       "type": "integer",
       "minimuim": 0,
       "maximum": 65535,
-      "default": 80
-    },
-    "secure_port": {
-      "type": "integer",
-      "minimuim": 0,
-      "maximum": 65535,
       "default": 443
     },
     "service": {
