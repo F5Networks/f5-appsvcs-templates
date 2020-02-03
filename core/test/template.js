@@ -213,7 +213,7 @@ describe('Template class tests', function () {
     it('render_type_defaults', function () {
         const mstdata = '{{virtual_port:f5:port}}';
         const view = {};
-        const reference = '80';
+        const reference = '443';
 
         return Template.loadMst(schemaProvider, mstdata)
             .then((tmpl) => {
