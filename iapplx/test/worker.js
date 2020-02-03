@@ -406,9 +406,9 @@ describe('template worker info tests', function () {
                 assert.equal(op.status, 404);
             });
     });
-    it('install_templateset_missing', function () {
+    it('post_templateset_missing', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('installtemplateset');
+        const op = new RestOp('templatesets');
         op.setBody({
             name: 'badname'
         });
@@ -419,9 +419,9 @@ describe('template worker info tests', function () {
             .then(() => assert.equal(op.status, 404))
             .finally(() => mockfs.restore());
     });
-    it('install_templateset', function () {
+    it('post_templateset', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('installtemplateset');
+        const op = new RestOp('templatesets');
 
         op.setBody({
             name: 'testset'

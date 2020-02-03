@@ -269,7 +269,7 @@ class TemplateWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
-    postInstallTemplateSet(restOperation, data) {
+    postTemplateSets(restOperation, data) {
         const setpath = `${uploadPath}/${data.name}.zip`;
         const targetpath = `${templatesPath}/${data.name}`;
 
@@ -301,8 +301,8 @@ class TemplateWorker {
             switch (collection) {
             case 'applications':
                 return this.postApplications(restOperation, body);
-            case 'installtemplateset':
-                return this.postInstallTemplateSet(restOperation, body);
+            case 'templatesets':
+                return this.postTemplateSets(restOperation, body);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
