@@ -8,7 +8,7 @@ const fs = require('fs');
 const assert = require('assert');
 const { execSync } = require('child_process');
 
-const tempView = 'tmp.json';
+const tempView = 'view.json';
 
 const render = function (template, view) {
     const cmd = `fast render ${template} ${tempView}`;

@@ -9,12 +9,12 @@ const util = require('./util');
 const template = 'http-basic.yml';
 
 const view = {
-    tenant: 't1',
-    app: 'app1',
+    tenant_name: 't1',
+    app_name: 'app1',
 
     // virtual server
     virtual_addr: '10.1.1.1',
-    virtual_port: 4430,
+    virtual_port: 4430, // TODO: test default values of 80 and 443
     hostnames: ['www.example.com'],
 
     // http redirect
@@ -99,8 +99,12 @@ const expected = {
                 class: 'Service_HTTPS',
                 virtualAddresses: ['10.1.1.1'],
                 virtualPort: 4430,
+                redirect80: true,
                 pool: {
                     use: 'app1_pool'
+                },
+                snat: {
+                    use: 'app1_snatpool'
                 },
                 profileHTTPCaching: 'basic',
                 profileHTTPCompression: 'basic'
@@ -129,20 +133,32 @@ describe('http-basic template', function () {
 
     describe('existing pool and profiles', function () {
         before(() => {
-            // remove view properties
+            // existing pool
             delete view.pool_members;
-            // delete view.snat_pool_members;
             view.pool_name = '/Common/pool1';
-            // view.snat_pool_name = '/Common/snatpool1';
-            view.caching_profile_name = '/Common/caching1';
-            view.compression_profile_name = '/Common/compression1';
-
-            // remove corresponding declaration properties
             delete expected.t1.app1.app1_pool;
-            // delete expected.t1.app1.app1_snatpool;
             expected.t1.app1.serviceMain.pool = { bigip: '/Common/pool1' };
+
+            // existing snatpool
+            delete view.snat_pool_members;
+            view.snat_pool_name = '/Common/snatpool1';
+            delete expected.t1.app1.app1_snatpool;
+            expected.t1.app1.serviceMain.snat = { bigip: '/Common/snatpool1' };
+
+            // existing caching and compression profiles
+            view.caching_profile_name = '/Common/caching1';
             expected.t1.app1.serviceMain.profileHTTPCaching = { bigip: '/Common/caching1' };
+            view.compression_profile_name = '/Common/compression1';
             expected.t1.app1.serviceMain.profileHTTPCompression = { bigip: '/Common/compression1' };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('automap and other defaults', function () {
+        before(() => {
+            // snat automap
+            delete view.snat_pool_name;
+            expected.t1.app1.serviceMain.snat = 'auto';
         });
         util.assertRendering(template, view, expected);
     });
