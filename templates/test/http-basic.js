@@ -63,14 +63,14 @@ const view = {
     tls_chain_certificate: undefined,
 
     // http, xff, caching, compression, and oneconnect
-    http_profile_name: undefined,
     x_forwarded_for: true,
-    do_caching: true,
+    http_profile_name: undefined,
+    do_caching: false,
     caching_profile_name: undefined,
-    do_compression: true,
+    do_compression: false,
     compression_profile_name: undefined,
-    do_oneconnect: true,
-    oneconnect_profile_name: undefined,
+    do_multiplex: false,
+    multiplex_profile_name: undefined,
 
     // irules
     irules: [],
@@ -100,14 +100,13 @@ const expected = {
                 virtualAddresses: ['10.1.1.1'],
                 virtualPort: 4430,
                 redirect80: true,
+                profileHTTP: 'basic',
                 pool: {
                     use: 'app1_pool'
                 },
                 snat: {
                     use: 'app1_snatpool'
-                },
-                profileHTTPCaching: 'basic',
-                profileHTTPCompression: 'basic'
+                }
             },
             app1_pool: {
                 class: 'Pool',
@@ -131,18 +130,6 @@ describe('http-basic template', function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls offload with new pool, snatpool, and profiles', function () {
-        before(() => {
-            // unset tls client
-            view.do_tls_client = false;
-
-            // default pool port
-            view.pool_port = 80;
-            expected.t1.app1.app1_pool.members[0].servicePort = 80;
-        });
-        util.assertRendering(template, view, expected);
-    });
-
     describe('tls bridging with existing pool, snatpool, and profiles', function () {
         before(() => {
             // reset tls client
@@ -160,11 +147,18 @@ describe('http-basic template', function () {
             delete expected.t1.app1.app1_snatpool;
             expected.t1.app1.serviceMain.snat = { bigip: '/Common/snatpool1' };
 
-            // existing caching and compression profiles
+            // existing caching, compression, and multiplex profiles
+            view.http_profile_name = '/Common/http1';
+            expected.t1.app1.serviceMain.profileHTTP = { bigip: '/Common/http1' };
+            view.do_caching = true;
             view.caching_profile_name = '/Common/caching1';
             expected.t1.app1.serviceMain.profileHTTPCaching = { bigip: '/Common/caching1' };
+            view.do_compression = true;
             view.compression_profile_name = '/Common/compression1';
             expected.t1.app1.serviceMain.profileHTTPCompression = { bigip: '/Common/compression1' };
+            view.do_multiplex = true;
+            view.multiplex_profile_name = '/Common/oneconnect1';
+            expected.t1.app1.serviceMain.profileMultiplex = { bigip: '/Common/oneconnect1' };
         });
         util.assertRendering(template, view, expected);
     });
@@ -178,6 +172,12 @@ describe('http-basic template', function () {
             // snat automap
             delete view.snat_pool_name;
             expected.t1.app1.serviceMain.snat = 'auto';
+
+            // caching and compression profiles
+            delete view.caching_profile_name;
+            expected.t1.app1.serviceMain.profileHTTPCaching = 'basic';
+            delete view.compression_profile_name;
+            expected.t1.app1.serviceMain.profileHTTPCompression = 'basic';
         });
         util.assertRendering(template, view, expected);
     });

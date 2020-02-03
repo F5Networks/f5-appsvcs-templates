@@ -78,6 +78,16 @@ definitions:
           {{/snat_pool_members}}
         {{/snat_pool_name}}
       {{/do_snat}}
+  service_http_def:
+    template: |
+      {{#http_profile_name}}
+        "profileHTTP": {
+          "bigip": "{{http_profile_name}}"
+        },
+      {{/http_profile_name}}
+      {{^http_profile_name}}
+        "profileHTTP": "basic",
+      {{/http_profile_name}}
   service_caching_def:
     template: |
       {{#do_caching}}
@@ -102,6 +112,18 @@ definitions:
           "profileHTTPCompression": "basic",
         {{/compression_profile_name}}
       {{/do_compression}}
+  service_multiplex_def:
+    template: |
+      {{#do_multiplex}}
+        {{#multiplex_profile_name}}
+          "profileMultiplex": {
+            "bigip": "{{multiplex_profile_name}}"
+          },
+        {{/multiplex_profile_name}}
+        {{^multiplex_profile_name}}
+          "profileMultiplex": "basic",
+        {{/multiplex_profile_name}}
+      {{/do_multiplex}}
 template: |
   {
     "class": "ADC",
@@ -118,8 +140,10 @@ template: |
           {{> service_class_def}}
           {{> service_pool_def}}
           {{> service_snat_def}}
+          {{> service_http_def}}
           {{> service_caching_def}}
           {{> service_compression_def}}
+          {{> service_multiplex_def}}
           {{#do_tls_server}}
             "redirect80": {{redirect80::boolean}},
           {{/do_tls_server}}
