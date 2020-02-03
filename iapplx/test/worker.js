@@ -4,11 +4,15 @@
 
 'use strict';
 
-process.AFL_TW_ROOT = '../templates';
-process.AFL_TW_TS = '../templates';
+const path = require('path');
 
+process.AFL_TW_ROOT = path.join(process.cwd(), '../templates');
+process.AFL_TW_TS = path.join(process.cwd(), '../templates');
+
+const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
+const mockfs = require('mock-fs');
 
 const fast = require('@f5devcentral/fast');
 
@@ -381,5 +385,36 @@ describe('template worker info tests', function () {
             .then(() => {
                 assert.equal(op.status, 404);
             });
+    });
+    it('install_templateset_missing', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('installtemplateset');
+        op.setBody({
+            name: 'badname'
+        });
+        mockfs({
+        });
+
+        return worker.onPost(op)
+            .then(() => assert.equal(op.status, 404))
+            .finally(() => mockfs.restore());
+    });
+    it('install_templateset', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('installtemplateset');
+
+        op.setBody({
+            name: 'testset'
+        });
+        mockfs({
+            '/var/config/rest/downloads': {
+                'testset.zip': fs.readFileSync('./test/testset.zip')
+            },
+            [path.join(process.cwd(), '..', 'templates', 'templatesets')]: {}
+        });
+
+        return worker.onPost(op)
+            .then(() => assert.equal(op.status, 200))
+            .finally(() => mockfs.restore());
     });
 });

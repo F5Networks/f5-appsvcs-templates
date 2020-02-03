@@ -1,6 +1,9 @@
 'use strict';
 
+const fs = require('fs');
+
 const yaml = require('js-yaml');
+const extract = require('extract-zip');
 
 const fast = require('@f5devcentral/fast');
 
@@ -17,6 +20,8 @@ const mainBlockName = 'F5 Application Services Templates';
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
+
+const uploadPath = '/var/config/rest/downloads';
 
 class TemplateWorker {
     constructor() {
@@ -238,6 +243,28 @@ class TemplateWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    postInstallTemplateSet(restOperation, data) {
+        const setpath = `${uploadPath}/${data.name}.zip`;
+        const targetpath = `${templatesPath}/${data.name}`;
+
+        if (!fs.existsSync(setpath)) {
+            return this.genRestResponse(restOperation, 404, `${setpath} does not exist`);
+        }
+
+        if (fs.existsSync(targetpath)) {
+            fs.rmdirSync(targetpath);
+        }
+
+        fs.mkdirSync(targetpath);
+
+        return new Promise((resolve, reject) => {
+            extract(setpath, { dir: targetpath }, (err) => {
+                if (err) return reject(err);
+                return resolve(this.genRestResponse(restOperation, 200, ''));
+            });
+        });
+    }
+
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -248,6 +275,8 @@ class TemplateWorker {
             switch (collection) {
             case 'applications':
                 return this.postApplications(restOperation, body);
+            case 'installtemplateset':
+                return this.postInstallTemplateSet(restOperation, body);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
