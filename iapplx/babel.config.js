@@ -9,6 +9,8 @@ module.exports = {
     ignore: [
         // Add whitelisted modules to sped up builds
         '**/ajv/**',
-        '**/mustache/**'
+        '**/mustache/**',
+        '**/mkdirp/**',
+        '**/bin/**'
     ]
 };
