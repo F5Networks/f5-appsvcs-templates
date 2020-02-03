@@ -192,6 +192,30 @@ class TemplateWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    getTemplateSets(restOperation, tsid) {
+        if (tsid) {
+            return this.templateProvider.list()
+                .then((templates) => {
+                    const filteredList = templates.filter(x => x.startsWith(`${tsid}/`));
+                    if (!filteredList) {
+                        return this.genRestResponse(restOperation, 404, `No templates found for template set ${tsid}`);
+                    }
+                    restOperation.setBody(filteredList);
+                    this.completeRestOperation(restOperation);
+                    return Promise.resolve();
+                })
+                .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+        }
+
+        return this.templateProvider.list()
+            .then(templates => Array.from(templates.reduce((acc, curr) => acc.add(curr.split('/')[0]), new Set())))
+            .then((setList) => {
+                restOperation.setBody(setList);
+                this.completeRestOperation(restOperation);
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
@@ -207,6 +231,8 @@ class TemplateWorker {
                 return this.getApplications(restOperation, itemid);
             case 'tasks':
                 return this.getTasks(restOperation, itemid);
+            case 'templatesets':
+                return this.getTemplateSets(restOperation, itemid);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
@@ -262,8 +288,7 @@ class TemplateWorker {
                 if (err) return reject(err);
                 return resolve(this.genRestResponse(restOperation, 200, ''));
             });
-        })
-        .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+        }).catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     onPost(restOperation) {

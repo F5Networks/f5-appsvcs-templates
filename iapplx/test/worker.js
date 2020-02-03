@@ -295,6 +295,26 @@ describe('template worker info tests', function () {
                 });
             });
     });
+    it('get_templatesets', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('templatesets');
+        return worker.onGet(op)
+            .then(() => {
+                assert.notEqual(op.status, 404);
+                assert.notEqual(op.status, 500);
+                assert.deepEqual(op.body, ['f5-debug']);
+            });
+    });
+    it('get_templatesets_item', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('templatesets/f5-debug');
+        return worker.onGet(op)
+            .then(() => {
+                assert.notEqual(op.status, 404);
+                assert.notEqual(op.status, 500);
+                assert.notDeepEqual(op.body, {});
+            });
+    });
     it('post_bad_end_point', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('bad');
