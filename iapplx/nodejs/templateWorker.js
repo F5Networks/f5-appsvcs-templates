@@ -262,7 +262,8 @@ class TemplateWorker {
                 if (err) return reject(err);
                 return resolve(this.genRestResponse(restOperation, 200, ''));
             });
-        });
+        })
+        .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     onPost(restOperation) {
