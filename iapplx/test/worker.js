@@ -437,4 +437,20 @@ describe('template worker info tests', function () {
             .then(() => assert.equal(op.status, 200))
             .finally(() => mockfs.restore());
     });
+    it('delete_templateset', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('templatesets/f5-debug');
+        const tsPath = path.join(process.cwd(), '..', 'templates', 'f5-debug');
+
+        mockfs({
+            [tsPath]: {}
+        });
+
+        return worker.onDelete(op)
+            .then(() => {
+                assert.equal(op.status, 200);
+                assert(!fs.existsSync(tsPath));
+            })
+            .finally(() => mockfs.restore());
+    });
 });

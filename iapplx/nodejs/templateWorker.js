@@ -330,6 +330,21 @@ class TemplateWorker {
             .catch(e => this.genRestResponse(restOperation, 404, e.stack));
     }
 
+    deleteTemplateSets(restOperation, tsid) {
+        const tspath = `${templatesPath}/${tsid}`;
+        if (!fs.existsSync(tspath)) {
+            return this.genRestResponse(restOperation, 404, `template set not found: ${tsid}`);
+        }
+
+        try {
+            fs.rmdirSync(tspath);
+        } catch (e) {
+            return this.genRestResponse(restOperation, 500, e.stack);
+        }
+
+        return this.genRestResponse(restOperation, 200, '');
+    }
+
     onDelete(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
@@ -340,6 +355,8 @@ class TemplateWorker {
             switch (collection) {
             case 'applications':
                 return this.deleteApplications(restOperation, itemid);
+            case 'templatesets':
+                return this.deleteTemplateSets(restOperation, itemid);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
