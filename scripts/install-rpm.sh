@@ -45,12 +45,12 @@ poll_task () {
     done
 }
 
-#Get list of existing f5-fast packages on target
+#Get list of existing f5-appsvcs-templates packages on target
 echo "Finding installed packages on ${TARGET}";
 TASK=$(curl $CURL_FLAGS -H "Content-Type: application/json" \
     -X POST https://$TARGET/mgmt/shared/iapp/package-management-tasks -d "{operation: 'QUERY'}")
 poll_task $(echo $TASK | jq -r .id)
-RPMS=$(echo $RESULT | jq -r '.queryResponse[].packageName | select(. | startswith("f5-fast"))')
+RPMS=$(echo $RESULT | jq -r '.queryResponse[].packageName | select(. | startswith("f5-appsvcs-templates"))')
 
 #Uninstall existing,matching packages on target
 for PKG in $RPMS; do

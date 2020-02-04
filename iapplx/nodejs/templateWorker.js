@@ -15,7 +15,7 @@ const AS3Driver = fast.AS3Driver;
 const pkg = require('../package.json');
 
 const endpointName = 'fast';
-const projectName = `f5-${endpointName}`;
+const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
