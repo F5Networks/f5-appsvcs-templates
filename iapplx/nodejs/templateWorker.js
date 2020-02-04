@@ -266,7 +266,11 @@ class TemplateWorker {
                     parameters: tmplView
                 });
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+            .catch((e) => {
+                if (restOperation.status !== 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 
     postTemplateSets(restOperation, data) {
