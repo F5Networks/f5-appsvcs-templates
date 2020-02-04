@@ -1,0 +1,34 @@
+{{!
+  A simple HTTP application with HTTP load balancing. Provide a virtual address
+  and port to host on, and a list of HTTP server IP addresses and a port to
+  load balance requests to.
+}}
+{
+  "class": "ADC",
+  "schemaVersion": "3.0.0",
+  "{{tenant_name}}": {
+    "class": "Tenant",
+    "{{application_name}}": {
+      "class": "Application",
+      "template": "http",
+      "serviceMain": {
+        "class": "Service_HTTP",
+        "virtualPort": {{virtual_port::integer}},
+        "virtualAddresses": ["{{virtual_address}}"],
+        "pool": "web_pool"
+      },
+      "web_pool": {
+        "class": "Pool",
+        "monitors": [
+          "http"
+        ],
+        "members": [
+          {
+            "servicePort": {{server_port::integer}},
+            "serverAddresses": {{server_addresses::array}}
+          }
+        ]
+      }
+    }
+  }
+}

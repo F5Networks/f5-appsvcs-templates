@@ -1,0 +1,51 @@
+{{!
+Example of an HTTPS application using an ASM Policy. Provide a Virtual IP address
+and port along with a list of HTTP server IP addresses, port, and a HTTPS
+certificate and private key. Enter the path to an existing ASM policy (WAF) on
+BIG-IP to provide L7 security and logging features.
+}}
+{
+  "class": "ADC",
+  "schemaVersion": "3.0.0",
+  "id": "template-simple-https-asm",
+  "label": "Simple HTTPS",
+  "remark": "An HTTPS application",
+  "{{tenant_name}}": {
+    "class": "Tenant",
+    "{{application_name}}": {
+      "class": "Application",
+      "template": "https",
+      "serviceMain": {
+        "class": "Service_HTTPS",
+        "virtualPort": {{virtual_port::integer}},
+        "virtualAddresses": [ "{{virtual_address}}" ],
+        "pool": "web_pool",
+        "policyWAF": {
+          "bigip": "{{WAF_policy_path}}"
+        },
+        "serverTLS": "webtls"
+      },
+      "web_pool": {
+        "class": "Pool",
+        "monitors": [
+          "http"
+        ],
+        "members": [{
+          "servicePort": {{server_port::integer}},
+          "serverAddresses": {{server_address::array}}
+        }]
+      },
+      "webtls": {
+        "class": "TLS_Server",
+        "certificates": [{
+          "certificate": "webcert"
+        }]
+      },
+      "webcert": {
+        "class": "Certificate",
+        "certificate": {{certificate::text}},
+        "privateKey": {{private_key::text}}
+      }
+    }
+  }
+}

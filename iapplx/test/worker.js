@@ -134,7 +134,7 @@ describe('template worker info tests', function () {
     });
     it('get_template_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/f5-debug/simple_udp');
+        const op = new RestOp('templates/f5-simple/simple_udp');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -144,7 +144,7 @@ describe('template worker info tests', function () {
     });
     it('get_template_item_with_schema', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/f5-debug/f5_https');
+        const op = new RestOp('templates/f5-debug/http-basic');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -302,7 +302,7 @@ describe('template worker info tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert.deepEqual(op.body, ['f5-debug']);
+                assert.deepEqual(op.body, ['f5-debug', 'f5-simple']);
             });
     });
     it('get_templatesets_item', function () {

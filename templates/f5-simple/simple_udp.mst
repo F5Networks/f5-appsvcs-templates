@@ -1,0 +1,35 @@
+{{!
+Simple UDP application. Provide a Virtual IP Address and a port for client
+to connect to, and a list of IP Addresses with a port hosting a UDP service.
+}}
+{
+  "class": "ADC",
+  "schemaVersion": "3.0.0",
+  "{{tenant_name}}": {
+    "class": "Tenant",
+    "{{application_name}}": {
+      "class": "Application",
+      "template": "udp",
+      "serviceMain": {
+        "class": "Service_UDP",
+        "virtualPort": {{virtual_port::integer}},
+        "virtualAddresses": [
+          "{{virtual_address}}"
+        ],
+        "pool": "Pool1"
+      },
+      "Pool1": {
+        "class": "Pool",
+        "monitors": [
+          "icmp"
+        ],
+        "members": [
+          {
+            "servicePort": {{server_port::integer}},
+            "serverAddresses": {{server_addresses::array}}
+          }
+        ]
+      }
+    }
+  }
+}

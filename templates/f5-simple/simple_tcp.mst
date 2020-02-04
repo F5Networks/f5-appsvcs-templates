@@ -1,0 +1,30 @@
+{{!
+ Simple TCP application load balancer. Provide a Virtual IP address and a port
+ for clients to connect to, and a list of IP addresses hosting a TCP service.
+}}
+{
+  "class": "ADC",
+  "schemaVersion": "3.0.0",
+  "{{tenant_name}}": {
+    "class": "Tenant",
+    "{{application_name}}": {
+      "class": "Application",
+      "template": "tcp",
+      "serviceMain": {
+        "class": "Service_TCP",
+        "virtualAddresses": [
+          "{{virtual_address}}"
+        ],
+        "virtualPort": {{virtual_port::integer}},
+        "pool": "svc_pool"
+      },
+      "svc_pool": {
+        "class": "Pool",
+        "members": [{
+          "servicePort": {{server_port::integer}},
+          "serverAddresses": {{server_addresses::array}}
+        }]
+      }
+    }
+  }
+}

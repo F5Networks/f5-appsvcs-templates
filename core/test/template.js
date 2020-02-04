@@ -127,13 +127,6 @@ describe('Template class tests', function () {
                 assert.deepStrictEqual(tmpl.getViewSchema(), reference);
             });
     });
-    it('load_complex_mustache', function () {
-        const mstdata = fs.readFileSync('./../templates/f5-debug/f5_https.mst', 'utf8');
-        return Template.loadMst(schemaProvider, mstdata)
-            .then((tmpl) => {
-                assert.ok(tmpl);
-            });
-    });
     it('load_complex_yaml', function () {
         const ymldata = fs.readFileSync(`${templatesPath}/complex.yml`, 'utf8');
         return Template.loadYaml(schemaProvider, ymldata)
