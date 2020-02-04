@@ -26,6 +26,16 @@ validator.addFormat('mustache', {
 });
 const _validateSchema = validator.compile(tmplSchema);
 
+class JSONViewTransform {
+    transform(schema, value) {
+        if (schema.type === 'array' && !schema.items) {
+            return JSON.stringify(value);
+        }
+
+        return value;
+    }
+}
+
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
     return text;
@@ -71,6 +81,7 @@ class Template {
             'number',
             'string',
             'integer',
+            'array',
             'text'
         ];
 
@@ -278,15 +289,32 @@ class Template {
         }
     }
 
+    transformView(view) {
+        const schema = this.getViewSchema();
+        const transform = new JSONViewTransform();
+        return Object.keys(view).reduce((acc, curr) => {
+            const value = view[curr];
+            const valueSchema = schema.properties && schema.properties[curr];
+
+            if (valueSchema) {
+                acc[curr] = transform.transform(valueSchema, value);
+            } else {
+                // Skip transform if we do not have schema
+                acc[curr] = value;
+            }
+            return acc;
+        }, {});
+    }
+
     _cleanTemplateText(text) {
         return text.replace(/{{([_a-zA-Z0-9]+):.*}}/g, '{{$1}}');
     }
 
     render(view) {
         this.validateView(view);
+        const xfview = this.transformView(this.getCombinedView(view));
         const partials = this._getPartials();
-        const combView = this.getCombinedView(view);
-        return Mustache.render(this._cleanTemplateText(this.templateText), combView, partials);
+        return Mustache.render(this._cleanTemplateText(this.templateText), xfview, partials);
     }
 }
 

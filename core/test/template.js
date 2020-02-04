@@ -221,4 +221,14 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
+    it('render_array', function () {
+        const mstdata = '{{values::array}}';
+        const view = { values: [1, 2, 3] };
+        const reference = '[1,2,3]';
+        return Template.loadMst(schemaProvider, mstdata)
+            .then((tmpl) => {
+                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                assert.strictEqual(tmpl.render(view), reference);
+            });
+    });
 });
