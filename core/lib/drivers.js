@@ -4,36 +4,6 @@ const url = require('url');
 const uuid4 = require('uuid/v4');
 const httpUtils = require('./http_utils');
 
-class NullDriver {
-    constructor() {
-        this._apps = {};
-    }
-
-    createApplication(appDef) {
-        const appName = appDef.name;
-        this._apps[appName] = appDef;
-        return Promise.resolve({
-        });
-    }
-
-    deleteApplication(tenant, app) {
-        delete this._apps[app];
-        return Promise.resolve();
-    }
-
-    listApplicationNames() {
-        return Promise.resolve(Object.keys(this._apps));
-    }
-
-    listApplications() {
-        return Promise.resolve(Object.values(this._apps));
-    }
-
-    getApplication(_tenant, app) {
-        return Promise.resolve(this._apps[app]);
-    }
-}
-
 const AS3DriverConstantsKey = 'fast';
 
 class AS3Driver {
@@ -238,7 +208,6 @@ class AS3Driver {
 }
 
 module.exports = {
-    NullDriver,
     AS3Driver,
     AS3DriverConstantsKey
 };

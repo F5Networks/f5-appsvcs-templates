@@ -11,22 +11,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { NullDriver, AS3Driver, AS3DriverConstantsKey } = require('../lib/drivers');
-
-describe('Null Driver tests', function () {
-    it('add_app', function () {
-        const driver = new NullDriver();
-        const appDef = {
-            name: 'appy'
-        };
-
-        return assert.becomes(driver.listApplicationNames(), [])
-            .then(() => driver.createApplication(appDef))
-            .then(() => assert.becomes(driver.listApplicationNames(), ['appy']))
-            .then(() => assert.becomes(driver.listApplications(), [{ name: 'appy' }]))
-            .then(() => assert.becomes(driver.getApplication(null, 'appy'), appDef));
-    });
-});
+const { AS3Driver, AS3DriverConstantsKey } = require('../lib/drivers');
 
 describe('AS3 Driver tests', function () {
     const appDef = {
