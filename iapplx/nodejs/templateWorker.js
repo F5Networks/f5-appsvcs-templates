@@ -118,11 +118,7 @@ class TemplateWorker {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation);
             })
-            .catch((e) => {
-                console.error(e); /* eslint-disable-line no-console */
-                restOperation.setBody(info);
-                this.completeRestOperation(restOperation);
-            });
+            .catch(e => this.genRestResponse(500, e.stack));
     }
 
     getTemplates(restOperation, tmplid) {

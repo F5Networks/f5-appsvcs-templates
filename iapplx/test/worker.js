@@ -78,7 +78,7 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onDelete');
 };
 
-describe('template worker info tests', function () {
+describe('template worker tests', function () {
     const host = 'http://localhost:8105';
     const as3ep = '/shared/appsvcs/declare';
     const as3TaskEp = '/shared/appsvcs/task';
@@ -102,8 +102,19 @@ describe('template worker info tests', function () {
 
         return worker.onGet(op)
             .then(() => {
-                assert.notEqual(op.status, 404);
-                assert.notEqual(op.status, 500);
+                assert.strictEqual(op.status, 200);
+            });
+    });
+    it('info_without_as3', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('info');
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(404);
+
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 200);
             });
     });
     it('get_bad_end_point', function () {
