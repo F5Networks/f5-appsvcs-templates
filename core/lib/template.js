@@ -28,7 +28,7 @@ const _validateSchema = validator.compile(tmplSchema);
 
 class JSONViewTransform {
     transform(schema, value) {
-        if (schema.type === 'array' && !schema.items) {
+        if (schema.type === 'array' && !schema.skip_xform) {
             return JSON.stringify(value);
         }
 
@@ -110,6 +110,13 @@ class Template {
                         type: 'string',
                         format: 'text'
                     };
+                } else if (defType === 'array') {
+                    acc.properties[defName] = {
+                        type: defType,
+                        items: {
+                            type: 'string'
+                        }
+                    };
                 } else {
                     acc.properties[defName] = {
                         type: defType
@@ -132,6 +139,7 @@ class Template {
                 if (asArray) {
                     acc.properties[mstName] = {
                         type: 'array',
+                        skip_xform: true,
                         items
                     };
                     if (items.properties && Object.keys(items.properties) < 1) {

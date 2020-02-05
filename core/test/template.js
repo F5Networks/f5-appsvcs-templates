@@ -105,6 +105,7 @@ describe('Template class tests', function () {
                 string_variable: { type: 'string' },
                 array_variable: {
                     type: 'array',
+                    skip_xform: true,
                     items: {
                         type: 'string'
                     }
@@ -216,8 +217,8 @@ describe('Template class tests', function () {
     });
     it('render_array', function () {
         const mstdata = '{{values::array}}';
-        const view = { values: [1, 2, 3] };
-        const reference = '[1,2,3]';
+        const view = { values: ['1', '2', '3'] };
+        const reference = '["1","2","3"]';
         return Template.loadMst(schemaProvider, mstdata)
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
