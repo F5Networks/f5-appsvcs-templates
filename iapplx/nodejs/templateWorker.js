@@ -177,7 +177,7 @@ class TemplateWorker {
                     this.completeRestOperation(restOperation);
                     return Promise.resolve();
                 })
-                .catch(e => this.genRestResponse(restOperation, 404, e.stack));
+                .catch(e => this.genRestResponse(restOperation, 500, e.stack));
         }
 
         return this.driver.getTasks()

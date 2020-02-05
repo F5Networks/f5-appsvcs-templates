@@ -306,6 +306,20 @@ describe('template worker tests', function () {
                 });
             });
     });
+    it('get_tasks_bad', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('tasks/foo1');
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                ]
+            });
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 404);
+            });
+    });
     it('get_templatesets', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('templatesets');
