@@ -10,7 +10,6 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { FsSchemaProvider } = require('../lib/schema_provider');
 const { FsTemplateProvider } = require('../lib/template_provider');
 
 const templatesPath = './test/templatesets';
@@ -21,8 +20,7 @@ describe('template provider tests', function () {
         assert.ok(provider);
     });
     it('load_single_mst', function () {
-        const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
-        const provider = new FsTemplateProvider(templatesPath, schemaProvider);
+        const provider = new FsTemplateProvider(templatesPath);
         return provider.fetch('test/simple_udp')
             .then((tmpl) => {
                 assert.ok(tmpl);
@@ -35,17 +33,9 @@ describe('template provider tests', function () {
                 assert.ok(tmpl);
             });
     });
-    it('load_single_yaml', function () {
+    it('load_single_with_schema', function () {
         const provider = new FsTemplateProvider(templatesPath);
         return provider.fetch('test/simple')
-            .then((tmpl) => {
-                assert.ok(tmpl);
-            });
-    });
-    it('load_single_with_schema', function () {
-        const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
-        const provider = new FsTemplateProvider(templatesPath, schemaProvider);
-        return provider.fetch('test/simple_udp')
             .then((tmpl) => {
                 assert.ok(tmpl);
             });

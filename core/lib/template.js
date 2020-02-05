@@ -52,18 +52,20 @@ class Template {
         this.defaultView = {};
     }
 
-    _loadTypeSchemas(schemaProvider, schemaList) {
-        const schemas = {};
-        if (schemaProvider) {
-            return Promise.all(schemaList.map(
-                item => schemaProvider.fetch(item)
-                    .then((schema) => {
-                        schemas[item] = JSON.parse(schema);
-                    })
-            )).then(() => schemas);
+    _loadTypeSchemas(schemaProvider) {
+        if (!schemaProvider) {
+            return Promise.resolve({});
         }
 
-        return Promise.resolve({});
+        return schemaProvider.list()
+            .then(schemaList => Promise.all(
+                schemaList.map(x => Promise.all([Promise.resolve(x), schemaProvider.fetch(x)]))
+            ))
+            .then(schemas => schemas.reduce((acc, curr) => {
+                const [schemaName, schema] = curr;
+                acc[schemaName] = JSON.parse(schema);
+                return acc;
+            }, {}));
     }
 
     _descriptionFromTemplate() {
@@ -202,11 +204,11 @@ class Template {
         }
     }
 
-    static loadMst(schemaProvider, msttext) {
+    static loadMst(msttext, schemaProvider) {
         this.validate(msttext);
         const tmpl = new this();
         tmpl.templateText = msttext;
-        return tmpl._loadTypeSchemas(schemaProvider, ['f5'])
+        return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
                 tmpl._descriptionFromTemplate();
                 tmpl._viewSchemaFromTemplate(typeSchemas);
@@ -215,7 +217,7 @@ class Template {
             });
     }
 
-    static loadYaml(schemaProvider, yamltext) {
+    static loadYaml(yamltext, schemaProvider) {
         this.validate(yamltext);
         const tmpl = new this();
         const yamldata = yaml.safeLoad(yamltext);
@@ -226,7 +228,7 @@ class Template {
         if (yamldata.definitions) tmpl.definitions = yamldata.definitions;
         if (yamldata.view) tmpl.defaultView = yamldata.view;
 
-        return tmpl._loadTypeSchemas(schemaProvider, ['f5'])
+        return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
                 tmpl._viewSchemaFromTemplate(typeSchemas);
 

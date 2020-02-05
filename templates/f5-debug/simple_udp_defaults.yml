@@ -22,7 +22,7 @@ template: |
           "virtualAddresses": [
             "{{virtual_address}}"
           ],
-          "virtualPort": {{virtual_port::integer}},
+          "virtualPort": {{virtual_port:f5:port}},
           "pool": "Pool1"
         },
         "Pool1": {
@@ -33,7 +33,7 @@ template: |
           "members": [
             {
               "serverAddresses": {{server_addresses::array}},
-              "servicePort": {{service_port::integer}}
+              "servicePort": {{service_port:f5:port}}
             }
           ]
         }

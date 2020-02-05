@@ -5,11 +5,18 @@ const path = require('path');
 
 const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
+const FsSchemaProvider = require('./schema_provider').FsSchemaProvider;
 
-function FsTemplateProvider(templateRootPath, schemaProvider) {
+function FsTemplateProvider(templateRootPath) {
     this.config_template_path = templateRootPath;
+    this.schemaProviders = {};
 
     this.cache = new ResourceCache((templateName) => {
+        const tsName = templateName.split('/')[0];
+        if (!this.schemaProviders[tsName]) {
+            this.schemaProviders[tsName] = new FsSchemaProvider(`${templateRootPath}/${tsName}`);
+        }
+        const schemaProvider = this.schemaProviders[tsName];
         let useMst = 0;
         let tmplpath = `${templateRootPath}/${templateName}`;
         if (fs.existsSync(`${tmplpath}.yml`)) {
@@ -30,7 +37,7 @@ function FsTemplateProvider(templateRootPath, schemaProvider) {
                     resolve(data.toString('utf8'));
                 }
             });
-        }).then(tmpldata => Template[(useMst) ? 'loadMst' : 'loadYaml'](schemaProvider, tmpldata));
+        }).then(tmpldata => Template[(useMst) ? 'loadMst' : 'loadYaml'](tmpldata, schemaProvider));
     });
 
     return this;

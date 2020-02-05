@@ -36,7 +36,7 @@ Uses AS3 template: udp.
                   "{{.}}",
                 {{/server_addresses}}
               ],
-              "servicePort": {{service_port:f5:port}}
+              "servicePort": {{service_port:types:port}}
             }
           ]
         }

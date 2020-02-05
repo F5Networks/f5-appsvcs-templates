@@ -28,8 +28,6 @@ const mstWithTypes = `{
 `;
 
 describe('Template class tests', function () {
-    const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
-
     it('construct', function () {
         const tmpl = new Template();
         assert.ok(tmpl);
@@ -48,7 +46,7 @@ describe('Template class tests', function () {
         reference.description = 'Just a basic template';
         reference.templateText = mstdata;
 
-        return Template.loadMst(schemaProvider, mstdata)
+        return Template.loadMst(mstdata)
             .then((tmpl) => {
                 reference._viewSchema = tmpl._viewSchema;
                 assert.ok(tmpl);
@@ -71,13 +69,13 @@ describe('Template class tests', function () {
               </html>
         `;
 
-        return Template.loadYaml(schemaProvider, ymldata)
+        return Template.loadYaml(ymldata)
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
     });
     it('from_json', function () {
-        return Template.loadMst(null, mstWithTypes)
+        return Template.loadMst(mstWithTypes)
             .then((tmpl) => {
                 const jsondata = JSON.stringify(tmpl);
                 let jsontmpl = Template.fromJson(jsondata);
@@ -91,7 +89,7 @@ describe('Template class tests', function () {
     });
     it('missing_dscription', function () {
         const mstdata = '{{{foo}}: {{bar}}}';
-        return Template.loadMst(schemaProvider, mstdata)
+        return Template.loadMst(mstdata)
             .then((tmpl) => {
                 assert.ok(tmpl);
                 assert.strictEqual(tmpl.description, '');
@@ -123,14 +121,14 @@ describe('Template class tests', function () {
             title: '',
             description: ''
         };
-        return Template.loadMst(schemaProvider, mstWithTypes)
+        return Template.loadMst(mstWithTypes)
             .then((tmpl) => {
                 assert.deepStrictEqual(tmpl.getViewSchema(), reference);
             });
     });
     it('load_complex_yaml', function () {
         const ymldata = fs.readFileSync(`${templatesPath}/complex.yml`, 'utf8');
-        return Template.loadYaml(schemaProvider, ymldata)
+        return Template.loadYaml(ymldata)
             .then((tmpl) => {
                 assert.ok(tmpl);
             });
@@ -155,14 +153,14 @@ describe('Template class tests', function () {
         const reference = `
             bar
         `;
-        return Template.loadMst(schemaProvider, mstdata)
+        return Template.loadMst(mstdata)
             .then((tmpl) => {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
     it('load_partials', function () {
         const ymldata = fs.readFileSync(`${templatesPath}/complex.yml`, 'utf8');
-        return Template.loadYaml(null, ymldata)
+        return Template.loadYaml(ymldata)
             .then((tmpl) => {
                 assert.notStrictEqual(tmpl._getPartials(), {});
             });
@@ -178,7 +176,7 @@ describe('Template class tests', function () {
             template: |
                 {{> numbpartial}}
         `;
-        return Template.loadYaml(null, ymldata)
+        return Template.loadYaml(ymldata)
             .then((tmpl) => {
                 assert.strictEqual(tmpl.render(), 'numb=5\n');
             });
@@ -188,7 +186,7 @@ describe('Template class tests', function () {
         const view = {};
         const reference = '';
 
-        return Template.loadMst(null, mstdata)
+        return Template.loadMst(mstdata)
             .then((tmpl) => {
                 assert.strictEqual(tmpl.render(view), reference);
             });
@@ -198,18 +196,19 @@ describe('Template class tests', function () {
         const view = { skip_foo: true };
         const reference = 'bar';
 
-        return Template.loadMst(null, mstdata)
+        return Template.loadMst(mstdata)
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
     it('render_type_defaults', function () {
+        const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
         const mstdata = '{{virtual_port:f5:port}}';
         const view = {};
         const reference = '443';
 
-        return Template.loadMst(schemaProvider, mstdata)
+        return Template.loadMst(mstdata, schemaProvider)
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
@@ -219,7 +218,7 @@ describe('Template class tests', function () {
         const mstdata = '{{values::array}}';
         const view = { values: ['1', '2', '3'] };
         const reference = '["1","2","3"]';
-        return Template.loadMst(schemaProvider, mstdata)
+        return Template.loadMst(mstdata)
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
                 assert.strictEqual(tmpl.render(view), reference);

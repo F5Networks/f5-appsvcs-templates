@@ -7,7 +7,6 @@ const extract = require('extract-zip');
 
 const fast = require('@f5devcentral/fast');
 
-const FsSchemaProvider = fast.FsSchemaProvider;
 const FsTemplateProvider = fast.FsTemplateProvider;
 const httpUtils = fast.httpUtils;
 const AS3Driver = fast.AS3Driver;
@@ -30,8 +29,7 @@ class TemplateWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.schemaProvider = new FsSchemaProvider(`${templatesPath}/f5-debug`);
-        this.templateProvider = new FsTemplateProvider(templatesPath, this.schemaProvider);
+        this.templateProvider = new FsTemplateProvider(templatesPath);
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
     }
 
@@ -270,7 +268,7 @@ class TemplateWorker {
     }
 
     _validateTemplateSet(tspath) {
-        const tmplProvider = new FsTemplateProvider(scratchPath, new FsSchemaProvider(tspath));
+        const tmplProvider = new FsTemplateProvider(tspath);
         return tmplProvider.list()
             .then(templateList => Promise.all(templateList.map(tmpl => tmplProvider.fetch(tmpl))));
     }
@@ -299,7 +297,7 @@ class TemplateWorker {
                 return resolve();
             });
         })
-            .then(() => this._validateTemplateSet(scratch))
+            .then(() => this._validateTemplateSet(scratchPath))
             .then(() => fs.move(scratch, targetpath, { overwrite: true }))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))

@@ -19,9 +19,9 @@ const loadTemplate = (templatePath) => {
         .then((tmplData) => {
             try {
                 if (tmplExt === 'mst') {
-                    return Template.loadMst(schemaProvider, tmplData);
+                    return Template.loadMst(tmplData, schemaProvider);
                 }
-                return Template.loadYaml(schemaProvider, tmplData);
+                return Template.loadYaml(tmplData, schemaProvider);
             } catch (e) {
                 if (!Template.isValid(tmplData)) {
                     console.error(`template at ${templatePath} failed validation:`);
