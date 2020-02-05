@@ -275,7 +275,8 @@ route('modify', 'create', (appID) => {
     dispOutput(`Fetching app data for ${appID}`);
     getJSON(`applications/${appID}`)
         .then((appData) => {
-            newEditor(appData.template, appData.view);
+            const appDef = appData.constants.fast;
+            newEditor(appDef.template, appDef.view);
         })
         .catch(e => dispOutput(e.message));
 });
