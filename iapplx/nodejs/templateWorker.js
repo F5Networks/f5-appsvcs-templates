@@ -193,7 +193,7 @@ class TemplateWorker {
             return this.templateProvider.list()
                 .then((templates) => {
                     const filteredList = templates.filter(x => x.startsWith(`${tsid}/`));
-                    if (!filteredList) {
+                    if (filteredList.length === 0) {
                         return this.genRestResponse(restOperation, 404, `No templates found for template set ${tsid}`);
                     }
                     restOperation.setBody(filteredList);

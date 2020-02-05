@@ -340,6 +340,14 @@ describe('template worker tests', function () {
                 assert.notDeepEqual(op.body, {});
             });
     });
+    it('get_templatesets_bad', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('templatesets/foo1');
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 404);
+            });
+    });
     it('post_bad_end_point', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('bad');
