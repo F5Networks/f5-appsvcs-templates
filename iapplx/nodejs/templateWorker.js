@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs-extra');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
@@ -290,11 +290,8 @@ class TemplateWorker {
         }
 
         // Setup a scratch location we can use while validating the template set
-        if (fs.existsSync(scratchPath)) {
-            fs.rmdirSync(scratchPath);
-        }
-        fs.mkdirSync(scratchPath);
-        fs.mkdirSync(scratch);
+        fs.removeSync(scratch);
+        fs.mkdirsSync(scratch);
 
         return new Promise((resolve, reject) => {
             extract(setpath, { dir: scratch }, (err) => {
@@ -303,19 +300,10 @@ class TemplateWorker {
             });
         })
             .then(() => this._validateTemplateSet(scratch))
-            .then(() => {
-                if (fs.existsSync(targetpath)) {
-                    fs.rmdirSync(targetpath);
-                }
-                fs.renameSync(scratch, targetpath);
-            })
+            .then(() => fs.move(scratch, targetpath, { overwrite: true }))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))
-            .finally(() => {
-                if (fs.existsSync(scratch)) {
-                    fs.rmdirSync(scratch);
-                }
-            });
+            .finally(() => fs.removeSync(scratch));
     }
 
     onPost(restOperation) {
@@ -362,14 +350,9 @@ class TemplateWorker {
         if (!fs.existsSync(tspath)) {
             return this.genRestResponse(restOperation, 404, `template set not found: ${tsid}`);
         }
-
-        try {
-            fs.rmdirSync(tspath);
-        } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.stack);
-        }
-
-        return this.genRestResponse(restOperation, 200, '');
+        return fs.remove(tspath)
+            .then(() => this.genRestResponse(restOperation, 200, ''))
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     onDelete(restOperation) {

@@ -11,6 +11,7 @@ module.exports = {
         '**/ajv/**',
         '**/mustache/**',
         '**/mkdirp/**',
+        '**/fs-extra/**',
         '**/bin/**'
     ]
 };

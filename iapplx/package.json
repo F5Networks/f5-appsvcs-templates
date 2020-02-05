@@ -45,6 +45,7 @@
   "dependencies": {
     "@f5devcentral/fast": "file:../core",
     "extract-zip": "^1.6.7",
+    "fs-extra": "^8.1.0",
     "js-yaml": "^3.13.1"
   }
 }

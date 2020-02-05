@@ -499,4 +499,13 @@ describe('template worker tests', function () {
             })
             .finally(() => mockfs.restore());
     });
+    it('delete_templateset_bad', function () {
+        const worker = new TemplateWorker();
+        const op = new RestOp('templatesets/does_not_exist');
+
+        return worker.onDelete(op)
+            .then(() => {
+                assert.equal(op.status, 404);
+            });
+    });
 });
