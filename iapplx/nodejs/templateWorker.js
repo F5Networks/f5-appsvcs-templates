@@ -20,7 +20,7 @@ const mainBlockName = 'F5 Application Services Templates';
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
-
+const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
 
 class TemplateWorker {
@@ -273,26 +273,53 @@ class TemplateWorker {
             });
     }
 
+    _validateTemplateSet(tspath) {
+        const tmplProvider = new FsTemplateProvider(scratchPath, new FsSchemaProvider(tspath));
+        return tmplProvider.list()
+            .then(templateList => Promise.all(templateList.map(tmpl => tmplProvider.fetch(tmpl))));
+    }
+
     postTemplateSets(restOperation, data) {
-        const setpath = `${uploadPath}/${data.name}.zip`;
-        const targetpath = `${templatesPath}/${data.name}`;
+        const tsid = data.name;
+        const setpath = `${uploadPath}/${tsid}.zip`;
+        const targetpath = `${templatesPath}/${tsid}`;
+        const scratch = `${scratchPath}/${tsid}`;
+
+        if (!data.name) {
+            return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
+        }
 
         if (!fs.existsSync(setpath)) {
             return this.genRestResponse(restOperation, 404, `${setpath} does not exist`);
         }
 
-        if (fs.existsSync(targetpath)) {
-            fs.rmdirSync(targetpath);
+        // Setup a scratch location we can use while validating the template set
+        if (fs.existsSync(scratchPath)) {
+            fs.rmdirSync(scratchPath);
         }
-
-        fs.mkdirSync(targetpath);
+        fs.mkdirSync(scratchPath);
+        fs.mkdirSync(scratch);
 
         return new Promise((resolve, reject) => {
-            extract(setpath, { dir: targetpath }, (err) => {
+            extract(setpath, { dir: scratch }, (err) => {
                 if (err) return reject(err);
-                return resolve(this.genRestResponse(restOperation, 200, ''));
+                return resolve();
             });
-        }).catch(e => this.genRestResponse(restOperation, 500, e.stack));
+        })
+            .then(() => this._validateTemplateSet(scratch))
+            .then(() => {
+                if (fs.existsSync(targetpath)) {
+                    fs.rmdirSync(targetpath);
+                }
+                fs.renameSync(scratch, targetpath);
+            })
+            .then(() => this.genRestResponse(restOperation, 200, ''))
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack))
+            .finally(() => {
+                if (fs.existsSync(scratch)) {
+                    fs.rmdirSync(scratch);
+                }
+            });
     }
 
     onPost(restOperation) {

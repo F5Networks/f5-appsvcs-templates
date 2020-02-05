@@ -4,6 +4,7 @@
 
 'use strict';
 
+const mockfs = require('mock-fs');
 const path = require('path');
 
 process.AFL_TW_ROOT = path.join(process.cwd(), '../templates');
@@ -12,7 +13,6 @@ process.AFL_TW_TS = path.join(process.cwd(), '../templates');
 const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
-const mockfs = require('mock-fs');
 
 const fast = require('@f5devcentral/fast');
 
@@ -422,6 +422,7 @@ describe('template worker info tests', function () {
     it('post_templateset', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('templatesets');
+        const tsPath = path.join(process.cwd(), '..', 'templates');
 
         op.setBody({
             name: 'testset'
@@ -430,11 +431,15 @@ describe('template worker info tests', function () {
             '/var/config/rest/downloads': {
                 'testset.zip': fs.readFileSync('./test/testset.zip')
             },
-            [path.join(process.cwd(), '..', 'templates', 'templatesets')]: {}
+            [tsPath]: {}
         });
 
         return worker.onPost(op)
-            .then(() => assert.equal(op.status, 200))
+            .then(() => {
+                assert(fs.existsSync(tsPath));
+                assert.equal(op.status, 200);
+                assert(fs.existsSync(path.join(tsPath, 'testset')));
+            })
             .finally(() => mockfs.restore());
     });
     it('delete_templateset', function () {
