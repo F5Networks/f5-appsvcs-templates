@@ -59,4 +59,10 @@ describe('template provider tests', function () {
             assert.isRejected(provider.fetch('simple_udp'))
         ]);
     });
+    it('load_multiple', function () {
+        const provider = new FsTemplateProvider(templatesPath);
+        return assert.isFulfilled(provider.fetch('test/simple'))
+            .then(() => assert.isFulfilled(provider.fetch('test/complex')))
+            .then(() => assert.isFulfilled(provider.fetch('test/simple')));
+    });
 });
