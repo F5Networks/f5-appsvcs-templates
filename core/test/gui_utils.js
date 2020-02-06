@@ -19,13 +19,15 @@ describe('GUI utils test', function () {
             properties: {
                 bool: { type: 'boolean' },
                 table: { type: 'array' },
-                str: { type: 'string' }
+                str: { type: 'string' },
+                longstr: { type: 'string', format: 'text' }
             }
         };
         guiUtils.modSchemaForJSONEditor(schema);
         assert.strictEqual(schema.properties.bool.format, 'checkbox');
         assert.strictEqual(schema.properties.table.format, 'table');
         assert.strictEqual(schema.properties.str.format, undefined);
+        assert.strictEqual(schema.properties.longstr.format, 'textarea');
     });
     it('add_deps', function () {
         const schema = {

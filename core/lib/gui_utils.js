@@ -7,6 +7,8 @@ const injectFormatsIntoSchema = (schema) => {
                 item.format = 'checkbox';
             } else if (item.type === 'array') {
                 item.format = 'table';
+            } else if (item.format === 'text') {
+                item.format = 'textarea';
             }
 
             injectFormatsIntoSchema(item);
