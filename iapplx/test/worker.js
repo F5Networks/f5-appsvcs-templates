@@ -458,6 +458,11 @@ describe('template worker tests', function () {
 
         return worker.onPost(op)
             .then(() => assert.equal(op.status, 404))
+            .then(() => {
+                op.setBody({});
+                return worker.onPost(op);
+            })
+            .then(() => assert.equal(op.status, 400))
             .finally(() => mockfs.restore());
     });
     it('post_templateset', function () {
