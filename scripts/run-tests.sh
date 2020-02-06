@@ -14,9 +14,7 @@ mkdir .nyc_output
 for project in "${projects[@]}"; do
     pushd "${project}"
     npm ci
-    if [ "${project}" != "templates" ]; then
-        npm run lint
-    fi
+    npm run lint
     npm run coverage
     popd
     cp -r "${project}"/.nyc_output/* .nyc_output
