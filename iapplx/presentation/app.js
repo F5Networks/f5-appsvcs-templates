@@ -66,6 +66,10 @@ const newEditor = (tmplid, view) => {
                 dispOutput('Editor ready');
             });
 
+            editor.on('change', () => {
+                document.getElementById('form-btn').disabled = editor.validation_results.length !== 0;
+            });
+
             // Hook up buttons
             document.getElementById('view-tmpl-btn').onclick = () => {
                 dispOutput(tmpl.templateText);
