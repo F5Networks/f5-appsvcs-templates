@@ -52,6 +52,14 @@ describe('template provider tests', function () {
                 assert.notStrictEqual(templates.length, 0);
             });
     });
+    it('load_list_filter', function () {
+        const provider = new FsTemplateProvider(templatesPath, ['foo']);
+        return provider.list()
+            .then((templates) => {
+                assert.ok(templates);
+                assert.strictEqual(templates.length, 0);
+            });
+    });
     it('bad_tmpl_path', function () {
         const provider = new FsTemplateProvider('bad/path');
         return Promise.all([

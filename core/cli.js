@@ -8,30 +8,18 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const Template = require('./lib/template').Template;
-const FsSchemaProvider = require('./lib/schema_provider').FsSchemaProvider;
-
-const schemaPath = path.join(__dirname, '..', 'templates', 'f5-debug');
-const schemaProvider = new FsSchemaProvider(schemaPath);
+const FsTemplateProvider = require('./lib/template_provider').FsTemplateProvider;
 
 const loadTemplate = (templatePath) => {
-    const tmplExt = templatePath.split('.').pop();
-    return fs.readFile(templatePath, 'utf8')
-        .then((tmplData) => {
-            try {
-                if (tmplExt === 'mst') {
-                    return Template.loadMst(tmplData, schemaProvider);
-                }
-                return Template.loadYaml(tmplData, schemaProvider);
-            } catch (e) {
-                if (!Template.isValid(tmplData)) {
-                    console.error(`template at ${templatePath} failed validation:`);
-                    console.error(`${Template.getValidationErrors()}`);
-                } else {
-                    console.error(`failed to load template: ${e.message}`);
-                }
-                process.exit(1);
-                return null;
-            }
+    const tmplName = path.basename(templatePath, path.extname(templatePath));
+    const tsName = path.basename(path.dirname(templatePath));
+    const tsDir = path.dirname(path.dirname(templatePath));
+    const provider = new FsTemplateProvider(tsDir, [tsName]);
+    return provider.fetch(`${tsName}/${tmplName}`)
+        .catch((e) => {
+            console.error(Template.getValidationErrors());
+            console.error(`failed to load template: ${e.message}`);
+            process.exit(1);
         });
 };
 
@@ -77,6 +65,18 @@ const renderTemplate = (templatePath, viewPath) => loadTemplateAndView(templateP
         console.log(tmpl.render(view));
     });
 
+const validateTemplateSet = (tsPath) => {
+    const tsName = path.basename(tsPath);
+    const tsDir = path.dirname(tsPath);
+    const provider = new FsTemplateProvider(tsDir, [tsName]);
+    return provider.list()
+        .then(templateList => Promise.all(templateList.map(tmpl => provider.fetch(tmpl))))
+        .catch((e) => {
+            console.error(`Template set "${tsName}" failed validation:\n${e.message}`);
+            process.exit(1);
+        });
+};
+
 
 /* eslint-disable-next-line no-unused-expressions */
 require('yargs')
@@ -110,6 +110,12 @@ require('yargs')
                 describe: 'optional view file to use in addition to any defined view in the template file'
             });
     }, argv => renderTemplate(argv.tmplFile, argv.viewFile))
+    .command('validateTemplateSet <templateSetPath>', 'validate supplied template set', (yargs) => {
+        yargs
+            .positional('templateSetPath', {
+                describe: 'path to template set'
+            });
+    }, argv => validateTemplateSet(argv.templateSetPath))
     .demandCommand(1, 'A command is required')
     .strict()
     .argv;

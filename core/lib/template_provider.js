@@ -7,9 +7,10 @@ const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
 const FsSchemaProvider = require('./schema_provider').FsSchemaProvider;
 
-function FsTemplateProvider(templateRootPath) {
+function FsTemplateProvider(templateRootPath, filteredSets) {
     this.config_template_path = templateRootPath;
     this.schemaProviders = {};
+    this.filteredSets = new Set(filteredSets || []);
 
     this.cache = new ResourceCache((templateName) => {
         const tsName = templateName.split('/')[0];
@@ -51,7 +52,10 @@ FsTemplateProvider.prototype.list = function list() {
     return new Promise((resolve, reject) => {
         fs.readdir(this.config_template_path, (err, files) => {
             if (err) return reject(err);
-            return resolve(files.filter(x => fs.lstatSync(path.join(this.config_template_path, x)).isDirectory()));
+            return resolve(files.filter(x => (
+                fs.lstatSync(path.join(this.config_template_path, x)).isDirectory()
+                && (this.filteredSets.size === 0 || this.filteredSets.has(x))
+            )));
         });
     }).then(sets => Promise.all(sets.map(setName => new Promise((resolve, reject) => {
         fs.readdir(path.join(this.config_template_path, setName), (err, files) => {
