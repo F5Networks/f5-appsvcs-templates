@@ -18,7 +18,7 @@ coverage:
 build:
     stage: test
     script:
-        - apt-get update && apt-get install -y rpm
+        - apt-get update && apt-get install -y rpm git
         - cd iapplx && npm ci && npm run build
     artifacts:
         expire_in: 1 week
