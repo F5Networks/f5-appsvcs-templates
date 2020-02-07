@@ -21,10 +21,10 @@ build:
         - apt-get update && apt-get install -y rpm
         - cd iapplx && npm ci && npm run build
     artifacts:
+        expire_in: 1 week
         name: mystique-$CI_BUILD_REF
         paths:
             - iapplx/dist
-        expire_in: 1 month
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
