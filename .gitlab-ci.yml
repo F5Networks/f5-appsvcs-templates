@@ -72,41 +72,16 @@ pages:
     only:
         - develop
 
-docs_to_staging:
+clouddocs:
   image: ${CONTAINTHEDOCS_IMAGE}
   stage: publish
-  environment:
-    name: staging
-    url: https://clouddocs.f5networks.net/products/extensions/f5-appsvcs-templates/latest
   tags:
     - cm-official-docker-executor
   only:
-    - docs-staging
+    - docs-staging@automation-toolchain/mystique
+    - docs-latest@automation-toolchain/mystique
   dependencies:
     - create_docs
   script:
-    - aws s3 sync docs/_build/html s3://clouddocs.f5networks.net/products/extensions/f5-appsvcs-templates/latest
-    - aws s3 cp versions.json s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/versions.json
-    # create invalidation to clear cloudfront cache
-    - aws cloudfront create-invalidation --distribution-id $AWS_DIST --paths /products/extensions/f5-appsvcs-templates/latest
-
-# Publish docs to clouddocs.f5.com
-docs_to_production:
-  image: ${CONTAINTHEDOCS_IMAGE}
-  stage: publish
-  environment:
-    name: production
-    url: https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest
-  only:
-  # Currently will only deploy to clouddocs.f5.com on commits to docs-latest
-  # fill in desired release branch name and uncomment to add deployment from a branch
-    - docs-latest
-  tags:
-    - cm-official-docker-executor
-  dependencies:
-    - create_docs
-  script:
-    - aws s3 sync docs/_build/html s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest
-    - aws s3 cp versions.json s3://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/versions.json
-    # create invalidation to clear cloudfront cache
-    - aws cloudfront create-invalidation --distribution-id $AWS_DIST --paths /products/extensions/f5-appsvcs-templates/latest
+    - apk add --update --no-cache jq
+    - scripts/publish-clouddocs.sh iapplx/package.json
