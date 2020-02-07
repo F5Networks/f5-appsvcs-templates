@@ -4,8 +4,8 @@ set -e
 MAINDIR=$(pwd)
 
 FULL_VERSION=$(node -e "console.log(require('./package.json').version)")
-VERSION=$(echo $FULL_VERSION | cut -d - -f 1)
-RELEASE=$(echo $FULL_VERSION | cut -d - -f 2)
+VERSION="$(echo $FULL_VERSION | cut -d - -f 1).dev$(git log master..HEAD --oneline | wc -l)"
+RELEASE=1
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
 OUTPUT_DIR=${MAINDIR}/dist
 
