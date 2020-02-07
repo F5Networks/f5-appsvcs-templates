@@ -4,7 +4,12 @@ set -e
 MAINDIR=$(pwd)
 
 FULL_VERSION=$(node -e "console.log(require('./package.json').version)")
-VERSION="$(echo $FULL_VERSION | cut -d - -f 1).dev$(git log master..HEAD --oneline | wc -l)"
+VERSION="$(echo $FULL_VERSION | cut -d - -f 1)"
+LAST_TAG="$(git describe --tags --always --abbrev=0)"
+NUM_COMMITS_FROM_TAG=$(git rev-list $LAST_TAG.. --count)
+if [ "$NUM_COMMITS_FROM_TAG" -ne 0 ]; then
+    VERSION="$VERSION.dev$NUM_COMMITS_FROM_TAG"
+fi
 RELEASE=1
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
 OUTPUT_DIR=${MAINDIR}/dist
