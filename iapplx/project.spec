@@ -30,8 +30,8 @@ cp -r %{main}/presentation/js %{_builddir}/presentation
 cp -r %{main}/presentation/webfonts %{_builddir}/presentation
 # Default template sets
 mkdir -p %{_builddir}/templatesets/
-cp -r %{main}/../templates/f5-debug %{_builddir}/templatesets
-cp -r %{main}/../templates/f5-simple %{_builddir}/templatesets
+cp -r %{main}/../templates/examples %{_builddir}/templatesets
+cp -r %{main}/../templates/protocols %{_builddir}/templatesets
 
 %install
 rm -rf $RPM_BUILD_ROOT
