@@ -203,7 +203,7 @@ describe('Template class tests', function () {
             });
     });
     it('render_type_defaults', function () {
-        const schemaProvider = new FsSchemaProvider('./../templates/f5-debug');
+        const schemaProvider = new FsSchemaProvider('./../templates/protocols');
         const mstdata = '{{virtual_port:f5:port}}';
         const view = {};
         const reference = '443';

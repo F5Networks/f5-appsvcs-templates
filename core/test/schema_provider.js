@@ -12,7 +12,7 @@ const assert = chai.assert;
 
 const { FsSchemaProvider } = require('../lib/schema_provider');
 
-const schemasPath = './../templates/f5-debug';
+const schemasPath = './../templates/protocols';
 
 describe('schema provider tests', function () {
     it('construct', function () {
