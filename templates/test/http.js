@@ -6,7 +6,7 @@
 
 const util = require('./util');
 
-const template = 'protocols/http.yml';
+const template = 'bigip-fast-templates/http.yml';
 
 const view = {
     tenant_name: 't1',

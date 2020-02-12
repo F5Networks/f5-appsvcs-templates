@@ -155,7 +155,7 @@ describe('template worker tests', function () {
     });
     it('get_template_item_with_schema', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/protocols/http');
+        const op = new RestOp('templates/bigip-fast-templates/http');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -327,12 +327,12 @@ describe('template worker tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert.deepEqual(op.body, ['examples', 'protocols']);
+                assert.deepEqual(op.body, ['examples', 'bigip-fast-templates']);
             });
     });
     it('get_templatesets_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templatesets/protocols');
+        const op = new RestOp('templatesets/bigip-fast-templates');
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.status, 404);
@@ -490,8 +490,8 @@ describe('template worker tests', function () {
     });
     it('delete_templateset', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templatesets/protocols');
-        const tsPath = path.join(process.cwd(), '..', 'templates', 'protocols');
+        const op = new RestOp('templatesets/bigip-fast-templates');
+        const tsPath = path.join(process.cwd(), '..', 'templates', 'bigip-fast-templates');
 
         mockfs({
             [tsPath]: {}

@@ -31,7 +31,7 @@ cp -r %{main}/presentation/webfonts %{_builddir}/presentation
 # Default template sets
 mkdir -p %{_builddir}/templatesets/
 cp -r %{main}/../templates/examples %{_builddir}/templatesets
-cp -r %{main}/../templates/protocols %{_builddir}/templatesets
+cp -r %{main}/../templates/bigip-fast-templates %{_builddir}/templatesets
 
 %install
 rm -rf $RPM_BUILD_ROOT
