@@ -145,7 +145,7 @@ describe('template worker tests', function () {
     });
     it('get_template_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/f5-simple/simple_udp');
+        const op = new RestOp('templates/examples/simple_udp');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -155,7 +155,7 @@ describe('template worker tests', function () {
     });
     it('get_template_item_with_schema', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templates/f5-debug/http-basic');
+        const op = new RestOp('templates/protocols/http');
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -327,12 +327,12 @@ describe('template worker tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert.deepEqual(op.body, ['f5-debug', 'f5-simple']);
+                assert.deepEqual(op.body, ['examples', 'protocols']);
             });
     });
     it('get_templatesets_item', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templatesets/f5-debug');
+        const op = new RestOp('templatesets/protocols');
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.status, 404);
@@ -371,7 +371,7 @@ describe('template worker tests', function () {
         const worker = new TemplateWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: 'f5-debug/simple_udp_defaults',
+            name: 'examples/simple_udp_defaults',
             parameters: {}
         });
         nock(host)
@@ -490,8 +490,8 @@ describe('template worker tests', function () {
     });
     it('delete_templateset', function () {
         const worker = new TemplateWorker();
-        const op = new RestOp('templatesets/f5-debug');
-        const tsPath = path.join(process.cwd(), '..', 'templates', 'f5-debug');
+        const op = new RestOp('templatesets/protocols');
+        const tsPath = path.join(process.cwd(), '..', 'templates', 'protocols');
 
         mockfs({
             [tsPath]: {}
