@@ -71,6 +71,7 @@ pages:
             - public
     only:
         - develop
+        - joes-edits
 
 docs_to_staging:
   image: ${CONTAINTHEDOCS_IMAGE}

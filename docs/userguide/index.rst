@@ -1,3 +1,5 @@
+.. _start:
+
 Getting Started with FAST
 =========================
 This guide contains information about how to install and use
@@ -6,7 +8,7 @@ F5 Application Services Templates.
 .. _about:
 
 About F5 Application Services Templates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------------
 
 The F5 Application Services Templates extension, or FAST, provides a way to
 streamline deployment of AS3 applications onto BIG-IP. By using AS3 deployment
@@ -24,37 +26,31 @@ satisfy specific needs of any infrastructure.
 Continue reading to learn more about templating AS3 applications.
 
 Installing the Application Services Templates Extension
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------------------------------
 
 Prerequisites
 
 * BIG-IP, TMOS v13.1 or later.
-* AS3 version 3.16 or later must be installed.
+* AS3 version 3.16 or later must be installed (see the `AS3 Documentation <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/>`_ for more details on AS3).
 
-See the
-`AS3 Documentation <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/>`_
-for more details on AS3.
+Downloading and installing the FAST Extension
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The FAST extension can be download from github at http://github.com/F5Networks/f5-appsvcs-templates.
+1. Download the FAST extension RPM from GitHub at http://github.com/F5Networks/f5-appsvcs-templates to a location accessible from the BIG-IP.
 
-Download the RPM onto the machine you will be using to access to BIG-IPs web interface.
-From there, install the extension by navigating to iApps > Package Management LX.
-Click 'import' and select the RPM downloaded in the previous step.
+2. From the BIG-IP system, install the extension by navigating to **iApps > Package Management LX**. Click **Import** and then select the RPM you downloaded.
 
-Once the package is imported, you should now see f5-appsvcs-templates in the list
-of installed extensions.
+   * If you are using a BIG-IP version prior to 14.0, before you can use the Configuration utility, you must enable the framework using the BIG-IP command line. From the CLI, type the following command:  ``touch /var/config/rest/iapps/enable``.  You only need to run this command once (per BIG-IP system). This is not necessary with 14.0 and later. |br| |br|
 
-The extension's UI can be found by navigating to
-iApps > Application Services > Applications LX
+   Once the package is imported, you should see **f5-appsvcs-templates** in the list of installed extensions.
 
-There an entry should be shown for F5 Application Services Templates. Click this
-entry to start using FAST. Follow the links on the side to learn more about FAST's features.
+3. Click **iApps > Application Services > Applications LX**.
+
+4. Click **F5 Application Services Templates** to start using FAST. 
+
+Continue with :ref:`Fast Overview<overview>` for information on using the interface, or use the left navigation to go to a specific page.
 
 
-
-.. |declare| raw:: html
-
-   <a href="https://f5.com/about-us/blog/articles/in-container-land-declarative-configuration-is-king-27226" target="_blank">declarative</a>
 
 .. |br| raw:: html
 

@@ -1,3 +1,5 @@
+.. _authoring:
+
 Creating New Templates
 ======================
 
@@ -5,104 +7,97 @@ Templates are AS3 declarations that have been parameterized. This page has a
 short tutorial to help template authors get started creating template sets, and
 a more detailed explanation of the templates and their syntax.
 
-It is recommended for template authors to read the overview of the FAST Engine,
+We recommend template authors read the overview of the FAST Engine
 to fully understand how templates are processed in the system.
 
-Some familiarity with the command line is assumed, it is recommended the FAST
-@f5devcentral/fast npm module is installed globally, this will provide the
+Some familiarity with the command line is assumed, and we recommend the FAST
+@f5devcentral/fast npm module is installed globally. This provides the
 command line tools to validate and render templates during authoring.
 
-`npm install -g f5devcentral/fast`
+Use the following command to install the NPM module:  ``npm install -g f5devcentral/fast``
 
-Hello World
------------
+Hello World example
+-------------------
 
-First we'll start by creating a Hello World template and uploading it to FAST.
-Later sections will go into detail about the template specification and its
+In this section, we create a simple Hello World template and upload it to FAST.
+Later sections go into detail about the template specification and its
 entire feature set.
 
-Start by creating a file, `hello.mst` and copy the following parameterized AS3
-declaration into it:
+1. Start by creating a file named **hello.mst** and copy the following parameterized AS3 declaration into it:
 
-.. code-block:: json
+    .. code-block:: json
 
-  {
-      "class": "ADC",
-      "schemaVersion": "3.11.0",
-      "{{tenant_name}}": {
-        "class": "Tenant",
-        "{{application_name}}": {
-          "class": "Application",
-          "template": "http",
-          "serviceMain": {
-            "class": "Service_HTTP",
-            "virtualAddresses": ["{{virtual_address}}"],
-            "pool": "web_pool_{{port}}",
-          },
-          "web_pool_{{port}}": {
-            "class": "Pool",
-            "monitors": [
-              "http"
-            ],
-            "members": [
-              {
-                "servicePort": {{port::integer}},
-                "serverAddresses": {{server_addresses::array}}
+      {
+          "class": "ADC",
+          "schemaVersion": "3.11.0",
+          "{{tenant_name}}": {
+            "class": "Tenant",
+            "{{application_name}}": {
+              "class": "Application",
+              "template": "http",
+              "serviceMain": {
+                "class": "Service_HTTP",
+                "virtualAddresses": ["{{virtual_address}}"],
+                "pool": "web_pool_{{port}}",
+              },
+              "web_pool_{{port}}": {
+                "class": "Pool",
+                "monitors": [
+                  "http"
+                ],
+                "members": [
+                  {
+                    "servicePort": {{port::integer}},
+                    "serverAddresses": {{server_addresses::array}}
+                  }
+                ]
               }
-            ]
+            }
           }
         }
-      }
-    }
-  }
+      } 
+
+
+
+    This is a basic template that creates an HTTP Virtual IP and allows you to specify
+    the Virtual IP and a list of server addresses, and a port to use for both the
+    front and back end. The tenant name and application name are also specified by the user.
+
+2. Save the file.
+
+3. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
+
+4. Create the following file named **params.yml**:
+
+    .. code-block:: yaml
+
+      tenant_name: TestTenant
+      application_name: MyTestApp
+      virtual_address: 0.0.0.0
+      port: 80
+      serverAddresses:
+        - 10.0.0.1
+        - 10.0.0.2
 |
 
-This is a basic template that creates an HTTP Virtual IP and allows you to specify
-the Virtual IP and a list of server addresses, and a port to use for both the
-front and back end. The tenant name and application name are also specified by the user.
+5. Using this file, the following command will show an example render: ``fast render hello.mst params.yml``
 
-Save the file.
+6. To add this to the system, this template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
 
-If the FAST npm module is installed globally on your system, we can validate it
-and try rendering it with the following commands:
+7. Take note of where the zip was created, and go back to your BIG-IP. 
 
-`fast validate hello.mst`
+    - Navigate to the FAST extension (**iApps > Application Services > Applications LX > F5 Application Services Templates**).
+    - Click the Templates tab. 
+    - At the top is the dialog to add a new template set. Click **Choose file** and then browse to the zip you just created.
+    - Click **Ok** and then click **Upload**.
 
-Create the following file params.yml:
+The template will validate and then be added to the system. When you navigating to the Deploy
+tab, the new template set should be available, with the Hello World template ready for use.
 
-.. code-block:: yaml
-   tenant_name: TestTenant
-   application_name: MyTestApp
-   virtual_address: 0.0.0.0
-   port: 80
-   serverAddresses:
-    - 10.0.0.1
-    - 10.0.0.2
-|
-
-Using this file, the following command will show an example render:
-
-`fast render hello.mst params.yml`
-
-To add this to the system, this template can be placed into azip file.
-
-From the command line:
-
-`zip hello.zip hello.mst`
-
-
-Take note of where the zip was created, and go back to your BIG-IP. Navigate to
-the FAST extension and select the 'Templates' tab. At the top is the dialog to
-add a new template set. Click 'choose file' and find the zip we just created and
-select ok. Now click 'upload'.
-
-The template will validate and be added to the system. When navigating to the deploy
-tab, a new template set should be available with the hello template ready for use.
-
-To understand more about what the templating system can do, read on. By using
+The rest of this page explains more about what the templating system can do. By using
 JSON schema alongside the templates, FAST provides a powerful system for
-validating template parameters and ensuring that applications gets deployed as
-expected, with no surprises.
+validating template parameters and ensuring that applications get deployed as
+expected.
 
 Template Specification
 ----------------------
@@ -122,6 +117,8 @@ Templates abide by the following rules:
   * boolean
   * array
 
+|
+
 Example
 -------
 
@@ -130,60 +127,63 @@ AS3 declaration:
 
 .. code-block:: json
 
-  {
-      "class": "ADC",
-      "schemaVersion": "3.11.0",
-      "{{tenant_name}}": {
-        "class": "Tenant",
-        "{{application_name}}": {
-          "class": "Application",
-          "template": "http",
-          "serviceMain": {
-            "class": "Service_HTTP",
-            "virtualAddresses": ["{{virtual_address}}"],
-            "pool": "web_pool_{{port}}",
-          },
-          "web_pool_{{port}}": {
-            "class": "Pool",
-            "monitors": [
-              "http"
-            ],
-            "members": [
-              {
-                "servicePort": {{port::integer}},
-                "serverAddresses": {{server_addresses::array}}
-              }
-            ]
+    {
+        "class": "ADC",
+        "schemaVersion": "3.11.0",
+        "{{tenant_name}}": {
+          "class": "Tenant",
+          "{{application_name}}": {
+            "class": "Application",
+            "template": "http",
+            "serviceMain": {
+              "class": "Service_HTTP",
+              "virtualAddresses": ["{{virtual_address}}"],
+              "pool": "web_pool_{{port}}",
+            },
+            "web_pool_{{port}}": {
+              "class": "Pool",
+              "monitors": [
+                "http"
+              ],
+              "members": [
+                {
+                  "servicePort": {{port::integer}},
+                  "serverAddresses": {{server_addresses::array}}
+                }
+              ]
+            }
           }
         }
       }
     }
-  }
+
+
 |
 
 The following schema will get auto-generated from the example:
 
 .. code-block:: json
 
-  {
-    "properties": {
-      "tenant_name" : {
-        "type": "string"
-      },
-      "application_name" : {
-        "type": "string"
-      },
-      "virtual_address" : {
-        "type": "string"
-      },
-      "server_addresses" : {
-        "type": "array"
-      },
-      "port" : {
-        "type": "integer"
-      },
+    {
+      "properties": {
+        "tenant_name" : {
+          "type": "string"
+        },
+        "application_name" : {
+          "type": "string"
+        },
+        "virtual_address" : {
+          "type": "string"
+        },
+        "server_addresses" : {
+          "type": "array"
+        },
+        "port" : {
+          "type": "integer"
+        },
+      }
     }
-  }
+
 |
 
 The example schema can validate the object the admin or upstream caller provides
@@ -191,13 +191,14 @@ The example schema can validate the object the admin or upstream caller provides
 
 .. code-block:: json
 
-  {
-    "tenant_name" : "myTenant",
-    "application_name" : "simple_http_1",
-    "virtual_address" : "10.0.0.1",
-    "server_addresses" : [ "10.0.1.1", "10.0.2.2" ],
-    "port" : 80
-  }
+    {
+      "tenant_name" : "myTenant",
+      "application_name" : "simple_http_1",
+      "virtual_address" : "10.0.0.1",
+      "server_addresses" : [ "10.0.1.1", "10.0.2.2" ],
+      "port" : 80
+    }
+
 |
 
 At render time, the view will get translated in the actual view the template
@@ -210,18 +211,19 @@ representation of that variable. The view is filled in to provide this behavior.
 
 .. code-block:: json
 
-  {
-    "template_name" : "<name of the template being run>",
-    "uuid" : "<a uuid id generated by the system at render time>",
+    {
+      "template_name" : "<name of the template being run>",
+      "uuid" : "<a uuid id generated by the system at render time>",
 
-    "tenant_name" : "myTenant",
-    "application_name" : "simple_http_1",
-    "virtual_address" : "10.0.0.1",
-    "server_addresses" : "[ \"10.0.1.1\", \"10.0.2.2\" ]",
-    "server_addresses::array" : [ "10.0.1.1", "10.0.2.2" ],
-    "port" : "80",
-    "port::integer" : 80
-  }
+      "tenant_name" : "myTenant",
+      "application_name" : "simple_http_1",
+      "virtual_address" : "10.0.0.1",
+      "server_addresses" : "[ \"10.0.1.1\", \"10.0.2.2\" ]",
+      "server_addresses::array" : [ "10.0.1.1", "10.0.2.2" ],
+      "port" : "80",
+      "port::integer" : 80
+    }
+
 |
 
 The final declaration is generated by providing the previous view with the
@@ -229,43 +231,44 @@ provided template:
 
 .. code-block:: json
 
-  {
-      "class": "ADC",
-      "schemaVersion": "3.11.0",
-      "myTenant": {
-        "class": "Tenant",
-        "simple_http_1": {
-          "class": "Application",
-          "template": "http",
-          "serviceMain": {
-            "class": "Service_HTTP",
-            "virtualAddresses": ["10.0.0.1"],
-            "pool": "web_pool_80",
-          },
-          "web_pool_80": {
-            "class": "Pool",
-            "monitors": [
-              "http"
-            ],
-            "members": [
-              {
-                "servicePort": 80,
-                "serverAddresses": [ "10.0.1.1", "10.0.2.2" ]
-              }
-            ]
+    {
+        "class": "ADC",
+        "schemaVersion": "3.11.0",
+        "myTenant": {
+          "class": "Tenant",
+          "simple_http_1": {
+            "class": "Application",
+            "template": "http",
+            "serviceMain": {
+              "class": "Service_HTTP",
+              "virtualAddresses": ["10.0.0.1"],
+              "pool": "web_pool_80",
+            },
+            "web_pool_80": {
+              "class": "Pool",
+              "monitors": [
+                "http"
+              ],
+              "members": [
+                {
+                  "servicePort": 80,
+                  "serverAddresses": [ "10.0.1.1", "10.0.2.2" ]
+                }
+              ]
+            }
           }
         }
       }
     }
-  }
+
 |
 
 Extended Types
 --------------
 
 Typestache also allows specification of custom types using JSON schema. Schema
-files can be placed into `/var/config/rest/iapps/as3-forms-lx/schemas`. Each
-file must have a `.json` extension and contain valid JSON schema. Schemas listed
+files can be placed into **/var/config/rest/iapps/as3-forms-lx/schemas**. Each
+file must have a **.json** extension and contain valid JSON schema. Schemas listed
 in the `definitions` will be made available to templates using the following
 syntax:
 
@@ -297,17 +300,18 @@ The definition from f5.json:
 
 .. code-block:: json
 
-  "service": {
-    "type": "string",
-    "enum": [
-      "Service_HTTP",
-      "Service_HTTPS",
-      "Service_TCP",
-      "Service_UDP",
-      "Service_L4"
-    ],
-    "default": "Service_HTTP"
-  },
+    "service": {
+      "type": "string",
+      "enum": [
+        "Service_HTTP",
+        "Service_HTTPS",
+        "Service_TCP",
+        "Service_UDP",
+        "Service_L4"
+      ],
+      "default": "Service_HTTP"
+    },
+
 |
 
 Arrays of primitives should work fine, but has not been tested extensively.

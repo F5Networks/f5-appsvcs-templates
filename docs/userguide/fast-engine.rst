@@ -7,14 +7,14 @@ sound templates and debugging the system when things don't go as expected.
 
 Template to Schema
 ------------------
-
+Placeholder
 
 Application Creation
 --------------------
 
-The process for creating a new application looks something like this
+The process for creating a new application looks something like this: 
 
-Form field submission -> pre-processing -> rendering -> deploy
+**Form field submission -> pre-processing -> rendering -> deploy**
 
 The user enters the configuration parameters into the form, then hits the submit
 button. Parameters are packaged up into a JSON object and sent to the system for
@@ -25,11 +25,12 @@ deploy the application to AS3.
 
 Template Validation
 -------------------
+Placeholder
 
 Schema Generation
 -----------------
+Placeholder
 
 Template Storage
 ----------------
-
 Templates are stored internally in datagroups. These datagroups can be found...
