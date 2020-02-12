@@ -15,13 +15,13 @@ Use the following links, the navigation on the left, and/or the Next and
 Previous buttons to explore the documentation.
 
 .. toctree::
+   :maxdepth: 1
    :includehidden:
    :glob:
 
    userguide/quick-start
    userguide/index
    userguide/using-app-templates
-   userguide/installed-templates
    userguide/fast-engine
    userguide/template-authoring
    refguide/index
