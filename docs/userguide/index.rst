@@ -36,7 +36,7 @@ Prerequisites
 Downloading and installing the FAST Extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. Download the FAST extension RPM from GitHub at http://github.com/F5Networks/f5-appsvcs-templates to a location accessible from the BIG-IP.
+1. Download the FAST extension RPM from GitHub at http://github.com/F5devcentral/f5-appsvcs-templates to a location accessible from the BIG-IP.
 
 2. From the BIG-IP system, install the extension by navigating to **iApps > Package Management LX**. Click **Import** and then select the RPM you downloaded.
 
