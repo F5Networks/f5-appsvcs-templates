@@ -13,7 +13,7 @@ definitions:
         {{^pool_name}}
           "{{app_name}}_pool": {
             "class": "Pool",
-            "loadBalancingMethod": "{{pool_lb_method}}",
+            "loadBalancingMode": "{{pool_lb_method}}",
             "members": [{
                "serverAddresses": ["10.2.1.1", "10.2.1.2"],
                "servicePort": {{pool_port:f5:port}}
@@ -28,12 +28,37 @@ definitions:
         {{^snat_pool_name}}
           {{#snat_pool_members}}
             "{{app_name}}_snatpool": {
-              "class": "SNAT",
-              "members": ["10.3.1.1", "10.3.1.2"]
+              "class": "SNAT_Pool",
+              "snatAddresses": ["10.3.1.1", "10.3.1.2"]
             },
           {{/snat_pool_members}}
         {{/snat_pool_name}}
       {{/do_snat}}
+  app_tls_server_def:
+    template: |
+      {{#do_tls_server}}
+        {{^tls_server_name}}
+          "{{app_name}}_tls_server": {
+            "class": "TLS_Server",
+            "certificates": [{ "certificate": "{{app_name}}_certificate" }]
+          },
+          "{{app_name}}_certificate": {
+            "class": "Certificate",
+            "certificate": { "bigip": "{{tls_server_certificate}}" },
+            "privateKey": { "bigip": "{{tls_server_key}}" }
+          },
+        {{/tls_server_name}}
+      {{/do_tls_server}}
+  app_tls_client_def:
+    template: |
+      {{#do_tls_client}}
+        {{^tls_client_name}}
+          "{{app_name}}_tls_client": {
+            "class": "TLS_Client",
+            "sendSNI": "{{hostnames}}"
+          },
+        {{/tls_client_name}}
+      {{/do_tls_client}}
   service_class_def:
     template: |
       {{#do_tls_server}}
@@ -51,13 +76,8 @@ definitions:
           },
         {{/pool_name}}
         {{^pool_name}}
-          "pool": {
-            "use": "{{app_name}}_pool"
-          },
+          "pool": "{{app_name}}_pool",
         {{/pool_name}}
-      {{/do_pool}}
-      {{^do_pool}}
-        "pool": "none",
       {{/do_pool}}
   service_snat_def:
     template: |
@@ -78,6 +98,30 @@ definitions:
           {{/snat_pool_members}}
         {{/snat_pool_name}}
       {{/do_snat}}
+  service_tls_server_def:
+    template: |
+      {{#do_tls_server}}
+        {{#tls_server_name}}
+          "serverTLS": {
+            "bigip": "{{tls_server_name}}"
+          },
+        {{/tls_server_name}}
+        {{^tls_server_name}}
+          "serverTLS": "{{app_name}}_tls_server",
+        {{/tls_server_name}}
+      {{/do_tls_server}}
+  service_tls_client_def:
+    template: |
+      {{#do_tls_client}}
+        {{#tls_client_name}}
+          "clientTLS": {
+            "bigip": "{{tls_client_name}}"
+          },
+        {{/tls_client_name}}
+        {{^tls_client_name}}
+          "clientTLS": "{{app_name}}_tls_client",
+        {{/tls_client_name}}
+      {{/do_tls_client}}
   service_http_def:
     template: |
       {{#http_profile_name}}
@@ -92,12 +136,12 @@ definitions:
     template: |
       {{#do_caching}}
         {{#caching_profile_name}}
-          "profileHTTPCaching": {
+          "profileHTTPAcceleration": {
             "bigip": "{{caching_profile_name}}"
           },
         {{/caching_profile_name}}
         {{^caching_profile_name}}
-          "profileHTTPCaching": "basic",
+          "profileHTTPAcceleration": "basic",
         {{/caching_profile_name}}
       {{/do_caching}}
   service_compression_def:
@@ -136,10 +180,14 @@ template: |
         {{> app_template_def}}
         {{> app_pool_def}}
         {{> app_snat_def}}
+        {{> app_tls_server_def}}
+        {{> app_tls_client_def}}
         "serviceMain": {
           {{> service_class_def}}
           {{> service_pool_def}}
           {{> service_snat_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
           {{> service_http_def}}
           {{> service_caching_def}}
           {{> service_compression_def}}

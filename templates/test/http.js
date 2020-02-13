@@ -55,8 +55,8 @@ const view = {
     // tls encryption profile spec
     do_tls_server: true,
     tls_server_profile_name: undefined,
-    tls_server_certificate: 'default.crt',
-    tls_server_key: 'default.key',
+    tls_server_certificate: '/Common/default.crt',
+    tls_server_key: '/Common/default.key',
     do_tls_client: true,
     tls_client_profile_name: undefined,
     do_tls_chain_certificate: false,
@@ -100,13 +100,13 @@ const expected = {
                 virtualAddresses: ['10.1.1.1'],
                 virtualPort: 4430,
                 redirect80: true,
-                profileHTTP: 'basic',
-                pool: {
-                    use: 'app1_pool'
-                },
+                pool: 'app1_pool',
                 snat: {
                     use: 'app1_snatpool'
-                }
+                },
+                profileHTTP: 'basic',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client'
             },
             app1_pool: {
                 class: 'Pool',
@@ -114,27 +114,39 @@ const expected = {
                     servicePort: 443,
                     serverAddresses: ['10.2.1.1', '10.2.1.2']
                 }],
-                loadBalancingMethod: 'round-robin',
+                loadBalancingMode: 'round-robin',
                 monitors: ['http']
             },
             app1_snatpool: {
-                class: 'SNAT',
-                members: ['10.3.1.1', '10.3.1.2']
+                class: 'SNAT_Pool',
+                snatAddresses: ['10.3.1.1', '10.3.1.2']
+            },
+            app1_tls_server: {
+                class: 'TLS_Server',
+                certificates: [{
+                    certificate: 'app1_certificate'
+                }]
+            },
+            app1_certificate: {
+                class: 'Certificate',
+                certificate: { bigip: '/Common/default.crt' },
+                privateKey: { bigip: '/Common/default.key' }
+            },
+            app1_tls_client: {
+                class: 'TLS_Client',
+                sendSNI: 'www.example.com'
             }
         }
     }
 };
 
-describe('http-basic template', function () {
+describe(template, function () {
     describe('tls bridging with new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
 
     describe('tls bridging with existing pool, snatpool, and profiles', function () {
         before(() => {
-            // reset tls client
-            view.do_tls_client = true;
-
             // existing pool
             delete view.pool_members;
             view.pool_name = '/Common/pool1';
@@ -147,12 +159,21 @@ describe('http-basic template', function () {
             delete expected.t1.app1.app1_snatpool;
             expected.t1.app1.serviceMain.snat = { bigip: '/Common/snatpool1' };
 
+            // existing TLS profiles
+            view.tls_server_name = '/Common/clientssl';
+            delete expected.t1.app1.app1_tls_server;
+            delete expected.t1.app1.app1_certificate;
+            expected.t1.app1.serviceMain.serverTLS = { bigip: '/Common/clientssl' };
+            view.tls_client_name = '/Common/serverssl';
+            delete expected.t1.app1.app1_tls_client;
+            expected.t1.app1.serviceMain.clientTLS = { bigip: '/Common/serverssl' };
+
             // existing caching, compression, and multiplex profiles
             view.http_profile_name = '/Common/http1';
             expected.t1.app1.serviceMain.profileHTTP = { bigip: '/Common/http1' };
             view.do_caching = true;
             view.caching_profile_name = '/Common/caching1';
-            expected.t1.app1.serviceMain.profileHTTPCaching = { bigip: '/Common/caching1' };
+            expected.t1.app1.serviceMain.profileHTTPAcceleration = { bigip: '/Common/caching1' };
             view.do_compression = true;
             view.compression_profile_name = '/Common/compression1';
             expected.t1.app1.serviceMain.profileHTTPCompression = { bigip: '/Common/compression1' };
@@ -173,11 +194,15 @@ describe('http-basic template', function () {
             delete view.snat_pool_name;
             expected.t1.app1.serviceMain.snat = 'auto';
 
-            // caching and compression profiles
+            // default caching, compression, and multiplex profiles
+            delete view.http_profile_name;
+            expected.t1.app1.serviceMain.profileHTTP = 'basic';
             delete view.caching_profile_name;
-            expected.t1.app1.serviceMain.profileHTTPCaching = 'basic';
+            expected.t1.app1.serviceMain.profileHTTPAcceleration = 'basic';
             delete view.compression_profile_name;
             expected.t1.app1.serviceMain.profileHTTPCompression = 'basic';
+            delete view.multiplex_profile_name;
+            expected.t1.app1.serviceMain.profileMultiplex = 'basic';
         });
         util.assertRendering(template, view, expected);
     });
@@ -186,6 +211,7 @@ describe('http-basic template', function () {
         before(() => {
             // no tls client
             view.do_tls_client = false;
+            delete expected.t1.app1.serviceMain.clientTLS;
         });
         util.assertRendering(template, view, expected);
     });
@@ -194,11 +220,33 @@ describe('http-basic template', function () {
         before(() => {
             // no tls server
             view.do_tls_server = false;
+            delete expected.t1.app1.serviceMain.serverTLS;
 
             // no https
             delete expected.t1.app1.serviceMain.redirect80;
             expected.t1.app1.template = 'http';
             expected.t1.app1.serviceMain.class = 'Service_HTTP';
+
+            // default http virtual port
+            view.virtual_port = 80;
+            expected.t1.app1.serviceMain.virtualPort = 80;
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('http with no profiles and no pool', function () {
+        before(() => {
+            // no profiles
+            view.do_caching = false;
+            delete expected.t1.app1.serviceMain.profileHTTPAcceleration;
+            view.do_compression = false;
+            delete expected.t1.app1.serviceMain.profileHTTPCompression;
+            view.do_multiplex = false;
+            delete expected.t1.app1.serviceMain.profileMultiplex;
+
+            // no pool
+            view.do_pool = false;
+            delete expected.t1.app1.serviceMain.pool;
 
             // default http virtual port
             view.virtual_port = 80;
