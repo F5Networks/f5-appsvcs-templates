@@ -6,3 +6,4 @@ test-output.txt
 bundle.js*
 coverage
 docs/_build/
+.vscode/
