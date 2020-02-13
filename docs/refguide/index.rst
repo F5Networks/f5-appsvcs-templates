@@ -4,3 +4,7 @@ This Reference Guide contains detailed information, how to use the API methods, 
 
 Reference Guide Index
 ---------------------
+.. toctree::
+   :maxdepth: 2
+   :includehidden:
+   :glob:

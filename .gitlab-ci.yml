@@ -71,6 +71,7 @@ pages:
             - public
     only:
         - develop
+        - joes-edits
 
 clouddocs:
   image: ${CONTAINTHEDOCS_IMAGE}

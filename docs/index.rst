@@ -1,11 +1,15 @@
-Mystique Documentation
-======================
+F5 Application Services Templates (FAST)
+========================================
 
-Welcome to the F5 
+F5 Application Services Templates (FAST) are an easy and effective way to deploy applications on the BIG-IP system using |as3|.  
 
-Introduction
-------------
+The FAST Extension provides a toolset for templating and managing AS3 Applications
+on BIG-IP.
 
+.. TIP:: To get started right away, see the :ref:`Quick Start<quick>`.
+
+Table of Contents
+-----------------
 
 Use the following links, the navigation on the left, and/or the Next and
 Previous buttons to explore the documentation.
@@ -15,32 +19,16 @@ Previous buttons to explore the documentation.
    :includehidden:
    :glob:
 
-
+   userguide/quick-start
    userguide/index
+   userguide/using-app-templates
+   userguide/fast-engine
+   userguide/template-authoring
    refguide/index
 
 
 
 
-.. |video| raw:: html
+.. |as3| raw:: html
 
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/NJjcUUtjnJU" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-
-.. |relnotes| raw:: html
-
-   <a href=" https://github.com/F5Networks/f5-appsvcs-extension/releases" target="_blank">Release Notes on GitHub</a>
-
-.. |vid| raw:: html
-
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/cMl3AOtMcUo" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-
-.. |supportmd| raw:: html
-
-   <a href="https://github.com/F5Networks/f5-appsvcs-extension/blob/master/SUPPORT.md" target="_blank">Support information on GitHub</a>
-
-
-.. |release| raw:: html
-
-   <a href="https://github.com/F5Networks/f5-appsvcs-extension/releases" target="_blank">GitHub Release</a>
-
-
+   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/" target="_blank">AS3</a>
