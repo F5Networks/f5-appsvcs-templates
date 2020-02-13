@@ -19,12 +19,12 @@ build:
     stage: test
     script:
         - apt-get update && apt-get install -y rpm git
-        - cd iapplx && npm ci && npm run build
+        - cd iappslx && npm ci && npm run build
     artifacts:
         expire_in: 1 week
         name: f5-appsvcs-templates.$CI_BUILD_REF
         paths:
-            - iapplx/dist/*
+            - iappslx/dist/*
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
@@ -85,7 +85,7 @@ clouddocs:
     - create_docs
   script:
     - apk add --update --no-cache jq
-    - scripts/publish-clouddocs.sh iapplx/package.json
+    - scripts/publish-clouddocs.sh iappslx/package.json
 
 artifactory:
     stage: publish
@@ -97,4 +97,4 @@ artifactory:
     dependencies:
         - build
     script:
-        -scripts/publish-artifactory.sh iapplx/package.json
+        -scripts/publish-artifactory.sh iappslx/package.json
