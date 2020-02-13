@@ -85,3 +85,15 @@ clouddocs:
   script:
     - apk add --update --no-cache jq
     - scripts/publish-clouddocs.sh iapplx/package.json
+
+artifactory:
+    stage: publish
+    only:
+        variables:
+            - $CI_COMMIT_TAG =~ /v[0-9]+\.[0-9]+\.[0-9]+/
+    tags:
+        - cm-official-docker-executor
+    dependencies:
+        - build
+    script:
+        -scripts/publish-artifactory.sh iapplx/package.json
