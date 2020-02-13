@@ -11,9 +11,6 @@ This repo is broken into subprojects
 Each subproject maintains its own package.json and associated files.
 In other words, run `npm` commands for a given subproject in that subproject's directory.
 
-## Documentation
-
-Docs for the latest stable release can be found [here](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/).
 
 ## License
 
