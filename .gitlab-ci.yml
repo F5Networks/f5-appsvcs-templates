@@ -97,5 +97,5 @@ artifactory:
     dependencies:
         - build
     script:
-        - apt-get update && apt-get install -y jq
+        - apt-get update && apt-get install -y jq curl
         - ./scripts/publish-artifactory.sh iappslx/package.json
