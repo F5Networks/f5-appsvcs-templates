@@ -14,8 +14,13 @@ const render = function (template, view) {
     const cmd = `fast render ${template} ${tempView}`;
     fs.writeFileSync(tempView, JSON.stringify(view, null, 2));
     const output = execSync(cmd).toString();
-    // console.log(output);
-    return JSON.parse(output);
+    let obj = {};
+    try {
+        obj = JSON.parse(output);
+    } catch (e) {
+        console.log('\n', e, '\n', output);
+    }
+    return obj;
 };
 
 const compare = function (expected, actual, parent) {
