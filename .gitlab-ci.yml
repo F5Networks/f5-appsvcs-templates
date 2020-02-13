@@ -97,4 +97,4 @@ artifactory:
     dependencies:
         - build
     script:
-        -scripts/publish-artifactory.sh iappslx/package.json
+        - ./scripts/publish-artifactory.sh iappslx/package.json
