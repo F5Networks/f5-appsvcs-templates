@@ -7,7 +7,7 @@ The FAST Extension provides a toolset for templating and managing AS3 Applicatio
 
 This F5 Application Services Template (FAST) release is a community-supported preview. Your feedback is appreciated.
 
-We will provide a fully F5-supported FAST offer early next calendar quarter (Q2CY20).
+We will provide a fully F5-supported FAST offering early next calendar quarter (Q2CY20).
 
 ### Filing Issues and Getting Help
 
