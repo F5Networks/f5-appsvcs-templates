@@ -13,7 +13,7 @@ const view = {
     app_name: 'app1',
 
     // virtual server
-    virtual_addr: '10.1.1.1',
+    virtual_address: '10.1.1.1',
     virtual_port: 4430, // TODO: test default values of 80 and 443
     hostnames: ['www.example.com'],
 
@@ -24,7 +24,7 @@ const view = {
     do_pool: true,
     do_pool_priority_groups: false,
     pool_name: undefined,
-    pool_members: ['10.2.1.1', '10.2.1.2'],
+    pool_members: ['"10.2.1.1"', '"10.2.1.2"'],
     pool_port: 443,
     pool_lb_method: 'round-robin',
     pool_slow_ramp: 10,
@@ -32,7 +32,7 @@ const view = {
     // snat
     do_snat: true,
     snat_pool_name: undefined,
-    snat_pool_members: ['10.3.1.1', '10.3.1.2'],
+    snat_pool_members: ['"10.3.1.1"', '"10.3.1.2"'],
 
     // monitor spec
     do_monitor: true,
@@ -97,8 +97,8 @@ const expected = {
             template: 'https',
             serviceMain: {
                 class: 'Service_HTTPS',
-                virtualAddresses: ['10.1.1.1'],
-                virtualPort: 4430,
+                virtualAddresses: [view.virtual_address],
+                virtualPort: view.virtual_port,
                 redirect80: true,
                 pool: 'app1_pool',
                 snat: {
@@ -111,10 +111,10 @@ const expected = {
             app1_pool: {
                 class: 'Pool',
                 members: [{
-                    servicePort: 443,
+                    servicePort: view.pool_port,
                     serverAddresses: ['10.2.1.1', '10.2.1.2']
                 }],
-                loadBalancingMode: 'round-robin',
+                loadBalancingMode: view.pool_lb_method,
                 monitors: ['http']
             },
             app1_snatpool: {
@@ -129,12 +129,12 @@ const expected = {
             },
             app1_certificate: {
                 class: 'Certificate',
-                certificate: { bigip: '/Common/default.crt' },
-                privateKey: { bigip: '/Common/default.key' }
+                certificate: { bigip: view.tls_server_certificate },
+                privateKey: { bigip: view.tls_server_key }
             },
             app1_tls_client: {
                 class: 'TLS_Client',
-                sendSNI: 'www.example.com'
+                sendSNI: view.hostnames[0]
             }
         }
     }
