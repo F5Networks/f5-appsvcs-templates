@@ -4,7 +4,7 @@ projects=("$@")
 if [ -z "${projects[*]}" ]; then
     projects=(
         core
-        iapplx
+        iappslx
         templates
     )
 fi

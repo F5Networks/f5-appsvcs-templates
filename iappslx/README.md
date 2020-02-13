@@ -1,8 +1,8 @@
-# F5 Application Services Templates (FAST) iApp LX package
+# F5 Application Services Templates (FAST) iApps LX package
 
 ## Overview
 
-This iApp LX package provides a REST fron-end and a GUI for managing and deploying applications via FAST templates.
+This iApps LX package provides a REST front-end and a GUI for managing and deploying applications via FAST templates.
 
 ## Development
 

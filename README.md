@@ -5,7 +5,7 @@
 This repo is broken into subprojects
 
 * An NPM package in [core](core)
-* An iAppLX in [iapplx](iapplx)
+* An iApps LX package in [iappslx](iappslx)
 * A set of default templates in [templates](templates)
 
 Each subproject maintains its own package.json and associated files.
