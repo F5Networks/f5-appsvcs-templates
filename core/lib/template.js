@@ -132,6 +132,9 @@ class Template {
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
                 Object.assign(acc.properties, partial.properties);
+                if (partial.required) {
+                    partial.required.forEach(x => required.add(x));
+                }
                 break;
             }
             case '#': {
