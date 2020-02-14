@@ -167,9 +167,23 @@ class Template {
                 required.add(mstName);
                 break;
             }
+            case '^': {
+                const items = this._handleParsed(curr[4], typeSchemas);
+                if (!acc.properties[mstName]) {
+                    acc.properties[mstName] = {
+                        type: 'boolean'
+                    };
+                }
+                if (items.properties) {
+                    Object.keys(items.properties).forEach((item) => {
+                        dependencies[item] = [mstName];
+                    });
+                    Object.assign(acc.properties, items.properties);
+                }
+                break;
+            }
             case '!':
             case 'text':
-            case '^':
                 // skip
                 break;
             default:
