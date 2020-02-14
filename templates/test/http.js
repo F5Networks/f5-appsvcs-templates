@@ -24,7 +24,7 @@ const view = {
     do_pool: true,
     do_pool_priority_groups: false,
     pool_name: undefined,
-    pool_members: ['"10.2.1.1"', '"10.2.1.2"'],
+    pool_members: ['10.2.1.1', '10.2.1.2'],
     pool_port: 443,
     pool_lb_method: 'round-robin',
     pool_slow_ramp: 10,
@@ -32,7 +32,7 @@ const view = {
     // snat
     do_snat: true,
     snat_pool_name: undefined,
-    snat_pool_members: ['"10.3.1.1"', '"10.3.1.2"'],
+    snat_pool_members: ['10.3.1.1', '10.3.1.2'],
 
     // monitor spec
     do_monitor: true,
