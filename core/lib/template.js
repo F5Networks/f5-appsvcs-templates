@@ -131,7 +131,21 @@ class Template {
             }
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
+
+                // Filter out properties we do not want to overwrite
+                partial.properties = Object.keys(partial.properties).reduce((filtered, prop) => {
+                    const propDef = partial.properties[prop];
+                    const noOverwrite = (
+                        acc.properties[prop] && acc.properties[prop].type && acc.properties[prop].type === 'array'
+                        && propDef.type && propDef.type === 'boolean'
+                    );
+                    if (!noOverwrite) {
+                        filtered[prop] = propDef;
+                    }
+                    return filtered;
+                }, {});
                 Object.assign(acc.properties, partial.properties);
+
                 if (partial.required) {
                     partial.required.forEach(x => required.add(x));
                 }
