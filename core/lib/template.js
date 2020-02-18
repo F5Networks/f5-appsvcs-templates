@@ -76,6 +76,30 @@ class Template {
         }
     }
 
+    _mergeSchemaInto(dst, src) {
+        if (!src.properties) {
+            // Nothing to merge
+            return;
+        }
+
+        // Filter out properties we do not want to overwrite
+        src.properties = Object.keys(src.properties).reduce((filtered, prop) => {
+            const propDef = src.properties[prop];
+            const noOverwrite = (
+                dst.properties && dst.properties[prop] && dst.properties[prop].type
+                && (dst.properties[prop].type === 'array' || dst.properties[prop].type === 'string')
+                && propDef.type && propDef.type === 'boolean'
+            );
+            if (!noOverwrite) {
+                filtered[prop] = propDef;
+            }
+            return filtered;
+        }, {});
+
+        // Merge
+        Object.assign(dst.properties, src.properties);
+    }
+
     _handleParsed(parsed, typeSchemas) {
         const primitives = [
             'boolean',
@@ -131,21 +155,7 @@ class Template {
             }
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
-
-                // Filter out properties we do not want to overwrite
-                partial.properties = Object.keys(partial.properties).reduce((filtered, prop) => {
-                    const propDef = partial.properties[prop];
-                    const noOverwrite = (
-                        acc.properties[prop] && acc.properties[prop].type && acc.properties[prop].type === 'array'
-                        && propDef.type && propDef.type === 'boolean'
-                    );
-                    if (!noOverwrite) {
-                        filtered[prop] = propDef;
-                    }
-                    return filtered;
-                }, {});
-                Object.assign(acc.properties, partial.properties);
-
+                this._mergeSchemaInto(acc, partial);
                 if (partial.required) {
                     partial.required.forEach(x => required.add(x));
                 }
@@ -186,10 +196,10 @@ class Template {
                         Object.keys(items.properties).forEach((item) => {
                             dependencies[item] = [mstName];
                         });
-                        Object.assign(acc.properties, items.properties);
                     }
                 }
 
+                this._mergeSchemaInto(acc, items);
                 break;
             }
             case '^': {
@@ -203,8 +213,9 @@ class Template {
                     Object.keys(items.properties).forEach((item) => {
                         dependencies[item] = [mstName];
                     });
-                    Object.assign(acc.properties, items.properties);
                 }
+
+                this._mergeSchemaInto(acc, items);
                 break;
             }
             case '!':
