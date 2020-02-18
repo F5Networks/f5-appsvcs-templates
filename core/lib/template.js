@@ -165,9 +165,8 @@ class Template {
                 const items = this._handleParsed(curr[4], typeSchemas);
                 const dotItems = curr[4].filter(item => item[0] === 'name' && item[1] === '.');
                 const asArray = dotItems.length !== 0;
-                const asString = (
+                const typeDefined = (
                     items.properties
-                    && items.properties === 1
                     && items.properties[mstName]
                     && items.properties[mstName].type
                     && items.properties[mstName].type === 'string'
@@ -184,10 +183,8 @@ class Template {
                         };
                     }
                     required.add(mstName);
-                } else if (asString) {
-                    acc.properties[mstName] = {
-                        type: 'string'
-                    };
+                } else if (typeDefined) {
+                    acc.properties[mstName] = items.properties[mstName];
                 } else {
                     acc.properties[mstName] = {
                         type: 'boolean'
