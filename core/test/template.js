@@ -232,4 +232,48 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
+    it('render_nested_section', function () {
+        const mstdata = `
+            {{outer_val}}
+            {{^outer_val}}
+                {{#inner_val}}
+                    {{inner_val::array}}
+                {{/inner_val}}
+            {{/outer_val}}
+        `;
+        const view = { outer_val: '', inner_val: ['1', '2', '3'] };
+        const reference = '["1","2","3"]';
+
+        return Template.loadMst(mstdata)
+            .then((tmpl) => {
+                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                assert.strictEqual(tmpl.render(view).trim(), reference);
+            });
+    });
+    it('render_merged_sections', function () {
+        const ymldata = `
+            definitions:
+                part_nothing:
+                    template: |
+                        {{^value}}
+                            Nothing
+                        {{/value}}
+                part_value:
+                    template: |
+                        {{#value}}
+                            {{value}}
+                        {{/value}}
+            template: |
+                {{> part_value}}
+                {{> part_nothing}}
+        `;
+        const view = { value: 'foo' };
+        const reference = 'foo';
+
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                assert.strictEqual(tmpl.render(view).trim(), reference);
+            });
+    });
 });
