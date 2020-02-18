@@ -168,6 +168,11 @@ definitions:
           "profileMultiplex": "basic",
         {{/multiplex_profile_name}}
       {{/do_multiplex}}
+  service_redirect:
+    template: |
+      {{#do_tls_server}}
+        "redirect80": {{redirect80::boolean}},
+      {{/do_tls_server}}
 template: |
   {
     "class": "ADC",
@@ -192,9 +197,7 @@ template: |
           {{> service_caching_def}}
           {{> service_compression_def}}
           {{> service_multiplex_def}}
-          {{#do_tls_server}}
-            "redirect80": {{redirect80::boolean}},
-          {{/do_tls_server}}
+          {{> service_redirect}}
           "virtualAddresses": ["{{virtual_address}}"],
           "virtualPort": {{virtual_port:f5:port}}
         }
