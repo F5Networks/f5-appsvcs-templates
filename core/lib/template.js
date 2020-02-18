@@ -131,13 +131,37 @@ class Template {
             }
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
+
+                // Filter out properties we do not want to overwrite
+                partial.properties = Object.keys(partial.properties).reduce((filtered, prop) => {
+                    const propDef = partial.properties[prop];
+                    const noOverwrite = (
+                        acc.properties[prop] && acc.properties[prop].type && acc.properties[prop].type === 'array'
+                        && propDef.type && propDef.type === 'boolean'
+                    );
+                    if (!noOverwrite) {
+                        filtered[prop] = propDef;
+                    }
+                    return filtered;
+                }, {});
                 Object.assign(acc.properties, partial.properties);
+
+                if (partial.required) {
+                    partial.required.forEach(x => required.add(x));
+                }
                 break;
             }
             case '#': {
                 const items = this._handleParsed(curr[4], typeSchemas);
                 const dotItems = curr[4].filter(item => item[0] === 'name' && item[1] === '.');
                 const asArray = dotItems.length !== 0;
+                const asString = (
+                    items.properties
+                    && items.properties === 1
+                    && items.properties[mstName]
+                    && items.properties[mstName].type
+                    && items.properties[mstName].type === 'string'
+                );
                 if (asArray) {
                     acc.properties[mstName] = {
                         type: 'array',
@@ -149,6 +173,11 @@ class Template {
                             type: 'string'
                         };
                     }
+                    required.add(mstName);
+                } else if (asString) {
+                    acc.properties[mstName] = {
+                        type: 'string'
+                    };
                 } else {
                     acc.properties[mstName] = {
                         type: 'boolean'
@@ -161,12 +190,25 @@ class Template {
                     }
                 }
 
-                required.add(mstName);
+                break;
+            }
+            case '^': {
+                const items = this._handleParsed(curr[4], typeSchemas);
+                if (!acc.properties[mstName]) {
+                    acc.properties[mstName] = {
+                        type: 'boolean'
+                    };
+                }
+                if (items.properties) {
+                    Object.keys(items.properties).forEach((item) => {
+                        dependencies[item] = [mstName];
+                    });
+                    Object.assign(acc.properties, items.properties);
+                }
                 break;
             }
             case '!':
             case 'text':
-            case '^':
                 // skip
                 break;
             default:

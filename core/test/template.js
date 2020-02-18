@@ -169,16 +169,24 @@ describe('Template class tests', function () {
         const ymldata = `
             view:
                 numb: 5
+                arr:
+                    - "1"
+                    - "2"
             definitions:
                 numbpartial:
                     template: |
                         numb={{numb::integer}}
+                arraypartial:
+                    template: |
+                        arr={{arr::array}}
             template: |
                 {{> numbpartial}}
+                {{> arraypartial}}
         `;
+        const reference = 'numb=5\narr=["1","2"]\n';
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
-                assert.strictEqual(tmpl.render(), 'numb=5\n');
+                assert.strictEqual(tmpl.render(), reference);
             });
     });
     it('render_empty_template', function () {

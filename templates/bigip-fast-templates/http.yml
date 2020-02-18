@@ -15,7 +15,7 @@ definitions:
             "class": "Pool",
             "loadBalancingMode": "{{pool_lb_method}}",
             "members": [{
-               "serverAddresses": [{{pool_members::array}}],
+               "serverAddresses": {{pool_members::array}},
                "servicePort": {{pool_port:f5:port}}
             }],
             "monitors": ["http"]
@@ -29,7 +29,7 @@ definitions:
           {{#snat_pool_members}}
             "{{app_name}}_snatpool": {
               "class": "SNAT_Pool",
-              "snatAddresses": [{{snat_pool_members::array}}]
+              "snatAddresses": {{snat_pool_members::array}}
             },
           {{/snat_pool_members}}
         {{/snat_pool_name}}
@@ -55,7 +55,7 @@ definitions:
         {{^tls_client_name}}
           "{{app_name}}_tls_client": {
             "class": "TLS_Client",
-            "sendSNI": "{{hostnames}}"
+            "sendSNI": {{hostnames::array}}
           },
         {{/tls_client_name}}
       {{/do_tls_client}}
