@@ -159,6 +159,11 @@ class Template {
                 if (partial.required) {
                     partial.required.forEach(x => required.add(x));
                 }
+                if (partial.dependencies) {
+                    Object.keys(partial.dependencies).forEach((prop) => {
+                        dependencies[prop] = partial.dependencies[prop];
+                    });
+                }
                 break;
             }
             case '#': {
@@ -189,13 +194,13 @@ class Template {
                     acc.properties[mstName] = {
                         type: 'boolean'
                     };
-                    if (items.properties) {
-                        Object.keys(items.properties).forEach((item) => {
-                            dependencies[item] = [mstName];
-                        });
-                    }
                 }
 
+                if (items.properties) {
+                    Object.keys(items.properties).forEach((item) => {
+                        dependencies[item] = [mstName];
+                    });
+                }
                 this._mergeSchemaInto(acc, items);
                 break;
             }
@@ -211,7 +216,6 @@ class Template {
                         dependencies[item] = [mstName];
                     });
                 }
-
                 this._mergeSchemaInto(acc, items);
                 break;
             }
