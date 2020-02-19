@@ -28,7 +28,7 @@ const _validateSchema = validator.compile(tmplSchema);
 
 class JSONViewTransform {
     transform(schema, value) {
-        if (schema.type === 'array' && !schema.skip_xform) {
+        if (schema.type === 'array' && value.length && value.length > 0 && !schema.skip_xform) {
             return JSON.stringify(value);
         }
 
@@ -101,15 +101,15 @@ class Template {
     }
 
     _handleParsed(parsed, typeSchemas) {
-        const primitives = [
-            'boolean',
-            'object',
-            'number',
-            'string',
-            'integer',
-            'array',
-            'text'
-        ];
+        const primitives = {
+            boolean: false,
+            object: {},
+            number: 0,
+            string: '',
+            integer: 0,
+            array: [],
+            text: ''
+        };
 
         const required = new Set();
         const dependencies = {};
@@ -122,7 +122,7 @@ class Template {
                 if (schemaName && typeof typeSchemas[schemaName] === 'undefined') {
                     throw new Error(`Failed to find the specified schema: ${schemaName}`);
                 }
-                if (!schemaName && primitives.indexOf(defType) === -1) {
+                if (!schemaName && typeof primitives[defType] === 'undefined') {
                     throw new Error(`No schema definition for ${schemaName}/${defType}`);
                 }
 
@@ -233,14 +233,23 @@ class Template {
         });
         if (schema.properties['.'] && Object.keys(schema.properties).length === 1) {
             return {
-                type: 'string'
+                type: 'string',
+                default: primitives.string
             };
         }
         if (Object.keys(schema.properties).length < 1) {
             return {
-                type: 'string'
+                type: 'string',
+                default: primitives.string
             };
         }
+        // Set default values for any primitives
+        Object.keys(schema.properties).forEach((prop) => {
+            const def = schema.properties[prop];
+            if (typeof def.default === 'undefined' && typeof primitives[def.type] !== 'undefined') {
+                schema.properties[prop].default = primitives[def.type];
+            }
+        });
         schema.required = Array.from(required);
         if (dependencies && Object.keys(dependencies).length > 0) {
             schema.dependencies = dependencies;

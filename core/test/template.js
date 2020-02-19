@@ -99,17 +99,19 @@ describe('Template class tests', function () {
         const reference = {
             type: 'object',
             properties: {
-                variable1: { type: 'string' },
-                string_variable: { type: 'string' },
+                variable1: { type: 'string', default: '' },
+                string_variable: { type: 'string', default: '' },
                 array_variable: {
                     type: 'array',
                     skip_xform: true,
                     items: {
+                        default: '',
                         type: 'string'
-                    }
+                    },
+                    default: []
                 },
-                boolean_variable: { type: 'boolean' },
-                number_variable: { type: 'number' }
+                boolean_variable: { type: 'boolean', default: false },
+                number_variable: { type: 'number', default: 0 }
             },
             required: [
                 'variable1',
@@ -234,14 +236,16 @@ describe('Template class tests', function () {
     });
     it('render_nested_section', function () {
         const mstdata = `
-            {{outer_val}}
+            {{#outer_val}}
+                {{outer_val::array}}
+            {{/outer_val}}
             {{^outer_val}}
                 {{#inner_val}}
                     {{inner_val::array}}
                 {{/inner_val}}
             {{/outer_val}}
         `;
-        const view = { outer_val: '', inner_val: ['1', '2', '3'] };
+        const view = { outer_val: [], inner_val: ['1', '2', '3'] };
         const reference = '["1","2","3"]';
 
         return Template.loadMst(mstdata)
