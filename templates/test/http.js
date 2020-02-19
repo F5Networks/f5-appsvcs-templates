@@ -14,7 +14,7 @@ const view = {
 
     // virtual server
     virtual_address: '10.1.1.1',
-    virtual_port: 4430, // TODO: test default values of 80 and 443
+    virtual_port: 4430,
     hostnames: ['www.example.com'],
 
     // http redirect
@@ -25,7 +25,7 @@ const view = {
     do_pool_priority_groups: false,
     pool_name: undefined,
     pool_members: ['10.2.1.1', '10.2.1.2'],
-    pool_port: 443,
+    pool_port: 4433,
     pool_lb_method: 'round-robin',
     pool_slow_ramp: 10,
 
@@ -42,9 +42,9 @@ const view = {
     monitor_http_version: '1.1',
     monitor_send_string: '/',
     monitor_expected_response: 'OK',
-    monitor_credentials: false,
-    monitor_username: undefined,
-    monitor_passphrase: undefined,
+    monitor_credentials: true,
+    monitor_username: 'testuser',
+    monitor_passphrase: 'testpass',
 
     // tcp profile spec
     clientside_topology: 'wan',
@@ -115,7 +115,18 @@ const expected = {
                     serverAddresses: ['10.2.1.1', '10.2.1.2']
                 }],
                 loadBalancingMode: view.pool_lb_method,
-                monitors: ['http']
+                monitors: [{ use: 'app1_monitor' }]
+            },
+            app1_monitor: {
+                class: 'Monitor',
+                monitorType: 'https',
+                send: view.monitor_send_string,
+                receive: view.monitor_expected_response,
+                username: view.monitor_username,
+                passphrase: {
+                    ciphertext: view.monitor_passphrase,
+                    protected: 'eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0'
+                }
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
@@ -133,8 +144,7 @@ const expected = {
                 privateKey: { bigip: view.tls_server_key }
             },
             app1_tls_client: {
-                class: 'TLS_Client',
-                sendSNI: view.hostnames[0]
+                class: 'TLS_Client'
             }
         }
     }
@@ -145,13 +155,16 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls bridging with existing pool, snatpool, and profiles', function () {
+    describe('tls bridging with default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
-            // existing pool
-            delete view.pool_members;
-            view.pool_name = '/Common/pool1';
-            delete expected.t1.app1.app1_pool;
-            expected.t1.app1.serviceMain.pool = { bigip: '/Common/pool1' };
+            // default https pool port
+            delete view.pool_port;
+            expected.t1.app1.app1_pool.members[0].servicePort = 443;
+
+            // existing monitor
+            view.monitor_name = '/Common/https';
+            delete expected.t1.app1.app1_monitor;
+            expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/https' }];
 
             // existing snatpool
             delete view.snat_pool_members;
@@ -184,10 +197,16 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls bridging with snat automap and default profiles', function () {
+    describe('tls bridging with existing pool, snat automap and default profiles', function () {
         before(() => {
+            // existing pool
+            delete view.pool_members;
+            view.pool_name = '/Common/pool1';
+            delete expected.t1.app1.app1_pool;
+            expected.t1.app1.serviceMain.pool = { bigip: '/Common/pool1' };
+
             // default https virtual port
-            view.virtual_port = 443;
+            delete view.virtual_port;
             expected.t1.app1.serviceMain.virtualPort = 443;
 
             // snat automap

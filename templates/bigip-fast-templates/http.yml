@@ -13,15 +13,56 @@ definitions:
         {{^pool_name}}
           "{{app_name}}_pool": {
             "class": "Pool",
-            "loadBalancingMode": "{{pool_lb_method}}",
             "members": [{
                "serverAddresses": {{pool_members::array}},
                "servicePort": {{pool_port:f5:port}}
             }],
-            "monitors": ["http"]
+            {{#do_monitor}}
+              {{#monitor_name}}
+                "monitors": [{
+                  "bigip": "{{monitor_name}}"
+                }],
+              {{/monitor_name}}
+              {{^monitor_name}}
+                "monitors": [{
+                  "use": "{{app_name}}_monitor"
+                }],
+              {{/monitor_name}}
+            {{/do_monitor}}
+            "loadBalancingMode": "{{pool_lb_method}}"
           },
         {{/pool_name}}
       {{/do_pool}}
+  app_monitor_def:
+    template: |
+      {{#do_monitor}}
+        {{^monitor_name}}
+          "{{app_name}}_monitor": {
+            "class": "Monitor",
+            {{#monitor_send_string}}
+              "send": "{{monitor_send_string}}",
+            {{/monitor_send_string}}
+            {{#monitor_expected_response}}
+              "receive": "{{monitor_expected_response}}",
+            {{/monitor_expected_response}}
+            {{#monitor_username}}
+              "username": "{{monitor_username}}",
+            {{/monitor_username}}
+            {{#monitor_passphrase}}
+              "passphrase": {
+                "ciphertext": "{{monitor_passphrase}}",
+                "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+              },
+            {{/monitor_passphrase}}
+            {{#do_tls_server}}
+              "monitorType": "https"
+            {{/do_tls_server}}
+            {{^do_tls_server}}
+              "monitorType": "http"
+            {{/do_tls_server}}
+          },
+        {{/monitor_name}}
+      {{/do_monitor}}
   app_snat_def:
     template: |
       {{#do_snat}}
@@ -54,8 +95,7 @@ definitions:
       {{#do_tls_client}}
         {{^tls_client_name}}
           "{{app_name}}_tls_client": {
-            "class": "TLS_Client",
-            "sendSNI": {{hostnames::array}}
+            "class": "TLS_Client"
           },
         {{/tls_client_name}}
       {{/do_tls_client}}
@@ -184,6 +224,7 @@ template: |
         "class": "Application",
         {{> app_template_def}}
         {{> app_pool_def}}
+        {{> app_monitor_def}}
         {{> app_snat_def}}
         {{> app_tls_server_def}}
         {{> app_tls_client_def}}
