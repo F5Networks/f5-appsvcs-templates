@@ -49,7 +49,7 @@ const newEditor = (tmplid, view) => {
 
             // Create a new editor
             editor = new JSONEditor(formElement, {
-                schema: tmpl.getViewSchema(),
+                schema,
                 compact: true,
                 disable_edit_json: true,
                 disable_properties: true,
@@ -62,7 +62,8 @@ const newEditor = (tmplid, view) => {
 
             // Load with defaults
             editor.on('ready', () => {
-                editor.setValue(guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema));
+                const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema);
+                editor.setValue(defaults);
                 dispOutput('Editor ready');
             });
 
@@ -75,7 +76,7 @@ const newEditor = (tmplid, view) => {
                 dispOutput(tmpl.templateText);
             }
             document.getElementById('view-schema-btn').onclick = () => {
-                dispOutput(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                dispOutput(JSON.stringify(schema, null, 2));
             }
             document.getElementById('view-render-btn').onclick = () => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
