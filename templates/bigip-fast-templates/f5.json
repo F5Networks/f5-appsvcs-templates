@@ -44,7 +44,8 @@
         "round-robin",
         "weighted-least-connections-member",
         "weighted-least-connections-node"
-      ]
+      ],
+      "default": "least-connections-member"
     },
     "match_blob" : {
       "type": "array",
