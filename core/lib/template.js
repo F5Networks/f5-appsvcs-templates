@@ -254,6 +254,12 @@ class Template {
                 schema.properties[prop].default = primitives[def.type];
             }
         });
+        // Remove any required items from dependencies
+        required.forEach((value) => {
+            delete dependencies[value];
+        });
+
+        // Add required and dependencies to the schema
         schema.required = Array.from(required);
         if (dependencies && Object.keys(dependencies).length > 0) {
             schema.dependencies = dependencies;

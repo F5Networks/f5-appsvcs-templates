@@ -280,4 +280,20 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view).trim(), reference);
             });
     });
+    it('schema_clean_deps', function () {
+        const mstdata = `
+            {{app_name}}
+            {{#do_foo}}
+                {{app_name}}_foo
+            {{/do_foo}}
+        `;
+
+        return Template.loadMst(mstdata)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
+                assert(schema.required.includes('app_name'));
+                assert(typeof schema.dependencies === 'undefined');
+            });
+    });
 });
