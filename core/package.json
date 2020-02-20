@@ -7,7 +7,7 @@
   "description": "",
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
-    "lint": "eslint lib test cli.js",
+    "lint": "eslint lib dataStores test cli.js",
     "coverage": "nyc npm test"
   },
   "keywords": [
@@ -48,6 +48,7 @@
     "js-yaml": "^3.13.1",
     "mustache": "^3.1.0",
     "uuid": "^3.4.0",
-    "yargs": "^15.1.0"
+    "yargs": "^15.1.0",
+    "zlib": "^1.0.5"
   }
 }
