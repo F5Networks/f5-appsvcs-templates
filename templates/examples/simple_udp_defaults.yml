@@ -23,9 +23,9 @@ template: |
             "{{virtual_address}}"
           ],
           "virtualPort": {{virtual_port:f5:port}},
-          "pool": "Pool1"
+          "pool": "{{application_name}}_Pool1"
         },
-        "Pool1": {
+        "{{application_name}}_Pool1": {
           "class": "Pool",
           "monitors": [
             "icmp"

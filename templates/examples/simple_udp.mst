@@ -16,9 +16,9 @@ to connect to, and a list of IP Addresses with a port hosting a UDP service.
         "virtualAddresses": [
           "{{virtual_address}}"
         ],
-        "pool": "Pool1"
+        "pool": "{{application_name}}_Pool1"
       },
-      "Pool1": {
+      "{{application_name}}_Pool1": {
         "class": "Pool",
         "monitors": [
           "icmp"

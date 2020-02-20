@@ -15,10 +15,10 @@
         "class": "Service_HTTPS",
         "virtualPort": {{virtual_port::integer}},
         "virtualAddresses": [ "{{virtual_address}}" ],
-        "pool": "web_pool",
+        "pool": "{{application_name}}_web_pool",
         "serverTLS": "webtls"
       },
-      "web_pool": {
+      "{{application_name}}_web_pool": {
         "class": "Pool",
         "monitors": [
           "http"

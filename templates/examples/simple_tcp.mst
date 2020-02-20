@@ -16,9 +16,9 @@
           "{{virtual_address}}"
         ],
         "virtualPort": {{virtual_port::integer}},
-        "pool": "svc_pool"
+        "pool": "{{application_name}}_svc_pool"
       },
-      "svc_pool": {
+      "{{application_name}}_svc_pool": {
         "class": "Pool",
         "members": [{
           "servicePort": {{server_port::integer}},
