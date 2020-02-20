@@ -28,6 +28,10 @@ const _validateSchema = validator.compile(tmplSchema);
 
 class JSONViewTransform {
     transform(schema, value) {
+        if (typeof value === 'undefined') {
+            return value;
+        }
+
         if (schema.type === 'array' && value.length && value.length > 0 && !schema.skip_xform) {
             return JSON.stringify(value);
         }
