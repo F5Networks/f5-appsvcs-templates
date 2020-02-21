@@ -323,4 +323,25 @@ describe('Template class tests', function () {
                 assert.strictEqual(typeof emptyDef.description, 'undefined');
             });
     });
+    it('schema_prop_order_from_def', function () {
+        const ymldata = `
+            definitions:
+                foo:
+                    title: 'Foo'
+                baz:
+                    title: 'Baz'
+            template: |
+                {{bar}}{{baz}}{{foo}}{{other}}
+        `;
+
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                assert.deepStrictEqual(Object.keys(tmpl.getViewSchema().properties), [
+                    'foo',
+                    'baz',
+                    'bar',
+                    'other'
+                ]);
+            });
+    });
 });

@@ -254,18 +254,36 @@ class Template {
                 schema.properties[prop].default = primitives[def.type];
             }
         });
-        // Set title and description from definitions if present
+
+        // Use definitions to add more information to variables
+        const defKeys = Object.keys(this.definitions);
         Object.keys(schema.properties).forEach((prop) => {
             const schemaDef = schema.properties[prop];
             const def = this.definitions[prop];
             if (typeof def === 'undefined') {
-                // No definition from template, skip
+                schemaDef.propertyOrder = 1000;
+                // No definition from template, nothing more to do
                 return;
             }
 
+            // Set title and description from definitions
             schemaDef.title = def.title || schemaDef.title;
             schemaDef.description = def.description || schemaDef.description;
+
+            // Order properties based on the order they appear in definition
+            schemaDef.propertyOrder = defKeys.indexOf(prop);
         });
+
+        // Re-sort properties based on propertyOrder
+        schema.properties = Object.entries(schema.properties)
+            .map(([key, def]) => Object.assign({ name: key }, def))
+            .sort((a, b) => a.propertyOrder - b.propertyOrder)
+            .reduce((acc, curr) => {
+                acc[curr.name] = curr;
+                delete curr.name;
+                delete curr.propertyOrder;
+                return acc;
+            }, {});
 
         // Remove any required items from dependencies
         required.forEach((value) => {
