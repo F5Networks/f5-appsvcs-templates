@@ -191,7 +191,6 @@ class Template {
                             type: 'string'
                         };
                     }
-                    required.add(mstName);
                 } else if (typeDefined) {
                     acc.properties[mstName] = items.properties[mstName];
                 } else {
@@ -199,6 +198,7 @@ class Template {
                         type: 'boolean'
                     };
                 }
+                required.add(mstName);
 
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
