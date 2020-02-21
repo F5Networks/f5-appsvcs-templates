@@ -1,0 +1,261 @@
+{
+    "$schema": "http://json-schema.org/draft-07/hyper-schema",
+    "definitions": {
+      "tenant_name": {
+        "type": "string",
+        "title": "What is the tenant name?",
+        "description": "The tenant is the high-level grouping in an AS3 declaration. AS3 deploys all configuration for a given tenant in a BIG-IP partition of the same name."
+      },
+      "app_name": {
+        "type": "string",
+        "title": "What is the application name?",
+        "description": "The application is the low-level grouping in an AS3 declaration. AS3 deploys all configuration for a given application in a BIG-IP folder within the tenant partition."
+      },
+      "ipv4": {
+        "format": "ipv4",
+        "default": "10.0.0.1"
+      },
+      "port": {
+        "type": "integer",
+        "minimuim": 0,
+        "maximum": 65535,
+        "default": 443
+      },
+      "virtual_address": {
+        "type": "string",
+        "format": "ipv4",
+        "title": "What IP address do you want to use for the virtual server?",
+        "description": "This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the web servers."
+      },
+      "virtual_port": {
+        "type": "integer",
+        "title": "What TCP port do you want to use for the virtual server?",
+        "minimuim": 0,
+        "maximum": 65535,
+        "default": 443
+      },
+      "pool_port": {
+        "type": "integer",
+        "title": "What TCP port do you want to use for the pool members?",
+        "minimuim": 0,
+        "maximum": 65535,
+        "default": 80
+      },
+      "pool_name": {
+        "type": "string",
+        "title": "Specify the name of an existing BIG-IP pool.",
+        "description": "A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool."
+      },
+      "monitor_name": {
+        "type": "string",
+        "title": "Specify the name of an existing BIG-IP monitor.",
+        "description": "Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly."
+      },
+      "profile_name": {
+        "type": "string",
+        "title": "Specify the name of an existing BIG-IP profile."
+      },
+      "tls_cert_name": {
+        "type": "string",
+        "title": "Specify the name of an existing BIG-IP SSL certificate.",
+        "default": "/Common/default.crt"
+      },
+      "tls_key_name": {
+        "type": "string",
+        "title": "Specify the name of an existing BIG-IP SSL key.",
+        "default": "/Common/default.key"
+      },
+      "service": {
+        "type": "string",
+        "enum": [
+          "Service_HTTP",
+          "Service_HTTPS",
+          "Service_TCP",
+          "Service_UDP",
+          "Service_L4"
+        ],
+        "default": "Service_HTTP"
+      },
+      "http_service": {
+        "type": "string",
+        "enum": [
+          "Service_HTTP",
+          "Service_HTTPS"
+        ],
+        "default": "Service_HTTP"
+      },
+      "load_balancing_mode": {
+        "type": "string",
+        "title": "Which load balancing method do you want to use?",
+        "description": "A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.",
+        "enum": [
+          "dynamic-ratio-member",
+          "dynamic-ratio-node",
+          "fastest-app-response",
+          "fastest-node",
+          "least-connections-member",
+          "least-connections-node",
+          "least-sessions",
+          "observed-member",
+          "observed-node",
+          "predictive-member",
+          "predictive-node",
+          "ratio-least-connections-member",
+          "ratio-least-connections-node",
+          "ratio-member",
+          "ratio-node",
+          "ratio-session",
+          "round-robin",
+          "weighted-least-connections-member",
+          "weighted-least-connections-node"
+        ],
+        "default": "least-connections-member"
+      },
+      "match_blob" : {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": ["*"]
+      },
+      "basic_policy_matching_strategy": {
+        "type": "string",
+        "enum": [
+          "all-match",
+          "best-match",
+          "first-match"
+        ]
+      },
+      "policy_condition": {
+        "type": "string",
+        "enum": [
+          "httpHeader",
+          "httpUri",
+          "httpCookie",
+          "sslExtension"
+        ]
+      },
+      "policy_action": {
+        "type": "string",
+        "enum": [
+          "http",
+          "httpCookie",
+          "httpHeader",
+          "httpRedirect",
+          "httpUri",
+          "waf",
+          "forward",
+          "drop",
+          "clientSsl",
+          "persist"
+        ]
+      },
+      "match_component": {
+        "type": "string",
+        "enum": [
+          "npn",
+          "path",
+          "pathSegment",
+          "port",
+          "queryParameter",
+          "queryString",
+          "scheme",
+          "serverName"
+        ]
+      },
+      "policy_condition_event": {
+        "type": "string",
+        "enum": [
+          "proxy-connect",
+          "proxy-request",
+          "request",
+          "proxy-response",
+          "response"
+        ]
+      },
+      "policy_action_event": {
+        "type": "string",
+        "enum": [
+          "client-accepted",
+          "proxy-request",
+          "request",
+          "response",
+          "server-connected"
+        ]
+      },
+      "http_header": {
+        "type":"string",
+        "enum": [
+          "Access-Control-Allow-Credentials",
+          "Access-Control-Allow-Headers",
+          "Access-Control-Allow-Methods",
+          "Access-Control-Allow-Origin",
+          "Access-Control-Expose-Headers",
+          "Access-Control-Max-Age",
+          "Accept-Ranges",
+          "Age",
+          "Allow",
+          "Alternate-Protocol",
+          "Cache-Control",
+          "Client-Date",
+          "Client-Peer",
+          "Client-Response-Num",
+          "Connection",
+          "Content-Disposition",
+          "Content-Encoding",
+          "Content-Language",
+          "Content-Length",
+          "Content-Location",
+          "Content-MD5",
+          "Content-Range",
+          "Content-Security-Policy,",
+          "Content-Security-Policy-Report-Only",
+          "Content-Type",
+          "Date",
+          "ETag",
+          "Expires",
+          "HTTP",
+          "Keep-Alive",
+          "Last-Modified",
+          "Link",
+          "Location",
+          "P3P",
+          "Pragma",
+          "Proxy-Authenticate",
+          "Proxy-Connection",
+          "Refresh",
+          "Retry-After",
+          "Server",
+          "Set-Cookie",
+          "Status",
+          "Strict-Transport-Security",
+          "Timing-Allow-Origin",
+          "Trailer",
+          "Transfer-Encoding",
+          "Upgrade",
+          "Vary",
+          "Via",
+          "Warning",
+          "WWW-Authenticate",
+          "X-Aspnet-Version",
+          "X-Content-Type-Options",
+          "X-Frame-Options",
+          "X-Permitted-Cross-Domain-Policies",
+          "X-Pingback",
+          "X-Powered-By",
+          "X-Robots-Tag",
+          "X-UA-Compatible",
+          "X-XSS-Protection"
+        ]
+      },
+      "operands": {
+        "type": "string",
+        "enum": [
+          "equals",
+          "starts-with",
+          "ends-with",
+          "contains"
+        ]
+      }
+    }
+  }

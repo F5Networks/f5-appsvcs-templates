@@ -1,0 +1,127 @@
+definitions:
+  redirect80_def:
+    template: |
+      {{#Create_a_redirect_virtual_on_port_80}}
+          "redirect80": true,
+      {{/Create_a_redirect_virtual_on_port_80}}
+  service_pool_def:
+    template: |
+      {{#Use_an_existing_pool}}
+        "pool": {
+          "bigip": "{{pool_name:f5:pool_name}}"
+        },
+      {{/Use_an_existing_pool}}
+      {{#Create_a_new_pool}}
+        "pool": "{{app_name:f5:app_name}}_pool",
+      {{/Create_a_new_pool}}
+  service_tls_server_def:
+    template: |
+      "serverTLS": "{{app_name:f5:app_name}}_tls_server",
+  service_tls_client_def:
+    template: |
+      {{#Create_a_TLS_client_profile}}
+        "clientTLS": "{{app_name:f5:app_name}}_tls_client",
+      {{/Create_a_TLS_client_profile}}
+  service_http_def:
+    template: |
+      {{#Use_an_existing_HTTP_profile}}
+        "profileHTTP": {
+          "bigip": "{{http_profile_name:f5:profile_name}}"
+        },
+      {{/Use_an_existing_HTTP_profile}}
+      {{^Use_an_existing_HTTP_profile}}
+        "profileHTTP": "basic",
+      {{/Use_an_existing_HTTP_profile}}
+  service_caching_def:
+    template: |
+      {{#Use_an_existing_web_acceleration_profile}}
+        "profileHTTPAcceleration": {
+          "bigip": "{{web_acceleration_profile_name:f5:profile_name}}"
+        },
+      {{/Use_an_existing_web_acceleration_profile}}
+      {{^Use_an_existing_web_acceleration_profile}}
+        "profileHTTPAcceleration": "basic",
+      {{/Use_an_existing_web_acceleration_profile}}
+  service_compression_def:
+    template: |
+      {{#Use_an_existing_HTTP_compression_profile}}
+        "profileHTTPCompression": {
+          "bigip": "{{compression_profile_name:f5:profile_name}}"
+        },
+      {{/Use_an_existing_HTTP_compression_profile}}
+      {{^Use_an_existing_HTTP_compression_profile}}
+        "profileHTTPCompression": "basic",
+      {{/Use_an_existing_HTTP_compression_profile}}
+  service_multiplex_def:
+    template: |
+      {{#Use_an_existing_multiplex_profile}}
+          "profileMultiplex": {
+            "bigip": "{{multiplex_profile_name:f5:profile_name}}"
+          }
+      {{/Use_an_existing_multiplex_profile}}
+      {{^Use_an_existing_multiplex_profile}}
+          "profileMultiplex": "basic"
+      {{/Use_an_existing_multiplex_profile}}
+  app_pool_def:
+    template: |
+      {{#Create_a_new_pool}}
+        "{{app_name:f5:app_name}}_pool": {
+          "class": "Pool",
+          "members": [{
+             "serverAddresses": {{pool_members::array}},
+             "servicePort": {{pool_port:f5:pool_port}}
+          }],
+          {{#Create_a_default_HTTPS_monitor}}
+            "monitors": [{ "https" }],
+          {{/Create_a_default_HTTPS_monitor}}
+          "loadBalancingMode": "{{pool_lb_method:f5:load_balancing_mode}}"
+        },
+      {{/Create_a_new_pool}}
+  app_tls_server_def:
+    template: |
+      "{{app_name:f5:app_name}}_tls_server": {
+        "class": "TLS_Server",
+        "certificates": [{ "certificate": "{{app_name:f5:app_name}}_certificate" }]
+      },
+      "{{app_name:f5:app_name}}_certificate": {
+        "class": "Certificate",
+        "certificate": { "bigip": "{{tls_server_certificate:f5:tls_cert_name}}" },
+        "privateKey": { "bigip": "{{tls_server_key:f5:tls_key_name}}" }
+      },
+  app_tls_client_def:
+    template: |
+      {{#Create_a_TLS_client_profile}}
+        "{{app_name:f5:app_name}}_tls_client": {
+          "class": "TLS_Client"
+        },
+      {{/Create_a_TLS_client_profile}}
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
+    "{{tenant_name:f5:tenant_name}}": {
+      "class": "Tenant",
+      "{{app_name:f5:app_name}}": {
+        "class": "Application",
+        "serviceMain": {
+          "class": "Service_HTTPS"
+          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
+          "virtualPort": {{virtual_port:f5:virtual_port}},
+          "snat": "auto",
+          {{> redirect80_def}}
+          {{> service_pool_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_caching_def}}
+          {{> service_compression_def}}
+          {{> service_multiplex_def}}
+        },
+        {{> app_pool_def}}
+        {{> app_tls_server_def}}
+        {{> app_tls_client_def}}
+        "template": "https"
+      }
+    }
+  }
