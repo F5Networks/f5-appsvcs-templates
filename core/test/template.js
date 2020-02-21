@@ -296,4 +296,31 @@ describe('Template class tests', function () {
                 assert(typeof schema.dependencies === 'undefined');
             });
     });
+    it('schema_title_desc_from_def', function () {
+        const ymldata = `
+            definitions:
+                foo:
+                    title: 'Foo'
+                    description: 'BarBar'
+                baz:
+                    title: 'Baz'
+            template: |
+                {{foo}}{{baz}}{{empty}}
+        `;
+
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                const fooDef = tmpl.getViewSchema().properties.foo;
+                assert.strictEqual(fooDef.title, 'Foo');
+                assert.strictEqual(fooDef.description, 'BarBar');
+
+                const bazDef = tmpl.getViewSchema().properties.baz;
+                assert.strictEqual(bazDef.title, 'Baz');
+                assert.strictEqual(typeof bazDef.description, 'undefined');
+
+                const emptyDef = tmpl.getViewSchema().properties.empty;
+                assert.strictEqual(typeof emptyDef.title, 'undefined');
+                assert.strictEqual(typeof emptyDef.description, 'undefined');
+            });
+    });
 });

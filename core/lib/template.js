@@ -254,6 +254,19 @@ class Template {
                 schema.properties[prop].default = primitives[def.type];
             }
         });
+        // Set title and description from definitions if present
+        Object.keys(schema.properties).forEach((prop) => {
+            const schemaDef = schema.properties[prop];
+            const def = this.definitions[prop];
+            if (typeof def === 'undefined') {
+                // No definition from template, skip
+                return;
+            }
+
+            schemaDef.title = def.title || schemaDef.title;
+            schemaDef.description = def.description || schemaDef.description;
+        });
+
         // Remove any required items from dependencies
         required.forEach((value) => {
             delete dependencies[value];
