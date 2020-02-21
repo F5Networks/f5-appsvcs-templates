@@ -78,8 +78,12 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onDelete');
 };
 
+let testStorage = null;
+
 function createTemplateWorker() {
     const tw = new TemplateWorker();
+    tw.storage = testStorage;
+    tw.templateProvider.storage = testStorage;
     return tw;
 }
 
@@ -93,6 +97,11 @@ describe('template worker tests', function () {
     };
 
     patchWorker(TemplateWorker);
+
+    beforeEach(function () {
+        testStorage = new fast.dataStores.StorageMemory();
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS);
+    });
 
     afterEach(function () {
         nock.cleanAll();
@@ -154,7 +163,8 @@ describe('template worker tests', function () {
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
-                assert.notEqual(op.status, 404);
+                console.log(op.body.message);
+                assert.strictEqual(op.status, 200);
                 assert.notEqual(tmpl, {});
             });
     });
@@ -164,7 +174,7 @@ describe('template worker tests', function () {
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
-                assert.notEqual(op.status, 404);
+                assert.equal(op.status, 200);
                 assert.notEqual(tmpl, {});
                 assert.notEqual(tmpl.getViewSchema(), {});
             });
@@ -488,9 +498,12 @@ describe('template worker tests', function () {
 
         return worker.onPost(op)
             .then(() => {
-                assert(fs.existsSync(tsPath));
                 assert.equal(op.status, 200);
-                assert(fs.existsSync(path.join(tsPath, 'testset')));
+            })
+            .then(() => worker.templateProvider.listSets())
+            .then((tmplSets) => {
+                assert(fs.existsSync(`${tsPath}/scratch`));
+                assert(tmplSets.includes('testset'));
             })
             .finally(() => mockfs.restore());
     });
@@ -517,6 +530,29 @@ describe('template worker tests', function () {
         return worker.onDelete(op)
             .then(() => {
                 assert.equal(op.status, 404);
+            });
+    });
+    it('on_start_load_templates', function () {
+        const worker = createTemplateWorker();
+
+        // Clear the data store
+        worker.storage.data = {};
+
+        // "Install" a template set to make sure it is not overridden
+        worker.storage.data['bigip-fast-templates'] = {
+            name: 'bigip-fast-templatesets',
+            schema: {},
+            templates: {}
+        };
+
+        return worker.onStart(
+            () => {}, // success callback
+            () => assert(false) // error callback
+        )
+            .then(() => worker.templateProvider.list())
+            .then((tmplList) => {
+                assert(tmplList.includes('examples/simple_http'));
+                assert(!tmplList.includes('bigip-fast-templates/http'));
             });
     });
 });

@@ -8,6 +8,8 @@ const extract = require('extract-zip');
 const fast = require('@f5devcentral/fast');
 
 const FsTemplateProvider = fast.FsTemplateProvider;
+const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
+const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const httpUtils = fast.httpUtils;
 const AS3Driver = fast.AS3Driver;
 
@@ -21,6 +23,7 @@ const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
 const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
+const dataGroupPath = `/Common/${projectName}/dataStore`;
 
 class TemplateWorker {
     constructor() {
@@ -29,13 +32,37 @@ class TemplateWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.templateProvider = new FsTemplateProvider(templatesPath);
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
+        this.storage = new StorageDataGroup(dataGroupPath);
+        this.templateProvider = new DataStoreTemplateProvider(this.storage);
     }
 
     /**
      * Worker Handlers
      */
+    onStart(success, error) {
+        // Find any template sets on disk (e.g., from the RPM) and add them to
+        // the data store. Do not overwrite template sets already in the data store.
+        const fsprovider = new FsTemplateProvider(templatesPath);
+        return Promise.all([fsprovider.listSets(), this.templateProvider.listSets()])
+            .then(([fsSets, knownSets]) => {
+                const sets = fsSets.filter(setName => !knownSets.includes(setName));
+                this.logger.info(
+                    `TemplateWorker: Loading template sets from disk: ${JSON.stringify(sets)} (skipping: ${JSON.stringify(knownSets)})`
+                );
+                if (sets.length === 0) {
+                    // Nothing to do
+                    return Promise.resolve();
+                }
+                return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
+            })
+            .then(() => success())
+            .catch((e) => {
+                this.logger.severe(`TemplateWorker: Failed to load templates from disk: ${e.stack}`);
+                error();
+            });
+    }
+
     onStartCompleted(success, error, state, errMsg) {
         if (errMsg) {
             this.logger.severe(`TemplateWorker onStartCompleted error: something went wrong ${errMsg}`);
@@ -201,8 +228,7 @@ class TemplateWorker {
                 .catch(e => this.genRestResponse(restOperation, 500, e.stack));
         }
 
-        return this.templateProvider.list()
-            .then(templates => Array.from(templates.reduce((acc, curr) => acc.add(curr.split('/')[0]), new Set())))
+        return this.templateProvider.listSets()
             .then((setList) => {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation);
@@ -276,7 +302,6 @@ class TemplateWorker {
     postTemplateSets(restOperation, data) {
         const tsid = data.name;
         const setpath = `${uploadPath}/${tsid}.zip`;
-        const targetpath = `${templatesPath}/${tsid}`;
         const scratch = `${scratchPath}/${tsid}`;
 
         if (!data.name) {
@@ -298,7 +323,7 @@ class TemplateWorker {
             });
         })
             .then(() => this._validateTemplateSet(scratchPath))
-            .then(() => fs.move(scratch, targetpath, { overwrite: true }))
+            .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))
             .finally(() => fs.removeSync(scratch));
