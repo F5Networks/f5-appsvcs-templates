@@ -327,7 +327,8 @@ describe('template worker tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert.deepEqual(op.body, ['bigip-fast-templates', 'examples']);
+                assert(op.body.includes('bigip-fast-templates'));
+                assert(op.body.includes('examples'));
             });
     });
     it('get_templatesets_item', function () {
