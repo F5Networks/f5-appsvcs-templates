@@ -208,8 +208,10 @@ describe('Template class tests', function () {
 
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(schema.properties.skip_foo.invertedSection, true);
             });
     });
     it('render_type_defaults', function () {

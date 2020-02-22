@@ -33,15 +33,19 @@ describe('GUI utils test', function () {
         const schema = {
             properties: {
                 useFoo: { type: 'boolean' },
-                foo: { type: 'string' }
+                foo: { type: 'string' },
+                skipBar: { type: 'boolean', invertedSection: true },
+                bar: { type: 'string' }
             },
             dependencies: {
-                foo: ['useFoo']
+                foo: ['useFoo'],
+                bar: ['skipBar']
             }
         };
         guiUtils.modSchemaForJSONEditor(schema);
         console.log(JSON.stringify(schema, null, 2));
         assert.deepStrictEqual(schema.properties.foo.options.dependencies, { useFoo: true });
+        assert.deepStrictEqual(schema.properties.bar.options.dependencies, { skipBar: false });
     });
     it('filter_extra_props', function () {
         const schema = {
