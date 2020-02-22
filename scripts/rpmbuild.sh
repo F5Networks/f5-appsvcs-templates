@@ -7,10 +7,11 @@ FULL_VERSION=$(node -e "console.log(require('./package.json').version)")
 VERSION="$(echo $FULL_VERSION | cut -d - -f 1)"
 LAST_TAG="$(git describe --tags --always --abbrev=0)"
 NUM_COMMITS_FROM_TAG=$(git rev-list $LAST_TAG.. --count)
+if [ "$(echo $LAST_TAG | head -c 1)" = "v" ]; then
+    VERSION="$(echo $LAST_TAG | tail -c +2)"
+fi
 if [ "$NUM_COMMITS_FROM_TAG" -ne 0 ]; then
     VERSION="$VERSION.dev$NUM_COMMITS_FROM_TAG"
-elif [ "$(echo $LAST_TAG | head -c 1)" = "v" ]; then
-    VERSION="$(echo $LAST_TAG | tail -c +2)"
 fi
 RELEASE=1
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
