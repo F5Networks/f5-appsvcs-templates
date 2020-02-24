@@ -216,7 +216,7 @@ class Template {
                 const items = this._handleParsed(curr[4], typeSchemas);
                 if (!acc.properties[mstName]) {
                     acc.properties[mstName] = {
-                        type: 'boolean',
+                        type: 'boolean'
                     };
                 }
                 if (items.properties) {
