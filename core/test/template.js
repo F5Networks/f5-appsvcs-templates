@@ -208,8 +208,10 @@ describe('Template class tests', function () {
 
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(schema.properties.skip_foo.invertedSection, true);
             });
     });
     it('render_type_defaults', function () {
@@ -321,6 +323,27 @@ describe('Template class tests', function () {
                 const emptyDef = tmpl.getViewSchema().properties.empty;
                 assert.strictEqual(typeof emptyDef.title, 'undefined');
                 assert.strictEqual(typeof emptyDef.description, 'undefined');
+            });
+    });
+    it('schema_prop_order_from_def', function () {
+        const ymldata = `
+            definitions:
+                foo:
+                    title: 'Foo'
+                baz:
+                    title: 'Baz'
+            template: |
+                {{bar}}{{baz}}{{foo}}{{other}}
+        `;
+
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                assert.deepStrictEqual(Object.keys(tmpl.getViewSchema().properties), [
+                    'foo',
+                    'baz',
+                    'bar',
+                    'other'
+                ]);
             });
     });
 });
