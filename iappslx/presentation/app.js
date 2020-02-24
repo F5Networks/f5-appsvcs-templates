@@ -40,7 +40,7 @@ const newEditor = (tmplid, view) => {
             return Template.fromJson(data);
         })
         .then((tmpl) => {
-            const schema = tmpl.getViewSchema();
+            const schema = JSON.parse(JSON.stringify(tmpl.getViewSchema())); // Deep copy schema before modifying
             dispOutput(`Creating editor with schema:\n${JSON.stringify(schema, null, 2)}`);
 
             // Prep the schema for JSON editor
