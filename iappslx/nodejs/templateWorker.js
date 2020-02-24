@@ -44,6 +44,7 @@ class TemplateWorker {
         // Find any template sets on disk (e.g., from the RPM) and add them to
         // the data store. Do not overwrite template sets already in the data store.
         const fsprovider = new FsTemplateProvider(templatesPath);
+        let saveState = true;
         return Promise.all([fsprovider.listSets(), this.templateProvider.listSets()])
             .then(([fsSets, knownSets]) => {
                 const sets = fsSets.filter(setName => !knownSets.includes(setName));
@@ -52,11 +53,13 @@ class TemplateWorker {
                 );
                 if (sets.length === 0) {
                     // Nothing to do
+                    saveState = false;
                     return Promise.resolve();
                 }
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
             })
+            .then(() => saveState && this.storage.persist())
             .then(() => success())
             .catch((e) => {
                 this.logger.severe(`TemplateWorker: Failed to load templates from disk: ${e.stack}`);
@@ -326,6 +329,7 @@ class TemplateWorker {
             .then(() => this._validateTemplateSet(scratchPath))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
+            .then(() => this.storage.persist())
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))
             .finally(() => fs.removeSync(scratch));

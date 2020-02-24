@@ -30,6 +30,10 @@ class StorageMemory {
         this.data[keyName] = keyValue;
         return Promise.resolve();
     }
+
+    persist() {
+        return Promise.resolve();
+    }
 }
 
 module.exports = StorageMemory;

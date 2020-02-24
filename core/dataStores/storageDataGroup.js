@@ -1,5 +1,6 @@
 'use strict';
 
+const http = require('http');
 const zlib = require('zlib');
 
 const childProcess = require('child_process');
@@ -198,6 +199,50 @@ class StorageDataGroup {
             .then(() => this._getRecords())
             .then(records => recordsToString(records, keyName))
             .then(data => JSON.parse(data));
+    }
+
+    persist() {
+        const opts = {
+            host: 'localhost',
+            port: 8100,
+            path: '/mgmt/tm/task/sys/config',
+            method: 'POST',
+            send: JSON.stringify({ command: 'save' }),
+            headers: {
+                Authorization: `Basic ${Buffer.from('admin:').toString('base64')}`,
+                'Content-Type': 'application/json'
+            }
+        };
+
+        return new Promise((resolve, reject) => {
+            const req = http.request(opts, (res) => {
+                const buffer = [];
+                res.setEncoding('utf8');
+                res.on('data', (data) => {
+                    buffer.push(data);
+                });
+                res.on('end', () => {
+                    let body = buffer.join('');
+                    body = body || '{}';
+                    try {
+                        body = JSON.parse(body);
+                    } catch (e) {
+                        return reject(new Error(`Invalid response object from ${opts.method} to ${opts.path}`));
+                    }
+                    return resolve({
+                        status: res.statusCode,
+                        headers: res.headers,
+                        body
+                    });
+                });
+            });
+
+            req.on('error', (e) => {
+                reject(new Error(`${opts.host}:${e.message}`));
+            });
+
+            req.end();
+        });
     }
 }
 
