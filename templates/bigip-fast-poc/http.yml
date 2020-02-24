@@ -11,9 +11,9 @@ definitions:
           "bigip": "{{pool_name:f5:pool_name}}"
         },
       {{/Use_an_existing_pool}}
-      {{#Create_a_new_pool}}
+      {{^Use_an_existing_pool}}
         "pool": "{{app_name:f5:app_name}}_pool",
-      {{/Create_a_new_pool}}
+      {{/Use_an_existing_pool}}
   service_tls_server_def:
     template: |
       "serverTLS": "{{app_name:f5:app_name}}_tls_server",
@@ -64,7 +64,7 @@ definitions:
       {{/Use_an_existing_multiplex_profile}}
   app_pool_def:
     template: |
-      {{#Create_a_new_pool}}
+      {{^Use_an_existing_pool}}
         "{{app_name:f5:app_name}}_pool": {
           "class": "Pool",
           "members": [{
@@ -76,7 +76,7 @@ definitions:
           {{/Create_a_default_HTTPS_monitor}}
           "loadBalancingMode": "{{pool_lb_method:f5:load_balancing_mode}}"
         },
-      {{/Create_a_new_pool}}
+      {{/Use_an_existing_pool}}
   app_tls_server_def:
     template: |
       "{{app_name:f5:app_name}}_tls_server": {
