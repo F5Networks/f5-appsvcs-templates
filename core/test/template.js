@@ -236,6 +236,16 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
+    it('render_text', function () {
+        const mstdata = '{{textvar::text}}';
+        const view = { textvar: 'multi\nline' };
+        const reference = '"multi\\nline"';
+        return Template.loadMst(mstdata)
+            .then((tmpl) => {
+                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                assert.strictEqual(tmpl.render(view), reference);
+            });
+    });
     it('render_nested_section', function () {
         const mstdata = `
             {{#outer_val}}

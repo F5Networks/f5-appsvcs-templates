@@ -36,6 +36,10 @@ class JSONViewTransform {
             return JSON.stringify(value);
         }
 
+        if (schema.format === 'text' && value) {
+            return JSON.stringify(value);
+        }
+
         return value;
     }
 }
