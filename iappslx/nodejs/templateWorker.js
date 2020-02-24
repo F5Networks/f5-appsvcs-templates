@@ -54,6 +54,7 @@ class TemplateWorker {
                     // Nothing to do
                     return Promise.resolve();
                 }
+                this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
             })
             .then(() => success())
@@ -323,6 +324,7 @@ class TemplateWorker {
             });
         })
             .then(() => this._validateTemplateSet(scratchPath))
+            .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))

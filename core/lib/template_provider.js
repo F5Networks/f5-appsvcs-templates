@@ -47,6 +47,10 @@ class FsTemplateProvider {
         return this.cache.fetch(key);
     }
 
+    invalidateCache() {
+        this.cache.invalidate();
+    }
+
     listSets() {
         return new Promise((resolve, reject) => {
             fs.readdir(this.config_template_path, (err, files) => {
@@ -87,6 +91,7 @@ class DataStoreTemplateProvider {
     constructor(datastore, filteredSets) {
         this.filteredSets = new Set(filteredSets || []);
         this.storage = datastore;
+        this.keyCache = [];
 
         this.cache = new ResourceCache((templatePath) => {
             const [tsName, templateName] = templatePath.split('/');
@@ -113,9 +118,22 @@ class DataStoreTemplateProvider {
         return this.cache.fetch(key);
     }
 
+    invalidateCache() {
+        this.cache.invalidate();
+        this.keyCache = [];
+    }
+
     listSets() {
+        if (this.keyCache.length !== 0) {
+            return Promise.resolve(this.keyCache);
+        }
+
         return this.storage.keys()
-            .then(keys => keys.filter(x => this.filteredSets.size === 0 || this.filteredSets.has(x)));
+            .then(keys => keys.filter(x => this.filteredSets.size === 0 || this.filteredSets.has(x)))
+            .then((keys) => {
+                this.keyCache = keys;
+                return keys;
+            });
     }
 
     list() {
