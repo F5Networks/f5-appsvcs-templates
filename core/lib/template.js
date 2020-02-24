@@ -217,12 +217,12 @@ class Template {
                 if (!acc.properties[mstName]) {
                     acc.properties[mstName] = {
                         type: 'boolean',
-                        invertedSection: true
                     };
                 }
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
                         dependencies[item] = [mstName];
+                        items.properties[item].invertDependency = true;
                     });
                 }
                 this._mergeSchemaInto(acc, items);

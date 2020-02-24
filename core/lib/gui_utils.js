@@ -22,7 +22,7 @@ const addDepsToSchema = (schema) => {
             const dependsOn = schema.dependencies[key][0];
             schema.properties[key].options = Object.assign({}, schema.properties[key].options, {
                 dependencies: {
-                    [dependsOn]: !schema.properties[dependsOn].invertedSection
+                    [dependsOn]: !schema.properties[key].invertDependency
                 }
             });
         });

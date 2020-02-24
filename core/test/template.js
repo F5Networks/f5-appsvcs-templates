@@ -202,7 +202,7 @@ describe('Template class tests', function () {
             });
     });
     it('render_inverted_section', function () {
-        const mstdata = '{{^skip_foo}}foo{{/skip_foo}}{{^skip_bar}}bar{{/skip_bar}}';
+        const mstdata = '{{^skip_foo}}{{foo}}{{/skip_foo}}{{^skip_bar}}bar{{/skip_bar}}';
         const view = { skip_foo: true };
         const reference = 'bar';
 
@@ -211,7 +211,7 @@ describe('Template class tests', function () {
                 const schema = tmpl.getViewSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
-                assert.strictEqual(schema.properties.skip_foo.invertedSection, true);
+                assert.strictEqual(schema.properties.foo.invertDependency, true);
             });
     });
     it('render_type_defaults', function () {

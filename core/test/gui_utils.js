@@ -34,8 +34,8 @@ describe('GUI utils test', function () {
             properties: {
                 useFoo: { type: 'boolean' },
                 foo: { type: 'string' },
-                skipBar: { type: 'boolean', invertedSection: true },
-                bar: { type: 'string' }
+                skipBar: { type: 'boolean' },
+                bar: { type: 'string', invertDependency: true }
             },
             dependencies: {
                 foo: ['useFoo'],
