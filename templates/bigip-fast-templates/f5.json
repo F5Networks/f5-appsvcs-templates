@@ -6,6 +6,11 @@
         "format": "ipv4",
         "default": "10.0.0.1"
       },
+      "port": {
+        "type": "integer",
+        "minimuim": 0,
+        "maximum": 65535
+      },
       "https_port": {
         "type": "integer",
         "minimuim": 0,
