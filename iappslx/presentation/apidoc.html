@@ -689,6 +689,45 @@
   <script>
     // Script section to load models into a JS Var
     var defs = {}
+            defs.Application = {
+  "required" : [ "lastModified", "name", "template", "tenant", "view" ],
+  "type" : "object",
+  "properties" : {
+    "template" : {
+      "type" : "string",
+      "description" : "must be valid template in the system"
+    },
+    "view" : {
+      "type" : "object",
+      "description" : "object must conform to specified template's schema"
+    },
+    "lastModified" : {
+      "description" : "timestamp of when the application was last modified"
+    },
+    "tenant" : {
+      "description" : "the tenant the application belongs to"
+    },
+    "name" : {
+      "description" : "the name of the application"
+    }
+  }
+};
+            defs.ApplicationList = {
+  "type" : "array",
+  "items" : {
+    "$ref" : "#/components/schemas/Application"
+  }
+};
+            defs.body = {
+  "required" : [ "name" ],
+  "properties" : {
+    "name" : {
+      "title" : "Template set name",
+      "type" : "string",
+      "description" : "The name of the template set to install (excluding the .zip extension)"
+    }
+  }
+};
             defs.Error = {
   "required" : [ "code", "message" ],
   "type" : "object",
@@ -699,30 +738,6 @@
     },
     "message" : {
       "type" : "string"
-    }
-  }
-};
-            defs.PackageList = {
-  "type" : "array",
-  "items" : {
-    "$ref" : "#/components/schemas/PackageList_inner"
-  }
-};
-            defs.PackageList_inner = {
-  "type" : "object",
-  "properties" : {
-    "name" : {
-      "type" : "string",
-      "description" : "the name of this package"
-    },
-    "version" : {
-      "type" : "string",
-      "description" : "the package version"
-    },
-    "installed_on" : {
-      "type" : "string",
-      "description" : "date the package was installed",
-      "format" : "date-time"
     }
   }
 };
@@ -759,12 +774,23 @@
     "$ref" : "#/components/schemas/Task"
   }
 };
+            defs.Template = {
+  "type" : "object",
+  "properties" : {
+    "templateText" : {
+      "$ref" : "#/components/schemas/TemplateSchema"
+    },
+    "definitions" : {
+      "$ref" : "#/components/schemas/TemplateSchema"
+    }
+  }
+};
             defs.TemplateList = {
   "type" : "array",
   "example" : [ {
-    "name" : "httpTemplate"
+    "name" : "example/httpTemplate"
   }, {
-    "name" : "httpsTemplate"
+    "name" : "example/httpsTemplate"
   } ],
   "items" : {
     "$ref" : "#/components/schemas/TemplateList_inner"
@@ -828,6 +854,9 @@
             <li class="nav-fixed nav-header active" data-group="_"><a href="#api-_">API Summary</a></li>
 
                   <li class="nav-header" data-group="ApplicationManagement"><a href="#api-ApplicationManagement">API Methods - ApplicationManagement</a></li>
+                    <li data-group="ApplicationManagement" data-name="applicationsTenantNameAppNameDelete" class="">
+                      <a href="#api-ApplicationManagement-applicationsTenantNameAppNameDelete">applicationsTenantNameAppNameDelete</a>
+                    </li>
                     <li data-group="ApplicationManagement" data-name="createApplication" class="">
                       <a href="#api-ApplicationManagement-createApplication">createApplication</a>
                     </li>
@@ -841,16 +870,6 @@
                     <li data-group="FASTExtension" data-name="getInfo" class="">
                       <a href="#api-FASTExtension-getInfo">getInfo</a>
                     </li>
-                  <li class="nav-header" data-group="PackageManagement"><a href="#api-PackageManagement">API Methods - PackageManagement</a></li>
-                    <li data-group="PackageManagement" data-name="getTemplateSet" class="">
-                      <a href="#api-PackageManagement-getTemplateSet">getTemplateSet</a>
-                    </li>
-                    <li data-group="PackageManagement" data-name="listAllTemplateSets" class="">
-                      <a href="#api-PackageManagement-listAllTemplateSets">listAllTemplateSets</a>
-                    </li>
-                    <li data-group="PackageManagement" data-name="uploadTemplates" class="">
-                      <a href="#api-PackageManagement-uploadTemplates">uploadTemplates</a>
-                    </li>
                   <li class="nav-header" data-group="TaskTracking"><a href="#api-TaskTracking">API Methods - TaskTracking</a></li>
                     <li data-group="TaskTracking" data-name="getTask" class="">
                       <a href="#api-TaskTracking-getTask">getTask</a>
@@ -862,8 +881,20 @@
                     <li data-group="TemplateManagement" data-name="getTemplate" class="">
                       <a href="#api-TemplateManagement-getTemplate">getTemplate</a>
                     </li>
+                    <li data-group="TemplateManagement" data-name="getTemplateSet" class="">
+                      <a href="#api-TemplateManagement-getTemplateSet">getTemplateSet</a>
+                    </li>
+                    <li data-group="TemplateManagement" data-name="listAllTemplateSets" class="">
+                      <a href="#api-TemplateManagement-listAllTemplateSets">listAllTemplateSets</a>
+                    </li>
                     <li data-group="TemplateManagement" data-name="listAllTemplates" class="">
                       <a href="#api-TemplateManagement-listAllTemplates">listAllTemplates</a>
+                    </li>
+                    <li data-group="TemplateManagement" data-name="templatesetsSetNameGet" class="">
+                      <a href="#api-TemplateManagement-templatesetsSetNameGet">templatesetsSetNameGet</a>
+                    </li>
+                    <li data-group="TemplateManagement" data-name="uploadTemplates" class="">
+                      <a href="#api-TemplateManagement-uploadTemplates">uploadTemplates</a>
                     </li>
           </ul>
         </nav>
@@ -878,7 +909,7 @@
         <div id="header">
           <div id="api-_">
             <h2 id="welcome-to-apidoc">API and SDK Documentation</h2>
-              <div class="app-desc">Version: 0.1.0</div>
+              <div class="app-desc">Version: 0.2.0</div>
             <hr>
             <div><h1>F5 Application Services Templates (<em>FAST</em>)</h1>
 <p>This is the documentation for the FAST templating extension. This document
@@ -906,6 +937,282 @@ for getting debug information or software version information.</p>
         <div id="sections">
                 <section id="api-ApplicationManagement">
                   <h1>ApplicationManagement</h1>
+                    <div id="api-ApplicationManagement-applicationsTenantNameAppNameDelete">
+                      <article id="api-ApplicationManagement-applicationsTenantNameAppNameDelete-0" data-group="User" data-name="applicationsTenantNameAppNameDelete" data-version="0">
+                        <div class="pull-left">
+                          <h1>applicationsTenantNameAppNameDelete</h1>
+                          <p>Delete an individual application</p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/applications/{tenantName}/{appName}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-java">Java</a></li>
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-curl">
+                            <pre class="prettyprint"><code class="language-bsh">curl -X DELETE "/mgmt/shared/fast/applications/{tenantName}/{appName}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.ApplicationManagementApi;
+
+import java.io.File;
+import java.util.*;
+
+public class ApplicationManagementApiExample {
+
+    public static void main(String[] args) {
+        
+        ApplicationManagementApi apiInstance = new ApplicationManagementApi();
+        String appName = appName_example; // String | The name of the app to retrieve
+        String tenantName = tenantName_example; // String | The tenant the app belongs to
+        try {
+            apiInstance.applicationsTenantNameAppNameDelete(appName, tenantName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ApplicationManagementApi#applicationsTenantNameAppNameDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.ApplicationManagementApi;
+
+public class ApplicationManagementApiExample {
+
+    public static void main(String[] args) {
+        ApplicationManagementApi apiInstance = new ApplicationManagementApi();
+        String appName = appName_example; // String | The name of the app to retrieve
+        String tenantName = tenantName_example; // String | The tenant the app belongs to
+        try {
+            apiInstance.applicationsTenantNameAppNameDelete(appName, tenantName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ApplicationManagementApi#applicationsTenantNameAppNameDelete");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">String *appName = appName_example; // The name of the app to retrieve
+String *tenantName = tenantName_example; // The tenant the app belongs to
+
+ApplicationManagementApi *apiInstance = [[ApplicationManagementApi alloc] init];
+
+// Delete an individual application
+[apiInstance applicationsTenantNameAppNameDeleteWith:appName
+    tenantName:tenantName
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
+
+var api = new F5ApplicationServicesApi.ApplicationManagementApi()
+var appName = appName_example; // {{String}} The name of the app to retrieve
+var tenantName = tenantName_example; // {{String}} The tenant the app belongs to
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.applicationsTenantNameAppNameDelete(appName, tenantName, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class applicationsTenantNameAppNameDeleteExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new ApplicationManagementApi();
+            var appName = appName_example;  // String | The name of the app to retrieve
+            var tenantName = tenantName_example;  // String | The tenant the app belongs to
+
+            try
+            {
+                // Delete an individual application
+                apiInstance.applicationsTenantNameAppNameDelete(appName, tenantName);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling ApplicationManagementApi.applicationsTenantNameAppNameDelete: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiApplicationManagementApi();
+$appName = appName_example; // String | The name of the app to retrieve
+$tenantName = tenantName_example; // String | The tenant the app belongs to
+
+try {
+    $api_instance->applicationsTenantNameAppNameDelete($appName, $tenantName);
+} catch (Exception $e) {
+    echo 'Exception when calling ApplicationManagementApi->applicationsTenantNameAppNameDelete: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::ApplicationManagementApi;
+
+my $api_instance = WWW::SwaggerClient::ApplicationManagementApi->new();
+my $appName = appName_example; # String | The name of the app to retrieve
+my $tenantName = tenantName_example; # String | The tenant the app belongs to
+
+eval { 
+    $api_instance->applicationsTenantNameAppNameDelete(appName => $appName, tenantName => $tenantName);
+};
+if ($@) {
+    warn "Exception when calling ApplicationManagementApi->applicationsTenantNameAppNameDelete: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-ApplicationManagement-applicationsTenantNameAppNameDelete-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.ApplicationManagementApi()
+appName = appName_example # String | The name of the app to retrieve
+tenantName = tenantName_example # String | The tenant the app belongs to
+
+try: 
+    # Delete an individual application
+    api_instance.applications_tenant_name_app_name_delete(appName, tenantName)
+except ApiException as e:
+    print("Exception when calling ApplicationManagementApi->applicationsTenantNameAppNameDelete: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">appName*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_applicationsTenantNameAppNameDelete_appName">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          The name of the app to retrieve
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                                  <tr><td style="width:150px;">tenantName*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_applicationsTenantNameAppNameDelete_tenantName">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          The tenant the app belongs to
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                            <h3> Status: 200 - OK </h3>
+
+                            <ul class="nav nav-tabs nav-tabs-examples" >
+                            </ul>
+
+                            <div class="tab-content" style='margin-bottom: 10px;'>
+                            </div>
+
+                        </article>
+                      </div>
+                      <hr>
                     <div id="api-ApplicationManagement-createApplication">
                       <article id="api-ApplicationManagement-createApplication-0" data-group="User" data-name="createApplication" data-version="0">
                         <div class="pull-left">
@@ -1185,20 +1492,20 @@ except ApiException as e:
 
 
                           <h2>Responses</h2>
-                            <h3> Status: 201 - Template Job Submitted Successfully, check the provided task id to get the status of
+                            <h3> Status: 202 - Template Job Submitted Successfully, check the provided task id to get the status of
 the deployment
  </h3>
 
                             <ul class="nav nav-tabs nav-tabs-examples" >
                                 <li class="active">
-                                  <a data-toggle="tab" href="#responses-createApplication-201-schema">Schema</a>
+                                  <a data-toggle="tab" href="#responses-createApplication-202-schema">Schema</a>
                                 </li>
 
                             </ul>
 
                             <div class="tab-content" style='margin-bottom: 10px;'>
-                                <div class="tab-pane active" id="responses-createApplication-201-schema">
-                                  <div id='responses-createApplication-201-schema-201' style="padding: 30px; border-left: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                                <div class="tab-pane active" id="responses-createApplication-202-schema">
+                                  <div id='responses-createApplication-202-schema-202' style="padding: 30px; border-left: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
                                     <script>
                                       $(document).ready(function() {
                                         var schemaWrapper = {
@@ -1224,14 +1531,14 @@ the deployment
 
                                         //console.log(JSON.stringify(schema));
                                         var view = new JSONSchemaView(schema, 3);
-                                        $('#responses-createApplication-201-schema-data').val(stringify(schema));
-                                        var result = $('#responses-createApplication-201-schema-201');
+                                        $('#responses-createApplication-202-schema-data').val(stringify(schema));
+                                        var result = $('#responses-createApplication-202-schema-202');
                                         result.empty();
                                         result.append(view.render());
                                       });
                                     </script>
                                   </div>
-                                  <input id='responses-createApplication-201-schema-data' type='hidden' value=''></input>
+                                  <input id='responses-createApplication-202-schema-data' type='hidden' value=''></input>
                                 </div>
                             </div>
 
@@ -1336,7 +1643,8 @@ public class ApplicationManagementApiExample {
         
         ApplicationManagementApi apiInstance = new ApplicationManagementApi();
         try {
-            apiInstance.getAllApplications();
+            ApplicationList result = apiInstance.getAllApplications();
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ApplicationManagementApi#getAllApplications");
             e.printStackTrace();
@@ -1353,7 +1661,8 @@ public class ApplicationManagementApiExample {
     public static void main(String[] args) {
         ApplicationManagementApi apiInstance = new ApplicationManagementApi();
         try {
-            apiInstance.getAllApplications();
+            ApplicationList result = apiInstance.getAllApplications();
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ApplicationManagementApi#getAllApplications");
             e.printStackTrace();
@@ -1371,7 +1680,10 @@ ApplicationManagementApi *apiInstance = [[ApplicationManagementApi alloc] init];
 
 // Fetch List of FAST Applications
 [apiInstance getAllApplicationsWithCompletionHandler: 
-              ^(NSError* error) {
+              ^(ApplicationList output, NSError* error) {
+                            if (output) {
+                                NSLog(@"%@", output);
+                            }
                             if (error) {
                                 NSLog(@"Error: %@", error);
                             }
@@ -1387,7 +1699,7 @@ var callback = function(error, data, response) {
   if (error) {
     console.error(error);
   } else {
-    console.log('API called successfully.');
+    console.log('API called successfully. Returned data: ' + data);
   }
 };
 api.getAllApplications(callback);
@@ -1416,7 +1728,8 @@ namespace Example
             try
             {
                 // Fetch List of FAST Applications
-                apiInstance.getAllApplications();
+                ApplicationList result = apiInstance.getAllApplications();
+                Debug.WriteLine(result);
             }
             catch (Exception e)
             {
@@ -1435,7 +1748,8 @@ require_once(__DIR__ . '/vendor/autoload.php');
 $api_instance = new Swagger\Client\ApiApplicationManagementApi();
 
 try {
-    $api_instance->getAllApplications();
+    $result = $api_instance->getAllApplications();
+    print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling ApplicationManagementApi->getAllApplications: ', $e->getMessage(), PHP_EOL;
 }
@@ -1450,7 +1764,8 @@ use WWW::SwaggerClient::ApplicationManagementApi;
 my $api_instance = WWW::SwaggerClient::ApplicationManagementApi->new();
 
 eval { 
-    $api_instance->getAllApplications();
+    my $result = $api_instance->getAllApplications();
+    print Dumper($result);
 };
 if ($@) {
     warn "Exception when calling ApplicationManagementApi->getAllApplications: $@\n";
@@ -1469,7 +1784,8 @@ api_instance = swagger_client.ApplicationManagementApi()
 
 try: 
     # Fetch List of FAST Applications
-    api_instance.get_all_applications()
+    api_response = api_instance.get_all_applications()
+    pprint(api_response)
 except ApiException as e:
     print("Exception when calling ApplicationManagementApi->getAllApplications: %s\n" % e)</code></pre>
                             </div>
@@ -1486,9 +1802,49 @@ except ApiException as e:
                             <h3> Status: 200 - OK </h3>
 
                             <ul class="nav nav-tabs nav-tabs-examples" >
+                                <li class="active">
+                                  <a data-toggle="tab" href="#responses-getAllApplications-200-schema">Schema</a>
+                                </li>
+
                             </ul>
 
                             <div class="tab-content" style='margin-bottom: 10px;'>
+                                <div class="tab-pane active" id="responses-getAllApplications-200-schema">
+                                  <div id='responses-getAllApplications-200-schema-200' style="padding: 30px; border-left: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
+                                    <script>
+                                      $(document).ready(function() {
+                                        var schemaWrapper = {
+  "description" : "OK",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/ApplicationList"
+      }
+    }
+  }
+};
+                                        var schema = schemaWrapper.content["application/json"].schema;
+                                        if (schema.$ref != null) {
+                                          schema = defsParser.$refs.get(schema.$ref);
+                                        } else {
+                                          schemaWrapper.components = {};
+                                          schemaWrapper.components.schemas = Object.assign({}, defs);
+                                          $RefParser.dereference(schemaWrapper).catch(function(err) {
+                                            console.log(err);
+                                          });
+                                        }
+
+                                        //console.log(JSON.stringify(schema));
+                                        var view = new JSONSchemaView(schema, 3);
+                                        $('#responses-getAllApplications-200-schema-data').val(stringify(schema));
+                                        var result = $('#responses-getAllApplications-200-schema-200');
+                                        result.empty();
+                                        result.append(view.render());
+                                      });
+                                    </script>
+                                  </div>
+                                  <input id='responses-getAllApplications-200-schema-data' type='hidden' value=''></input>
+                                </div>
                             </div>
 
                         </article>
@@ -1503,11 +1859,11 @@ except ApiException as e:
                         <div class="pull-right"></div>
                         <div class="clearfix"></div>
                         <p></p>
-                        <p class="marked">Fetches the detail view of an individual mystique application
+                        <p class="marked">Fetches the AS3 application class for the given FAST application
 </p>
                         <p></p>
                         <br />
-                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/applications/{appName}</span></code></pre>
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/applications/{tenantName}/{appName}</span></code></pre>
                         <p>
                           <h3>Usage and SDK Samples</h3>
                         </p>
@@ -1527,7 +1883,7 @@ except ApiException as e:
 
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-ApplicationManagement-getApplication-0-curl">
-                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/applications/{appName}"</code></pre>
+                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/applications/{tenantName}/{appName}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-ApplicationManagement-getApplication-0-java">
                             <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
@@ -1544,8 +1900,9 @@ public class ApplicationManagementApiExample {
         
         ApplicationManagementApi apiInstance = new ApplicationManagementApi();
         String appName = appName_example; // String | The name of the app to retrieve
+        String tenantName = tenantName_example; // String | The tenant the app belongs to
         try {
-            apiInstance.getApplication(appName);
+            apiInstance.getApplication(appName, tenantName);
         } catch (ApiException e) {
             System.err.println("Exception when calling ApplicationManagementApi#getApplication");
             e.printStackTrace();
@@ -1562,8 +1919,9 @@ public class ApplicationManagementApiExample {
     public static void main(String[] args) {
         ApplicationManagementApi apiInstance = new ApplicationManagementApi();
         String appName = appName_example; // String | The name of the app to retrieve
+        String tenantName = tenantName_example; // String | The tenant the app belongs to
         try {
-            apiInstance.getApplication(appName);
+            apiInstance.getApplication(appName, tenantName);
         } catch (ApiException e) {
             System.err.println("Exception when calling ApplicationManagementApi#getApplication");
             e.printStackTrace();
@@ -1577,11 +1935,13 @@ public class ApplicationManagementApiExample {
   </div> -->
                             <div class="tab-pane" id="examples-ApplicationManagement-getApplication-0-objc">
                               <pre class="prettyprint"><code class="language-cpp">String *appName = appName_example; // The name of the app to retrieve
+String *tenantName = tenantName_example; // The tenant the app belongs to
 
 ApplicationManagementApi *apiInstance = [[ApplicationManagementApi alloc] init];
 
 // Fetch an individual application
 [apiInstance getApplicationWith:appName
+    tenantName:tenantName
               completionHandler: ^(NSError* error) {
                             if (error) {
                                 NSLog(@"Error: %@", error);
@@ -1595,6 +1955,7 @@ ApplicationManagementApi *apiInstance = [[ApplicationManagementApi alloc] init];
 
 var api = new F5ApplicationServicesApi.ApplicationManagementApi()
 var appName = appName_example; // {{String}} The name of the app to retrieve
+var tenantName = tenantName_example; // {{String}} The tenant the app belongs to
 
 var callback = function(error, data, response) {
   if (error) {
@@ -1603,7 +1964,7 @@ var callback = function(error, data, response) {
     console.log('API called successfully.');
   }
 };
-api.getApplication(appName, callback);
+api.getApplication(appName, tenantName, callback);
 </code></pre>
                             </div>
 
@@ -1626,11 +1987,12 @@ namespace Example
 
             var apiInstance = new ApplicationManagementApi();
             var appName = appName_example;  // String | The name of the app to retrieve
+            var tenantName = tenantName_example;  // String | The tenant the app belongs to
 
             try
             {
                 // Fetch an individual application
-                apiInstance.getApplication(appName);
+                apiInstance.getApplication(appName, tenantName);
             }
             catch (Exception e)
             {
@@ -1648,9 +2010,10 @@ require_once(__DIR__ . '/vendor/autoload.php');
 
 $api_instance = new Swagger\Client\ApiApplicationManagementApi();
 $appName = appName_example; // String | The name of the app to retrieve
+$tenantName = tenantName_example; // String | The tenant the app belongs to
 
 try {
-    $api_instance->getApplication($appName);
+    $api_instance->getApplication($appName, $tenantName);
 } catch (Exception $e) {
     echo 'Exception when calling ApplicationManagementApi->getApplication: ', $e->getMessage(), PHP_EOL;
 }
@@ -1664,9 +2027,10 @@ use WWW::SwaggerClient::ApplicationManagementApi;
 
 my $api_instance = WWW::SwaggerClient::ApplicationManagementApi->new();
 my $appName = appName_example; # String | The name of the app to retrieve
+my $tenantName = tenantName_example; # String | The tenant the app belongs to
 
 eval { 
-    $api_instance->getApplication(appName => $appName);
+    $api_instance->getApplication(appName => $appName, tenantName => $tenantName);
 };
 if ($@) {
     warn "Exception when calling ApplicationManagementApi->getApplication: $@\n";
@@ -1683,10 +2047,11 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = swagger_client.ApplicationManagementApi()
 appName = appName_example # String | The name of the app to retrieve
+tenantName = tenantName_example # String | The tenant the app belongs to
 
 try: 
     # Fetch an individual application
-    api_instance.get_application(appName)
+    api_instance.get_application(appName, tenantName)
 except ApiException as e:
     print("Exception when calling ApplicationManagementApi->getApplication: %s\n" % e)</code></pre>
                             </div>
@@ -1713,6 +2078,28 @@ except ApiException as e:
                                   
                                                       <div class="inner description">
                                                           The name of the app to retrieve
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                                  <tr><td style="width:150px;">tenantName*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_getApplication_tenantName">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          The tenant the app belongs to
                                                       </div>
                                               </div>
                                                   <div class="inner required">
@@ -1943,776 +2330,6 @@ except ApiException as e:
 
                           <h2>Responses</h2>
                             <h3> Status: 200 - OK </h3>
-
-                            <ul class="nav nav-tabs nav-tabs-examples" >
-                            </ul>
-
-                            <div class="tab-content" style='margin-bottom: 10px;'>
-                            </div>
-
-                        </article>
-                      </div>
-                      <hr>
-                  </section>
-                <section id="api-PackageManagement">
-                  <h1>PackageManagement</h1>
-                    <div id="api-PackageManagement-getTemplateSet">
-                      <article id="api-PackageManagement-getTemplateSet-0" data-group="User" data-name="getTemplateSet" data-version="0">
-                        <div class="pull-left">
-                          <h1>getTemplateSet</h1>
-                          <p>Removes an installed package</p>
-                        </div>
-                        <div class="pull-right"></div>
-                        <div class="clearfix"></div>
-                        <p></p>
-                        <p class="marked">DELETE /packages/{setName} will remove an installed package specified by its name.</p>
-                        <p></p>
-                        <br />
-                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/templatesets/{setName}</span></code></pre>
-                        <p>
-                          <h3>Usage and SDK Samples</h3>
-                        </p>
-                        <ul class="nav nav-tabs nav-tabs-examples">
-                          <li class="active"><a href="#examples-PackageManagement-getTemplateSet-0-curl">Curl</a></li>
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-java">Java</a></li>
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-android">Android</a></li>
-                          <!--<li class=""><a href="#examples-PackageManagement-getTemplateSet-0-groovy">Groovy</a></li>-->
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-objc">Obj-C</a></li>
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-javascript">JavaScript</a></li>
-                          <!--<li class=""><a href="#examples-PackageManagement-getTemplateSet-0-angular">Angular</a></li>-->
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-csharp">C#</a></li>
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-php">PHP</a></li>
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-perl">Perl</a></li>
-                          <li class=""><a href="#examples-PackageManagement-getTemplateSet-0-python">Python</a></li>
-                        </ul>
-
-                        <div class="tab-content">
-                          <div class="tab-pane active" id="examples-PackageManagement-getTemplateSet-0-curl">
-                            <pre class="prettyprint"><code class="language-bsh">curl -X DELETE "/mgmt/shared/fast/templatesets/{setName}"</code></pre>
-                          </div>
-                          <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-java">
-                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
-import io.swagger.client.auth.*;
-import io.swagger.client.model.*;
-import io.swagger.client.api.PackageManagementApi;
-
-import java.io.File;
-import java.util.*;
-
-public class PackageManagementApiExample {
-
-    public static void main(String[] args) {
-        
-        PackageManagementApi apiInstance = new PackageManagementApi();
-        String setName = setName_example; // String | The name of the package to remove
-        try {
-            apiInstance.getTemplateSet(setName);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling PackageManagementApi#getTemplateSet");
-            e.printStackTrace();
-        }
-    }
-}</code></pre>
-                          </div>
-
-                          <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-android">
-                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.PackageManagementApi;
-
-public class PackageManagementApiExample {
-
-    public static void main(String[] args) {
-        PackageManagementApi apiInstance = new PackageManagementApi();
-        String setName = setName_example; // String | The name of the package to remove
-        try {
-            apiInstance.getTemplateSet(setName);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling PackageManagementApi#getTemplateSet");
-            e.printStackTrace();
-        }
-    }
-}</code></pre>
-                          </div>
-  <!--
-  <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-groovy">
-  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
-  </div> -->
-                            <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">String *setName = setName_example; // The name of the package to remove
-
-PackageManagementApi *apiInstance = [[PackageManagementApi alloc] init];
-
-// Removes an installed package
-[apiInstance getTemplateSetWith:setName
-              completionHandler: ^(NSError* error) {
-                            if (error) {
-                                NSLog(@"Error: %@", error);
-                            }
-                        }];
-</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-javascript">
-                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
-
-var api = new F5ApplicationServicesApi.PackageManagementApi()
-var setName = setName_example; // {{String}} The name of the package to remove
-
-var callback = function(error, data, response) {
-  if (error) {
-    console.error(error);
-  } else {
-    console.log('API called successfully.');
-  }
-};
-api.getTemplateSet(setName, callback);
-</code></pre>
-                            </div>
-
-                            <!--<div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-angular">
-              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
-            </div>-->
-                            <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-csharp">
-                              <pre class="prettyprint"><code class="language-cs">using System;
-using System.Diagnostics;
-using IO.Swagger.Api;
-using IO.Swagger.Client;
-using IO.Swagger.Model;
-
-namespace Example
-{
-    public class getTemplateSetExample
-    {
-        public void main()
-        {
-
-            var apiInstance = new PackageManagementApi();
-            var setName = setName_example;  // String | The name of the package to remove
-
-            try
-            {
-                // Removes an installed package
-                apiInstance.getTemplateSet(setName);
-            }
-            catch (Exception e)
-            {
-                Debug.Print("Exception when calling PackageManagementApi.getTemplateSet: " + e.Message );
-            }
-        }
-    }
-}
-</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-php">
-                              <pre class="prettyprint"><code class="language-php"><&#63;php
-require_once(__DIR__ . '/vendor/autoload.php');
-
-$api_instance = new Swagger\Client\ApiPackageManagementApi();
-$setName = setName_example; // String | The name of the package to remove
-
-try {
-    $api_instance->getTemplateSet($setName);
-} catch (Exception $e) {
-    echo 'Exception when calling PackageManagementApi->getTemplateSet: ', $e->getMessage(), PHP_EOL;
-}
-?></code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-perl">
-                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
-use WWW::SwaggerClient::Configuration;
-use WWW::SwaggerClient::PackageManagementApi;
-
-my $api_instance = WWW::SwaggerClient::PackageManagementApi->new();
-my $setName = setName_example; # String | The name of the package to remove
-
-eval { 
-    $api_instance->getTemplateSet(setName => $setName);
-};
-if ($@) {
-    warn "Exception when calling PackageManagementApi->getTemplateSet: $@\n";
-}</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-getTemplateSet-0-python">
-                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.PackageManagementApi()
-setName = setName_example # String | The name of the package to remove
-
-try: 
-    # Removes an installed package
-    api_instance.get_template_set(setName)
-except ApiException as e:
-    print("Exception when calling PackageManagementApi->getTemplateSet: %s\n" % e)</code></pre>
-                            </div>
-                          </div>
-
-                          <h2>Parameters</h2>
-
-                            <div class="methodsubtabletitle">Path parameters</div>
-                            <table id="methodsubtable">
-                                <tr>
-                                  <th width="150px">Name</th>
-                                  <th>Description</th>
-                                </tr>
-                                  <tr><td style="width:150px;">setName*</td>
-                                  <td>
-                                  
-                                  
-                                      <div id="d2e199_getTemplateSet_setName">
-                                          <div class="json-schema-view">
-                                              <div class="primitive">
-                                                  <span class="type">
-                                                      String
-                                                  </span>
-                                  
-                                                      <div class="inner description">
-                                                          The name of the package to remove
-                                                      </div>
-                                              </div>
-                                                  <div class="inner required">
-                                                      Required
-                                                  </div>
-                                          </div>
-                                      </div>
-                                  </td>
-                                  </tr>
-                            </table>
-
-
-
-
-
-                          <h2>Responses</h2>
-                            <h3> Status: 200 - package removed successfully </h3>
-
-                            <ul class="nav nav-tabs nav-tabs-examples" >
-                            </ul>
-
-                            <div class="tab-content" style='margin-bottom: 10px;'>
-                            </div>
-
-                        </article>
-                      </div>
-                      <hr>
-                    <div id="api-PackageManagement-listAllTemplateSets">
-                      <article id="api-PackageManagement-listAllTemplateSets-0" data-group="User" data-name="listAllTemplateSets" data-version="0">
-                        <div class="pull-left">
-                          <h1>listAllTemplateSets</h1>
-                          <p>Info about installed packages</p>
-                        </div>
-                        <div class="pull-right"></div>
-                        <div class="clearfix"></div>
-                        <p></p>
-                        <p class="marked">GET /packages will retrieve the list of template packages currently installed in the system
-</p>
-                        <p></p>
-                        <br />
-                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/templatesets</span></code></pre>
-                        <p>
-                          <h3>Usage and SDK Samples</h3>
-                        </p>
-                        <ul class="nav nav-tabs nav-tabs-examples">
-                          <li class="active"><a href="#examples-PackageManagement-listAllTemplateSets-0-curl">Curl</a></li>
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-java">Java</a></li>
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-android">Android</a></li>
-                          <!--<li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-groovy">Groovy</a></li>-->
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-objc">Obj-C</a></li>
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-javascript">JavaScript</a></li>
-                          <!--<li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-angular">Angular</a></li>-->
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-csharp">C#</a></li>
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-php">PHP</a></li>
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-perl">Perl</a></li>
-                          <li class=""><a href="#examples-PackageManagement-listAllTemplateSets-0-python">Python</a></li>
-                        </ul>
-
-                        <div class="tab-content">
-                          <div class="tab-pane active" id="examples-PackageManagement-listAllTemplateSets-0-curl">
-                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/templatesets"</code></pre>
-                          </div>
-                          <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-java">
-                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
-import io.swagger.client.auth.*;
-import io.swagger.client.model.*;
-import io.swagger.client.api.PackageManagementApi;
-
-import java.io.File;
-import java.util.*;
-
-public class PackageManagementApiExample {
-
-    public static void main(String[] args) {
-        
-        PackageManagementApi apiInstance = new PackageManagementApi();
-        try {
-            PackageList result = apiInstance.listAllTemplateSets();
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling PackageManagementApi#listAllTemplateSets");
-            e.printStackTrace();
-        }
-    }
-}</code></pre>
-                          </div>
-
-                          <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-android">
-                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.PackageManagementApi;
-
-public class PackageManagementApiExample {
-
-    public static void main(String[] args) {
-        PackageManagementApi apiInstance = new PackageManagementApi();
-        try {
-            PackageList result = apiInstance.listAllTemplateSets();
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling PackageManagementApi#listAllTemplateSets");
-            e.printStackTrace();
-        }
-    }
-}</code></pre>
-                          </div>
-  <!--
-  <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-groovy">
-  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
-  </div> -->
-                            <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">
-PackageManagementApi *apiInstance = [[PackageManagementApi alloc] init];
-
-// Info about installed packages
-[apiInstance listAllTemplateSetsWithCompletionHandler: 
-              ^(PackageList output, NSError* error) {
-                            if (output) {
-                                NSLog(@"%@", output);
-                            }
-                            if (error) {
-                                NSLog(@"Error: %@", error);
-                            }
-                        }];
-</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-javascript">
-                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
-
-var api = new F5ApplicationServicesApi.PackageManagementApi()
-var callback = function(error, data, response) {
-  if (error) {
-    console.error(error);
-  } else {
-    console.log('API called successfully. Returned data: ' + data);
-  }
-};
-api.listAllTemplateSets(callback);
-</code></pre>
-                            </div>
-
-                            <!--<div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-angular">
-              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
-            </div>-->
-                            <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-csharp">
-                              <pre class="prettyprint"><code class="language-cs">using System;
-using System.Diagnostics;
-using IO.Swagger.Api;
-using IO.Swagger.Client;
-using IO.Swagger.Model;
-
-namespace Example
-{
-    public class listAllTemplateSetsExample
-    {
-        public void main()
-        {
-
-            var apiInstance = new PackageManagementApi();
-
-            try
-            {
-                // Info about installed packages
-                PackageList result = apiInstance.listAllTemplateSets();
-                Debug.WriteLine(result);
-            }
-            catch (Exception e)
-            {
-                Debug.Print("Exception when calling PackageManagementApi.listAllTemplateSets: " + e.Message );
-            }
-        }
-    }
-}
-</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-php">
-                              <pre class="prettyprint"><code class="language-php"><&#63;php
-require_once(__DIR__ . '/vendor/autoload.php');
-
-$api_instance = new Swagger\Client\ApiPackageManagementApi();
-
-try {
-    $result = $api_instance->listAllTemplateSets();
-    print_r($result);
-} catch (Exception $e) {
-    echo 'Exception when calling PackageManagementApi->listAllTemplateSets: ', $e->getMessage(), PHP_EOL;
-}
-?></code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-perl">
-                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
-use WWW::SwaggerClient::Configuration;
-use WWW::SwaggerClient::PackageManagementApi;
-
-my $api_instance = WWW::SwaggerClient::PackageManagementApi->new();
-
-eval { 
-    my $result = $api_instance->listAllTemplateSets();
-    print Dumper($result);
-};
-if ($@) {
-    warn "Exception when calling PackageManagementApi->listAllTemplateSets: $@\n";
-}</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-listAllTemplateSets-0-python">
-                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.PackageManagementApi()
-
-try: 
-    # Info about installed packages
-    api_response = api_instance.list_all_template_sets()
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling PackageManagementApi->listAllTemplateSets: %s\n" % e)</code></pre>
-                            </div>
-                          </div>
-
-                          <h2>Parameters</h2>
-
-
-
-
-
-
-                          <h2>Responses</h2>
-                            <h3> Status: 200 - a list of installed packages, versions, installation dates, etc </h3>
-
-                            <ul class="nav nav-tabs nav-tabs-examples" >
-                                <li class="active">
-                                  <a data-toggle="tab" href="#responses-listAllTemplateSets-200-schema">Schema</a>
-                                </li>
-
-                            </ul>
-
-                            <div class="tab-content" style='margin-bottom: 10px;'>
-                                <div class="tab-pane active" id="responses-listAllTemplateSets-200-schema">
-                                  <div id='responses-listAllTemplateSets-200-schema-200' style="padding: 30px; border-left: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;">
-                                    <script>
-                                      $(document).ready(function() {
-                                        var schemaWrapper = {
-  "description" : "a list of installed packages, versions, installation dates, etc",
-  "content" : {
-    "application/json" : {
-      "schema" : {
-        "$ref" : "#/components/schemas/PackageList"
-      }
-    }
-  }
-};
-                                        var schema = schemaWrapper.content["application/json"].schema;
-                                        if (schema.$ref != null) {
-                                          schema = defsParser.$refs.get(schema.$ref);
-                                        } else {
-                                          schemaWrapper.components = {};
-                                          schemaWrapper.components.schemas = Object.assign({}, defs);
-                                          $RefParser.dereference(schemaWrapper).catch(function(err) {
-                                            console.log(err);
-                                          });
-                                        }
-
-                                        //console.log(JSON.stringify(schema));
-                                        var view = new JSONSchemaView(schema, 3);
-                                        $('#responses-listAllTemplateSets-200-schema-data').val(stringify(schema));
-                                        var result = $('#responses-listAllTemplateSets-200-schema-200');
-                                        result.empty();
-                                        result.append(view.render());
-                                      });
-                                    </script>
-                                  </div>
-                                  <input id='responses-listAllTemplateSets-200-schema-data' type='hidden' value=''></input>
-                                </div>
-                            </div>
-
-                        </article>
-                      </div>
-                      <hr>
-                    <div id="api-PackageManagement-uploadTemplates">
-                      <article id="api-PackageManagement-uploadTemplates-0" data-group="User" data-name="uploadTemplates" data-version="0">
-                        <div class="pull-left">
-                          <h1>uploadTemplates</h1>
-                          <p>Upload a new package</p>
-                        </div>
-                        <div class="pull-right"></div>
-                        <div class="clearfix"></div>
-                        <p></p>
-                        <p class="marked"></p>
-                        <p></p>
-                        <br />
-                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/templatesets</span></code></pre>
-                        <p>
-                          <h3>Usage and SDK Samples</h3>
-                        </p>
-                        <ul class="nav nav-tabs nav-tabs-examples">
-                          <li class="active"><a href="#examples-PackageManagement-uploadTemplates-0-curl">Curl</a></li>
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-java">Java</a></li>
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-android">Android</a></li>
-                          <!--<li class=""><a href="#examples-PackageManagement-uploadTemplates-0-groovy">Groovy</a></li>-->
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-objc">Obj-C</a></li>
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-javascript">JavaScript</a></li>
-                          <!--<li class=""><a href="#examples-PackageManagement-uploadTemplates-0-angular">Angular</a></li>-->
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-csharp">C#</a></li>
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-php">PHP</a></li>
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-perl">Perl</a></li>
-                          <li class=""><a href="#examples-PackageManagement-uploadTemplates-0-python">Python</a></li>
-                        </ul>
-
-                        <div class="tab-content">
-                          <div class="tab-pane active" id="examples-PackageManagement-uploadTemplates-0-curl">
-                            <pre class="prettyprint"><code class="language-bsh">curl -X POST "/mgmt/shared/fast/templatesets"</code></pre>
-                          </div>
-                          <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-java">
-                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
-import io.swagger.client.auth.*;
-import io.swagger.client.model.*;
-import io.swagger.client.api.PackageManagementApi;
-
-import java.io.File;
-import java.util.*;
-
-public class PackageManagementApiExample {
-
-    public static void main(String[] args) {
-        
-        PackageManagementApi apiInstance = new PackageManagementApi();
-        TemplateSchema body = ; // TemplateSchema | A template spec or zip containing template specs
-        try {
-            apiInstance.uploadTemplates(body);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling PackageManagementApi#uploadTemplates");
-            e.printStackTrace();
-        }
-    }
-}</code></pre>
-                          </div>
-
-                          <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-android">
-                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.PackageManagementApi;
-
-public class PackageManagementApiExample {
-
-    public static void main(String[] args) {
-        PackageManagementApi apiInstance = new PackageManagementApi();
-        TemplateSchema body = ; // TemplateSchema | A template spec or zip containing template specs
-        try {
-            apiInstance.uploadTemplates(body);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling PackageManagementApi#uploadTemplates");
-            e.printStackTrace();
-        }
-    }
-}</code></pre>
-                          </div>
-  <!--
-  <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-groovy">
-  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
-  </div> -->
-                            <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-objc">
-                              <pre class="prettyprint"><code class="language-cpp">TemplateSchema *body = ; // A template spec or zip containing template specs
-
-PackageManagementApi *apiInstance = [[PackageManagementApi alloc] init];
-
-// Upload a new package
-[apiInstance uploadTemplatesWith:body
-              completionHandler: ^(NSError* error) {
-                            if (error) {
-                                NSLog(@"Error: %@", error);
-                            }
-                        }];
-</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-javascript">
-                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
-
-var api = new F5ApplicationServicesApi.PackageManagementApi()
-var body = ; // {{TemplateSchema}} A template spec or zip containing template specs
-
-var callback = function(error, data, response) {
-  if (error) {
-    console.error(error);
-  } else {
-    console.log('API called successfully.');
-  }
-};
-api.uploadTemplates(body, callback);
-</code></pre>
-                            </div>
-
-                            <!--<div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-angular">
-              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
-            </div>-->
-                            <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-csharp">
-                              <pre class="prettyprint"><code class="language-cs">using System;
-using System.Diagnostics;
-using IO.Swagger.Api;
-using IO.Swagger.Client;
-using IO.Swagger.Model;
-
-namespace Example
-{
-    public class uploadTemplatesExample
-    {
-        public void main()
-        {
-
-            var apiInstance = new PackageManagementApi();
-            var body = new TemplateSchema(); // TemplateSchema | A template spec or zip containing template specs
-
-            try
-            {
-                // Upload a new package
-                apiInstance.uploadTemplates(body);
-            }
-            catch (Exception e)
-            {
-                Debug.Print("Exception when calling PackageManagementApi.uploadTemplates: " + e.Message );
-            }
-        }
-    }
-}
-</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-php">
-                              <pre class="prettyprint"><code class="language-php"><&#63;php
-require_once(__DIR__ . '/vendor/autoload.php');
-
-$api_instance = new Swagger\Client\ApiPackageManagementApi();
-$body = ; // TemplateSchema | A template spec or zip containing template specs
-
-try {
-    $api_instance->uploadTemplates($body);
-} catch (Exception $e) {
-    echo 'Exception when calling PackageManagementApi->uploadTemplates: ', $e->getMessage(), PHP_EOL;
-}
-?></code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-perl">
-                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
-use WWW::SwaggerClient::Configuration;
-use WWW::SwaggerClient::PackageManagementApi;
-
-my $api_instance = WWW::SwaggerClient::PackageManagementApi->new();
-my $body = WWW::SwaggerClient::Object::TemplateSchema->new(); # TemplateSchema | A template spec or zip containing template specs
-
-eval { 
-    $api_instance->uploadTemplates(body => $body);
-};
-if ($@) {
-    warn "Exception when calling PackageManagementApi->uploadTemplates: $@\n";
-}</code></pre>
-                            </div>
-
-                            <div class="tab-pane" id="examples-PackageManagement-uploadTemplates-0-python">
-                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.PackageManagementApi()
-body =  # TemplateSchema | A template spec or zip containing template specs
-
-try: 
-    # Upload a new package
-    api_instance.upload_templates(body)
-except ApiException as e:
-    print("Exception when calling PackageManagementApi->uploadTemplates: %s\n" % e)</code></pre>
-                            </div>
-                          </div>
-
-                          <h2>Parameters</h2>
-
-
-
-                            <div class="methodsubtabletitle">Body parameters</div>
-                            <table id="methodsubtable">
-                              <tr>
-                                <th width="150px">Name</th>
-                                <th>Description</th>
-                              </tr>
-                                <tr><td style="width:150px;">body <span style="color:red;">*</span></td>
-                                <td>
-                                
-                                
-                                <script>
-                                $(document).ready(function() {
-                                  var schemaWrapper = {
-  "description" : "A template spec or zip containing template specs",
-  "content" : {
-    "application/json" : {
-      "schema" : {
-        "$ref" : "#/components/schemas/TemplateSchema"
-      }
-    },
-    "multipart/form-data" : {
-      "schema" : {
-        "description" : "a zip file containing template schema or mustache files"
-      }
-    }
-  },
-  "required" : true
-};
-                                  var schema = schemaWrapper.content["application/json"].schema;
-                                  if (schema.$ref != null) {
-                                    schema = defsParser.$refs.get(schema.$ref);
-                                  } else {
-                                    schemaWrapper.components = {};
-                                    schemaWrapper.components.schemas = Object.assign({}, defs);
-                                    $RefParser.dereference(schemaWrapper).catch(function(err) {
-                                      console.log(err);
-                                    });
-                                  }
-                                
-                                  var view = new JSONSchemaView(schema,2,{isBodyParam: true});
-                                  var result = $('#d2e199_uploadTemplates_body');
-                                  result.empty();
-                                  result.append(view.render());
-                                });
-                                </script>
-                                <div id="d2e199_uploadTemplates_body"></div>
-                                </td>
-                                </tr>
-                            </table>
-
-
-
-                          <h2>Responses</h2>
-                            <h3> Status: 200 - upload a new package, either a zipfile or a single template specifiation </h3>
 
                             <ul class="nav nav-tabs nav-tabs-examples" >
                             </ul>
@@ -3389,7 +3006,7 @@ except ApiException as e:
                         <p class="marked"></p>
                         <p></p>
                         <br />
-                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/templates/{templateName}</span></code></pre>
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/templates/{setName}/{templateName}</span></code></pre>
                         <p>
                           <h3>Usage and SDK Samples</h3>
                         </p>
@@ -3409,7 +3026,7 @@ except ApiException as e:
 
                         <div class="tab-content">
                           <div class="tab-pane active" id="examples-TemplateManagement-getTemplate-0-curl">
-                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/templates/{templateName}"</code></pre>
+                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/templates/{setName}/{templateName}"</code></pre>
                           </div>
                           <div class="tab-pane" id="examples-TemplateManagement-getTemplate-0-java">
                             <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
@@ -3426,8 +3043,9 @@ public class TemplateManagementApiExample {
         
         TemplateManagementApi apiInstance = new TemplateManagementApi();
         String templateName = templateName_example; // String | The name of the template to retrieve
+        String setName = setName_example; // String | The name of template set the template belongs to
         try {
-            TemplateSchema result = apiInstance.getTemplate(templateName);
+            Template result = apiInstance.getTemplate(templateName, setName);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling TemplateManagementApi#getTemplate");
@@ -3445,8 +3063,9 @@ public class TemplateManagementApiExample {
     public static void main(String[] args) {
         TemplateManagementApi apiInstance = new TemplateManagementApi();
         String templateName = templateName_example; // String | The name of the template to retrieve
+        String setName = setName_example; // String | The name of template set the template belongs to
         try {
-            TemplateSchema result = apiInstance.getTemplate(templateName);
+            Template result = apiInstance.getTemplate(templateName, setName);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling TemplateManagementApi#getTemplate");
@@ -3461,12 +3080,14 @@ public class TemplateManagementApiExample {
   </div> -->
                             <div class="tab-pane" id="examples-TemplateManagement-getTemplate-0-objc">
                               <pre class="prettyprint"><code class="language-cpp">String *templateName = templateName_example; // The name of the template to retrieve
+String *setName = setName_example; // The name of template set the template belongs to
 
 TemplateManagementApi *apiInstance = [[TemplateManagementApi alloc] init];
 
 // get the specified template
 [apiInstance getTemplateWith:templateName
-              completionHandler: ^(TemplateSchema output, NSError* error) {
+    setName:setName
+              completionHandler: ^(Template output, NSError* error) {
                             if (output) {
                                 NSLog(@"%@", output);
                             }
@@ -3482,6 +3103,7 @@ TemplateManagementApi *apiInstance = [[TemplateManagementApi alloc] init];
 
 var api = new F5ApplicationServicesApi.TemplateManagementApi()
 var templateName = templateName_example; // {{String}} The name of the template to retrieve
+var setName = setName_example; // {{String}} The name of template set the template belongs to
 
 var callback = function(error, data, response) {
   if (error) {
@@ -3490,7 +3112,7 @@ var callback = function(error, data, response) {
     console.log('API called successfully. Returned data: ' + data);
   }
 };
-api.getTemplate(templateName, callback);
+api.getTemplate(templateName, setName, callback);
 </code></pre>
                             </div>
 
@@ -3513,11 +3135,12 @@ namespace Example
 
             var apiInstance = new TemplateManagementApi();
             var templateName = templateName_example;  // String | The name of the template to retrieve
+            var setName = setName_example;  // String | The name of template set the template belongs to
 
             try
             {
                 // get the specified template
-                TemplateSchema result = apiInstance.getTemplate(templateName);
+                Template result = apiInstance.getTemplate(templateName, setName);
                 Debug.WriteLine(result);
             }
             catch (Exception e)
@@ -3536,9 +3159,10 @@ require_once(__DIR__ . '/vendor/autoload.php');
 
 $api_instance = new Swagger\Client\ApiTemplateManagementApi();
 $templateName = templateName_example; // String | The name of the template to retrieve
+$setName = setName_example; // String | The name of template set the template belongs to
 
 try {
-    $result = $api_instance->getTemplate($templateName);
+    $result = $api_instance->getTemplate($templateName, $setName);
     print_r($result);
 } catch (Exception $e) {
     echo 'Exception when calling TemplateManagementApi->getTemplate: ', $e->getMessage(), PHP_EOL;
@@ -3553,9 +3177,10 @@ use WWW::SwaggerClient::TemplateManagementApi;
 
 my $api_instance = WWW::SwaggerClient::TemplateManagementApi->new();
 my $templateName = templateName_example; # String | The name of the template to retrieve
+my $setName = setName_example; # String | The name of template set the template belongs to
 
 eval { 
-    my $result = $api_instance->getTemplate(templateName => $templateName);
+    my $result = $api_instance->getTemplate(templateName => $templateName, setName => $setName);
     print Dumper($result);
 };
 if ($@) {
@@ -3573,10 +3198,11 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = swagger_client.TemplateManagementApi()
 templateName = templateName_example # String | The name of the template to retrieve
+setName = setName_example # String | The name of template set the template belongs to
 
 try: 
     # get the specified template
-    api_response = api_instance.get_template(templateName)
+    api_response = api_instance.get_template(templateName, setName)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling TemplateManagementApi->getTemplate: %s\n" % e)</code></pre>
@@ -3613,6 +3239,28 @@ except ApiException as e:
                                       </div>
                                   </td>
                                   </tr>
+                                  <tr><td style="width:150px;">setName*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_getTemplate_setName">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          The name of template set the template belongs to
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
                             </table>
 
 
@@ -3639,7 +3287,7 @@ except ApiException as e:
   "content" : {
     "application/json" : {
       "schema" : {
-        "$ref" : "#/components/schemas/TemplateSchema"
+        "$ref" : "#/components/schemas/Template"
       }
     }
   }
@@ -3666,6 +3314,458 @@ except ApiException as e:
                                   </div>
                                   <input id='responses-getTemplate-200-schema-data' type='hidden' value=''></input>
                                 </div>
+                            </div>
+
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-TemplateManagement-getTemplateSet">
+                      <article id="api-TemplateManagement-getTemplateSet-0" data-group="User" data-name="getTemplateSet" data-version="0">
+                        <div class="pull-left">
+                          <h1>getTemplateSet</h1>
+                          <p>Removes an installed template set</p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked">DELETE /templatesets/{setName} will remove an installed template set specified by its name.</p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="delete"><code><span class="pln">/templatesets/{setName}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-TemplateManagement-getTemplateSet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-getTemplateSet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-TemplateManagement-getTemplateSet-0-curl">
+                            <pre class="prettyprint"><code class="language-bsh">curl -X DELETE "/mgmt/shared/fast/templatesets/{setName}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.TemplateManagementApi;
+
+import java.io.File;
+import java.util.*;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        String setName = setName_example; // String | The name of the template set
+        try {
+            apiInstance.getTemplateSet(setName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#getTemplateSet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.TemplateManagementApi;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        String setName = setName_example; // String | The name of the template set
+        try {
+            apiInstance.getTemplateSet(setName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#getTemplateSet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">String *setName = setName_example; // The name of the template set
+
+TemplateManagementApi *apiInstance = [[TemplateManagementApi alloc] init];
+
+// Removes an installed template set
+[apiInstance getTemplateSetWith:setName
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
+
+var api = new F5ApplicationServicesApi.TemplateManagementApi()
+var setName = setName_example; // {{String}} The name of the template set
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.getTemplateSet(setName, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class getTemplateSetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new TemplateManagementApi();
+            var setName = setName_example;  // String | The name of the template set
+
+            try
+            {
+                // Removes an installed template set
+                apiInstance.getTemplateSet(setName);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling TemplateManagementApi.getTemplateSet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiTemplateManagementApi();
+$setName = setName_example; // String | The name of the template set
+
+try {
+    $api_instance->getTemplateSet($setName);
+} catch (Exception $e) {
+    echo 'Exception when calling TemplateManagementApi->getTemplateSet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::TemplateManagementApi;
+
+my $api_instance = WWW::SwaggerClient::TemplateManagementApi->new();
+my $setName = setName_example; # String | The name of the template set
+
+eval { 
+    $api_instance->getTemplateSet(setName => $setName);
+};
+if ($@) {
+    warn "Exception when calling TemplateManagementApi->getTemplateSet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-getTemplateSet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.TemplateManagementApi()
+setName = setName_example # String | The name of the template set
+
+try: 
+    # Removes an installed template set
+    api_instance.get_template_set(setName)
+except ApiException as e:
+    print("Exception when calling TemplateManagementApi->getTemplateSet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">setName*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_getTemplateSet_setName">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          The name of the template set
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                            <h3> Status: 200 - Template set removed successfully </h3>
+
+                            <ul class="nav nav-tabs nav-tabs-examples" >
+                            </ul>
+
+                            <div class="tab-content" style='margin-bottom: 10px;'>
+                            </div>
+
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-TemplateManagement-listAllTemplateSets">
+                      <article id="api-TemplateManagement-listAllTemplateSets-0" data-group="User" data-name="listAllTemplateSets" data-version="0">
+                        <div class="pull-left">
+                          <h1>listAllTemplateSets</h1>
+                          <p>Info about installed template sets</p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/templatesets</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-TemplateManagement-listAllTemplateSets-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-java">Java</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-listAllTemplateSets-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-TemplateManagement-listAllTemplateSets-0-curl">
+                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/templatesets"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.TemplateManagementApi;
+
+import java.io.File;
+import java.util.*;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        try {
+            apiInstance.listAllTemplateSets();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#listAllTemplateSets");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.TemplateManagementApi;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        try {
+            apiInstance.listAllTemplateSets();
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#listAllTemplateSets");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">
+TemplateManagementApi *apiInstance = [[TemplateManagementApi alloc] init];
+
+// Info about installed template sets
+[apiInstance listAllTemplateSetsWithCompletionHandler: 
+              ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
+
+var api = new F5ApplicationServicesApi.TemplateManagementApi()
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.listAllTemplateSets(callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class listAllTemplateSetsExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new TemplateManagementApi();
+
+            try
+            {
+                // Info about installed template sets
+                apiInstance.listAllTemplateSets();
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling TemplateManagementApi.listAllTemplateSets: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiTemplateManagementApi();
+
+try {
+    $api_instance->listAllTemplateSets();
+} catch (Exception $e) {
+    echo 'Exception when calling TemplateManagementApi->listAllTemplateSets: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::TemplateManagementApi;
+
+my $api_instance = WWW::SwaggerClient::TemplateManagementApi->new();
+
+eval { 
+    $api_instance->listAllTemplateSets();
+};
+if ($@) {
+    warn "Exception when calling TemplateManagementApi->listAllTemplateSets: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-listAllTemplateSets-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.TemplateManagementApi()
+
+try: 
+    # Info about installed template sets
+    api_instance.list_all_template_sets()
+except ApiException as e:
+    print("Exception when calling TemplateManagementApi->listAllTemplateSets: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+
+
+
+                          <h2>Responses</h2>
+                            <h3> Status: 200 - a list of installed template sets </h3>
+
+                            <ul class="nav nav-tabs nav-tabs-examples" >
+                            </ul>
+
+                            <div class="tab-content" style='margin-bottom: 10px;'>
                             </div>
 
                         </article>
@@ -3975,6 +4075,517 @@ except ApiException as e:
                         </article>
                       </div>
                       <hr>
+                    <div id="api-TemplateManagement-templatesetsSetNameGet">
+                      <article id="api-TemplateManagement-templatesetsSetNameGet-0" data-group="User" data-name="templatesetsSetNameGet" data-version="0">
+                        <div class="pull-left">
+                          <h1>templatesetsSetNameGet</h1>
+                          <p>Get a list of templates that belong to {setName}</p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked"></p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="get"><code><span class="pln">/templatesets/{setName}</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-java">Java</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-templatesetsSetNameGet-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-TemplateManagement-templatesetsSetNameGet-0-curl">
+                            <pre class="prettyprint"><code class="language-bsh">curl -X GET "/mgmt/shared/fast/templatesets/{setName}"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.TemplateManagementApi;
+
+import java.io.File;
+import java.util.*;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        String setName = setName_example; // String | The name of the template set
+        try {
+            apiInstance.templatesetsSetNameGet(setName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#templatesetsSetNameGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.TemplateManagementApi;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        String setName = setName_example; // String | The name of the template set
+        try {
+            apiInstance.templatesetsSetNameGet(setName);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#templatesetsSetNameGet");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">String *setName = setName_example; // The name of the template set
+
+TemplateManagementApi *apiInstance = [[TemplateManagementApi alloc] init];
+
+// Get a list of templates that belong to {setName}
+[apiInstance templatesetsSetNameGetWith:setName
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
+
+var api = new F5ApplicationServicesApi.TemplateManagementApi()
+var setName = setName_example; // {{String}} The name of the template set
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.templatesetsSetNameGet(setName, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class templatesetsSetNameGetExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new TemplateManagementApi();
+            var setName = setName_example;  // String | The name of the template set
+
+            try
+            {
+                // Get a list of templates that belong to {setName}
+                apiInstance.templatesetsSetNameGet(setName);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling TemplateManagementApi.templatesetsSetNameGet: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiTemplateManagementApi();
+$setName = setName_example; // String | The name of the template set
+
+try {
+    $api_instance->templatesetsSetNameGet($setName);
+} catch (Exception $e) {
+    echo 'Exception when calling TemplateManagementApi->templatesetsSetNameGet: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::TemplateManagementApi;
+
+my $api_instance = WWW::SwaggerClient::TemplateManagementApi->new();
+my $setName = setName_example; # String | The name of the template set
+
+eval { 
+    $api_instance->templatesetsSetNameGet(setName => $setName);
+};
+if ($@) {
+    warn "Exception when calling TemplateManagementApi->templatesetsSetNameGet: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-templatesetsSetNameGet-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.TemplateManagementApi()
+setName = setName_example # String | The name of the template set
+
+try: 
+    # Get a list of templates that belong to {setName}
+    api_instance.templatesets_set_name_get(setName)
+except ApiException as e:
+    print("Exception when calling TemplateManagementApi->templatesetsSetNameGet: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+                            <div class="methodsubtabletitle">Path parameters</div>
+                            <table id="methodsubtable">
+                                <tr>
+                                  <th width="150px">Name</th>
+                                  <th>Description</th>
+                                </tr>
+                                  <tr><td style="width:150px;">setName*</td>
+                                  <td>
+                                  
+                                  
+                                      <div id="d2e199_templatesetsSetNameGet_setName">
+                                          <div class="json-schema-view">
+                                              <div class="primitive">
+                                                  <span class="type">
+                                                      String
+                                                  </span>
+                                  
+                                                      <div class="inner description">
+                                                          The name of the template set
+                                                      </div>
+                                              </div>
+                                                  <div class="inner required">
+                                                      Required
+                                                  </div>
+                                          </div>
+                                      </div>
+                                  </td>
+                                  </tr>
+                            </table>
+
+
+
+
+
+                          <h2>Responses</h2>
+                            <h3> Status: 200 - a list of template names </h3>
+
+                            <ul class="nav nav-tabs nav-tabs-examples" >
+                            </ul>
+
+                            <div class="tab-content" style='margin-bottom: 10px;'>
+                            </div>
+
+                        </article>
+                      </div>
+                      <hr>
+                    <div id="api-TemplateManagement-uploadTemplates">
+                      <article id="api-TemplateManagement-uploadTemplates-0" data-group="User" data-name="uploadTemplates" data-version="0">
+                        <div class="pull-left">
+                          <h1>uploadTemplates</h1>
+                          <p>Install a new template set</p>
+                        </div>
+                        <div class="pull-right"></div>
+                        <div class="clearfix"></div>
+                        <p></p>
+                        <p class="marked">Installs a previously uploaded template set zip (uploaded via the iControl file upload API)
+</p>
+                        <p></p>
+                        <br />
+                        <pre class="prettyprint language-html prettyprinted" data-type="post"><code><span class="pln">/templatesets</span></code></pre>
+                        <p>
+                          <h3>Usage and SDK Samples</h3>
+                        </p>
+                        <ul class="nav nav-tabs nav-tabs-examples">
+                          <li class="active"><a href="#examples-TemplateManagement-uploadTemplates-0-curl">Curl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-java">Java</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-android">Android</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-groovy">Groovy</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-objc">Obj-C</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-javascript">JavaScript</a></li>
+                          <!--<li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-angular">Angular</a></li>-->
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-csharp">C#</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-php">PHP</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-perl">Perl</a></li>
+                          <li class=""><a href="#examples-TemplateManagement-uploadTemplates-0-python">Python</a></li>
+                        </ul>
+
+                        <div class="tab-content">
+                          <div class="tab-pane active" id="examples-TemplateManagement-uploadTemplates-0-curl">
+                            <pre class="prettyprint"><code class="language-bsh">curl -X POST "/mgmt/shared/fast/templatesets"</code></pre>
+                          </div>
+                          <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-java">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.*;
+import io.swagger.client.auth.*;
+import io.swagger.client.model.*;
+import io.swagger.client.api.TemplateManagementApi;
+
+import java.io.File;
+import java.util.*;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        Body body = ; // Body | The name of a zip file (excluding the .zip extension)
+        try {
+            apiInstance.uploadTemplates(body);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#uploadTemplates");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+
+                          <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-android">
+                            <pre class="prettyprint"><code class="language-java">import io.swagger.client.api.TemplateManagementApi;
+
+public class TemplateManagementApiExample {
+
+    public static void main(String[] args) {
+        TemplateManagementApi apiInstance = new TemplateManagementApi();
+        Body body = ; // Body | The name of a zip file (excluding the .zip extension)
+        try {
+            apiInstance.uploadTemplates(body);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling TemplateManagementApi#uploadTemplates");
+            e.printStackTrace();
+        }
+    }
+}</code></pre>
+                          </div>
+  <!--
+  <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-groovy">
+  <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+  </div> -->
+                            <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-objc">
+                              <pre class="prettyprint"><code class="language-cpp">Body *body = ; // The name of a zip file (excluding the .zip extension)
+
+TemplateManagementApi *apiInstance = [[TemplateManagementApi alloc] init];
+
+// Install a new template set
+[apiInstance uploadTemplatesWith:body
+              completionHandler: ^(NSError* error) {
+                            if (error) {
+                                NSLog(@"Error: %@", error);
+                            }
+                        }];
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-javascript">
+                              <pre class="prettyprint"><code class="language-js">var F5ApplicationServicesApi = require('f5_application_services_api');
+
+var api = new F5ApplicationServicesApi.TemplateManagementApi()
+var body = ; // {{Body}} The name of a zip file (excluding the .zip extension)
+
+var callback = function(error, data, response) {
+  if (error) {
+    console.error(error);
+  } else {
+    console.log('API called successfully.');
+  }
+};
+api.uploadTemplates(body, callback);
+</code></pre>
+                            </div>
+
+                            <!--<div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-angular">
+              <pre class="prettyprint language-json prettyprinted" data-type="json"><code>Coming Soon!</code></pre>
+            </div>-->
+                            <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-csharp">
+                              <pre class="prettyprint"><code class="language-cs">using System;
+using System.Diagnostics;
+using IO.Swagger.Api;
+using IO.Swagger.Client;
+using IO.Swagger.Model;
+
+namespace Example
+{
+    public class uploadTemplatesExample
+    {
+        public void main()
+        {
+
+            var apiInstance = new TemplateManagementApi();
+            var body = new Body(); // Body | The name of a zip file (excluding the .zip extension)
+
+            try
+            {
+                // Install a new template set
+                apiInstance.uploadTemplates(body);
+            }
+            catch (Exception e)
+            {
+                Debug.Print("Exception when calling TemplateManagementApi.uploadTemplates: " + e.Message );
+            }
+        }
+    }
+}
+</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-php">
+                              <pre class="prettyprint"><code class="language-php"><&#63;php
+require_once(__DIR__ . '/vendor/autoload.php');
+
+$api_instance = new Swagger\Client\ApiTemplateManagementApi();
+$body = ; // Body | The name of a zip file (excluding the .zip extension)
+
+try {
+    $api_instance->uploadTemplates($body);
+} catch (Exception $e) {
+    echo 'Exception when calling TemplateManagementApi->uploadTemplates: ', $e->getMessage(), PHP_EOL;
+}
+?></code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-perl">
+                              <pre class="prettyprint"><code class="language-perl">use Data::Dumper;
+use WWW::SwaggerClient::Configuration;
+use WWW::SwaggerClient::TemplateManagementApi;
+
+my $api_instance = WWW::SwaggerClient::TemplateManagementApi->new();
+my $body = WWW::SwaggerClient::Object::Body->new(); # Body | The name of a zip file (excluding the .zip extension)
+
+eval { 
+    $api_instance->uploadTemplates(body => $body);
+};
+if ($@) {
+    warn "Exception when calling TemplateManagementApi->uploadTemplates: $@\n";
+}</code></pre>
+                            </div>
+
+                            <div class="tab-pane" id="examples-TemplateManagement-uploadTemplates-0-python">
+                              <pre class="prettyprint"><code class="language-python">from __future__ import print_statement
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.TemplateManagementApi()
+body =  # Body | The name of a zip file (excluding the .zip extension)
+
+try: 
+    # Install a new template set
+    api_instance.upload_templates(body)
+except ApiException as e:
+    print("Exception when calling TemplateManagementApi->uploadTemplates: %s\n" % e)</code></pre>
+                            </div>
+                          </div>
+
+                          <h2>Parameters</h2>
+
+
+
+                            <div class="methodsubtabletitle">Body parameters</div>
+                            <table id="methodsubtable">
+                              <tr>
+                                <th width="150px">Name</th>
+                                <th>Description</th>
+                              </tr>
+                                <tr><td style="width:150px;">body <span style="color:red;">*</span></td>
+                                <td>
+                                
+                                
+                                <script>
+                                $(document).ready(function() {
+                                  var schemaWrapper = {
+  "description" : "The name of a zip file (excluding the .zip extension)",
+  "content" : {
+    "application/json" : {
+      "schema" : {
+        "$ref" : "#/components/schemas/body"
+      }
+    },
+    "multipart/form-data" : {
+      "schema" : {
+        "description" : "a zip file containing template schema or mustache files"
+      }
+    }
+  },
+  "required" : true
+};
+                                  var schema = schemaWrapper.content["application/json"].schema;
+                                  if (schema.$ref != null) {
+                                    schema = defsParser.$refs.get(schema.$ref);
+                                  } else {
+                                    schemaWrapper.components = {};
+                                    schemaWrapper.components.schemas = Object.assign({}, defs);
+                                    $RefParser.dereference(schemaWrapper).catch(function(err) {
+                                      console.log(err);
+                                    });
+                                  }
+                                
+                                  var view = new JSONSchemaView(schema,2,{isBodyParam: true});
+                                  var result = $('#d2e199_uploadTemplates_body');
+                                  result.empty();
+                                  result.append(view.render());
+                                });
+                                </script>
+                                <div id="d2e199_uploadTemplates_body"></div>
+                                </td>
+                                </tr>
+                            </table>
+
+
+
+                          <h2>Responses</h2>
+                            <h3> Status: 200 - template set installed successfully </h3>
+
+                            <ul class="nav nav-tabs nav-tabs-examples" >
+                            </ul>
+
+                            <div class="tab-content" style='margin-bottom: 10px;'>
+                            </div>
+
+                        </article>
+                      </div>
+                      <hr>
                   </section>
           </div>
           <div id="footer">
@@ -3983,7 +4594,7 @@ except ApiException as e:
                   <div class="app-desc">Information URL: <a href="https://helloreverb.com">https://helloreverb.com</a></div>
                   <div class="app-desc">Contact Info: <a href="hello@helloreverb.com">hello@helloreverb.com</a></div>
               </p>
-                <div class="license-info">MIT</div>
+                <div class="license-info">Apache 2.0</div>
                 <div class="license-url">http://apache.org/licenses/LICENSE-2.0.html</div>
             </div>
           </div>
