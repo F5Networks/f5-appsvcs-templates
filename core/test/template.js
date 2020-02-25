@@ -216,7 +216,7 @@ describe('Template class tests', function () {
     });
     it('render_type_defaults', function () {
         const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
-        const mstdata = '{{virtual_port:f5:port}}';
+        const mstdata = '{{virtual_port:f5:https_port}}';
         const view = {};
         const reference = '443';
 
