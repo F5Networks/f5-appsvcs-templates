@@ -118,10 +118,15 @@ function recordsToKeys(records) {
 }
 
 class StorageDataGroup {
-    constructor(path) {
+    constructor(path, useInMemoryCache) {
+        useInMemoryCache = useInMemoryCache || true;
+
         this.length = 0;
         this.path = path;
         this._ready = false;
+
+        this.cache = useInMemoryCache ? {} : null;
+        this._dirty = false;
     }
 
     ensureFolder() {
@@ -147,10 +152,24 @@ class StorageDataGroup {
             });
     }
 
-    _getRecords() {
+    _getData() {
+        if (this.cache && this.cache.records) {
+            return Promise.resolve(this.cache);
+        }
+
         return Promise.resolve()
+            .then(() => this._lazyInit())
             .then(() => readDataGroup(this.path))
             .then(data => outputToObject(data))
+            .then((data) => {
+                this.cache = data;
+                return data;
+            });
+    }
+
+    _getRecords() {
+        return Promise.resolve()
+            .then(() => this._getData())
             .then(data => data.records || {})
             .then(records => Object.keys(records).map(
                 key => Object.assign({ name: key }, records[key])
@@ -159,7 +178,6 @@ class StorageDataGroup {
 
     keys() {
         return Promise.resolve()
-            .then(() => this._lazyInit())
             .then(() => this._getRecords())
             .then(records => recordsToKeys(records));
     }
@@ -179,12 +197,21 @@ class StorageDataGroup {
             return Promise.reject(new Error('Missing required argument keyName'));
         }
 
+        this._dirty = true;
+
         return Promise.resolve()
-            .then(() => this._lazyInit())
             .then(() => this._getRecords())
             .then((currentRecords) => {
                 const string = JSON.stringify(keyValue);
                 const records = currentRecords.concat(stringToRecords(keyName, string));
+                if (this.cache) {
+                    this.cache.records = records.reduce((acc, curr) => {
+                        acc[curr.name] = curr;
+                        return acc;
+                    }, {});
+                    return Promise.resolve();
+                }
+
                 return updateDataGroup(this.path, records);
             });
     }
@@ -195,7 +222,6 @@ class StorageDataGroup {
         }
 
         return Promise.resolve()
-            .then(() => this._lazyInit())
             .then(() => this._getRecords())
             .then(records => recordsToString(records, keyName))
             .then(data => JSON.parse(data));
@@ -207,42 +233,64 @@ class StorageDataGroup {
             port: 8100,
             path: '/mgmt/tm/task/sys/config',
             method: 'POST',
-            send: JSON.stringify({ command: 'save' }),
             headers: {
                 Authorization: `Basic ${Buffer.from('admin:').toString('base64')}`,
                 'Content-Type': 'application/json'
             }
         };
+        const payload = {
+            command: 'save'
+        };
 
-        return new Promise((resolve, reject) => {
-            const req = http.request(opts, (res) => {
-                const buffer = [];
-                res.setEncoding('utf8');
-                res.on('data', (data) => {
-                    buffer.push(data);
-                });
-                res.on('end', () => {
-                    let body = buffer.join('');
-                    body = body || '{}';
-                    try {
-                        body = JSON.parse(body);
-                    } catch (e) {
-                        return reject(new Error(`Invalid response object from ${opts.method} to ${opts.path}`));
-                    }
-                    return resolve({
-                        status: res.statusCode,
-                        headers: res.headers,
-                        body
+        if (!this._dirty) {
+            return Promise.resolve();
+        }
+
+        return Promise.resolve()
+            .then(() => {
+                if (this.cache) {
+                    return Promise.resolve()
+                        .then(() => this._getRecords())
+                        .then(records => updateDataGroup(this.path, records))
+                        .then(() => {
+                            this.cache = {};
+                        });
+                }
+                return Promise.resolve();
+            })
+            .then(() => new Promise((resolve, reject) => {
+                const req = http.request(opts, (res) => {
+                    const buffer = [];
+                    res.setEncoding('utf8');
+                    res.on('data', (data) => {
+                        buffer.push(data);
+                    });
+                    res.on('end', () => {
+                        let body = buffer.join('');
+                        body = body || '{}';
+                        try {
+                            body = JSON.parse(body);
+                        } catch (e) {
+                            return reject(new Error(`Invalid response object from ${opts.method} to ${opts.path}`));
+                        }
+                        return resolve({
+                            status: res.statusCode,
+                            headers: res.headers,
+                            body
+                        });
                     });
                 });
-            });
 
-            req.on('error', (e) => {
-                reject(new Error(`${opts.host}:${e.message}`));
-            });
+                req.on('error', (e) => {
+                    reject(new Error(`${opts.host}:${e.message}`));
+                });
 
-            req.end();
-        });
+                req.write(JSON.stringify(payload));
+                req.end();
+            }))
+            .then(() => {
+                this._dirty = false;
+            });
     }
 }
 
