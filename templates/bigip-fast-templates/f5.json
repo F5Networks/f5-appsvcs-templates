@@ -1,205 +1,220 @@
 {
-  "$schema": "http://json-schema.org/draft-07/hyper-schema",
-  "definitions": {
-    "ipv4": {
-      "format": "ipv4",
-      "default": "10.0.0.1"
-    },
-    "port": {
-      "type": "integer",
-      "minimuim": 0,
-      "maximum": 65535,
-      "default": 443
-    },
-    "service": {
-      "type": "string",
-      "enum": [
-        "Service_HTTP",
-        "Service_HTTPS",
-        "Service_TCP",
-        "Service_UDP",
-        "Service_L4"
-      ],
-      "default": "Service_HTTP"
-    },
-    "load_balancing_mode": {
-      "type": "string",
-      "enum": [
-        "dynamic-ratio-member",
-        "dynamic-ratio-node",
-        "fastest-app-response",
-        "fastest-node",
-        "least-connections-member",
-        "least-connections-node",
-        "least-sessions",
-        "observed-member",
-        "observed-node",
-        "predictive-member",
-        "predictive-node",
-        "ratio-least-connections-member",
-        "ratio-least-connections-node",
-        "ratio-member",
-        "ratio-node",
-        "ratio-session",
-        "round-robin",
-        "weighted-least-connections-member",
-        "weighted-least-connections-node"
-      ],
-      "default": "least-connections-member"
-    },
-    "match_blob" : {
-      "type": "array",
-      "items": {
-        "type": "string"
+    "$schema": "http://json-schema.org/draft-07/hyper-schema",
+    "definitions": {
+      "ipv4": {
+        "type": "string",
+        "format": "ipv4",
+        "default": "10.0.0.1"
       },
-      "default": ["*"]
-    },
-    "http_service": {
-      "type": "string",
-      "enum": [
-        "Service_HTTP",
-        "Service_HTTPS"
-      ],
-      "default": "Service_HTTP"
-    },
-    "basic_policy_matching_strategy": {
-      "type": "string",
-      "enum": [
-        "all-match",
-        "best-match",
-        "first-match"
-      ]
-    },
-    "policy_condition": {
-      "type": "string",
-      "enum": [
-        "httpHeader",
-        "httpUri",
-        "httpCookie",
-        "sslExtension"
-      ]
-    },
-    "policy_action": {
-      "type": "string",
-      "enum": [
-        "http",
-        "httpCookie",
-        "httpHeader",
-        "httpRedirect",
-        "httpUri",
-        "waf",
-        "forward",
-        "drop",
-        "clientSsl",
-        "persist"
-      ]
-    },
-    "match_component": {
-      "type": "string",
-      "enum": [
-        "npn",
-        "path",
-        "pathSegment",
-        "port",
-        "queryParameter",
-        "queryString",
-        "scheme",
-        "serverName"
-      ]
-    },
-    "policy_condition_event": {
-      "type": "string",
-      "enum": [
-        "proxy-connect",
-        "proxy-request",
-        "request",
-        "proxy-response",
-        "response"
-      ]
-    },
-    "policy_action_event": {
-      "type": "string",
-      "enum": [
-        "client-accepted",
-        "proxy-request",
-        "request",
-        "response",
-        "server-connected"
-      ]
-    },
-    "http_header": {
-      "type":"string",
-      "enum": [
-        "Access-Control-Allow-Credentials",
-        "Access-Control-Allow-Headers",
-        "Access-Control-Allow-Methods",
-        "Access-Control-Allow-Origin",
-        "Access-Control-Expose-Headers",
-        "Access-Control-Max-Age",
-        "Accept-Ranges",
-        "Age",
-        "Allow",
-        "Alternate-Protocol",
-        "Cache-Control",
-        "Client-Date",
-        "Client-Peer",
-        "Client-Response-Num",
-        "Connection",
-        "Content-Disposition",
-        "Content-Encoding",
-        "Content-Language",
-        "Content-Length",
-        "Content-Location",
-        "Content-MD5",
-        "Content-Range",
-        "Content-Security-Policy,",
-        "Content-Security-Policy-Report-Only",
-        "Content-Type",
-        "Date",
-        "ETag",
-        "Expires",
-        "HTTP",
-        "Keep-Alive",
-        "Last-Modified",
-        "Link",
-        "Location",
-        "P3P",
-        "Pragma",
-        "Proxy-Authenticate",
-        "Proxy-Connection",
-        "Refresh",
-        "Retry-After",
-        "Server",
-        "Set-Cookie",
-        "Status",
-        "Strict-Transport-Security",
-        "Timing-Allow-Origin",
-        "Trailer",
-        "Transfer-Encoding",
-        "Upgrade",
-        "Vary",
-        "Via",
-        "Warning",
-        "WWW-Authenticate",
-        "X-Aspnet-Version",
-        "X-Content-Type-Options",
-        "X-Frame-Options",
-        "X-Permitted-Cross-Domain-Policies",
-        "X-Pingback",
-        "X-Powered-By",
-        "X-Robots-Tag",
-        "X-UA-Compatible",
-        "X-XSS-Protection"
-      ]
-    },
-    "operands": {
-      "type": "string",
-      "enum": [
-        "equals",
-        "starts-with",
-        "ends-with",
-        "contains"
-      ]
+      "https_port": {
+        "type": "integer",
+        "minimuim": 0,
+        "maximum": 65535,
+        "default": 443
+      },
+      "http_port": {
+        "type": "integer",
+        "minimuim": 0,
+        "maximum": 65535,
+        "default": 80
+      },
+      "tls_cert_name": {
+        "type": "string",
+        "default": "/Common/default.crt"
+      },
+      "tls_key_name": {
+        "type": "string",
+        "default": "/Common/default.key"
+      },
+      "service": {
+        "type": "string",
+        "enum": [
+          "Service_HTTP",
+          "Service_HTTPS",
+          "Service_TCP",
+          "Service_UDP",
+          "Service_L4"
+        ],
+        "default": "Service_HTTP"
+      },
+      "http_service": {
+        "type": "string",
+        "enum": [
+          "Service_HTTP",
+          "Service_HTTPS"
+        ],
+        "default": "Service_HTTP"
+      },
+      "load_balancing_mode": {
+        "type": "string",
+        "enum": [
+          "dynamic-ratio-member",
+          "dynamic-ratio-node",
+          "fastest-app-response",
+          "fastest-node",
+          "least-connections-member",
+          "least-connections-node",
+          "least-sessions",
+          "observed-member",
+          "observed-node",
+          "predictive-member",
+          "predictive-node",
+          "ratio-least-connections-member",
+          "ratio-least-connections-node",
+          "ratio-member",
+          "ratio-node",
+          "ratio-session",
+          "round-robin",
+          "weighted-least-connections-member",
+          "weighted-least-connections-node"
+        ],
+        "default": "least-connections-member"
+      },
+      "match_blob" : {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "default": ["*"]
+      },
+      "basic_policy_matching_strategy": {
+        "type": "string",
+        "enum": [
+          "all-match",
+          "best-match",
+          "first-match"
+        ]
+      },
+      "policy_condition": {
+        "type": "string",
+        "enum": [
+          "httpHeader",
+          "httpUri",
+          "httpCookie",
+          "sslExtension"
+        ]
+      },
+      "policy_action": {
+        "type": "string",
+        "enum": [
+          "http",
+          "httpCookie",
+          "httpHeader",
+          "httpRedirect",
+          "httpUri",
+          "waf",
+          "forward",
+          "drop",
+          "clientSsl",
+          "persist"
+        ]
+      },
+      "match_component": {
+        "type": "string",
+        "enum": [
+          "npn",
+          "path",
+          "pathSegment",
+          "port",
+          "queryParameter",
+          "queryString",
+          "scheme",
+          "serverName"
+        ]
+      },
+      "policy_condition_event": {
+        "type": "string",
+        "enum": [
+          "proxy-connect",
+          "proxy-request",
+          "request",
+          "proxy-response",
+          "response"
+        ]
+      },
+      "policy_action_event": {
+        "type": "string",
+        "enum": [
+          "client-accepted",
+          "proxy-request",
+          "request",
+          "response",
+          "server-connected"
+        ]
+      },
+      "http_header": {
+        "type":"string",
+        "enum": [
+          "Access-Control-Allow-Credentials",
+          "Access-Control-Allow-Headers",
+          "Access-Control-Allow-Methods",
+          "Access-Control-Allow-Origin",
+          "Access-Control-Expose-Headers",
+          "Access-Control-Max-Age",
+          "Accept-Ranges",
+          "Age",
+          "Allow",
+          "Alternate-Protocol",
+          "Cache-Control",
+          "Client-Date",
+          "Client-Peer",
+          "Client-Response-Num",
+          "Connection",
+          "Content-Disposition",
+          "Content-Encoding",
+          "Content-Language",
+          "Content-Length",
+          "Content-Location",
+          "Content-MD5",
+          "Content-Range",
+          "Content-Security-Policy,",
+          "Content-Security-Policy-Report-Only",
+          "Content-Type",
+          "Date",
+          "ETag",
+          "Expires",
+          "HTTP",
+          "Keep-Alive",
+          "Last-Modified",
+          "Link",
+          "Location",
+          "P3P",
+          "Pragma",
+          "Proxy-Authenticate",
+          "Proxy-Connection",
+          "Refresh",
+          "Retry-After",
+          "Server",
+          "Set-Cookie",
+          "Status",
+          "Strict-Transport-Security",
+          "Timing-Allow-Origin",
+          "Trailer",
+          "Transfer-Encoding",
+          "Upgrade",
+          "Vary",
+          "Via",
+          "Warning",
+          "WWW-Authenticate",
+          "X-Aspnet-Version",
+          "X-Content-Type-Options",
+          "X-Frame-Options",
+          "X-Permitted-Cross-Domain-Policies",
+          "X-Pingback",
+          "X-Powered-By",
+          "X-Robots-Tag",
+          "X-UA-Compatible",
+          "X-XSS-Protection"
+        ]
+      },
+      "operands": {
+        "type": "string",
+        "enum": [
+          "equals",
+          "starts-with",
+          "ends-with",
+          "contains"
+        ]
+      }
     }
   }
-}

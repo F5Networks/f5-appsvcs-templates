@@ -1,218 +1,170 @@
 definitions:
-  app_template_def:
-    template: |
-      {{#do_tls_server}}
-        "template": "https",
-      {{/do_tls_server}}
-      {{^do_tls_server}}
-        "template": "http",
-      {{/do_tls_server}}
+  tenant_name:
+    title: 'What is the tenant name?'
+    description: 'The tenant is the high-level grouping in an AS3 declaration. AS3 deploys all configuration for a given tenant in a BIG-IP partition of the same name.'
+  app_name:
+    title: 'What is the application name?'
+    description: 'The application is the low-level grouping in an AS3 declaration. AS3 deploys all configuration for a given application in a BIG-IP folder within the tenant partition.'
+  virtual_address:
+    title: 'What IP address do you want to use for the virtual server?'
+    description: 'This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the web servers.'
+  virtual_port:
+    title: 'What TCP port do you want to use for the virtual server?'
+  redirect:
+    title: 'Redirect port 80 traffic to this virtual server'
+  existing_pool:
+    title: 'Use an existing pool'
+    description: 'A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.'
+  pool_name:
+    title: 'Specify the name of an existing BIG-IP pool.'
+  pool_port:
+    title: 'What TCP port do you want to use for the pool members?'
+  load_balancing_mode:
+    title: 'Which load balancing method do you want to use?'
+    description: 'A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.'
+  existing_monitor:
+    title: 'Use an existing monitor'
+  monitor_name:
+    title: 'Specify the name of an existing BIG-IP monitor.'
+    description: 'Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.'
+  existing_tls_server:
+    title: 'Use an existing TLS server profile'
+  tls_server_profile_name:
+    title: 'Specify the name of an existing BIG-IP clientssl profile.'
+    description: 'TLS server profiles are of type "ltm clientssl" on BIG-IP.'
+  tls_cert_name:
+    title: 'Specify the name of an existing BIG-IP SSL certificate.'
+  tls_key_name:
+    title: 'Specify the name of an existing BIG-IP SSL key.'
+  existing_tls_client:
+    title: 'Use an existing TLS client profile'
+  tls_client_profile_name:
+    title: 'Specify the name of an existing BIG-IP serverssl profile.'
+    description: 'TLS client profiles are of type "ltm serverssl" on BIG-IP.'
+  existing_http_profile:
+    title: 'Use an existing HTTP profile'
+  http_profile_name:
+    title: 'Specify the name of an existing BIG-IP HTTP profile.'
+  existing_acceleration_profile:
+    title: 'Use an existing Web Acceleration profile'
+  acceleration_profile_name:
+    title: 'Specify the name of an existing BIG-IP web acceleration profile.'
+  existing_compression_profile:
+    title: 'Use an existing HTTP Compression profile'
+  compression_profile_name:
+    title: 'Specify the name of an existing BIG-IP HTTP compression profile.'
+  existing_multiplex_profile:
+    title: 'Use an existing Multiplex (OneConnect) profile'
+  multiplex_profile_name:
+    title: 'Specify the name of an existing BIG-IP OneConnect profile.'
   app_pool_def:
     template: |
-      {{#do_pool}}
-        {{^pool_name}}
-          "{{app_name}}_pool": {
-            "class": "Pool",
-            "members": [{
-               "serverAddresses": {{pool_members::array}},
-               "servicePort": {{pool_port:f5:port}}
-            }],
-            {{#do_monitor}}
-              {{#monitor_name}}
-                "monitors": [{
-                  "bigip": "{{monitor_name}}"
-                }],
-              {{/monitor_name}}
-              {{^monitor_name}}
-                "monitors": [{
-                  "use": "{{app_name}}_monitor"
-                }],
-              {{/monitor_name}}
-            {{/do_monitor}}
-            "loadBalancingMode": "{{pool_lb_method:f5:load_balancing_mode}}"
-          },
-        {{/pool_name}}
-      {{/do_pool}}
-  app_monitor_def:
-    template: |
-      {{#do_monitor}}
-        {{^monitor_name}}
-          "{{app_name}}_monitor": {
-            "class": "Monitor",
-            {{#monitor_send_string}}
-              "send": "{{monitor_send_string}}",
-            {{/monitor_send_string}}
-            {{#monitor_expected_response}}
-              "receive": "{{monitor_expected_response}}",
-            {{/monitor_expected_response}}
-            {{#monitor_username}}
-              "username": "{{monitor_username}}",
-            {{/monitor_username}}
-            {{#monitor_passphrase}}
-              "passphrase": {
-                "ciphertext": "{{monitor_passphrase}}",
-                "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
-              },
-            {{/monitor_passphrase}}
-            {{#do_tls_server}}
-              "monitorType": "https"
-            {{/do_tls_server}}
-            {{^do_tls_server}}
-              "monitorType": "http"
-            {{/do_tls_server}}
-          },
-        {{/monitor_name}}
-      {{/do_monitor}}
-  app_snat_def:
-    template: |
-      {{#do_snat}}
-        {{^snat_pool_name}}
-          {{#snat_pool_members}}
-            "{{app_name}}_snatpool": {
-              "class": "SNAT_Pool",
-              "snatAddresses": {{snat_pool_members::array}}
-            },
-          {{/snat_pool_members}}
-        {{/snat_pool_name}}
-      {{/do_snat}}
+      {{^existing_pool}}
+        "{{app_name}}_pool": {
+          "class": "Pool",
+          "members": [{
+             "serverAddresses": {{pool_members::array}},
+             "servicePort": {{pool_port:f5:http_port}}
+          }],
+          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+          "monitors": [ "https" ]
+        },
+      {{/existing_pool}}
   app_tls_server_def:
     template: |
-      {{#do_tls_server}}
-        {{^tls_server_name}}
-          "{{app_name}}_tls_server": {
-            "class": "TLS_Server",
-            "certificates": [{ "certificate": "{{app_name}}_certificate" }]
-          },
-          "{{app_name}}_certificate": {
-            "class": "Certificate",
-            "certificate": { "bigip": "{{tls_server_certificate}}" },
-            "privateKey": { "bigip": "{{tls_server_key}}" }
-          },
-        {{/tls_server_name}}
-      {{/do_tls_server}}
+      {{^existing_tls_server}}
+        "{{app_name}}_tls_server": {
+          "class": "TLS_Server",
+          "certificates": [{ "certificate": "{{app_name}}_certificate" }]
+        },
+        "{{app_name}}_certificate": {
+          "class": "Certificate",
+          "certificate": { "bigip": "{{tls_cert_name:f5:tls_cert_name}}" },
+          "privateKey": { "bigip": "{{tls_key_name:f5:tls_key_name}}" }
+        },
+      {{/existing_tls_server}}
   app_tls_client_def:
     template: |
-      {{#do_tls_client}}
-        {{^tls_client_name}}
-          "{{app_name}}_tls_client": {
-            "class": "TLS_Client"
-          },
-        {{/tls_client_name}}
-      {{/do_tls_client}}
-  service_class_def:
+      {{^existing_tls_client}}
+        "{{app_name}}_tls_client": {
+          "class": "TLS_Client"
+        },
+      {{/existing_tls_client}}
+  redirect80_def:
     template: |
-      {{#do_tls_server}}
-        "class": "Service_HTTPS",
-      {{/do_tls_server}}
-      {{^do_tls_server}}
-        "class": "Service_HTTP",
-      {{/do_tls_server}}
+      {{#redirect}}
+          "redirect80": true,
+      {{/redirect}}
   service_pool_def:
     template: |
-      {{#do_pool}}
-        {{#pool_name}}
-          "pool": {
-            "bigip": "{{pool_name}}"
-          },
-        {{/pool_name}}
-        {{^pool_name}}
-          "pool": "{{app_name}}_pool",
-        {{/pool_name}}
-      {{/do_pool}}
-  service_snat_def:
-    template: |
-      {{#do_snat}}
-        {{#snat_pool_name}}
-          "snat": {
-            "bigip": "{{snat_pool_name}}"
-          },
-        {{/snat_pool_name}}
-        {{^snat_pool_name}}
-          {{#snat_pool_members}}
-            "snat": {
-              "use": "{{app_name}}_snatpool"
-            },
-          {{/snat_pool_members}}
-          {{^snat_pool_members}}
-            "snat": "auto",
-          {{/snat_pool_members}}
-        {{/snat_pool_name}}
-      {{/do_snat}}
+      {{#existing_pool}}
+        "pool": {
+          "bigip": "{{pool_name}}"
+        },
+      {{/existing_pool}}
+      {{^existing_pool}}
+        "pool": "{{app_name}}_pool",
+      {{/existing_pool}}
   service_tls_server_def:
     template: |
-      {{#do_tls_server}}
-        {{#tls_server_name}}
-          "serverTLS": {
-            "bigip": "{{tls_server_name}}"
-          },
-        {{/tls_server_name}}
-        {{^tls_server_name}}
-          "serverTLS": "{{app_name}}_tls_server",
-        {{/tls_server_name}}
-      {{/do_tls_server}}
+      {{#existing_tls_server}}
+        "serverTLS": {
+          "bigip": "{{tls_server_profile_name}}"
+        },
+      {{/existing_tls_server}}
+      {{^existing_tls_server}}
+        "serverTLS": "{{app_name}}_tls_server",
+      {{/existing_tls_server}}
   service_tls_client_def:
     template: |
-      {{#do_tls_client}}
-        {{#tls_client_name}}
-          "clientTLS": {
-            "bigip": "{{tls_client_name}}"
-          },
-        {{/tls_client_name}}
-        {{^tls_client_name}}
-          "clientTLS": "{{app_name}}_tls_client",
-        {{/tls_client_name}}
-      {{/do_tls_client}}
+      {{#existing_tls_client}}
+        "clientTLS": {
+          "bigip": "{{tls_client_profile_name}}"
+        },
+      {{/existing_tls_client}}
+      {{^existing_tls_client}}
+        "clientTLS": "{{app_name}}_tls_client",
+      {{/existing_tls_client}}
   service_http_def:
     template: |
-      {{#http_profile_name}}
+      {{#existing_http_profile}}
         "profileHTTP": {
           "bigip": "{{http_profile_name}}"
         },
-      {{/http_profile_name}}
-      {{^http_profile_name}}
+      {{/existing_http_profile}}
+      {{^existing_http_profile}}
         "profileHTTP": "basic",
-      {{/http_profile_name}}
-  service_caching_def:
+      {{/existing_http_profile}}
+  service_acceleration_def:
     template: |
-      {{#do_caching}}
-        {{#caching_profile_name}}
-          "profileHTTPAcceleration": {
-            "bigip": "{{caching_profile_name}}"
-          },
-        {{/caching_profile_name}}
-        {{^caching_profile_name}}
-          "profileHTTPAcceleration": "basic",
-        {{/caching_profile_name}}
-      {{/do_caching}}
+      {{#existing_acceleration_profile}}
+        "profileHTTPAcceleration": {
+          "bigip": "{{acceleration_profile_name}}"
+        },
+      {{/existing_acceleration_profile}}
+      {{^existing_acceleration_profile}}
+        "profileHTTPAcceleration": "basic",
+      {{/existing_acceleration_profile}}
   service_compression_def:
     template: |
-      {{#do_compression}}
-        {{#compression_profile_name}}
-          "profileHTTPCompression": {
-            "bigip": "{{compression_profile_name}}"
-          },
-        {{/compression_profile_name}}
-        {{^compression_profile_name}}
-          "profileHTTPCompression": "basic",
-        {{/compression_profile_name}}
-      {{/do_compression}}
+      {{#existing_compression_profile}}
+        "profileHTTPCompression": {
+          "bigip": "{{compression_profile_name}}"
+        },
+      {{/existing_compression_profile}}
+      {{^existing_compression_profile}}
+        "profileHTTPCompression": "basic",
+      {{/existing_compression_profile}}
   service_multiplex_def:
     template: |
-      {{#do_multiplex}}
-        {{#multiplex_profile_name}}
+      {{#existing_multiplex_profile}}
           "profileMultiplex": {
             "bigip": "{{multiplex_profile_name}}"
-          },
-        {{/multiplex_profile_name}}
-        {{^multiplex_profile_name}}
-          "profileMultiplex": "basic",
-        {{/multiplex_profile_name}}
-      {{/do_multiplex}}
-  service_redirect:
-    template: |
-      {{#do_tls_server}}
-        "redirect80": {{redirect80::boolean}},
-      {{/do_tls_server}}
+          }
+      {{/existing_multiplex_profile}}
+      {{^existing_multiplex_profile}}
+          "profileMultiplex": "basic"
+      {{/existing_multiplex_profile}}
 template: |
   {
     "class": "ADC",
@@ -222,25 +174,23 @@ template: |
       "class": "Tenant",
       "{{app_name}}": {
         "class": "Application",
-        {{> app_template_def}}
+        "template": "https",
         {{> app_pool_def}}
-        {{> app_monitor_def}}
-        {{> app_snat_def}}
         {{> app_tls_server_def}}
         {{> app_tls_client_def}}
         "serviceMain": {
-          {{> service_class_def}}
+          "class": "Service_HTTPS",
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualPort": {{virtual_port:f5:https_port}},
+          "snat": "auto",
+          {{> redirect80_def}}
           {{> service_pool_def}}
-          {{> service_snat_def}}
           {{> service_tls_server_def}}
           {{> service_tls_client_def}}
           {{> service_http_def}}
-          {{> service_caching_def}}
+          {{> service_acceleration_def}}
           {{> service_compression_def}}
           {{> service_multiplex_def}}
-          {{> service_redirect}}
-          "virtualAddresses": ["{{virtual_address}}"],
-          "virtualPort": {{virtual_port:f5:port}}
         }
       }
     }
