@@ -1,9 +1,9 @@
 openapi: "3.0.0"
 info:
-  version: 0.1.0
+  version: 0.2.0
   title: F5 Application Services API
   license:
-    name: MIT
+    name: Apache 2.0
   description: |
     # F5 Application Services Templates (*FAST*)
 
@@ -41,7 +41,6 @@ servers:
 tags:
  - name: Application Management
  - name: Task Tracking
- - name: Package Management
  - name: Template Management
  - name: FAST Extension
 paths:
@@ -56,6 +55,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationList'
     post:
       summary: Create an application from a template
       description: |
@@ -77,7 +80,7 @@ paths:
             schema:
               $ref: '#/components/schemas/Task'
       responses:
-        '201':
+        '202':
           description: |
             Template Job Submitted Successfully, check the provided task id to get the status of
             the deployment
@@ -91,21 +94,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /applications/{appName}:
+  /applications/{tenantName}/{appName}:
+    parameters:
+      - name: appName
+        in: path
+        required: true
+        description: The name of the app to retrieve
+        schema:
+          type: string
+      - name: tenantName
+        in: path
+        required: true
+        description: The tenant the app belongs to
+        schema:
+          type: string
     get:
       summary: Fetch an individual application
       description: |
-        Fetches the detail view of an individual mystique application
+        Fetches the AS3 application class for the given FAST application
       operationId: getApplication
       tags:
         - Application Management
-      parameters:
-        - name: appName
-          in: path
-          required: true
-          description: The name of the app to retrieve
-          schema:
-            type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags:
+        - Application Management
+      summary: Delete an individual application
       responses:
         '200':
           description: OK
@@ -128,7 +144,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /templates/{templateName}:
+  /templates/{setName}/{templateName}:
     get:
       summary: get the specified template
       operationId: getTemplate
@@ -141,13 +157,19 @@ paths:
           description: The name of the template to retrieve
           schema:
             type: string
+        - name: setName
+          in: path
+          required: true
+          description: The name of template set the template belongs to
+          schema:
+            type: string
       responses:
         '200':
           description: A template object
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateSchema"
+                $ref: "#/components/schemas/Template"
   /tasks:
     get:
       summary: List all running and completed tasks
@@ -198,55 +220,64 @@ paths:
                 $ref: "#/components/schemas/Error"
   /templatesets:
     get:
-      summary: Info about installed packages
-      description: |
-        GET /packages will retrieve the list of template packages currently installed in the system
+      summary: Info about installed template sets
       operationId: listAllTemplateSets
       tags:
-        - Package Management
+        - Template Management
       responses:
         '200':
-          description: a list of installed packages, versions, installation dates, etc
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PackageList"
+          description: a list of installed template sets
     post:
-      summary: Upload a new package
+      summary: Install a new template set
+      description: |
+        Installs a previously uploaded template set zip (uploaded via the iControl file upload API)
       operationId: uploadTemplates
       tags:
-        - Package Management
+        - Template Management
       requestBody:
-        description: A template spec or zip containing template specs
+        description: The name of a zip file (excluding the .zip extension)
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TemplateSchema'
+              required:
+                - name
+              properties:
+                name:
+                  title: Template set name
+                  description: The name of the template set to install (excluding the .zip extension)
+                  type: string
           multipart/form-data:
             schema:
               description: a zip file containing template schema or mustache files
       responses:
         '200':
-          description: upload a new package, either a zipfile or a single template specifiation
+          description: template set installed successfully
   /templatesets/{setName}:
-    delete:
-      summary: Removes an installed package
-      description:
-        DELETE /packages/{setName} will remove an installed package specified by its name.
-      operationId: getTemplateSet
+    parameters:
+      - name: setName
+        in: path
+        required: true
+        description: The name of the template set
+        schema:
+          type: string
+    get:
       tags:
-        - Package Management
-      parameters:
-        - name: setName
-          in: path
-          required: true
-          description: The name of the package to remove
-          schema:
-            type: string
+        - Template Management
+      summary: Get a list of templates that belong to {setName}
       responses:
         '200':
-          description: package removed successfully
+          description: a list of template names
+    delete:
+      summary: Removes an installed template set
+      description:
+        DELETE /templatesets/{setName} will remove an installed template set specified by its name.
+      operationId: getTemplateSet
+      tags:
+        - Template Management
+      responses:
+        '200':
+          description: Template set removed successfully
   /info:
     get:
       summary: Information about the FAST Extension
@@ -262,6 +293,31 @@ paths:
           description: OK
 components:
   schemas:
+    Application:
+      type: object
+      required:
+        - template
+        - view
+        - lastModified
+        - tenant
+        - name
+      properties:
+        template:
+          description: must be valid template in the system
+          type: string
+        view:
+          description: object must conform to specified template's schema
+          type: object
+        lastModified:
+          description: timestamp of when the application was last modified
+        tenant:
+          description: the tenant the application belongs to
+        name:
+          description: the name of the application
+    ApplicationList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Application"
     Task:
       type: object
       required:
@@ -310,6 +366,13 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/TemplateSchema"
+    Template:
+      type: object
+      properties:
+        templateText:
+          $ref: "#/components/schemas/TemplateSchema"
+        definitions:
+          $ref: "#/components/schemas/TemplateSchema"
     TemplateList:
       type: array
       items:
@@ -318,23 +381,8 @@ components:
           name:
             type: string
       example:
-        - name: httpTemplate
-        - name: httpsTemplate
-    PackageList:
-      type: array
-      items:
-        type: object
-        properties:
-          name:
-            description: the name of this package
-            type: string
-          version:
-            description: the package version
-            type: string
-          installed_on:
-            description: date the package was installed
-            type: string
-            format: date-time
+        - name: example/httpTemplate
+        - name: example/httpsTemplate
     Error:
       type: object
       required:
