@@ -326,8 +326,13 @@ route('tasks', 'tasks', () => {
                         const tDiv = document.createElement('div');
                         tDiv.innerText = `${change.tenant}`
                         const mDiv = document.createElement('div');
-                        mDiv.innerText = `${change.message}
-                        ${change.response || ''}`;
+                        mDiv.innerText = `${change.message}`;
+                        if (change.errors) {
+                            mDiv.innerText += `\n${change.errors.join('\n')}`;
+                        }
+                        if (change.response) {
+                            mDiv.innerText += `\n${change.response}`;
+                        }
                         tenantDiv.appendChild(tDiv);
                         statusDiv.appendChild(mDiv);
                     });
