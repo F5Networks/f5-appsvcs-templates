@@ -17,7 +17,7 @@ Use the following links, the navigation on the left, and/or the Next and
 Previous buttons to explore the documentation.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :includehidden:
    :glob:
 
@@ -25,6 +25,7 @@ Previous buttons to explore the documentation.
    userguide/index
    userguide/using-app-templates
    userguide/template-authoring
+   userguide/known-issues
 
 
 
