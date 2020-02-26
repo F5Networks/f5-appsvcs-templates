@@ -85,12 +85,20 @@ entire feature set.
 
 6. To add this to the system, this template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
 
-7. Take note of where the zip was created, and go back to your BIG-IP.
+7. Make note of the file location, and the size of the file (in bytes).  Note that it must be less than 1MB or the transfer fails.
 
-    - Navigate to the FAST extension (**iApps > Application Services > Applications LX > F5 Application Services Templates**).
-    - Click the Templates tab.
-    - At the top is the dialog to add a new template set. Click **Choose file** and then browse to the zip you just created.
-    - Click **Ok** and then click **Upload**.
+8. Upload the file to the BIG-IP system using cURL from a Linux shell using the following syntax:
+   
+   .. code-block:: shell
+
+      $ curl -sku <BIG-IP username>:<BIG-IP password> --data-binary @<path to zip file> -H "Content-Type: application/octet-stream" -H "Content-Range: 0-<content-length minus 1>/<content-length>" -H "Content-Length: <file size in bytes>" -H "Connection: keep-alive" https://<IP address of BIG-IP>/mgmt/shared/file-transfer/uploads/<zipfile-name>.zip
+
+   For example:
+
+   .. code-block:: shell
+
+      $ curl -sku admin:Pass1w0rd! --data-binary @example.zip -H "Content-Type: application/octet-stream" -H "Content-Range: 0-1298/1299" -H "Content-Length: 1299" -H "Connection: keep-alive" https://192.0.2.87/mgmt/shared/file-transfer/uploads/example.zip
+
 
 The template will validate and then be added to the system. When you navigating to the Deploy
 tab, the new template set should be available, with the Hello World template ready for use.

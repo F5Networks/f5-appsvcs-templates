@@ -10,7 +10,7 @@ FAST Menu Tabs
 --------------
 
 When using FAST, the Applications tab is selected, but if you have never used FAST before
-the application list will likely be empty. See the deploy section on how to
+the application list will likely be empty. See the :ref:`deploytab<Deploy section>` on how to
 deploy a new application.
 
 You see the following tabs in the FAST interface:
@@ -119,8 +119,8 @@ At the bottom of the template, you see the following options for what to do once
       * - Template
         - Display the original template text.
 
-Filling out the form with the requested values, and hitting 'Submit' will Submit
-the declaration for deployment. See the result of the operation by...
+Filling out the form with the requested values, and clicking **Submit** will submit
+the declaration for deployment. 
 
 .. .. image:: deployed-application.png
   :width: 300
@@ -161,19 +161,15 @@ New Templates
 FAST can be extended beyond the included templates, new custom templates can be
 installed for any AS3 use case. Template
 sets are packaged into a single file that can be loaded into the system via
-the GUI or the REST API.
+the REST API (and will be available for install using the UI in an upcoming release).
 
 .. .. image:: template-list.png
   :width: 300
   :alt: The application list
 
 
-To add templates, select a properly formatted template set with the file chooser
-and click 'upload'. The template set will be validated and loaded, if there are
-any errors with template validation they will be reported at this time.
-
 Template sets may be provided by F5, sourced from the community, or may be custom written. For
-information on authoring template sets and understanding the template set format,
+information on authoring template sets, understanding the template set format, and uploading templates, 
 see :ref:`authoring`.
 
 |
