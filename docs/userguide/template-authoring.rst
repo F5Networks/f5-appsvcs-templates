@@ -78,6 +78,7 @@ entire feature set.
       serverAddresses:
         - 10.0.0.1
         - 10.0.0.2
+
 |
 
 5. Using this file, the following command will show an example render: ``fast render hello.mst params.yml``
@@ -277,6 +278,7 @@ for example,
     ...
   }
   ...
+  
 |
 
 AFL has support for `enums` and custom formats can be applied to the primitive
