@@ -39,6 +39,9 @@ You see the following tabs in the FAST interface:
       * - :ref:`templatetab`
         - This table has a list of installed templates, with any applications that use them.
 
+      * - :ref:`deploylogtab`
+        - The deploy log is a summary of AS3's async task results.
+
       * - :ref:`apitab`
         - This tab contains documentation on how to use FAST's REST API.
 
@@ -172,6 +175,14 @@ any errors with template validation they will be reported at this time.
 Template sets may be provided by F5, sourced from the community, or may be custom written. For
 information on authoring template sets and understanding the template set format,
 see :ref:`authoring`.
+
+|
+
+.. _deploylogtab:
+
+Deploy Log
+----------
+The deploy log is a summary of AS3's async task results, newer jobs are nearer to the top. The output includes the Task ID, the Tenant (BIG-IP partition), and the result.
 
 |
 
