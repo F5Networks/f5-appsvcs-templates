@@ -16,6 +16,14 @@ class StorageMemory {
         return Promise.resolve(typeof this.data[keyName] !== 'undefined');
     }
 
+    deleteItem(keyName) {
+        if (!keyName) {
+            return Promise.reject(new Error('Missing required argument keyName'));
+        }
+        delete this.data[keyName];
+        return Promise.resolve();
+    }
+
     getItem(keyName) {
         if (!keyName) {
             return Promise.reject(new Error('Missing required argument keyName'));

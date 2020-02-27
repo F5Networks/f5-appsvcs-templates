@@ -96,7 +96,7 @@ function outputToObject(output) {
 
 function recordsToKeys(records) {
     const recordNames = records.map(x => x.name);
-    const keynames = [];
+    const keynames = {};
 
     let lastKeyname = '';
     let recordCounter = -1;
@@ -106,11 +106,12 @@ function recordsToKeys(records) {
         if (nextRecordName === `${lastKeyname}${nextCounter}`) {
             // Still working on the same key
             recordCounter = nextCounter;
+            keynames[lastKeyname].push(nextRecordName);
         } else {
             // New key
             lastKeyname = nextRecordName.slice(0, -1);
             recordCounter = 0;
-            keynames.push(lastKeyname);
+            keynames[lastKeyname] = [nextRecordName];
         }
     }
 
@@ -179,7 +180,7 @@ class StorageDataGroup {
     keys() {
         return Promise.resolve()
             .then(() => this._getRecords())
-            .then(records => recordsToKeys(records));
+            .then(records => Object.keys(recordsToKeys(records)));
     }
 
     hasItem(keyName) {
@@ -190,6 +191,30 @@ class StorageDataGroup {
         return Promise.resolve()
             .then(() => this.getItem(keyName))
             .then(data => typeof data !== 'undefined');
+    }
+
+    deleteItem(keyName) {
+        if (!keyName) {
+            return Promise.reject(new Error('Missing required argument keyName'));
+        }
+
+        this._dirty = true;
+
+        return Promise.resolve()
+            .then(() => this._getRecords())
+            .then((currentRecords) => {
+                const recordNamesToDelete = recordsToKeys(currentRecords)[keyName];
+                const records = currentRecords.filter(x => !recordNamesToDelete.includes(x.name));
+
+                if (this.cache) {
+                    this.cache.records = records.reduce((acc, curr) => {
+                        acc[curr.name] = curr;
+                        return acc;
+                    }, {});
+                    return Promise.resolve();
+                }
+                return updateDataGroup(this.path, records);
+            });
     }
 
     setItem(keyName, keyValue) {
@@ -288,8 +313,12 @@ class StorageDataGroup {
                 req.write(JSON.stringify(payload));
                 req.end();
             }))
-            .then(() => {
+            .then((response) => {
+                if (response.status !== 200) {
+                    return Promise.reject(new Error(`failed to save sys config:${JSON.stringify(response.body)}`));
+                }
                 this._dirty = false;
+                return Promise.resolve();
             });
     }
 }
