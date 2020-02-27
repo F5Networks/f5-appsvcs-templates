@@ -99,6 +99,28 @@ entire feature set.
 
       $ curl -sku admin:Pass1w0rd! --data-binary @example.zip -H "Content-Type: application/octet-stream" -H "Content-Range: 0-1298/1299" -H "Content-Length: 1299" -H "Connection: keep-alive" https://192.0.2.87/mgmt/shared/file-transfer/uploads/example.zip
 
+   This example returns the following: 
+   
+   .. code-block:: shell
+      
+      {"remainingByteCount":0,"usedChunks":{"0":1299},"totalByteCount":1299,"localFilePath":"/var/config/rest/downloads/example.zip","temporaryFilePath":"/var/config/rest/downloads/tmp/example.zip","generation":0,"lastUpdateMicros":1582756171238125}
+
+
+9. Install the newly uploaded template set using the following syntax:
+
+   .. code-block:: shell
+
+      curl -sku <BIG-IP username>:<BIG-IP password> -X POST -d '{"name": "<zip file name without .zip extension>"}' -H "Content-Type: application/json" https://<IP address of BIG-IP>/mgmt/shared/fast/templatesets
+
+   For example:
+
+   .. code-block:: shell
+
+      curl -sku admin:Pass1w0rd -X POST -d '{"name": "example"}' -H "Content-Type: application/json" https://192.0.2.87/mgmt/shared/fast/templatesets
+ 
+   Example response: ``{"code":200,"message":""}``
+
+|
 
 The template will validate and then be added to the system. When you navigating to the Deploy
 tab, the new template set should be available, with the Hello World template ready for use.
@@ -316,3 +338,8 @@ The definition from f5.json:
 Arrays of primitives should work fine, but has not been tested extensively.
 
 Objects are not supported yet.
+
+
+.. |br| raw:: html
+
+   <br />
