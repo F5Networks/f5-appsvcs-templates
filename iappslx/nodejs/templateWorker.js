@@ -330,6 +330,7 @@ class TemplateWorker {
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
             .then(() => this.storage.persist())
+            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))
             .finally(() => fs.removeSync(scratch));
@@ -375,13 +376,20 @@ class TemplateWorker {
     }
 
     deleteTemplateSets(restOperation, tsid) {
-        const tspath = `${templatesPath}/${tsid}`;
-        if (!fs.existsSync(tspath)) {
-            return this.genRestResponse(restOperation, 404, `template set not found: ${tsid}`);
+        if (!tsid) {
+            return this.genRestResponse(restOperation, 405, 'DELETE is only supported for individual template sets');
         }
-        return fs.remove(tspath)
-            .then(() => this.genRestResponse(restOperation, 200, ''))
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+
+        return this.templateProvider.removeSet(tsid)
+            .then(() => this.storage.persist())
+            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            .then(() => this.genRestResponse(restOperation, 200, 'success'))
+            .catch((e) => {
+                if (e.message.match(/failed to find template set/)) {
+                    return this.genRestResponse(restOperation, 404, e.message);
+                }
+                return this.genRestResponse(restOperation, 500, e.stack);
+            });
     }
 
     onDelete(restOperation) {

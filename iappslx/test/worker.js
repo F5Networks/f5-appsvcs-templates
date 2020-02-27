@@ -509,19 +509,15 @@ describe('template worker tests', function () {
     });
     it('delete_templateset', function () {
         const worker = createTemplateWorker();
-        const op = new RestOp('templatesets/bigip-fast-templates');
-        const tsPath = path.join(process.cwd(), '..', 'templates', 'bigip-fast-templates');
+        const templateSet = 'bigip-fast-templates';
+        const op = new RestOp(`templatesets/${templateSet}`);
 
-        mockfs({
-            [tsPath]: {}
-        });
-
-        return worker.onDelete(op)
-            .then(() => {
-                assert.equal(op.status, 200);
-                assert(!fs.existsSync(tsPath));
-            })
-            .finally(() => mockfs.restore());
+        return worker.templateProvider.hasSet(templateSet)
+            .then(result => assert(result))
+            .then(() => worker.onDelete(op))
+            .then(() => assert.equal(op.status, 200))
+            .then(() => worker.templateProvider.hasSet(templateSet))
+            .then(result => assert(!result));
     });
     it('delete_templateset_bad', function () {
         const worker = createTemplateWorker();
