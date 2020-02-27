@@ -13,8 +13,6 @@ class FsSchemaProvider {
                 return resolve(data.toString('utf8'));
             });
         }));
-
-        return this;
     }
 
     fetch(key) {
@@ -34,6 +32,47 @@ class FsSchemaProvider {
     }
 }
 
+class DataStoreSchemaProvider {
+    constructor(datastore, tsName) {
+        this.storage = datastore;
+        this.tsName = tsName;
+        this.cache = new ResourceCache(
+            schemaName => this.storage.hasItem(this.tsName)
+                .then((result) => {
+                    if (result) {
+                        return Promise.resolve();
+                    }
+                    return Promise.reject(new Error(`Could not find template set "${this.tsName}" in data store`));
+                })
+                .then(() => this.storage.getItem(this.tsName))
+                .then(ts => ts.schemas[schemaName])
+                .then((schema) => {
+                    if (typeof schema === 'undefined') {
+                        return Promise.reject(new Error(`Failed to find schema named "${schemaName}"`));
+                    }
+                    return Promise.resolve(schema);
+                })
+        );
+    }
+
+    fetch(key) {
+        return this.cache.fetch(key);
+    }
+
+    list() {
+        return this.storage.hasItem(this.tsName)
+            .then((result) => {
+                if (result) {
+                    return Promise.resolve();
+                }
+                return Promise.reject(new Error(`Could not find template set "${this.tsName}" in data store`));
+            })
+            .then(() => this.storage.getItem(this.tsName))
+            .then(ts => Object.keys(ts.schemas));
+    }
+}
+
 module.exports = {
-    FsSchemaProvider
+    FsSchemaProvider,
+    DataStoreSchemaProvider
 };
