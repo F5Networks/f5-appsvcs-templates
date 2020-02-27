@@ -528,7 +528,7 @@ describe('template worker tests', function () {
                 assert.equal(op.status, 404);
             });
     });
-    it('on_start_load_templates', function () {
+    it('on_start', function () {
         const worker = createTemplateWorker();
 
         // Clear the data store
@@ -540,6 +540,12 @@ describe('template worker tests', function () {
             schema: {},
             templates: {}
         };
+
+        nock('http://localhost:8100')
+            .get('/shared/iapp/blocks')
+            .reply(200, { items: [] })
+            .post('/shared/iapp/blocks')
+            .reply(200, {});
 
         return worker.onStart(
             () => {}, // success callback

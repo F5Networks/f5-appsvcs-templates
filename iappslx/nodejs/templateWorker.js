@@ -45,7 +45,10 @@ class TemplateWorker {
         // the data store. Do not overwrite template sets already in the data store.
         const fsprovider = new FsTemplateProvider(templatesPath);
         let saveState = true;
-        return Promise.all([fsprovider.listSets(), this.templateProvider.listSets()])
+        this.logger.fine('TemplateWorker: Begin startup');
+        return Promise.resolve()
+            // Load template sets from disk (i.e., those from the RPM)
+            .then(() => Promise.all([fsprovider.listSets(), this.templateProvider.listSets()]))
             .then(([fsSets, knownSets]) => {
                 const sets = fsSets.filter(setName => !knownSets.includes(setName));
                 this.logger.info(
@@ -59,64 +62,48 @@ class TemplateWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
             })
+            // Persist any template set changes
             .then(() => saveState && this.storage.persist())
-            .then(() => success())
-            .catch((e) => {
-                this.logger.severe(`TemplateWorker: Failed to load templates from disk: ${e.stack}`);
-                error();
-            });
-    }
-
-    onStartCompleted(success, error, state, errMsg) {
-        if (errMsg) {
-            this.logger.severe(`TemplateWorker onStartCompleted error: something went wrong ${errMsg}`);
-            error();
-        }
-        this.setLxBlockStatus(mainBlockName)
-            .then(() => {
-                this.logger.fine(`TemplateWorker state loaded: ${JSON.stringify(state)}`);
-                success();
-            })
-            .catch((err) => {
-                error(err);
-            });
-    }
-
-    // LX block status controls the ball color shown in the BIG-IP UI.
-    // When at least one FAST app is deployed, set state to BOUND (green).
-    // When all are deleted, set state to UNBOUND (gray).
-    setLxBlockStatus(blockName, state) {
-        const blockData = {
-            name: blockName,
-            state: state || 'UNBOUND',
-            configurationProcessorReference: {
-                link: 'https://localhost/mgmt/shared/iapp/processors/noop'
-            },
-            presentationHtmlReference: {
-                link: `https://localhost/iapps/${projectName}/index.html`
-            }
-        };
-
-        return httpUtils.makeGet('/shared/iapp/blocks')
-            .then((res) => {
-                if (res.status === 200) {
-                    const body = res.body;
-                    let noBlockFound = true;
-                    body.items.forEach((block) => {
-                        if (block.name === blockName) {
-                            noBlockFound = false;
-                            if (state !== undefined && state !== block.state) {
-                                httpUtils.makePatch(`/shared/iapp/blocks/${block.id}`, {
-                                    state,
-                                    presentationHtmlReference: blockData.presentationHtmlReference
-                                });
-                            }
-                        }
-                    });
-                    if (noBlockFound) {
-                        httpUtils.makePost('/shared/iapp/blocks', blockData);
-                    }
+            // Automatically add a block
+            .then(() => httpUtils.makeGet('/shared/iapp/blocks'))
+            .then((results) => {
+                if (results.status !== 200) {
+                    return Promise.reject(new Error(`failed to get blocks: ${JSON.stringify(results.body, null, 2)}`));
                 }
+                const matchingBlocks = results.body.items.filter(x => x.name === mainBlockName);
+                const blockData = {
+                    name: mainBlockName,
+                    state: 'BOUND',
+                    configurationProcessorReference: {
+                        link: 'https://localhost/mgmt/shared/iapp/processors/noop'
+                    },
+                    presentationHtmlReference: {
+                        link: `https://localhost/iapps/${projectName}/index.html`
+                    }
+                };
+
+                if (matchingBlocks.length === 0) {
+                    // No existing block, make a new one
+                    return httpUtils.makePost('/shared/iapp/blocks', blockData);
+                }
+
+                // Found a block, do nothing
+                return Promise.resolve({ status: 200 });
+            })
+            .then((results) => {
+                if (results.status !== 200) {
+                    return Promise.reject(
+                        new Error(`failed to set block state: ${JSON.stringify(results.body, null, 2)}`)
+                    );
+                }
+                return Promise.resolve();
+            })
+            // Done
+            .then(() => success())
+            // Errors
+            .catch((e) => {
+                this.logger.severe(`TemplateWorker: Failed to start: ${e.stack}`);
+                error();
             });
     }
 
