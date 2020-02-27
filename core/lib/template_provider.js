@@ -85,6 +85,15 @@ class FsTemplateProvider {
                 });
             })))).then(sets => sets.reduce((acc, curr) => acc.concat(curr), []));
     }
+
+    hasSet(setid) {
+        return this.listSets()
+            .then(sets => sets.includes(setid));
+    }
+
+    removeSet() {
+        return Promise.reject(new Error('Set removal not implemented'));
+    }
 }
 
 class DataStoreTemplateProvider {
@@ -149,6 +158,20 @@ class DataStoreTemplateProvider {
                 });
                 return templates;
             });
+    }
+
+    hasSet(setid) {
+        return this.listSets()
+            .then(sets => sets.includes(setid));
+    }
+
+    removeSet(setid) {
+        return this.hasSet(setid)
+            .then(result => (result || Promise.reject(
+                new Error(`failed to find template set: ${setid}`)
+            )))
+            .then(() => this.storage.deleteItem(setid))
+            .then(() => this.invalidateCache());
     }
 
     static fromFs(datastore, templateRootPath, filteredSets) {

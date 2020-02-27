@@ -103,6 +103,10 @@ describe('template provider tests', function () {
                 assert.isRejected(provider.fetch('simple_udp'))
             ]);
         });
+        it('remove_tmpl_set', function () {
+            const provider = new FsTemplateProvider(templatesPath);
+            return assert.isRejected(provider.removeSet('example'), /not implemented/);
+        });
     });
     describe('DataStoreTemplateProvider', function () {
         const testStorage = new StorageMemory();
@@ -116,6 +120,15 @@ describe('template provider tests', function () {
         it('load_single_bad_tmpl_path', function () {
             const provider = createProvider();
             return assert.isRejected(provider.fetch('test/badpath'));
+        });
+        it('remove_tmpl_set', function () {
+            const provider = createProvider();
+            return assert.isFulfilled(provider.removeSet('test'))
+                .then(() => assert.becomes(provider.listSets(), []));
+        });
+        it('remove_tmpl_set_missing', function () {
+            const provider = createProvider();
+            return assert.isRejected(provider.removeSet('does_not_exist'), /failed to find template set/);
         });
     });
 });
