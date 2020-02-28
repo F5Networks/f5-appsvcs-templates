@@ -3,6 +3,8 @@
 const yaml = require('js-yaml');
 
 const { Template, guiUtils } = require('@f5devcentral/fast');
+const SwaggerUI = require('swagger-ui');
+const specData = require('./openapi.json');
 
 const endPointUrl = '/mgmt/shared/fast';
 
@@ -349,7 +351,10 @@ route('tasks', 'tasks', () => {
 });
 
 route('api', 'api', () => {
-
+    SwaggerUI({
+        dom_id: '#api-div',
+        spec: specData
+    });
 });
 
 route('templates', 'templates', () => {
