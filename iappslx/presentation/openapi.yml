@@ -118,6 +118,8 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Application or Tenant was not found
     delete:
       tags:
         - Application Management
@@ -170,6 +172,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Template"
+        '404':
+          description: Set or template was not found
   /tasks:
     get:
       summary: List all running and completed tasks
@@ -212,6 +216,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TaskList"
+        '404':
+          description: The task ID was not found
         default:
           description: unexpected error
           content:
@@ -278,6 +284,8 @@ paths:
       responses:
         '200':
           description: Template set removed successfully
+        '404':
+          description: The set name was not found
   /info:
     get:
       summary: Information about the FAST Extension
