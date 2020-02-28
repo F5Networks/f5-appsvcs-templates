@@ -1,4 +1,17 @@
 openapi: "3.0.0"
+x-errors:
+    '500': &serverError
+      description: Server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    default: &defaultResponse
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
 info:
   version: 0.3.0
   title: F5 Application Services API
@@ -59,6 +72,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApplicationList'
+        '500': *serverError
+        default: *defaultResponse
     post:
       summary: Create an application from a template
       description: |
@@ -88,12 +103,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TaskCreation"
-        default:
-          description: unexpected error
+        '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /applications/{tenantName}/{appName}:
     parameters:
       - name: appName
@@ -120,6 +137,12 @@ paths:
           description: OK
         '404':
           description: Application or Tenant was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
     delete:
       tags:
         - Application Management
@@ -127,6 +150,8 @@ paths:
       responses:
         '200':
           description: OK
+        '500': *serverError
+        default: *defaultResponse
   /templates:
     get:
       summary: List all templates
@@ -140,12 +165,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TemplateList"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /templates/{setName}/{templateName}:
     get:
       summary: get the specified template
@@ -174,6 +195,12 @@ paths:
                 $ref: "#/components/schemas/Template"
         '404':
           description: Set or template was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /tasks:
     get:
       summary: List all running and completed tasks
@@ -187,12 +214,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TaskList"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /tasks/{taskId}:
     get:
       summary: Get information about a specific task
@@ -218,12 +241,12 @@ paths:
                 $ref: "#/components/schemas/TaskList"
         '404':
           description: The task ID was not found
-        default:
-          description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /templatesets:
     get:
       summary: Info about installed template sets
@@ -233,6 +256,8 @@ paths:
       responses:
         '200':
           description: a list of installed template sets
+        '500': *serverError
+        default: *defaultResponse
     post:
       summary: Install a new template set
       description: |
@@ -259,6 +284,20 @@ paths:
       responses:
         '200':
           description: template set installed successfully
+        '400':
+          description: The supplied template set name is invalid or missing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: The supplied template name was not found in /var/config/rest/downloads
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /templatesets/{setName}:
     parameters:
       - name: setName
@@ -274,6 +313,8 @@ paths:
       responses:
         '200':
           description: a list of template names
+        '500': *serverError
+        default: *defaultResponse
     delete:
       summary: Removes an installed template set
       description:
@@ -286,6 +327,12 @@ paths:
           description: Template set removed successfully
         '404':
           description: The set name was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
   /info:
     get:
       summary: Information about the FAST Extension
@@ -299,6 +346,8 @@ paths:
       responses:
         '200':
           description: OK
+        '500': *serverError
+        default: *defaultResponse
 components:
   schemas:
     Application:
