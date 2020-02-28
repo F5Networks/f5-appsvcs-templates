@@ -123,14 +123,20 @@ class TemplateWorker {
     getInfo(restOperation) {
         const info = {
             version: pkg.version,
-            as3Info: {}
+            as3Info: {},
+            installedTemplates: []
         };
 
-        return httpUtils.makeGet('/mgmt/shared/appsvcs/info')
-            .then((response) => {
-                if (response.status < 300) {
-                    info.as3Info = response.body;
+        return Promise.resolve()
+            .then(() => Promise.all([
+                httpUtils.makeGet('/mgmt/shared/appsvcs/info'),
+                this.templateProvider.list()
+            ]))
+            .then(([as3response, tmplList]) => {
+                if (as3response.status < 300) {
+                    info.as3Info = as3response.body;
                 }
+                info.installedTemplates = tmplList;
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation);
             })

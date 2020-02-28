@@ -116,7 +116,12 @@ describe('template worker tests', function () {
 
         return worker.onGet(op)
             .then(() => {
+                const info = op.body;
                 assert.strictEqual(op.status, 200);
+                console.log(JSON.stringify(info, null, 2));
+                assert.notEqual(info.installedTemplates, []);
+                assert(info.installedTemplates.includes('bigip-fast-templates/http'));
+                assert(info.installedTemplates.includes('examples/simple_udp'));
             });
     });
     it('info_without_as3', function () {
@@ -128,7 +133,12 @@ describe('template worker tests', function () {
 
         return worker.onGet(op)
             .then(() => {
+                const info = op.body;
                 assert.strictEqual(op.status, 200);
+                console.log(JSON.stringify(info, null, 2));
+                assert.notEqual(info.installedTemplates, []);
+                assert(info.installedTemplates.includes('bigip-fast-templates/http'));
+                assert(info.installedTemplates.includes('examples/simple_udp'));
             });
     });
     it('get_bad_end_point', function () {
