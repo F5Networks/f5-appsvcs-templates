@@ -4,12 +4,14 @@
   "license": "Apache-2.0",
   "description": "Presentation layer for the FAST iAppLX",
   "scripts": {
-    "build": "browserify app.js -o bundle.js",
+    "buildapi": "js-yaml ../../docs/openapi.yml > openapi.json && browserify api.js -o api-bundle.js",
+    "build": "npm run buildapi && browserify app.js -o bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@f5devcentral/fast": "file:../../core",
     "browserify": "^16.5.0",
     "js-yaml": "^3.13.1",
-    "@f5devcentral/fast": "file:../../core"
+    "swagger-ui": "^3.25.0"
   }
 }

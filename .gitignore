@@ -2,9 +2,11 @@
 .nyc_output
 .vscode/
 bundle.js*
+api-bundle.js*
 coverage
 dist
 docs/_build/
 node_modules
 rpmbuild
 test-output.txt
+iappslx/presentation/openapi.json
