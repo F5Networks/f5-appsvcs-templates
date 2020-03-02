@@ -28,7 +28,7 @@ applications on the BIG-IP (which will likely be empty on initial installation).
 
 7. Click one of the template names, fill out the required fields, and then click **Submit** to deploy an AS3 application.
 
-When you click the Application List tab, you will see the application you just deployed. From the Application List tab, you can modify the parameters or delete the application.
+When you click the Application List tab, you will see the application you just deployed. From the Application List tab, you can modify the parameters or delete the application
 from this list.
 
 For more details on using the UI, see :ref:`start`.
