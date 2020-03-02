@@ -1,5 +1,7 @@
 'use strict';
 
+require('core-js');
+
 const fs = require('fs-extra');
 
 const yaml = require('js-yaml');
