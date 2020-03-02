@@ -17,7 +17,9 @@ Framework for deploying configuration on BIG-IP using mustache templates
 echo -n %{version}-%{release} > %{_builddir}/version
 # REST worker
 mkdir -p %{_builddir}/nodejs
-cp -r %{main}/nodejs %{_builddir}
+pushd %{main}
+npx babel %{main}/nodejs -d %{_builddir}/nodejs --copy-files --copy-ignored
+popd
 cp %{main}/package.json %{_builddir}
 %{main}/../scripts/copy-node-modules.sh %{main} %{_builddir}/node_modules
 # Presentation layer
