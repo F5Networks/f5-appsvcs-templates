@@ -2,6 +2,7 @@
 ## REST Worker
 * Persist template sets to data groups
 * Fix deleting template sets
+* Fix running on BIG-IP 13.1
 
 ## GUI
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
