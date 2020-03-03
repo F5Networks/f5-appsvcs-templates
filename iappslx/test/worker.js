@@ -33,6 +33,10 @@ class RestOp {
         this.status = status;
     }
 
+    getStatusCode() {
+        return this.status;
+    }
+
     setBody(body) {
         this.body = body;
     }
@@ -46,11 +50,16 @@ class RestOp {
             path: `/a/b/${this.uri}`
         };
     }
+
+    getMethod() {
+        return '';
+    }
 }
 
 const patchWorker = (worker) => {
     worker.prototype.logger = {
         severe: console.error,
+        error: console.error,
         info: console.log,
         fine: console.log,
         log: console.log
@@ -80,10 +89,23 @@ const patchWorker = (worker) => {
 
 let testStorage = null;
 
+class TeemDeviceMock {
+    report(reportName, reportVersion, declaration, extraFields) {
+        // console.error(`${reportName}: ${JSON.stringify(extraFields)}`);
+        return Promise.resolve()
+            .then(() => {
+                assert(reportName);
+                assert(declaration);
+                assert(extraFields);
+            });
+    }
+}
+
 function createTemplateWorker() {
     const tw = new TemplateWorker();
     tw.storage = testStorage;
     tw.templateProvider.storage = testStorage;
+    tw.teemDevice = new TeemDeviceMock();
     return tw;
 }
 
@@ -566,5 +588,18 @@ describe('template worker tests', function () {
                 assert(tmplList.includes('examples/simple_http'));
                 assert(!tmplList.includes('bigip-fast-templates/http'));
             });
+    });
+    it('onStartCompleted', function () {
+        const worker = createTemplateWorker();
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(200, {});
+        return Promise.resolve()
+            .then(() => worker.onStartCompleted(
+                () => {}, // success callback
+                () => assert(false), // error callback
+                undefined,
+                ''
+            ));
     });
 });
