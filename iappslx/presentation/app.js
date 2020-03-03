@@ -287,65 +287,75 @@ route('modify', 'create', (appID) => {
 });
 
 route('tasks', 'tasks', () => {
-  console.log('Fetching AS3 Tasks Endpoint');
-    fetch('/mgmt/shared/appsvcs/task')
-        .then((data) => {
-            return data.json();
-        })
-        .then((data)=> {
-            const taskList = document.getElementById('task-list');
-            taskList.innerHTML = `<div class="appListRow">
-              <div class="appListTitle">Task ID</div>
-              <div class="appListTitle">Tenant</div>
-              <div class="appListTitle">Result</div>
-            </div>`
-            taskList.appendChild(document.createElement('hr'));
-
-            let count = 0;
-            data.items.forEach((item) => {
-                const rowDiv = document.createElement('div');
-                rowDiv.classList.add('appListRow');
-                if (++count%2) rowDiv.classList.add('zebraRow');
-
-                const idDiv = document.createElement('div');
-                idDiv.classList.add('appListTitle');
-                idDiv.innerText = item.id;
-                rowDiv.appendChild(idDiv);
-
-                const tenantDiv = document.createElement('div');
-                tenantDiv.classList.add('appListTitle');
-
-                const statusDiv = document.createElement('div');
-                statusDiv.classList.add('appListTitle');
-
-                const changes = item.results.filter((r) => r.message !== 'no change');
-                if (changes.length === 0) {
-                    statusDiv.innerText = 'no change';
-                } else {
-                    changes.forEach((change) => {
-                        const tDiv = document.createElement('div');
-                        tDiv.innerText = `${change.tenant}`
-                        const mDiv = document.createElement('div');
-                        mDiv.innerText = `${change.message}`;
-                        if (change.errors) {
-                            mDiv.innerText += `\n${change.errors.join('\n')}`;
-                        }
-                        if (change.response) {
-                            mDiv.innerText += `\n${change.response}`;
-                        }
-                        tenantDiv.appendChild(tDiv);
-                        statusDiv.appendChild(mDiv);
-                    });
-                }
-
-                rowDiv.appendChild(tenantDiv);
-                rowDiv.appendChild(statusDiv);
-
-                taskList.appendChild(rowDiv);
+    const renderTaskList = () => {
+        fetch('/mgmt/shared/appsvcs/task')
+            .then(data => data.json())
+            .then((data) => {
+                const taskList = document.getElementById('task-list');
+                taskList.innerHTML = `<div class="appListRow">
+                  <div class="appListTitle">Task ID</div>
+                  <div class="appListTitle">Tenant</div>
+                  <div class="appListTitle">Result</div>
+                </div>`;
                 taskList.appendChild(document.createElement('hr'));
-            });
 
-        });
+                let count = 0;
+                data.items.forEach((item) => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.classList.add('appListRow');
+                    if (++count%2) rowDiv.classList.add('zebraRow');
+
+                    const idDiv = document.createElement('div');
+                    idDiv.classList.add('appListTitle');
+                    idDiv.innerText = item.id;
+                    rowDiv.appendChild(idDiv);
+
+                    const tenantDiv = document.createElement('div');
+                    tenantDiv.classList.add('appListTitle');
+
+                    const statusDiv = document.createElement('div');
+                    statusDiv.classList.add('appListTitle');
+
+                    const changes = item.results.filter(r => r.message !== 'no change');
+                    if (changes.length === 0) {
+                        statusDiv.innerText = 'no change';
+                    } else {
+                        changes.forEach((change) => {
+                            const tDiv = document.createElement('div');
+                            tDiv.innerText = `${change.tenant}`;
+                            const mDiv = document.createElement('div');
+                            mDiv.innerText = `${change.message}`;
+                            if (change.errors) {
+                                mDiv.innerText += `\n${change.errors.join('\n')}`;
+                            }
+                            if (change.response) {
+                                mDiv.innerText += `\n${change.response}`;
+                            }
+                            tenantDiv.appendChild(tDiv);
+                            statusDiv.appendChild(mDiv);
+                        });
+                    }
+
+                    rowDiv.appendChild(tenantDiv);
+                    rowDiv.appendChild(statusDiv);
+
+                    taskList.appendChild(rowDiv);
+                    taskList.appendChild(document.createElement('hr'));
+                });
+
+                const inProgressJob = (
+                    data.items[0] &&
+                    data.items[0].results &&
+                    data.items[0].results[0] &&
+                    data.items[0].results[0].message === 'in progress'
+                );
+                if (inProgressJob) {
+                    setTimeout(renderTaskList, 5000);
+                }
+            });
+    };
+
+    renderTaskList();
 });
 
 route('api', 'api', () => {
