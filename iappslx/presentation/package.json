@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "description": "Presentation layer for the FAST iAppLX",
   "scripts": {
-    "buildapi": "js-yaml ../../docs/openapi.yml > openapi.json",
+    "buildapi": "js-yaml ../../docs/openapi.yml > openapi.json && browserify api.js -o api-bundle.js",
     "build": "npm run buildapi && browserify app.js -o bundle.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
