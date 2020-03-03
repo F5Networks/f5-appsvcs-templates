@@ -1,4 +1,7 @@
+/* eslint-env browser */
+
 'use strict';
+
 
 const yaml = require('js-yaml');
 
@@ -74,10 +77,10 @@ const newEditor = (tmplid, view) => {
             // Hook up buttons
             document.getElementById('view-tmpl-btn').onclick = () => {
                 dispOutput(tmpl.templateText);
-            }
+            };
             document.getElementById('view-schema-btn').onclick = () => {
                 dispOutput(JSON.stringify(schema, null, 2));
-            }
+            };
             document.getElementById('view-render-btn').onclick = () => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
             };
@@ -110,7 +113,7 @@ function route(path, pageName, pageFunc) {
     routes[path] = { pageName, pageFunc };
 }
 
-const navTitles = {}
+const navTitles = {};
 function addRouteToHeader(topRoute, title) {
     navTitles[topRoute] = title;
     return title;
@@ -132,7 +135,7 @@ function router() {
             d = document.createElement('a');
             d.classList.add('btn-nav');
             d.classList.add('btn');
-            d.href = `#${k}`
+            d.href = `#${k}`;
         } else {
             d = document.createElement('div');
             d.classList.add('selected-nav');
@@ -180,7 +183,7 @@ addRouteToHeader('api', 'API');
 
 // Define routes
 route('', 'apps', () => {
-    outputElem =  document.getElementById('output');
+    outputElem = document.getElementById('output');
     const listElem = document.getElementById('applist');
     let count = 0;
     let lastTenant = '';
@@ -213,7 +216,7 @@ route('', 'apps', () => {
                 appTenant.classList.add('appListTitle');
                 row.appendChild(appTenant);
 
-                const appName= document.createElement('div');
+                const appName = document.createElement('div');
                 appName.innerText = appPair[1];
                 appName.classList.add('appListTitle');
                 row.appendChild(appName);
@@ -239,14 +242,13 @@ route('', 'apps', () => {
                 deleteBtn.addEventListener('click', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     fetch(`${endPointUrl}/applications/${appPairStr}`, {
-                        method: 'DELETE',
+                        method: 'DELETE'
                     });
                 });
                 deleteBtn.classList.add('appListEntry');
                 row.appendChild(deleteBtn);
-
-
             });
+
             dispOutput('');
         })
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
@@ -266,7 +268,7 @@ route('create', 'create', () => {
             elem.appendChild(btn);
         });
     };
-    outputElem =  document.getElementById('output');
+    outputElem = document.getElementById('output');
     dispOutput('Fetching templates');
     getJSON('templates')
         .then((data) => {
@@ -276,7 +278,7 @@ route('create', 'create', () => {
         .catch(e => dispOutput(e.message));
 });
 route('modify', 'create', (appID) => {
-    outputElem =  document.getElementById('output');
+    outputElem = document.getElementById('output');
     dispOutput(`Fetching app data for ${appID}`);
     getJSON(`applications/${appID}`)
         .then((appData) => {
@@ -378,8 +380,9 @@ route('templates', 'templates', () => {
             // build dictionary of app lists, keyed by template
             const appDict = applications.reduce((a, c) => {
                 if (c.template) {
-                    if(!a[c.template])
+                    if (!a[c.template]) {
                         a[c.template] = [];
+                    }
                     a[c.template].push(c);
                 }
                 return a;
@@ -402,7 +405,7 @@ route('templates', 'templates', () => {
                 if (appDict[tname]) {
                     appDict[tname].forEach((app) => {
                         const appDiv = document.createElement('div');
-                        appDiv.innerText = app.tenant + ' ' + app.name;
+                        appDiv.innerText = `${app.tenant} ${app.name}`;
                         applist.appendChild(appDiv);
                     });
                 }
