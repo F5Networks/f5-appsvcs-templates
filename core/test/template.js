@@ -45,6 +45,7 @@ describe('Template class tests', function () {
         const reference = new Template();
         reference.description = 'Just a basic template';
         reference.templateText = mstdata;
+        reference.sourceType = 'MST';
 
         return Template.loadMst(mstdata)
             .then((tmpl) => {

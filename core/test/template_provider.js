@@ -75,6 +75,19 @@ function runSharedTests(createProvider) {
             .then(() => assert.isFulfilled(provider.fetch('test/complex')))
             .then(() => assert.isFulfilled(provider.fetch('test/simple')));
     });
+    it('list_tmpl_sources', function () {
+        const provider = createProvider();
+        return assert.becomes(provider.getNumTemplateSourceTypes('test'), {
+            MST: 1,
+            YAML: 2
+        })
+            .then(() => assert.becomes(provider.getNumTemplateSourceTypes(), {
+                MST: 1,
+                YAML: 2
+            }))
+            .then(() => assert.becomes(provider.getNumSchema('test'), 1))
+            .then(() => assert.becomes(provider.getNumSchema(), 1));
+    });
 }
 
 describe('template provider tests', function () {

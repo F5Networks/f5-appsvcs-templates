@@ -58,6 +58,7 @@ class Template {
         this.target = 'as3';
         this.templateText = '';
         this.defaultView = {};
+        this.sourceType = 'UNKNOWN';
     }
 
     _loadTypeSchemas(schemaProvider) {
@@ -316,6 +317,7 @@ class Template {
     static loadMst(msttext, schemaProvider) {
         this.validate(msttext);
         const tmpl = new this();
+        tmpl.sourceType = 'MST';
         tmpl.templateText = msttext;
         return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
@@ -330,6 +332,7 @@ class Template {
         this.validate(yamltext);
         const tmpl = new this();
         const yamldata = yaml.safeLoad(yamltext);
+        tmpl.sourceType = 'YAML';
         tmpl.templateText = yamldata.template;
 
         if (yamldata.title) tmpl.title = yamldata.title;

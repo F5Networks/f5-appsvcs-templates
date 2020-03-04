@@ -86,6 +86,34 @@ class FsTemplateProvider {
             })))).then(sets => sets.reduce((acc, curr) => acc.concat(curr), []));
     }
 
+    getNumTemplateSourceTypes(filteredSetName) {
+        const sourceTypes = {};
+        return this.list()
+            .then(tmplList => tmplList.filter(
+                x => !filteredSetName || x.split('/')[0] === filteredSetName
+            ))
+            .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
+            .then(tmplList => tmplList.forEach((tmpl) => {
+                if (!sourceTypes[tmpl.sourceType]) {
+                    sourceTypes[tmpl.sourceType] = 0;
+                }
+                sourceTypes[tmpl.sourceType] += 1;
+            }))
+            .then(() => sourceTypes);
+    }
+
+    getNumSchema(filteredSetName) {
+        return Promise.resolve()
+            .then(() => {
+                if (filteredSetName) {
+                    return Promise.resolve([filteredSetName]);
+                }
+                return this.listSets();
+            })
+            .then(setList => setList.map(x => this.schemaProviders[x].list()))
+            .then(schemaLists => schemaLists.flat().length);
+    }
+
     hasSet(setid) {
         return this.listSets()
             .then(sets => sets.includes(setid));
@@ -101,6 +129,7 @@ class DataStoreTemplateProvider {
         this.filteredSets = new Set(filteredSets || []);
         this.storage = datastore;
         this.keyCache = [];
+        this._numSchema = {};
 
         this.cache = new ResourceCache((templatePath) => {
             const [tsName, templateName] = templatePath.split('/');
@@ -172,6 +201,34 @@ class DataStoreTemplateProvider {
             )))
             .then(() => this.storage.deleteItem(setid))
             .then(() => this.invalidateCache());
+    }
+
+    getNumTemplateSourceTypes(filteredSetName) {
+        const sourceTypes = {};
+        return this.list()
+            .then(tmplList => tmplList.filter(
+                x => !filteredSetName || x.split('/')[0] === filteredSetName
+            ))
+            .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
+            .then(tmplList => tmplList.forEach((tmpl) => {
+                if (!sourceTypes[tmpl.sourceType]) {
+                    sourceTypes[tmpl.sourceType] = 0;
+                }
+                sourceTypes[tmpl.sourceType] += 1;
+            }))
+            .then(() => sourceTypes);
+    }
+
+    getNumSchema(filteredSetName) {
+        return Promise.resolve()
+            .then(() => {
+                if (filteredSetName) {
+                    return Promise.resolve([filteredSetName]);
+                }
+                return this.listSets();
+            })
+            .then(setNames => Promise.all(setNames.map(x => this.storage.getItem(x))))
+            .then(sets => sets.reduce((acc, curr) => acc + Object.keys(curr.schemas).length, 0));
     }
 
     static fromFs(datastore, templateRootPath, filteredSets) {

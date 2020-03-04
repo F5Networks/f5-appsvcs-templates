@@ -8,6 +8,7 @@ const yaml = require('js-yaml');
 const extract = require('extract-zip');
 
 const fast = require('@f5devcentral/fast');
+const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
@@ -37,6 +38,10 @@ class TemplateWorker {
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
         this.storage = new StorageDataGroup(dataGroupPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage);
+        this.teemDevice = new TeemDevice({
+            name: projectName,
+            version: pkg.version
+        });
     }
 
     /**
@@ -109,20 +114,85 @@ class TemplateWorker {
             });
     }
 
-    /**
-     * HTTP/REST handlers
-     */
-    genRestResponse(restOperation, code, message) {
-        restOperation.setStatusCode(code);
-        restOperation.setBody({
-            code,
-            message
-        });
-        this.completeRestOperation(restOperation);
-        return Promise.resolve();
+    onStartCompleted(success, error, _loadedState, errMsg) {
+        if (typeof errMsg === 'string' && errMsg !== '') {
+            this.logger.error(`TemplateWorker onStart error: ${errMsg}`);
+            return error();
+        }
+
+        return this.generateTeemReportOnStart()
+            .then(() => success())
+            .catch((e) => {
+                this.logger.error(`TemplateWorker onStartCompleted error: ${e.stack}`);
+                return error();
+            });
     }
 
-    getInfo(restOperation) {
+    /**
+     * TEEM Report Generators
+     */
+    sendTeemReport(reportName, reportVersion, data) {
+        return this.teemDevice.report(`${projectName}: ${reportName}`, `${reportVersion}`, {}, data)
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportOnStart() {
+        return this.gatherInfo()
+            .then(info => this.sendTeemReport('onStart', 1, info))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportApplication(action, templateName) {
+        const report = {
+            action,
+            templateName
+        };
+        return Promise.resolve()
+            .then(() => this.sendTeemReport('Application Management', 1, report))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportTemplateSet(action, templateSetName) {
+        const report = {
+            action,
+            templateSetName
+        };
+        return Promise.resolve()
+            .then(() => {
+                if (action === 'create') {
+                    return Promise.all([
+                        this.templateProvider.getNumTemplateSourceTypes(templateSetName),
+                        this.templateProvider.getNumSchema(templateSetName)
+                    ])
+                        .then(([numTemplateTypes, numSchema]) => {
+                            report.numTemplateTypes = numTemplateTypes;
+                            report.numSchema = numSchema;
+                        });
+                }
+                return Promise.resolve();
+            })
+            .then(() => this.sendTeemReport('Template Set Management', 1, report))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportError(restOp) {
+        const uri = restOp.getUri();
+        const pathElements = uri.path.split('/');
+        const endpoint = pathElements.slice(0, 4).join('/');
+        const report = {
+            method: restOp.getMethod(),
+            endpoint,
+            code: restOp.getStatusCode()
+        };
+        return Promise.resolve()
+            .then(() => this.sendTeemReport('Error', 1, report))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    /**
+     * Helper functions
+     */
+    gatherInfo() {
         const info = {
             version: pkg.version,
             as3Info: {},
@@ -139,6 +209,28 @@ class TemplateWorker {
                     info.as3Info = as3response.body;
                 }
                 info.installedTemplates = tmplList;
+                return info;
+            });
+    }
+
+    /**
+     * HTTP/REST handlers
+     */
+    genRestResponse(restOperation, code, message) {
+        restOperation.setStatusCode(code);
+        restOperation.setBody({
+            code,
+            message
+        });
+        this.completeRestOperation(restOperation);
+        return Promise.resolve()
+            .then(() => this.generateTeemReportError(restOperation));
+    }
+
+    getInfo(restOperation) {
+        return Promise.resolve()
+            .then(() => this.gatherInfo())
+            .then((info) => {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation);
             })
@@ -285,6 +377,7 @@ class TemplateWorker {
                     parameters: tmplView
                 });
             })
+            .then(() => this.generateTeemReportApplication('modify', tmplid))
             .catch((e) => {
                 if (restOperation.status !== 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
@@ -324,6 +417,7 @@ class TemplateWorker {
             .then(() => this._validateTemplateSet(scratchPath))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
+            .then(() => this.generateTeemReportTemplateSet('create', tsid))
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, ''))
@@ -367,6 +461,7 @@ class TemplateWorker {
                 restOperation.setBody(result);
                 this.completeRestOperation(restOperation);
             })
+            .then(() => this.generateTeemReportApplication('delete', ''))
             .catch(e => this.genRestResponse(restOperation, 404, e.stack));
     }
 
@@ -376,6 +471,7 @@ class TemplateWorker {
         }
 
         return this.templateProvider.removeSet(tsid)
+            .then(() => this.generateTeemReportTemplateSet('delete', tsid))
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
