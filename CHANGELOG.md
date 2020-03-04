@@ -3,6 +3,10 @@
 * Persist template sets to data groups
 * Fix deleting template sets
 * Fix running on BIG-IP 13.1
+* Add initial TEEM integration
+
+## CLI
+* Print stack traces on errors
 
 ## GUI
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
