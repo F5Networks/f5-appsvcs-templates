@@ -367,15 +367,25 @@ route('api', 'api', () => {
 route('templates', 'templates', () => {
     console.log('Fetching Template Table Data.');
     const templateDiv = document.getElementById('template-list');
-    Promise.all([getJSON('applications'),
-        getJSON('templates')])
-        .then((data) => {
+    Promise.all([
+        getJSON('applications'),
+        getJSON('templates')
+    ])
+        .then(([applications, templates]) => {
             templateDiv.innerHTML = `<div class="appListRow">
               <div class="appListTitle">Templates</div>
               <div class="appListTitle">Applications</div>
+              <div class="appListTitle">Actions</div>
             </div>`;
-            const applications = data[0];
-            const templates = data[1];
+
+            const setMap = templates.reduce((acc, curr) => {
+                const [setName, templateName] = curr.split('/');
+                if (!acc[setName]) {
+                    acc[setName] = [];
+                }
+                acc[setName].push(templateName);
+                return acc;
+            }, {});
 
             // build dictionary of app lists, keyed by template
             const appDict = applications.reduce((a, c) => {
@@ -387,8 +397,12 @@ route('templates', 'templates', () => {
                 }
                 return a;
             }, {});
+
             let count = 0;
-            templates.forEach((tname) => {
+            const createRow = (rowName, rowList, actionsList) => {
+                rowList = rowList || [];
+                actionsList = actionsList || [];
+
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
                 if (++count%2) {
@@ -396,24 +410,47 @@ route('templates', 'templates', () => {
                 }
 
                 const name = document.createElement('div');
-                name.innerText = tname;
+                name.innerHTML = rowName;
                 name.classList.add('appListTitle');
                 row.appendChild(name);
 
                 const applist = document.createElement('div');
                 applist.classList.add('appListTitle');
-                if (appDict[tname]) {
-                    appDict[tname].forEach((app) => {
-                        const appDiv = document.createElement('div');
-                        appDiv.innerText = `${app.tenant} ${app.name}`;
-                        applist.appendChild(appDiv);
-                    });
-                }
+                rowList.forEach((item) => {
+                    const appDiv = document.createElement('div');
+                    appDiv.innerText = item;
+                    applist.appendChild(appDiv);
+                });
                 row.appendChild(applist);
+
+                const actions = document.createElement('div');
+                actions.classList.add('appListTitle');
+                Object.entries(actionsList).forEach(([actName, actFn]) => {
+                    const actBtn = document.createElement('a');
+                    actBtn.classList.add('btn');
+                    actBtn.innerText = actName;
+                    actBtn.onclick = actFn;
+                    actions.appendChild(actBtn);
+                });
+                row.appendChild(actions);
 
                 templateDiv.appendChild(document.createElement('hr'));
                 templateDiv.appendChild(row);
+            };
+            Object.keys(setMap).forEach((setName) => {
+                createRow(setName, [], {
+                    Remove: () => {
+                        console.log(`Deleting ${setName}`);
+                        return fetch(`${endPointUrl}/templatesets/${setName}`, {
+                            method: 'DELETE'
+                        })
+                            .then(() => location.reload());
+                    }
+                });
+                setMap[setName].forEach((templateName) => {
+                    const appList = appDict[`${setName}/${templateName}`] || [];
+                    createRow(`&nbsp;&nbsp;&nbsp;&nbsp;/${templateName}`, appList.map(app => `${app.tenant} ${app.name}`));
+                });
             });
-            templateDiv.appendChild(document.createElement('hr'));
         });
 });
