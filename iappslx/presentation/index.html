@@ -43,8 +43,19 @@
         </template>
 
         <template id="page-templates">
-          <div id="template-list" class="appList">
-            <center><pre>...Loading Template List...</pre></center></div>
+            <button type="button" class="btn" id="add-ts-btn">Add Set</button>
+            <input type="file" id="ts-file-input" style="display:none" accept=".zip">
+            <div id="template-list" class="appList">
+                <div class="appListRow">
+                    <div class="appListTitle">Templates</div>
+                    <div class="appListTitle">Applications</div>
+                    <div class="appListTitle">Actions</div>
+                </div>
+            </div>
+            <div>
+                <p>Output:</p>
+                <pre id="output"></pre>
+            </div>
         </template>
 
         <template id="page-tasks">

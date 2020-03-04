@@ -27,6 +27,42 @@ const dispOutput = (output) => {
     }
 };
 
+const multipartUpload = (file) => {
+    const CHUNK_SIZE = 1000000;
+    const uploadPart = (start, end) => {
+        const opts = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/octet-stream',
+                'Content-Range': `${start}-${end}/${file.size}`,
+                'Content-Length': (end - start) + 1,
+                'Connection': 'keep-alive'
+            },
+            body: file.slice(start, end + 1, 'application/octet-stream')
+        };
+        return fetch(`/mgmt/shared/file-transfer/uploads/${file.name}`, opts)
+            .then((response) => {
+                if (!response.ok) {
+                    return Promise.reject(new Error(`Failed to upload file: ${JSON.stringify(response)}`));
+                }
+                return Promise.resolve();
+            })
+            .then(() => {
+                if (end === file.size - 1) {
+                    return Promise.resolve();
+                }
+                const nextStart = start + CHUNK_SIZE;
+                const nextEnd = (end + CHUNK_SIZE > file.size - 1) ? file.size - 1 : end + CHUNK_SIZE;
+                return uploadPart(nextStart, nextEnd);
+            });
+    };
+
+    if (CHUNK_SIZE < file.size) {
+        return uploadPart(0, CHUNK_SIZE-1);
+    }
+    return uploadPart(0, file.size-1);
+};
+
 
 const newEditor = (tmplid, view) => {
     const formElement = document.getElementById('form-div');
@@ -365,19 +401,44 @@ route('api', 'api', () => {
 });
 
 route('templates', 'templates', () => {
-    console.log('Fetching Template Table Data.');
+    outputElem = document.getElementById('output');
+    dispOutput('...Loading Template List...');
     const templateDiv = document.getElementById('template-list');
+
+    document.getElementById('add-ts-btn').onclick = () => {
+        document.getElementById('ts-file-input').click();
+    };
+    document.getElementById('ts-file-input').onchange = (input) => {
+        const file = document.getElementById('ts-file-input').files[0]
+        const tsName = file.name.slice(0, -4);
+        dispOutput(`Uploading file: ${file.name}`);
+        multipartUpload(file)
+            .then(() => dispOutput(`Installing template set ${tsName}`))
+            .then(() => fetch('/mgmt/shared/fast/templatesets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: file.name.slice(0, -4)
+                })
+            }))
+            .then((response) => {
+                if (!response.ok) {
+                    return Promise.reject(new Error(`Failed to install ${tsName}: ${JSON.stringify(response)}`));
+                }
+                return Promise.resolve();
+            })
+            .then(() => dispOutput(`${tsName} installed successfully`))
+            .then(() => location.reload())
+            .catch(e => dispOutput(`Failed to install template set: ${e.stack}`));
+    };
+
     Promise.all([
         getJSON('applications'),
         getJSON('templates')
     ])
         .then(([applications, templates]) => {
-            templateDiv.innerHTML = `<div class="appListRow">
-              <div class="appListTitle">Templates</div>
-              <div class="appListTitle">Applications</div>
-              <div class="appListTitle">Actions</div>
-            </div>`;
-
             const setMap = templates.reduce((acc, curr) => {
                 const [setName, templateName] = curr.split('/');
                 if (!acc[setName]) {
@@ -440,7 +501,7 @@ route('templates', 'templates', () => {
             Object.keys(setMap).forEach((setName) => {
                 createRow(setName, [], {
                     Remove: () => {
-                        console.log(`Deleting ${setName}`);
+                        dispOutput(`Deleting ${setName}`);
                         return fetch(`${endPointUrl}/templatesets/${setName}`, {
                             method: 'DELETE'
                         })
@@ -452,5 +513,6 @@ route('templates', 'templates', () => {
                     createRow(`&nbsp;&nbsp;&nbsp;&nbsp;/${templateName}`, appList.map(app => `${app.tenant} ${app.name}`));
                 });
             });
-        });
+        })
+        .then(() => dispOutput(''));
 });

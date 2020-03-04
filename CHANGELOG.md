@@ -7,6 +7,7 @@
 ## GUI
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
 * Auto-refresh the Deploy Log when there is an "in progress" task
+* Add buttons to add and remove template sets
 
 # 0.2
 ## Core
