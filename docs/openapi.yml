@@ -345,7 +345,10 @@ paths:
        - FAST Extension
       responses:
         '200':
-          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Info"
         '500': *serverError
         default: *defaultResponse
 components:
@@ -451,3 +454,15 @@ components:
           format: int32
         message:
           type: string
+    Info:
+      type: object
+      properties:
+        version:
+          type: string
+          description: the version string for FAST
+        as3Info:
+          type: object
+          description: data from AS3's /info endpoint
+        installedTemplates:
+          type: object
+          description: keys are template names and values are the template hashes
