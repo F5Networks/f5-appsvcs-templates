@@ -223,8 +223,10 @@ class TemplateWorker {
             message
         });
         this.completeRestOperation(restOperation);
-        return Promise.resolve()
-            .then(() => this.generateTeemReportError(restOperation));
+        if (code >= 400) {
+            return this.generateTeemReportError(restOperation);
+        }
+        return Promise.resolve();
     }
 
     getInfo(restOperation) {
