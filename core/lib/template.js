@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 const Ajv = require('ajv');
 const Mustache = require('mustache');
 const yaml = require('js-yaml');
@@ -59,6 +61,8 @@ class Template {
         this.templateText = '';
         this.defaultView = {};
         this.sourceType = 'UNKNOWN';
+        this.sourceText = '';
+        this.sourceHash = '';
     }
 
     _loadTypeSchemas(schemaProvider) {
@@ -314,10 +318,19 @@ class Template {
         }
     }
 
+    _recordSource(sourceType, sourceText) {
+        const hash = crypto.createHash('sha256');
+        hash.update(sourceText);
+
+        this.sourceType = sourceType;
+        this.sourceText = sourceText;
+        this.sourceHash = hash.digest('hex');
+    }
+
     static loadMst(msttext, schemaProvider) {
         this.validate(msttext);
         const tmpl = new this();
-        tmpl.sourceType = 'MST';
+        tmpl._recordSource('MST', msttext);
         tmpl.templateText = msttext;
         return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
@@ -332,7 +345,7 @@ class Template {
         this.validate(yamltext);
         const tmpl = new this();
         const yamldata = yaml.safeLoad(yamltext);
-        tmpl.sourceType = 'YAML';
+        tmpl._recordSource('YAML', yamltext);
         tmpl.templateText = yamldata.template;
 
         if (yamldata.title) tmpl.title = yamldata.title;
