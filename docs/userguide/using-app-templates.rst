@@ -9,9 +9,8 @@ using loaded templates.
 FAST Menu Tabs
 --------------
 
-When using FAST, the Applications tab is selected, but if you have never used FAST before
-the application list will likely be empty. See the :ref:`deploytab<Deploy section>` on how to
-deploy a new application.
+When using FAST, the Applications List tab is selected. If you have never used FAST before
+the application list will likely be empty. See the :ref:`deploytab<Deploy section>` on deploying a new application.
 
 You see the following tabs in the FAST interface:
 
@@ -37,7 +36,7 @@ You see the following tabs in the FAST interface:
         - This is where you create a new application. Use this tab to choose a template and provide parameters to submit a new application to AS3.
 
       * - :ref:`templatetab`
-        - This table has a list of installed templates, with any applications that use them.
+        - This table has a list of installed templates, with any applications using them.
 
       * - :ref:`deploylogtab`
         - The deploy log is a summary of AS3's async task results.
@@ -69,7 +68,7 @@ On this tab, there are two buttons for each application: **Modify** and **Delete
 
 
 
-* Clicking **Modify** loads the application template form with the values used to last deploy it. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Submit** to redeploy the application.
+* Clicking **Modify** loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Submit** to redeploy the application.
 
 .. .. image:: delete-result.png
 ..   :width: 300
@@ -108,10 +107,10 @@ At the bottom of the template, you see the following options for what to do once
         - Summary
 
       * - Submit
-        - Submit this application to AS3 for deployment
+        - Submit this application to AS3 for deployment.
 
       * - Render
-        - See a sample of the rendered output of this template
+        - See a sample of the rendered output of this template.
 
       * - Schema
         - View the JSON schema of this template parameters.
@@ -127,7 +126,7 @@ the declaration for deployment.
   :alt: The result of a deployed application
 
 
-After a successful deployment, you can navigate back to the Applications tab and see the application
+After a successful deployment, you can navigate back to the Applications tab to see the application
 in the list view.
 
 .. .. image:: deployed-application-list-view.png
@@ -149,10 +148,10 @@ Templates
   :alt: The application list
 
 
-The Templates tab shows a list of installed template packages and the templates in each,
+The Templates tab shows a list of installed template packages, the templates in each,
 and which applications are deployed using them.
 
-FAST comes pre-installed with base template sets that satisfy common use cases.
+FAST comes pre-installed with base template sets satisfying common use cases.
 Included are templates to deploy virtual servers for basic HTTP and HTTPS applications, as well as simple TCP and UDP applications.
 
 New Templates
@@ -161,16 +160,17 @@ New Templates
 FAST can be extended beyond the included templates, new custom templates can be
 installed for any AS3 use case. Template
 sets are packaged into a single file that can be loaded into the system via
-the REST API (and will be available for install using the UI in an upcoming release).
+the REST API.
 
 .. .. image:: template-list.png
   :width: 300
   :alt: The application list
 
 
-Template sets may be provided by F5, sourced from the community, or may be custom written. For
-information on authoring template sets, understanding the template set format, and uploading templates, 
-see :ref:`authoring`.
+Template sets may be provided by F5, sourced from the community, or custom written. 
+Template sets can be added or removed via the user interface by clicking either the **Add Set** or **Remove** buttons. 
+
+For information on authoring template sets, understanding the template set format, and uploading templates, see :ref:`authoring`.
 
 |
 
