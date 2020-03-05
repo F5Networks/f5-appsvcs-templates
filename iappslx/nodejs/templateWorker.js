@@ -200,17 +200,25 @@ class TemplateWorker {
         };
 
         return Promise.resolve()
-            .then(() => Promise.all([
-                httpUtils.makeGet('/mgmt/shared/appsvcs/info'),
-                this.templateProvider.list()
-            ]))
-            .then(([as3response, tmplList]) => {
+            .then(() => httpUtils.makeGet('/mgmt/shared/appsvcs/info'))
+            .then((as3response) => {
                 if (as3response.status < 300) {
                     info.as3Info = as3response.body;
                 }
-                info.installedTemplates = tmplList;
-                return info;
-            });
+            })
+            .then(() => this.templateProvider.list())
+            .then(tmplList => Promise.all(tmplList.map(tmplName => Promise.all([
+                Promise.resolve(tmplName),
+                this.templateProvider.fetch(tmplName)
+            ]))))
+            .then((tmplList) => {
+                info.installedTemplates = tmplList.reduce((acc, curr) => {
+                    const [tmplName, tmplData] = curr;
+                    acc[tmplName] = tmplData.sourceHash;
+                    return acc;
+                }, {});
+            })
+            .then(() => info);
     }
 
     /**

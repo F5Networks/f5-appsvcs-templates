@@ -142,8 +142,12 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.status, 200);
                 console.log(JSON.stringify(info, null, 2));
                 assert.notEqual(info.installedTemplates, []);
-                assert(info.installedTemplates.includes('bigip-fast-templates/http'));
-                assert(info.installedTemplates.includes('examples/simple_udp'));
+                assert(Object.keys(info.installedTemplates).includes('bigip-fast-templates/http'));
+                assert(Object.keys(info.installedTemplates).includes('examples/simple_udp'));
+                assert.strictEqual(
+                    info.installedTemplates['examples/simple_udp'],
+                    'aa0e1ca8a7ea913c47c414f4a9f2c01e40302fff5dc13c157d088c4f5d9b7989'
+                );
             });
     });
     it('info_without_as3', function () {
@@ -159,8 +163,12 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.status, 200);
                 console.log(JSON.stringify(info, null, 2));
                 assert.notEqual(info.installedTemplates, []);
-                assert(info.installedTemplates.includes('bigip-fast-templates/http'));
-                assert(info.installedTemplates.includes('examples/simple_udp'));
+                assert(Object.keys(info.installedTemplates).includes('bigip-fast-templates/http'));
+                assert(Object.keys(info.installedTemplates).includes('examples/simple_udp'));
+                assert.strictEqual(
+                    info.installedTemplates['examples/simple_udp'],
+                    'aa0e1ca8a7ea913c47c414f4a9f2c01e40302fff5dc13c157d088c4f5d9b7989'
+                );
             });
     });
     it('get_bad_end_point', function () {

@@ -4,6 +4,7 @@
 * Fix deleting template sets
 * Fix running on BIG-IP 13.1
 * Add initial TEEM integration
+* Add template hashes to /info endpoint
 
 ## CLI
 * Print stack traces on errors
