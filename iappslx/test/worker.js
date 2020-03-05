@@ -58,8 +58,14 @@ class RestOp {
 
 const patchWorker = (worker) => {
     worker.prototype.logger = {
-        severe: console.error,
-        error: console.error,
+        severe: (str) => {
+            console.error(str);
+            assert(false);
+        },
+        error: (str) => {
+            console.error(str);
+            assert(false);
+        },
         info: console.log,
         fine: console.log,
         log: console.log
