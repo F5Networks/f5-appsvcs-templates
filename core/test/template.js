@@ -232,7 +232,7 @@ describe('Template class tests', function () {
                 const schema = tmpl.getViewSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
-                assert.strictEqual(schema.properties.foo.invertDependency, true);
+                assert.deepStrictEqual(schema.properties.foo.invertDependency, ['skip_foo']);
             });
     });
     it('render_type_defaults', function () {

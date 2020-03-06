@@ -211,7 +211,10 @@ class Template {
 
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
-                        dependencies[item] = [mstName];
+                        if (!dependencies[item]) {
+                            dependencies[item] = [];
+                        }
+                        dependencies[item].push(mstName);
                     });
                 }
                 this._mergeSchemaInto(acc, items);
@@ -226,8 +229,14 @@ class Template {
                 }
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
-                        dependencies[item] = [mstName];
-                        items.properties[item].invertDependency = true;
+                        if (!dependencies[item]) {
+                            dependencies[item] = [];
+                        }
+                        dependencies[item].push(mstName);
+                        if (!items.properties[item].invertDependency) {
+                            items.properties[item].invertDependency = [];
+                        }
+                        items.properties[item].invertDependency.push(mstName);
                     });
                 }
                 this._mergeSchemaInto(acc, items);
