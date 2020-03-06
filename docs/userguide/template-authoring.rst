@@ -59,8 +59,8 @@ entire feature set.
 
 
 
-    This is a basic template that creates an HTTP Virtual IP and allows you to specify
-    the Virtual IP and a list of server addresses, and a port to use for both the
+    This is a basic template that creates an HTTP Virtual IP allowing you to specify
+    the Virtual IP, a list of server addresses, and a port to use for both the
     front and back end. The tenant name and application name are also specified by the user.
 
 2. Save the file.
@@ -83,9 +83,9 @@ entire feature set.
 
 5. Using this file, the following command will show an example render: ``fast render hello.mst params.yml``
 
-6. To add this to the system, this template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
+6. To add this to the system, the template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
 
-7. Make note of the file location, and the size of the file (in bytes).  Note that it must be less than 1MB or the transfer fails.
+7. Make note of the file location, and the size of the file (in bytes).  Note it must be less than 1MB or the transfer fails.
 
 8. Upload the file to the BIG-IP system using cURL from a Linux shell using the following syntax:
    
@@ -122,13 +122,12 @@ entire feature set.
 
 |
 
-The template will validate and then be added to the system. When you navigating to the Deploy
+The template will validate and be added to the system. When navigating to the Deploy
 tab, the new template set should be available, with the Hello World template ready for use.
 
 The rest of this page explains more about what the templating system can do. By using
 JSON schema alongside the templates, FAST provides a powerful system for
-validating template parameters and ensuring that applications get deployed as
-expected.
+validating template parameters ensuring applications get deployed as expected.
 
 Template Specification
 ----------------------
@@ -142,7 +141,7 @@ Templates abide by the following rules:
 * Primitive Types
 
   * string (default)
-  * text (for strings with newlines and escape characters)
+  * text (for strings with new lines and escape characters)
   * number
   * integer
   * boolean
@@ -242,7 +241,7 @@ This example 'view' passes validation using the schema:
 
 |
 
-This information is collected in the form UI, and compiled into a parameter object
+This information is collected in the form UI and compiled into a parameter object
 like the example. The information is passed along to the template renderer,
 and the variable names are replaced with their parameter values.
 
@@ -335,10 +334,24 @@ The definition from f5.json:
 
 |
 
-Arrays of primitives should work fine, but has not been tested extensively.
+Arrays of primitives should work fine but have not been extensively tested.
 
-Objects are not supported yet.
+Objects are not yet supported.
 
+
+Adding New Template Sets
+------------------------
+
+FAST allows for the addition of pre-configured template sets. 
+From the Templates tab, click the **Add Set** button.  Navigate to the location of the template set, click **Open**.  The added templates will display in the template list.
+
+
+Removing Template Sets
+----------------------
+
+FAST allows for the removing of user added template sets.  From the Templates tab, under the Actions column, click the **Remove** button.
+
+.. NOTE:: Only user added template sets can be removed.
 
 .. |br| raw:: html
 
