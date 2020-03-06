@@ -10,8 +10,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
+const StorageMemory = require('atg-storage').StorageMemory;
 const { FsTemplateProvider, DataStoreTemplateProvider } = require('../lib/template_provider');
-const StorageMemory = require('../dataStores').StorageMemory;
 
 const templatesPath = './test/templatesets';
 
