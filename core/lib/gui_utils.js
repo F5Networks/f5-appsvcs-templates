@@ -19,14 +19,15 @@ const injectFormatsIntoSchema = (schema) => {
 const addDepsToSchema = (schema) => {
     if (schema.dependencies) {
         Object.keys(schema.dependencies).forEach((key) => {
-            const dependsOn = schema.dependencies[key][0];
+            const depsOpt = schema.dependencies[key].reduce((acc, curr) => {
+                acc[curr] = !(
+                    schema.properties[key].invertDependency
+                    && schema.properties[key].invertDependency.includes(curr)
+                );
+                return acc;
+            }, {});
             schema.properties[key].options = Object.assign({}, schema.properties[key].options, {
-                dependencies: {
-                    [dependsOn]: !(
-                        schema.properties[key].invertDependency
-                        && schema.properties[key].invertDependency.includes(dependsOn)
-                    )
-                }
+                dependencies: depsOpt
             });
         });
     }
