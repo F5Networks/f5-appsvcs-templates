@@ -8,7 +8,8 @@
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
     "lint": "eslint nodejs test",
-    "buildgui": "cd presentation && npm ci && npm run build",
+    "buildapi": "cd presentation && js-yaml ../../docs/openapi.yml > openapi.json && browserify api.js -o api-bundle.js",
+    "buildgui": "npm run buildapi && cd presentation && browserify app.js -o bundle.js",
     "buildrpm": "../scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
     "coverage": "nyc npm test"
@@ -28,7 +29,9 @@
     "mocha": "^6.2.2",
     "mock-fs": "^4.10.4",
     "nock": "^11.7.2",
-    "nyc": "^14.1.1"
+    "browserify": "^16.5.0",
+    "nyc": "^14.1.1",
+    "swagger-ui": "^3.25.0"
   },
   "eslintConfig": {
     "extends": "@f5devcentral/eslint-config-f5-atg",
