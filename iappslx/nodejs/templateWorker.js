@@ -120,19 +120,16 @@ class TemplateWorker {
             return error();
         }
 
-        return this.generateTeemReportOnStart()
-            .then(() => success())
-            .catch((e) => {
-                this.logger.error(`TemplateWorker onStartCompleted error: ${e.stack}`);
-                return error();
-            });
+        this.generateTeemReportOnStart();
+        return success();
     }
 
     /**
      * TEEM Report Generators
      */
     sendTeemReport(reportName, reportVersion, data) {
-        return this.teemDevice.report(`${projectName}: ${reportName}`, `${reportVersion}`, {}, data)
+        const documentName = `${projectName}: ${reportName}`;
+        return this.teemDevice.report(documentName, `${reportVersion}`, {}, data)
             .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
     }
 
@@ -232,7 +229,7 @@ class TemplateWorker {
         });
         this.completeRestOperation(restOperation);
         if (code >= 400) {
-            return this.generateTeemReportError(restOperation);
+            this.generateTeemReportError(restOperation);
         }
         return Promise.resolve();
     }
@@ -387,7 +384,9 @@ class TemplateWorker {
                     parameters: tmplView
                 });
             })
-            .then(() => this.generateTeemReportApplication('modify', tmplid))
+            .then(() => {
+                this.generateTeemReportApplication('modify', tmplid);
+            })
             .catch((e) => {
                 if (restOperation.status !== 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
@@ -427,7 +426,9 @@ class TemplateWorker {
             .then(() => this._validateTemplateSet(scratchPath))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
-            .then(() => this.generateTeemReportTemplateSet('create', tsid))
+            .then(() => {
+                this.generateTeemReportTemplateSet('create', tsid);
+            })
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, ''))
@@ -471,7 +472,9 @@ class TemplateWorker {
                 restOperation.setBody(result);
                 this.completeRestOperation(restOperation);
             })
-            .then(() => this.generateTeemReportApplication('delete', ''))
+            .then(() => {
+                this.generateTeemReportApplication('delete', '');
+            })
             .catch(e => this.genRestResponse(restOperation, 404, e.stack));
     }
 
@@ -481,7 +484,9 @@ class TemplateWorker {
         }
 
         return this.templateProvider.removeSet(tsid)
-            .then(() => this.generateTeemReportTemplateSet('delete', tsid))
+            .then(() => {
+                this.generateTeemReportTemplateSet('delete', tsid);
+            })
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
