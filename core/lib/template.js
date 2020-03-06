@@ -89,7 +89,7 @@ class Template {
         }
     }
 
-    _mergeSchemaInto(dst, src) {
+    _mergeSchemaInto(dst, src, dstDeps) {
         if (!src.properties) {
             // Nothing to merge
             return;
@@ -109,8 +109,17 @@ class Template {
             return filtered;
         }, {});
 
-        // Merge
+        // Merge properties
         Object.assign(dst.properties, src.properties);
+
+        // Merge dependencies
+        Object.keys(src.dependencies || []).forEach((dep) => {
+            if (typeof dstDeps[dep] === 'undefined') {
+                dstDeps[dep] = src.dependencies[dep];
+            } else {
+                dstDeps[dep] = dstDeps[dep].concat(src.dependencies[dep]);
+            }
+        });
     }
 
     _handleParsed(parsed, typeSchemas) {
@@ -168,7 +177,7 @@ class Template {
             }
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
-                this._mergeSchemaInto(acc, partial);
+                this._mergeSchemaInto(acc, partial, dependencies);
                 if (partial.required) {
                     partial.required.forEach(x => required.add(x));
                 }
@@ -217,11 +226,12 @@ class Template {
                         dependencies[item].push(mstName);
                     });
                 }
-                this._mergeSchemaInto(acc, items);
+                this._mergeSchemaInto(acc, items, dependencies);
                 break;
             }
             case '^': {
                 const items = this._handleParsed(curr[4], typeSchemas);
+
                 if (!acc.properties[mstName]) {
                     acc.properties[mstName] = {
                         type: 'boolean'
@@ -239,7 +249,7 @@ class Template {
                         items.properties[item].invertDependency.push(mstName);
                     });
                 }
-                this._mergeSchemaInto(acc, items);
+                this._mergeSchemaInto(acc, items, dependencies);
                 break;
             }
             case '!':

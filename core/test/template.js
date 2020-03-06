@@ -313,6 +313,28 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view).trim(), reference);
             });
     });
+    it('schema_nested_sections', function () {
+        const ymldata = `
+            definitions:
+                part:
+                    template: |
+                        {{^use_existing_a}}
+                            {{^make_new_b}}
+                                {{value}}
+                            {{/make_new_b}}
+                        {{/use_existing_a}}
+            template: |
+                {{> part}}
+        `;
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                assert.ok(tmpl);
+
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
+                assert.deepStrictEqual(schema.dependencies.value, ['use_existing_a', 'make_new_b']);
+            });
+    });
     it('schema_clean_deps', function () {
         const mstdata = `
             {{app_name}}
