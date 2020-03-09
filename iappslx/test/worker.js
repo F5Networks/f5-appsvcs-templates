@@ -152,6 +152,18 @@ describe('template worker tests', function () {
                 const tsNames = info.installedTemplates.map(x => x.name);
                 assert(tsNames.includes('bigip-fast-templates'));
                 assert(tsNames.includes('examples'));
+
+                const exampleTS = info.installedTemplates.filter(
+                    x => x.name === 'examples'
+                )[0];
+                assert(exampleTS.supported, `${exampleTS.name} has an unsupported hash: ${exampleTS.hash}`);
+                assert(!exampleTS.updateAvailable, `${exampleTS.name} should not have an update available`);
+
+                const bigipTS = info.installedTemplates.filter(
+                    x => x.name === 'bigip-fast-templates'
+                )[0];
+                assert(bigipTS.supported, `${bigipTS.name} has an unsupported hash: ${bigipTS.hash}`);
+                assert(!bigipTS.updateAvailable, `${bigipTS.name} should not have an update available`);
             });
     });
     it('info_without_as3', function () {

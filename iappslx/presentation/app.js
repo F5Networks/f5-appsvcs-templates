@@ -117,6 +117,9 @@ const newEditor = (tmplid, view) => {
             document.getElementById('view-schema-btn').onclick = () => {
                 dispOutput(JSON.stringify(schema, null, 2));
             };
+            document.getElementById('view-view-btn').onclick = () => {
+                dispOutput(JSON.stringify(tmpl.getCombinedView(editor.getValue()), null, 2));
+            };
             document.getElementById('view-render-btn').onclick = () => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
             };

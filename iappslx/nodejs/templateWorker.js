@@ -29,6 +29,16 @@ const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
+// Known good hashes for template sets. Always keep the latest at index 0!
+const supportedHashes = {
+    'bigip-fast-templates': [
+        'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
+    ],
+    examples: [
+        '0a0ca43ef9dbaf5f635b5c3db040792d15ba4116df1b90709d903f0e33ac501e'
+    ]
+};
+
 class TemplateWorker {
     constructor() {
         this.state = {};
@@ -210,12 +220,24 @@ class TemplateWorker {
                     return Promise.reject(new Error(`No templates found for template set ${tsid}`));
                 }
                 const tsHash = crypto.createHash('sha256');
-                Object.values(templates).forEach((tmpl) => {
-                    tsHash.update(tmpl.sourceHash);
+                const tmplHashes = Object.values(templates).map(x => x.sourceHash).sort();
+                tmplHashes.forEach((hash) => {
+                    tsHash.update(hash);
                 });
+                const tsHashDigest = tsHash.digest('hex');
+                const supported = (
+                    Object.keys(supportedHashes).includes(tsid)
+                    && supportedHashes[tsid].includes(tsHashDigest)
+                );
+                const updateAvailable = (
+                    !supported
+                    || supportedHashes[tsid].indexOf(tsHashDigest) !== 0
+                );
                 return Promise.resolve({
                     name: tsid,
-                    hash: tsHash.digest('hex'),
+                    hash: tsHashDigest,
+                    supported,
+                    updateAvailable,
                     templates: Object.keys(templates).reduce((acc, curr) => {
                         const tmpl = templates[curr];
                         acc.push({
