@@ -63,8 +63,10 @@ class FsTemplateProvider {
         });
     }
 
-    list() {
+    list(setList) {
+        setList = setList || [];
         return this.listSets()
+            .then(sets => sets.filter(x => setList.length === 0 || setList.includes(x)))
             .then(sets => Promise.all(sets.map(setName => new Promise((resolve, reject) => {
                 fs.readdir(path.join(this.config_template_path, setName), (err, files) => {
                     if (err) return reject(err);
@@ -88,10 +90,8 @@ class FsTemplateProvider {
 
     getNumTemplateSourceTypes(filteredSetName) {
         const sourceTypes = {};
-        return this.list()
-            .then(tmplList => tmplList.filter(
-                x => !filteredSetName || x.split('/')[0] === filteredSetName
-            ))
+        const filteredSetList = (filteredSetName && [filteredSetName]) || [];
+        return this.list(filteredSetList)
             .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
             .then(tmplList => tmplList.forEach((tmpl) => {
                 if (!sourceTypes[tmpl.sourceType]) {
@@ -174,8 +174,10 @@ class DataStoreTemplateProvider {
             });
     }
 
-    list() {
+    list(setList) {
+        setList = setList || [];
         return this.listSets()
+            .then(sets => sets.filter(x => setList.length === 0 || setList.includes(x)))
             .then(templateSets => Promise.all(templateSets.map(x => this.storage.getItem(x))))
             .then((templateSets) => {
                 let templates = [];
@@ -205,10 +207,8 @@ class DataStoreTemplateProvider {
 
     getNumTemplateSourceTypes(filteredSetName) {
         const sourceTypes = {};
-        return this.list()
-            .then(tmplList => tmplList.filter(
-                x => !filteredSetName || x.split('/')[0] === filteredSetName
-            ))
+        const filteredSetList = (filteredSetName && [filteredSetName]) || [];
+        return this.list(filteredSetList)
             .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
             .then(tmplList => tmplList.forEach((tmpl) => {
                 if (!sourceTypes[tmpl.sourceType]) {

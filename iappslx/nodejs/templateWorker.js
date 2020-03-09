@@ -313,13 +313,12 @@ class TemplateWorker {
 
     getTemplateSets(restOperation, tsid) {
         if (tsid) {
-            return this.templateProvider.list()
+            return this.templateProvider.list([tsid])
                 .then((templates) => {
-                    const filteredList = templates.filter(x => x.startsWith(`${tsid}/`));
-                    if (filteredList.length === 0) {
+                    if (templates.length === 0) {
                         return this.genRestResponse(restOperation, 404, `No templates found for template set ${tsid}`);
                     }
-                    restOperation.setBody(filteredList);
+                    restOperation.setBody(templates);
                     this.completeRestOperation(restOperation);
                     return Promise.resolve();
                 })
