@@ -256,6 +256,11 @@ paths:
       responses:
         '200':
           description: a list of installed template sets
+          content:
+            application/jason:
+              type: array
+              items:
+                $ref: "#/components/schemas/TemplateSet"
         '500': *serverError
         default: *defaultResponse
     post:

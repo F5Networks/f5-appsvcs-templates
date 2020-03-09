@@ -381,6 +381,7 @@ class TemplateWorker {
         }
 
         return this.templateProvider.listSets()
+            .then(setList => Promise.all(setList.map(x => this.gatherTemplateSet(x))))
             .then((setList) => {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation);
