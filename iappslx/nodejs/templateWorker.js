@@ -3,6 +3,7 @@
 require('core-js');
 
 const fs = require('fs-extra');
+const crypto = require('crypto');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
@@ -189,6 +190,44 @@ class TemplateWorker {
     /**
      * Helper functions
      */
+    gatherTemplates(setList) {
+        return this.templateProvider.list(setList)
+            .then(tmplList => Promise.all(tmplList.map(tmplName => Promise.all([
+                Promise.resolve(tmplName),
+                this.templateProvider.fetch(tmplName)
+            ]))))
+            .then(tmplList => tmplList.reduce((acc, curr) => {
+                const [tmplName, tmplData] = curr;
+                acc[tmplName] = tmplData;
+                return acc;
+            }, {}));
+    }
+
+    gatherTemplateSet(tsid) {
+        return this.gatherTemplates(tsid)
+            .then((templates) => {
+                if (Object.keys(templates).length === 0) {
+                    return Promise.reject(new Error(`No templates found for template set ${tsid}`));
+                }
+                const tsHash = crypto.createHash('sha256');
+                Object.values(templates).forEach((tmpl) => {
+                    tsHash.update(tmpl.sourceHash);
+                });
+                return Promise.resolve({
+                    name: tsid,
+                    hash: tsHash.digest('hex'),
+                    templates: Object.keys(templates).reduce((acc, curr) => {
+                        const tmpl = templates[curr];
+                        acc.push({
+                            name: curr,
+                            hash: tmpl.sourceHash
+                        });
+                        return acc;
+                    }, [])
+                });
+            });
+    }
+
     gatherInfo() {
         const info = {
             version: pkg.version,
@@ -203,17 +242,10 @@ class TemplateWorker {
                     info.as3Info = as3response.body;
                 }
             })
-            .then(() => this.templateProvider.list())
-            .then(tmplList => Promise.all(tmplList.map(tmplName => Promise.all([
-                Promise.resolve(tmplName),
-                this.templateProvider.fetch(tmplName)
-            ]))))
-            .then((tmplList) => {
-                info.installedTemplates = tmplList.reduce((acc, curr) => {
-                    const [tmplName, tmplData] = curr;
-                    acc[tmplName] = tmplData.sourceHash;
-                    return acc;
-                }, {});
+            .then(() => this.templateProvider.listSets())
+            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName))))
+            .then((tmplSets) => {
+                info.installedTemplates = tmplSets;
             })
             .then(() => info);
     }
@@ -241,7 +273,7 @@ class TemplateWorker {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation);
             })
-            .catch(e => this.genRestResponse(500, e.stack));
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     getTemplates(restOperation, tmplid) {
@@ -313,16 +345,17 @@ class TemplateWorker {
 
     getTemplateSets(restOperation, tsid) {
         if (tsid) {
-            return this.templateProvider.list([tsid])
-                .then((templates) => {
-                    if (templates.length === 0) {
-                        return this.genRestResponse(restOperation, 404, `No templates found for template set ${tsid}`);
-                    }
-                    restOperation.setBody(templates);
+            return this.gatherTemplateSet(tsid)
+                .then((tmplSet) => {
+                    restOperation.setBody(tmplSet);
                     this.completeRestOperation(restOperation);
-                    return Promise.resolve();
                 })
-                .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+                .catch((e) => {
+                    if (e.message.match(/No templates found/)) {
+                        return this.genRestResponse(restOperation, 404, e.message);
+                    }
+                    return this.genRestResponse(restOperation, 500, e.stack);
+                });
         }
 
         return this.templateProvider.listSets()

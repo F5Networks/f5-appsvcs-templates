@@ -309,10 +309,14 @@ paths:
     get:
       tags:
         - Template Management
-      summary: Get a list of templates that belong to {setName}
+      summary: Get information of template set with {setName}
       responses:
         '200':
-          description: a list of template names
+          description: A template set object
+          content:
+            application/json:
+                schema:
+                    $ref: "#/components/schemas/TemplateSet"
         '500': *serverError
         default: *defaultResponse
     delete:
@@ -443,6 +447,27 @@ components:
       example:
         - name: example/httpTemplate
         - name: example/httpsTemplate
+    TemplateSet:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the template set
+        hash:
+          type: string
+          description: A sha256 hash of the template hashes
+        templates:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: name of the template
+              hash:
+                type: string
+                description: sha256 of the template source text
+
     Error:
       type: object
       required:
@@ -464,5 +489,7 @@ components:
           type: object
           description: data from AS3's /info endpoint
         installedTemplates:
-          type: object
-          description: keys are template names and values are the template hashes
+          type: array
+          description: list of TemplateSets
+          items:
+            $ref: "#/components/schemas/TemplateSet"

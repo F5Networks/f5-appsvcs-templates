@@ -148,12 +148,10 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.status, 200);
                 console.log(JSON.stringify(info, null, 2));
                 assert.notEqual(info.installedTemplates, []);
-                assert(Object.keys(info.installedTemplates).includes('bigip-fast-templates/http'));
-                assert(Object.keys(info.installedTemplates).includes('examples/simple_udp'));
-                assert.strictEqual(
-                    info.installedTemplates['examples/simple_udp'],
-                    'aa0e1ca8a7ea913c47c414f4a9f2c01e40302fff5dc13c157d088c4f5d9b7989'
-                );
+
+                const tsNames = info.installedTemplates.map(x => x.name);
+                assert(tsNames.includes('bigip-fast-templates'));
+                assert(tsNames.includes('examples'));
             });
     });
     it('info_without_as3', function () {
@@ -169,12 +167,10 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.status, 200);
                 console.log(JSON.stringify(info, null, 2));
                 assert.notEqual(info.installedTemplates, []);
-                assert(Object.keys(info.installedTemplates).includes('bigip-fast-templates/http'));
-                assert(Object.keys(info.installedTemplates).includes('examples/simple_udp'));
-                assert.strictEqual(
-                    info.installedTemplates['examples/simple_udp'],
-                    'aa0e1ca8a7ea913c47c414f4a9f2c01e40302fff5dc13c157d088c4f5d9b7989'
-                );
+
+                const tsNames = info.installedTemplates.map(x => x.name);
+                assert(tsNames.includes('bigip-fast-templates'));
+                assert(tsNames.includes('examples'));
             });
     });
     it('get_bad_end_point', function () {
@@ -399,7 +395,11 @@ describe('template worker tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert.notDeepEqual(op.body, {});
+
+                const ts = op.body;
+                assert.notDeepEqual(ts, {});
+                assert.strictEqual(ts.name, 'bigip-fast-templates');
+                assert.notDeepEqual(ts.templates, []);
             });
     });
     it('get_templatesets_bad', function () {
