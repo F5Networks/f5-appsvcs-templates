@@ -67,7 +67,12 @@ definitions:
              "servicePort": {{pool_port:f5:http_port}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
-          "monitors": [ "https" ]
+          {{#existing_monitor}}
+            "monitors": [ "{{monitor_name}}" ]
+          {{/existing_monitor}}
+          {{^existing_monitor}}
+            "monitors": [ "https" ]
+          {{/existing_monitor}}
         },
       {{/existing_pool}}
   app_tls_server_def:

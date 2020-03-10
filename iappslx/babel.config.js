@@ -3,7 +3,9 @@
 module.exports = {
     presets: [
         ['@babel/preset-env', {
-            targets: { node: '4.8.0' }
+            targets: { node: '4.8.0' },
+            useBuiltIns: 'entry',
+            corejs: 3
         }]
     ],
     ignore: [
@@ -11,7 +13,7 @@ module.exports = {
         '**/ajv/**',
         '**/mustache/**',
         '**/mkdirp/**',
-        '**/fs-extra/**',
+        '**/core-js/**',
         '**/bin/**'
     ]
 };

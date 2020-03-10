@@ -11,8 +11,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
+const StorageMemory = require('atg-storage').StorageMemory;
 const { FsSchemaProvider, DataStoreSchemaProvider } = require('../lib/schema_provider');
-const StorageMemory = require('../dataStores').StorageMemory;
 
 const schemasPath = './test/templatesets/test/';
 

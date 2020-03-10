@@ -10,8 +10,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
+const StorageMemory = require('atg-storage').StorageMemory;
 const { FsTemplateProvider, DataStoreTemplateProvider } = require('../lib/template_provider');
-const StorageMemory = require('../dataStores').StorageMemory;
 
 const templatesPath = './test/templatesets';
 
@@ -74,6 +74,19 @@ function runSharedTests(createProvider) {
         return assert.isFulfilled(provider.fetch('test/simple'))
             .then(() => assert.isFulfilled(provider.fetch('test/complex')))
             .then(() => assert.isFulfilled(provider.fetch('test/simple')));
+    });
+    it('list_tmpl_sources', function () {
+        const provider = createProvider();
+        return assert.becomes(provider.getNumTemplateSourceTypes('test'), {
+            MST: 1,
+            YAML: 2
+        })
+            .then(() => assert.becomes(provider.getNumTemplateSourceTypes(), {
+                MST: 1,
+                YAML: 2
+            }))
+            .then(() => assert.becomes(provider.getNumSchema('test'), 1))
+            .then(() => assert.becomes(provider.getNumSchema(), 1));
     });
 }
 

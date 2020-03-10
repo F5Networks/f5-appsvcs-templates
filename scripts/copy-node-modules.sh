@@ -29,7 +29,7 @@ if [[ $skip_babel == 1 ]]; then
 else
     prevpwd=$(pwd)
     pushd "${src}"
-    npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" --copy-files --copy-ignored
+    npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" --copy-files
     popd
 fi
 

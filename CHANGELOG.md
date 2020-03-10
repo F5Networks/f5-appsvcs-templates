@@ -2,9 +2,17 @@
 ## REST Worker
 * Persist template sets to data groups
 * Fix deleting template sets
+* Fix running on BIG-IP 13.1
+* Add initial TEEM integration
+* Add template hashes to /info endpoint
+
+## CLI
+* Print stack traces on errors
 
 ## GUI
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
+* Auto-refresh the Deploy Log when there is an "in progress" task
+* Add buttons to add and remove template sets
 
 # 0.2
 ## Core

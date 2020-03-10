@@ -1,11 +1,15 @@
 'use strict';
 
+require('core-js');
+
 const fs = require('fs-extra');
+const crypto = require('crypto');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
 
 const fast = require('@f5devcentral/fast');
+const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
@@ -25,6 +29,16 @@ const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
+// Known good hashes for template sets. Always keep the latest at index 0!
+const supportedHashes = {
+    'bigip-fast-templates': [
+        'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
+    ],
+    examples: [
+        'ecf1dce5b54ecab68567c4e26a7bbee777f8f6b2affd005d408f4699192ffb1b'
+    ]
+};
+
 class TemplateWorker {
     constructor() {
         this.state = {};
@@ -35,6 +49,10 @@ class TemplateWorker {
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
         this.storage = new StorageDataGroup(dataGroupPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage);
+        this.teemDevice = new TeemDevice({
+            name: projectName,
+            version: pkg.version
+        });
     }
 
     /**
@@ -107,6 +125,150 @@ class TemplateWorker {
             });
     }
 
+    onStartCompleted(success, error, _loadedState, errMsg) {
+        if (typeof errMsg === 'string' && errMsg !== '') {
+            this.logger.error(`TemplateWorker onStart error: ${errMsg}`);
+            return error();
+        }
+
+        this.generateTeemReportOnStart();
+        return success();
+    }
+
+    /**
+     * TEEM Report Generators
+     */
+    sendTeemReport(reportName, reportVersion, data) {
+        const documentName = `${projectName}: ${reportName}`;
+        return this.teemDevice.report(documentName, `${reportVersion}`, {}, data)
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportOnStart() {
+        return this.gatherInfo()
+            .then(info => this.sendTeemReport('onStart', 1, info))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportApplication(action, templateName) {
+        const report = {
+            action,
+            templateName
+        };
+        return Promise.resolve()
+            .then(() => this.sendTeemReport('Application Management', 1, report))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportTemplateSet(action, templateSetName) {
+        const report = {
+            action,
+            templateSetName
+        };
+        return Promise.resolve()
+            .then(() => {
+                if (action === 'create') {
+                    return Promise.all([
+                        this.templateProvider.getNumTemplateSourceTypes(templateSetName),
+                        this.templateProvider.getNumSchema(templateSetName)
+                    ])
+                        .then(([numTemplateTypes, numSchema]) => {
+                            report.numTemplateTypes = numTemplateTypes;
+                            report.numSchema = numSchema;
+                        });
+                }
+                return Promise.resolve();
+            })
+            .then(() => this.sendTeemReport('Template Set Management', 1, report))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    generateTeemReportError(restOp) {
+        const uri = restOp.getUri();
+        const pathElements = uri.path.split('/');
+        const endpoint = pathElements.slice(0, 4).join('/');
+        const report = {
+            method: restOp.getMethod(),
+            endpoint,
+            code: restOp.getStatusCode()
+        };
+        return Promise.resolve()
+            .then(() => this.sendTeemReport('Error', 1, report))
+            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+    }
+
+    /**
+     * Helper functions
+     */
+    gatherTemplates(setList) {
+        return this.templateProvider.list(setList)
+            .then(tmplList => Promise.all(tmplList.map(tmplName => Promise.all([
+                Promise.resolve(tmplName),
+                this.templateProvider.fetch(tmplName)
+            ]))))
+            .then(tmplList => tmplList.reduce((acc, curr) => {
+                const [tmplName, tmplData] = curr;
+                acc[tmplName] = tmplData;
+                return acc;
+            }, {}));
+    }
+
+    gatherTemplateSet(tsid) {
+        return this.gatherTemplates(tsid)
+            .then((templates) => {
+                if (Object.keys(templates).length === 0) {
+                    return Promise.reject(new Error(`No templates found for template set ${tsid}`));
+                }
+                const tsHash = crypto.createHash('sha256');
+                const tmplHashes = Object.values(templates).map(x => x.sourceHash).sort();
+                tmplHashes.forEach((hash) => {
+                    tsHash.update(hash);
+                });
+                const tsHashDigest = tsHash.digest('hex');
+                const supported = (
+                    Object.keys(supportedHashes).includes(tsid)
+                    && supportedHashes[tsid].includes(tsHashDigest)
+                );
+                const updateAvailable = fs.existsSync(`${templatesPath}/${tsid}`);
+                return Promise.resolve({
+                    name: tsid,
+                    hash: tsHashDigest,
+                    supported,
+                    updateAvailable,
+                    templates: Object.keys(templates).reduce((acc, curr) => {
+                        const tmpl = templates[curr];
+                        acc.push({
+                            name: curr,
+                            hash: tmpl.sourceHash
+                        });
+                        return acc;
+                    }, [])
+                });
+            });
+    }
+
+    gatherInfo() {
+        const info = {
+            version: pkg.version,
+            as3Info: {},
+            installedTemplates: []
+        };
+
+        return Promise.resolve()
+            .then(() => httpUtils.makeGet('/mgmt/shared/appsvcs/info'))
+            .then((as3response) => {
+                if (as3response.status < 300) {
+                    info.as3Info = as3response.body;
+                }
+            })
+            .then(() => this.templateProvider.listSets())
+            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName))))
+            .then((tmplSets) => {
+                info.installedTemplates = tmplSets;
+            })
+            .then(() => info);
+    }
+
     /**
      * HTTP/REST handlers
      */
@@ -117,30 +279,20 @@ class TemplateWorker {
             message
         });
         this.completeRestOperation(restOperation);
+        if (code >= 400) {
+            this.generateTeemReportError(restOperation);
+        }
         return Promise.resolve();
     }
 
     getInfo(restOperation) {
-        const info = {
-            version: pkg.version,
-            as3Info: {},
-            installedTemplates: []
-        };
-
         return Promise.resolve()
-            .then(() => Promise.all([
-                httpUtils.makeGet('/mgmt/shared/appsvcs/info'),
-                this.templateProvider.list()
-            ]))
-            .then(([as3response, tmplList]) => {
-                if (as3response.status < 300) {
-                    info.as3Info = as3response.body;
-                }
-                info.installedTemplates = tmplList;
+            .then(() => this.gatherInfo())
+            .then((info) => {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation);
             })
-            .catch(e => this.genRestResponse(500, e.stack));
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     getTemplates(restOperation, tmplid) {
@@ -212,20 +364,21 @@ class TemplateWorker {
 
     getTemplateSets(restOperation, tsid) {
         if (tsid) {
-            return this.templateProvider.list()
-                .then((templates) => {
-                    const filteredList = templates.filter(x => x.startsWith(`${tsid}/`));
-                    if (filteredList.length === 0) {
-                        return this.genRestResponse(restOperation, 404, `No templates found for template set ${tsid}`);
-                    }
-                    restOperation.setBody(filteredList);
+            return this.gatherTemplateSet(tsid)
+                .then((tmplSet) => {
+                    restOperation.setBody(tmplSet);
                     this.completeRestOperation(restOperation);
-                    return Promise.resolve();
                 })
-                .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+                .catch((e) => {
+                    if (e.message.match(/No templates found/)) {
+                        return this.genRestResponse(restOperation, 404, e.message);
+                    }
+                    return this.genRestResponse(restOperation, 500, e.stack);
+                });
         }
 
         return this.templateProvider.listSets()
+            .then(setList => Promise.all(setList.map(x => this.gatherTemplateSet(x))))
             .then((setList) => {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation);
@@ -283,6 +436,9 @@ class TemplateWorker {
                     parameters: tmplView
                 });
             })
+            .then(() => {
+                this.generateTeemReportApplication('modify', tmplid);
+            })
             .catch((e) => {
                 if (restOperation.status !== 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
@@ -305,7 +461,7 @@ class TemplateWorker {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
         }
 
-        if (!fs.existsSync(setpath)) {
+        if (!fs.existsSync(setpath) && !Object.keys(supportedHashes).includes(tsid)) {
             return this.genRestResponse(restOperation, 404, `${setpath} does not exist`);
         }
 
@@ -313,15 +469,25 @@ class TemplateWorker {
         fs.removeSync(scratch);
         fs.mkdirsSync(scratch);
 
-        return new Promise((resolve, reject) => {
-            extract(setpath, { dir: scratch }, (err) => {
-                if (err) return reject(err);
-                return resolve();
-            });
-        })
+        return Promise.resolve()
+            .then(() => {
+                if (Object.keys(supportedHashes).includes(tsid)) {
+                    return fs.copy(`${templatesPath}/${tsid}`, scratch);
+                }
+
+                return new Promise((resolve, reject) => {
+                    extract(setpath, { dir: scratch }, (err) => {
+                        if (err) return reject(err);
+                        return resolve();
+                    });
+                });
+            })
             .then(() => this._validateTemplateSet(scratchPath))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
+            .then(() => {
+                this.generateTeemReportTemplateSet('create', tsid);
+            })
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, ''))
@@ -365,6 +531,9 @@ class TemplateWorker {
                 restOperation.setBody(result);
                 this.completeRestOperation(restOperation);
             })
+            .then(() => {
+                this.generateTeemReportApplication('delete', '');
+            })
             .catch(e => this.genRestResponse(restOperation, 404, e.stack));
     }
 
@@ -374,6 +543,9 @@ class TemplateWorker {
         }
 
         return this.templateProvider.removeSet(tsid)
+            .then(() => {
+                this.generateTeemReportTemplateSet('delete', tsid);
+            })
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.genRestResponse(restOperation, 200, 'success'))

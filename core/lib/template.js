@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 const Ajv = require('ajv');
 const Mustache = require('mustache');
 const yaml = require('js-yaml');
@@ -58,6 +60,9 @@ class Template {
         this.target = 'as3';
         this.templateText = '';
         this.defaultView = {};
+        this.sourceType = 'UNKNOWN';
+        this.sourceText = '';
+        this.sourceHash = '';
     }
 
     _loadTypeSchemas(schemaProvider) {
@@ -84,7 +89,7 @@ class Template {
         }
     }
 
-    _mergeSchemaInto(dst, src) {
+    _mergeSchemaInto(dst, src, dstDeps) {
         if (!src.properties) {
             // Nothing to merge
             return;
@@ -104,8 +109,17 @@ class Template {
             return filtered;
         }, {});
 
-        // Merge
+        // Merge properties
         Object.assign(dst.properties, src.properties);
+
+        // Merge dependencies
+        Object.keys(src.dependencies || []).forEach((dep) => {
+            if (typeof dstDeps[dep] === 'undefined') {
+                dstDeps[dep] = src.dependencies[dep];
+            } else {
+                dstDeps[dep] = dstDeps[dep].concat(src.dependencies[dep]);
+            }
+        });
     }
 
     _handleParsed(parsed, typeSchemas) {
@@ -163,7 +177,7 @@ class Template {
             }
             case '>': {
                 const partial = this._handleParsed(Mustache.parse(this.definitions[mstName].template), typeSchemas);
-                this._mergeSchemaInto(acc, partial);
+                this._mergeSchemaInto(acc, partial, dependencies);
                 if (partial.required) {
                     partial.required.forEach(x => required.add(x));
                 }
@@ -206,14 +220,18 @@ class Template {
 
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
-                        dependencies[item] = [mstName];
+                        if (!dependencies[item]) {
+                            dependencies[item] = [];
+                        }
+                        dependencies[item].push(mstName);
                     });
                 }
-                this._mergeSchemaInto(acc, items);
+                this._mergeSchemaInto(acc, items, dependencies);
                 break;
             }
             case '^': {
                 const items = this._handleParsed(curr[4], typeSchemas);
+
                 if (!acc.properties[mstName]) {
                     acc.properties[mstName] = {
                         type: 'boolean'
@@ -221,11 +239,17 @@ class Template {
                 }
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
-                        dependencies[item] = [mstName];
-                        items.properties[item].invertDependency = true;
+                        if (!dependencies[item]) {
+                            dependencies[item] = [];
+                        }
+                        dependencies[item].push(mstName);
+                        if (!items.properties[item].invertDependency) {
+                            items.properties[item].invertDependency = [];
+                        }
+                        items.properties[item].invertDependency.push(mstName);
                     });
                 }
-                this._mergeSchemaInto(acc, items);
+                this._mergeSchemaInto(acc, items, dependencies);
                 break;
             }
             case '!':
@@ -313,9 +337,19 @@ class Template {
         }
     }
 
+    _recordSource(sourceType, sourceText) {
+        const hash = crypto.createHash('sha256');
+        hash.update(sourceText);
+
+        this.sourceType = sourceType;
+        this.sourceText = sourceText;
+        this.sourceHash = hash.digest('hex');
+    }
+
     static loadMst(msttext, schemaProvider) {
         this.validate(msttext);
         const tmpl = new this();
+        tmpl._recordSource('MST', msttext);
         tmpl.templateText = msttext;
         return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
@@ -330,6 +364,7 @@ class Template {
         this.validate(yamltext);
         const tmpl = new this();
         const yamldata = yaml.safeLoad(yamltext);
+        tmpl._recordSource('YAML', yamltext);
         tmpl.templateText = yamldata.template;
 
         if (yamldata.title) tmpl.title = yamldata.title;

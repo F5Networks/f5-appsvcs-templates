@@ -18,7 +18,7 @@ const loadTemplate = (templatePath) => {
     return provider.fetch(`${tsName}/${tmplName}`)
         .catch((e) => {
             console.error(Template.getValidationErrors());
-            console.error(`failed to load template: ${e.message}`);
+            console.error(`failed to load template: ${e.stack}`);
             process.exit(1);
         });
 };
@@ -49,7 +49,7 @@ const validateViewData = (tmpl, view) => {
         tmpl.validateView(view);
     } catch (e) {
         console.error('view failed validation:');
-        console.error(`${e.message}`);
+        console.error(`${e.stack}`);
         process.exit(1);
     }
 };
@@ -72,7 +72,7 @@ const validateTemplateSet = (tsPath) => {
     return provider.list()
         .then(templateList => Promise.all(templateList.map(tmpl => provider.fetch(tmpl))))
         .catch((e) => {
-            console.error(`Template set "${tsName}" failed validation:\n${e.message}`);
+            console.error(`Template set "${tsName}" failed validation:\n${e.stack}`);
             process.exit(1);
         });
 };

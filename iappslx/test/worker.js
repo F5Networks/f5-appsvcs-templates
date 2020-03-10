@@ -33,6 +33,10 @@ class RestOp {
         this.status = status;
     }
 
+    getStatusCode() {
+        return this.status;
+    }
+
     setBody(body) {
         this.body = body;
     }
@@ -46,11 +50,22 @@ class RestOp {
             path: `/a/b/${this.uri}`
         };
     }
+
+    getMethod() {
+        return '';
+    }
 }
 
 const patchWorker = (worker) => {
     worker.prototype.logger = {
-        severe: console.error,
+        severe: (str) => {
+            console.error(str);
+            assert(false);
+        },
+        error: (str) => {
+            console.error(str);
+            assert(false);
+        },
         info: console.log,
         fine: console.log,
         log: console.log
@@ -80,10 +95,23 @@ const patchWorker = (worker) => {
 
 let testStorage = null;
 
+class TeemDeviceMock {
+    report(reportName, reportVersion, declaration, extraFields) {
+        // console.error(`${reportName}: ${JSON.stringify(extraFields)}`);
+        return Promise.resolve()
+            .then(() => {
+                assert(reportName);
+                assert(declaration);
+                assert(extraFields);
+            });
+    }
+}
+
 function createTemplateWorker() {
     const tw = new TemplateWorker();
     tw.storage = testStorage;
     tw.templateProvider.storage = testStorage;
+    tw.teemDevice = new TeemDeviceMock();
     return tw;
 }
 
@@ -120,8 +148,22 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.status, 200);
                 console.log(JSON.stringify(info, null, 2));
                 assert.notEqual(info.installedTemplates, []);
-                assert(info.installedTemplates.includes('bigip-fast-templates/http'));
-                assert(info.installedTemplates.includes('examples/simple_udp'));
+
+                const tsNames = info.installedTemplates.map(x => x.name);
+                assert(tsNames.includes('bigip-fast-templates'));
+                assert(tsNames.includes('examples'));
+
+                const exampleTS = info.installedTemplates.filter(
+                    x => x.name === 'examples'
+                )[0];
+                assert(exampleTS.supported, `${exampleTS.name} has an unsupported hash: ${exampleTS.hash}`);
+                // assert(!exampleTS.updateAvailable, `${exampleTS.name} should not have an update available`);
+
+                const bigipTS = info.installedTemplates.filter(
+                    x => x.name === 'bigip-fast-templates'
+                )[0];
+                assert(bigipTS.supported, `${bigipTS.name} has an unsupported hash: ${bigipTS.hash}`);
+                // assert(!bigipTS.updateAvailable, `${bigipTS.name} should not have an update available`);
             });
     });
     it('info_without_as3', function () {
@@ -137,8 +179,10 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.status, 200);
                 console.log(JSON.stringify(info, null, 2));
                 assert.notEqual(info.installedTemplates, []);
-                assert(info.installedTemplates.includes('bigip-fast-templates/http'));
-                assert(info.installedTemplates.includes('examples/simple_udp'));
+
+                const tsNames = info.installedTemplates.map(x => x.name);
+                assert(tsNames.includes('bigip-fast-templates'));
+                assert(tsNames.includes('examples'));
             });
     });
     it('get_bad_end_point', function () {
@@ -352,8 +396,10 @@ describe('template worker tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert(op.body.includes('bigip-fast-templates'));
-                assert(op.body.includes('examples'));
+
+                const foundSets = op.body.map(x => x.name);
+                assert(foundSets.includes('bigip-fast-templates'));
+                assert(foundSets.includes('examples'));
             });
     });
     it('get_templatesets_item', function () {
@@ -363,7 +409,11 @@ describe('template worker tests', function () {
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
-                assert.notDeepEqual(op.body, {});
+
+                const ts = op.body;
+                assert.notDeepEqual(ts, {});
+                assert.strictEqual(ts.name, 'bigip-fast-templates');
+                assert.notDeepEqual(ts.templates, []);
             });
     });
     it('get_templatesets_bad', function () {
@@ -566,5 +616,18 @@ describe('template worker tests', function () {
                 assert(tmplList.includes('examples/simple_http'));
                 assert(!tmplList.includes('bigip-fast-templates/http'));
             });
+    });
+    it('onStartCompleted', function () {
+        const worker = createTemplateWorker();
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(200, {});
+        return Promise.resolve()
+            .then(() => worker.onStartCompleted(
+                () => {}, // success callback
+                () => assert(false), // error callback
+                undefined,
+                ''
+            ));
     });
 });

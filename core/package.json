@@ -7,7 +7,7 @@
   "description": "",
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
-    "lint": "eslint lib dataStores test cli.js",
+    "lint": "eslint lib test cli.js",
     "coverage": "nyc npm test"
   },
   "keywords": [
@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "ajv": "^6.10.2",
+    "atg-storage": "git+https://github.com/dstokesf5/atg-storage.git#234a935",
     "js-yaml": "^3.13.1",
     "mustache": "^3.1.0",
     "uuid": "^3.4.0",

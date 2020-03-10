@@ -7,7 +7,6 @@
 
         <link rel="stylesheet" href="css/spectre.min.css">
         <link rel="stylesheet" href="css/all.min.css">
-        <link rel="stylesheet" href="css/swagger-ui.css">
         <link rel="stylesheet" href="css/style.css">
 
         <title>F5 Application Services Templates</title>
@@ -34,6 +33,7 @@
                 <div id="form-div"></div>
                 <button type="button" class="btn" id="view-tmpl-btn">View Template</button>
                 <button type="button" class="btn" id="view-schema-btn">View Schema</button>
+                <button type="button" class="btn" id="view-view-btn">View View</button>
                 <button type="button" class="btn" id="view-render-btn">View Rendered</button>
                 <button type="button" class="btn btn-primary" id="form-btn">Submit</button>
             </div>
@@ -44,8 +44,19 @@
         </template>
 
         <template id="page-templates">
-          <div id="template-list" class="appList">
-            <center><pre>...Loading Template List...</pre></center></div>
+            <button type="button" class="btn" id="add-ts-btn">Add Set</button>
+            <input type="file" id="ts-file-input" style="display:none" accept=".zip">
+            <div id="template-list" class="appList">
+                <div class="appListRow">
+                    <div class="appListTitle">Templates</div>
+                    <div class="appListTitle">Applications</div>
+                    <div class="appListTitle">Actions</div>
+                </div>
+            </div>
+            <div>
+                <p>Output:</p>
+                <pre id="output"></pre>
+            </div>
         </template>
 
         <template id="page-tasks">
@@ -53,7 +64,7 @@
         </template>
 
         <template id="page-api">
-            <div id="api-div"></div>
+            <iframe src="apidoc.html"></iframe>
         </template>
 
         <div id="app" style="height:100%"></div>
