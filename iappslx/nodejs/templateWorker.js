@@ -190,9 +190,17 @@ class TemplateWorker {
      * Helper functions
      */
     gatherTemplateSet(tsid) {
-        return this.templateProvider.getSetData(tsid)
-            .then((tsData) => {
-                tsData.updateAvailable = fs.existsSync(`${templatesPath}/${tsid}`);
+        const fsprovider = new FsTemplateProvider(templatesPath);
+        return Promise.all([
+            this.templateProvider.getSetData(tsid),
+            fsprovider.hasSet(tsid)
+                .then(result => (result ? fsprovider.getSetData(tsid) : Promise.resolve(undefined)))
+        ])
+            .then(([tsData, fsTsData]) => {
+                tsData.updateAvailable = (
+                    fs.existsSync(`${templatesPath}/${tsid}`)
+                    && fsTsData && fsTsData.hash !== tsData.hash
+                );
                 return tsData;
             });
     }

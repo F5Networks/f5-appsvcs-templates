@@ -544,6 +544,7 @@ describe('template worker tests', function () {
     it('post_templateset', function () {
         const worker = createTemplateWorker();
         const op = new RestOp('templatesets');
+        const infoOp = new RestOp('info');
         const tsPath = path.join(process.cwd(), '..', 'templates');
 
         op.setBody({
@@ -556,6 +557,10 @@ describe('template worker tests', function () {
             [tsPath]: {}
         });
 
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(404);
+
         return worker.onPost(op)
             .then(() => {
                 assert.equal(op.status, 200);
@@ -564,6 +569,13 @@ describe('template worker tests', function () {
             .then((tmplSets) => {
                 assert(fs.existsSync(`${tsPath}/scratch`));
                 assert(tmplSets.includes('testset'));
+            })
+            .then(() => worker.onGet(infoOp))
+            .then(() => {
+                assert.strictEqual(infoOp.status, 200);
+
+                const tsNames = infoOp.body.installedTemplates.map(x => x.name);
+                assert(tsNames.includes('testset'));
             })
             .finally(() => mockfs.restore());
     });
