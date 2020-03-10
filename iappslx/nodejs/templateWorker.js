@@ -35,7 +35,7 @@ const supportedHashes = {
         'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
     ],
     examples: [
-        '0a0ca43ef9dbaf5f635b5c3db040792d15ba4116df1b90709d903f0e33ac501e'
+        'ecf1dce5b54ecab68567c4e26a7bbee777f8f6b2affd005d408f4699192ffb1b'
     ]
 };
 
