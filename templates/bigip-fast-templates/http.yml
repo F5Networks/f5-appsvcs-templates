@@ -64,7 +64,8 @@ definitions:
           "class": "Pool",
           "members": [{
              "serverAddresses": {{pool_members:f5:ipv4_array}},
-             "servicePort": {{pool_port:f5:http_port}}
+             "servicePort": {{pool_port:f5:http_port}},
+             "shareNodes": true
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           {{#existing_monitor}}
