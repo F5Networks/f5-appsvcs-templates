@@ -7,48 +7,92 @@ const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
 const { FsSchemaProvider } = require('./schema_provider');
 
-class FsTemplateProvider {
-    constructor(templateRootPath, filteredSets) {
-        this.config_template_path = templateRootPath;
-        this.schemaProviders = {};
-        this.filteredSets = new Set(filteredSets || []);
+class BaseTemplateProvider {
+    constructor() {
+        if (new.target === BaseTemplateProvider) {
+            throw new TypeError('Cannot instantiate Abstract BaseTemplateProvider');
+        }
 
-        this.cache = new ResourceCache((templateName) => {
-            const tsName = templateName.split('/')[0];
-            if (!this.schemaProviders[tsName]) {
-                this.schemaProviders[tsName] = new FsSchemaProvider(`${templateRootPath}/${tsName}`);
+        const abstractMethods = [
+            '_loadTemplate',
+            'listSets',
+            'removeSet',
+            'list',
+            'getNumSchema'
+        ];
+        abstractMethods.forEach((method) => {
+            if (this[method] === undefined) {
+                throw new TypeError(`Expected ${method} to be defined`);
             }
-            const schemaProvider = this.schemaProviders[tsName];
-            let useMst = 0;
-            let tmplpath = `${templateRootPath}/${templateName}`;
-            if (fs.existsSync(`${tmplpath}.yml`)) {
-                tmplpath = `${tmplpath}.yml`;
-            } else if (fs.existsSync(`${tmplpath}.yaml`)) {
-                tmplpath = `${tmplpath}.yaml`;
-            } else if (fs.existsSync(`${tmplpath}.mst`)) {
-                useMst = 1;
-                tmplpath = `${tmplpath}.mst`;
-            } else {
-                return Promise.reject(new Error(`could not find a template with name "${templateName}"`));
-            }
-
-            return new Promise((resolve, reject) => {
-                fs.readFile(tmplpath, (err, data) => {
-                    if (err) reject(err);
-                    else {
-                        resolve(data.toString('utf8'));
-                    }
-                });
-            }).then(tmpldata => Template[(useMst) ? 'loadMst' : 'loadYaml'](tmpldata, schemaProvider));
         });
+
+
+        this.cache = new ResourceCache((tmplName => this._loadTemplate(tmplName)));
+    }
+
+    invalidateCache() {
+        this.cache.invalidate();
     }
 
     fetch(key) {
         return this.cache.fetch(key);
     }
 
-    invalidateCache() {
-        this.cache.invalidate();
+    hasSet(setid) {
+        return this.listSets()
+            .then(sets => sets.includes(setid));
+    }
+
+    getNumTemplateSourceTypes(filteredSetName) {
+        const sourceTypes = {};
+        const filteredSetList = (filteredSetName && [filteredSetName]) || [];
+        return this.list(filteredSetList)
+            .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
+            .then(tmplList => tmplList.forEach((tmpl) => {
+                if (!sourceTypes[tmpl.sourceType]) {
+                    sourceTypes[tmpl.sourceType] = 0;
+                }
+                sourceTypes[tmpl.sourceType] += 1;
+            }))
+            .then(() => sourceTypes);
+    }
+}
+
+class FsTemplateProvider extends BaseTemplateProvider {
+    constructor(templateRootPath, filteredSets) {
+        super();
+        this.config_template_path = templateRootPath;
+        this.schemaProviders = {};
+        this.filteredSets = new Set(filteredSets || []);
+    }
+
+    _loadTemplate(templateName) {
+        const tsName = templateName.split('/')[0];
+        if (!this.schemaProviders[tsName]) {
+            this.schemaProviders[tsName] = new FsSchemaProvider(`${this.config_template_path}/${tsName}`);
+        }
+        const schemaProvider = this.schemaProviders[tsName];
+        let useMst = 0;
+        let tmplpath = `${this.config_template_path}/${templateName}`;
+        if (fs.existsSync(`${tmplpath}.yml`)) {
+            tmplpath = `${tmplpath}.yml`;
+        } else if (fs.existsSync(`${tmplpath}.yaml`)) {
+            tmplpath = `${tmplpath}.yaml`;
+        } else if (fs.existsSync(`${tmplpath}.mst`)) {
+            useMst = 1;
+            tmplpath = `${tmplpath}.mst`;
+        } else {
+            return Promise.reject(new Error(`could not find a template with name "${templateName}"`));
+        }
+
+        return new Promise((resolve, reject) => {
+            fs.readFile(tmplpath, (err, data) => {
+                if (err) reject(err);
+                else {
+                    resolve(data.toString('utf8'));
+                }
+            });
+        }).then(tmpldata => Template[(useMst) ? 'loadMst' : 'loadYaml'](tmpldata, schemaProvider));
     }
 
     listSets() {
@@ -88,20 +132,6 @@ class FsTemplateProvider {
             })))).then(sets => sets.reduce((acc, curr) => acc.concat(curr), []));
     }
 
-    getNumTemplateSourceTypes(filteredSetName) {
-        const sourceTypes = {};
-        const filteredSetList = (filteredSetName && [filteredSetName]) || [];
-        return this.list(filteredSetList)
-            .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
-            .then(tmplList => tmplList.forEach((tmpl) => {
-                if (!sourceTypes[tmpl.sourceType]) {
-                    sourceTypes[tmpl.sourceType] = 0;
-                }
-                sourceTypes[tmpl.sourceType] += 1;
-            }))
-            .then(() => sourceTypes);
-    }
-
     getNumSchema(filteredSetName) {
         return Promise.resolve()
             .then(() => {
@@ -114,50 +144,42 @@ class FsTemplateProvider {
             .then(schemaLists => schemaLists.flat().length);
     }
 
-    hasSet(setid) {
-        return this.listSets()
-            .then(sets => sets.includes(setid));
-    }
-
     removeSet() {
         return Promise.reject(new Error('Set removal not implemented'));
     }
 }
 
-class DataStoreTemplateProvider {
+class DataStoreTemplateProvider extends BaseTemplateProvider {
     constructor(datastore, filteredSets) {
+        super();
         this.filteredSets = new Set(filteredSets || []);
         this.storage = datastore;
         this.keyCache = [];
         this._numSchema = {};
-
-        this.cache = new ResourceCache((templatePath) => {
-            const [tsName, templateName] = templatePath.split('/');
-            return this.storage.hasItem(tsName)
-                .then((result) => {
-                    if (result) {
-                        return Promise.resolve();
-                    }
-                    return Promise.reject(new Error(`Could not find template set "${tsName}" in data store`));
-                })
-                .then(() => this.storage.getItem(tsName))
-                .then((tsData) => {
-                    const templateData = tsData.templates[templateName];
-
-                    if (typeof templateData === 'undefined') {
-                        return Promise.reject(new Error(`Could not find template "${templateName}" in template set "${tsName}"`));
-                    }
-                    return Template.fromJson(JSON.parse(templateData));
-                });
-        });
     }
 
-    fetch(key) {
-        return this.cache.fetch(key);
+    _loadTemplate(templatePath) {
+        const [tsName, templateName] = templatePath.split('/');
+        return this.storage.hasItem(tsName)
+            .then((result) => {
+                if (result) {
+                    return Promise.resolve();
+                }
+                return Promise.reject(new Error(`Could not find template set "${tsName}" in data store`));
+            })
+            .then(() => this.storage.getItem(tsName))
+            .then((tsData) => {
+                const templateData = tsData.templates[templateName];
+
+                if (typeof templateData === 'undefined') {
+                    return Promise.reject(new Error(`Could not find template "${templateName}" in template set "${tsName}"`));
+                }
+                return Template.fromJson(JSON.parse(templateData));
+            });
     }
 
     invalidateCache() {
-        this.cache.invalidate();
+        super.invalidateCache();
         this.keyCache = [];
     }
 
@@ -191,11 +213,6 @@ class DataStoreTemplateProvider {
             });
     }
 
-    hasSet(setid) {
-        return this.listSets()
-            .then(sets => sets.includes(setid));
-    }
-
     removeSet(setid) {
         return this.hasSet(setid)
             .then(result => (result || Promise.reject(
@@ -203,20 +220,6 @@ class DataStoreTemplateProvider {
             )))
             .then(() => this.storage.deleteItem(setid))
             .then(() => this.invalidateCache());
-    }
-
-    getNumTemplateSourceTypes(filteredSetName) {
-        const sourceTypes = {};
-        const filteredSetList = (filteredSetName && [filteredSetName]) || [];
-        return this.list(filteredSetList)
-            .then(tmplList => Promise.all(tmplList.map(tmpl => this.fetch(tmpl))))
-            .then(tmplList => tmplList.forEach((tmpl) => {
-                if (!sourceTypes[tmpl.sourceType]) {
-                    sourceTypes[tmpl.sourceType] = 0;
-                }
-                sourceTypes[tmpl.sourceType] += 1;
-            }))
-            .then(() => sourceTypes);
     }
 
     getNumSchema(filteredSetName) {
