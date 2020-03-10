@@ -229,10 +229,7 @@ class TemplateWorker {
                     Object.keys(supportedHashes).includes(tsid)
                     && supportedHashes[tsid].includes(tsHashDigest)
                 );
-                const updateAvailable = (
-                    !supported
-                    || supportedHashes[tsid].indexOf(tsHashDigest) !== 0
-                );
+                const updateAvailable = fs.existsSync(`${templatesPath}/${tsid}`);
                 return Promise.resolve({
                     name: tsid,
                     hash: tsHashDigest,
@@ -464,7 +461,7 @@ class TemplateWorker {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
         }
 
-        if (!fs.existsSync(setpath)) {
+        if (!fs.existsSync(setpath) && !Object.keys(supportedHashes).includes(tsid)) {
             return this.genRestResponse(restOperation, 404, `${setpath} does not exist`);
         }
 
@@ -472,12 +469,19 @@ class TemplateWorker {
         fs.removeSync(scratch);
         fs.mkdirsSync(scratch);
 
-        return new Promise((resolve, reject) => {
-            extract(setpath, { dir: scratch }, (err) => {
-                if (err) return reject(err);
-                return resolve();
-            });
-        })
+        return Promise.resolve()
+            .then(() => {
+                if (Object.keys(supportedHashes).includes(tsid)) {
+                    return fs.copy(`${templatesPath}/${tsid}`, scratch);
+                }
+
+                return new Promise((resolve, reject) => {
+                    extract(setpath, { dir: scratch }, (err) => {
+                        if (err) return reject(err);
+                        return resolve();
+                    });
+                });
+            })
             .then(() => this._validateTemplateSet(scratchPath))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))

@@ -510,6 +510,25 @@ route('templates', 'templates', () => {
                     }
                 };
 
+                if (setData.updateAvailable) {
+                    setActions.Update = () => {
+                        dispOutput(`Updating ${setName}`);
+                        return fetch(`${endPointUrl}/templatesets/${setName}`, {
+                            method: 'DELETE'
+                        })
+                            .then(() => fetch(`${endPointUrl}/templatesets`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    name: setName
+                                })
+                            }))
+                            .then(() => location.reload());
+                    };
+                }
+
                 createRow(setName, (setData.supported) ? ['supported'] : [], setActions);
                 setMap[setName].templates.forEach((tmpl) => {
                     const templateName = tmpl.name;
