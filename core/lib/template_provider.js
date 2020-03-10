@@ -1,11 +1,23 @@
 'use strict';
 
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
 const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
 const { FsSchemaProvider } = require('./schema_provider');
+
+// Known good hashes for template sets
+const supportedHashes = {
+    'bigip-fast-templates': [
+        'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
+    ],
+    examples: [
+        'ecf1dce5b54ecab68567c4e26a7bbee777f8f6b2affd005d408f4699192ffb1b'
+    ]
+};
+
 
 class BaseTemplateProvider {
     constructor() {
@@ -38,6 +50,19 @@ class BaseTemplateProvider {
         return this.cache.fetch(key);
     }
 
+    fetchSet(setName) {
+        return this.list(setName)
+            .then(tmplList => Promise.all(tmplList.map(tmplName => Promise.all([
+                Promise.resolve(tmplName),
+                this.fetch(tmplName)
+            ]))))
+            .then(tmplList => tmplList.reduce((acc, curr) => {
+                const [tmplName, tmplData] = curr;
+                acc[tmplName] = tmplData;
+                return acc;
+            }, {}));
+    }
+
     hasSet(setid) {
         return this.listSets()
             .then(sets => sets.includes(setid));
@@ -55,6 +80,38 @@ class BaseTemplateProvider {
                 sourceTypes[tmpl.sourceType] += 1;
             }))
             .then(() => sourceTypes);
+    }
+
+    getSetData(setName) {
+        return this.fetchSet(setName)
+            .then((templates) => {
+                if (Object.keys(templates).length === 0) {
+                    return Promise.reject(new Error(`No templates found for template set ${setName}`));
+                }
+                const tsHash = crypto.createHash('sha256');
+                const tmplHashes = Object.values(templates).map(x => x.sourceHash).sort();
+                tmplHashes.forEach((hash) => {
+                    tsHash.update(hash);
+                });
+                const tsHashDigest = tsHash.digest('hex');
+                const supported = (
+                    Object.keys(supportedHashes).includes(setName)
+                    && supportedHashes[setName].includes(tsHashDigest)
+                );
+                return Promise.resolve({
+                    name: setName,
+                    hash: tsHashDigest,
+                    supported,
+                    templates: Object.keys(templates).reduce((acc, curr) => {
+                        const tmpl = templates[curr];
+                        acc.push({
+                            name: curr,
+                            hash: tmpl.sourceHash
+                        });
+                        return acc;
+                    }, [])
+                });
+            });
     }
 }
 

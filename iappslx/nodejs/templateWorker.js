@@ -3,7 +3,6 @@
 require('core-js');
 
 const fs = require('fs-extra');
-const crypto = require('crypto');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
@@ -28,16 +27,6 @@ const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
 const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
 const dataGroupPath = `/Common/${projectName}/dataStore`;
-
-// Known good hashes for template sets. Always keep the latest at index 0!
-const supportedHashes = {
-    'bigip-fast-templates': [
-        'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
-    ],
-    examples: [
-        'ecf1dce5b54ecab68567c4e26a7bbee777f8f6b2affd005d408f4699192ffb1b'
-    ]
-};
 
 class TemplateWorker {
     constructor() {
@@ -200,50 +189,11 @@ class TemplateWorker {
     /**
      * Helper functions
      */
-    gatherTemplates(setList) {
-        return this.templateProvider.list(setList)
-            .then(tmplList => Promise.all(tmplList.map(tmplName => Promise.all([
-                Promise.resolve(tmplName),
-                this.templateProvider.fetch(tmplName)
-            ]))))
-            .then(tmplList => tmplList.reduce((acc, curr) => {
-                const [tmplName, tmplData] = curr;
-                acc[tmplName] = tmplData;
-                return acc;
-            }, {}));
-    }
-
     gatherTemplateSet(tsid) {
-        return this.gatherTemplates(tsid)
-            .then((templates) => {
-                if (Object.keys(templates).length === 0) {
-                    return Promise.reject(new Error(`No templates found for template set ${tsid}`));
-                }
-                const tsHash = crypto.createHash('sha256');
-                const tmplHashes = Object.values(templates).map(x => x.sourceHash).sort();
-                tmplHashes.forEach((hash) => {
-                    tsHash.update(hash);
-                });
-                const tsHashDigest = tsHash.digest('hex');
-                const supported = (
-                    Object.keys(supportedHashes).includes(tsid)
-                    && supportedHashes[tsid].includes(tsHashDigest)
-                );
-                const updateAvailable = fs.existsSync(`${templatesPath}/${tsid}`);
-                return Promise.resolve({
-                    name: tsid,
-                    hash: tsHashDigest,
-                    supported,
-                    updateAvailable,
-                    templates: Object.keys(templates).reduce((acc, curr) => {
-                        const tmpl = templates[curr];
-                        acc.push({
-                            name: curr,
-                            hash: tmpl.sourceHash
-                        });
-                        return acc;
-                    }, [])
-                });
+        return this.templateProvider.getSetData(tsid)
+            .then((tsData) => {
+                tsData.updateAvailable = fs.existsSync(`${templatesPath}/${tsid}`);
+                return tsData;
             });
     }
 
@@ -456,12 +406,13 @@ class TemplateWorker {
         const tsid = data.name;
         const setpath = `${uploadPath}/${tsid}.zip`;
         const scratch = `${scratchPath}/${tsid}`;
+        const onDiskPath = `${templatesPath}/${tsid}`;
 
         if (!data.name) {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
         }
 
-        if (!fs.existsSync(setpath) && !Object.keys(supportedHashes).includes(tsid)) {
+        if (!fs.existsSync(setpath) && !fs.existsSync(onDiskPath)) {
             return this.genRestResponse(restOperation, 404, `${setpath} does not exist`);
         }
 
@@ -471,8 +422,8 @@ class TemplateWorker {
 
         return Promise.resolve()
             .then(() => {
-                if (Object.keys(supportedHashes).includes(tsid)) {
-                    return fs.copy(`${templatesPath}/${tsid}`, scratch);
+                if (fs.existsSync(onDiskPath)) {
+                    return fs.copy(onDiskPath, scratch);
                 }
 
                 return new Promise((resolve, reject) => {

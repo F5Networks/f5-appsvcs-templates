@@ -88,6 +88,33 @@ function runSharedTests(createProvider) {
             .then(() => assert.becomes(provider.getNumSchema('test'), 1))
             .then(() => assert.becomes(provider.getNumSchema(), 1));
     });
+    it('fetch_set', function () {
+        const provider = createProvider();
+        return provider.fetchSet('test')
+            .then((templates) => {
+                console.log(JSON.stringify(templates, null, 2));
+                assert.ok(templates['test/simple']);
+                assert.ok(templates['test/complex']);
+            });
+    });
+    it('get_set_data', function () {
+        const provider = createProvider();
+        return provider.getSetData('test')
+            .then((setData) => {
+                console.log(JSON.stringify(setData, null, 2));
+                assert.ok(setData);
+
+                assert.strictEqual(setData.name, 'test');
+                assert.strictEqual(setData.supported, false);
+
+                const tmplNames = setData.templates.map(x => x.name).sort();
+                assert.deepStrictEqual(tmplNames, [
+                    'test/complex',
+                    'test/simple',
+                    'test/simple_udp'
+                ]);
+            });
+    });
 }
 
 describe('template provider tests', function () {
