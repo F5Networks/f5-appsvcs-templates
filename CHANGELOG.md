@@ -13,6 +13,8 @@
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
 * Auto-refresh the Deploy Log when there is an "in progress" task
 * Add buttons to add and remove template sets
+* Add button to update template sets that are out-of-date with what shipped with the RPM
+* Show which template sets have a supported hash
 
 # 0.2
 ## Core
