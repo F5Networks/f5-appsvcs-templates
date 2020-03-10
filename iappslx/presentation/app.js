@@ -439,15 +439,12 @@ route('templates', 'templates', () => {
 
     Promise.all([
         getJSON('applications'),
-        getJSON('templates')
+        getJSON('templates'),
+        getJSON('templatesets')
     ])
-        .then(([applications, templates]) => {
-            const setMap = templates.reduce((acc, curr) => {
-                const [setName, templateName] = curr.split('/');
-                if (!acc[setName]) {
-                    acc[setName] = [];
-                }
-                acc[setName].push(templateName);
+        .then(([applications, templates, templatesets]) => {
+            const setMap = templatesets.reduce((acc, curr) => {
+                acc[curr.name] = curr;
                 return acc;
             }, {});
 
@@ -501,8 +498,9 @@ route('templates', 'templates', () => {
                 templateDiv.appendChild(document.createElement('hr'));
                 templateDiv.appendChild(row);
             };
-            Object.keys(setMap).forEach((setName) => {
-                createRow(setName, [], {
+            Object.values(setMap).forEach((setData) => {
+                const setName = setData.name;
+                const setActions = {
                     Remove: () => {
                         dispOutput(`Deleting ${setName}`);
                         return fetch(`${endPointUrl}/templatesets/${setName}`, {
@@ -510,8 +508,11 @@ route('templates', 'templates', () => {
                         })
                             .then(() => location.reload());
                     }
-                });
-                setMap[setName].forEach((templateName) => {
+                };
+
+                createRow(setName, (setData.supported) ? ['supported'] : [], setActions);
+                setMap[setName].templates.forEach((tmpl) => {
+                    const templateName = tmpl.name;
                     const appList = appDict[`${setName}/${templateName}`] || [];
                     createRow(`&nbsp;&nbsp;&nbsp;&nbsp;/${templateName}`, appList.map(app => `${app.tenant} ${app.name}`));
                 });
