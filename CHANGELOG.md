@@ -23,6 +23,7 @@
 * Show which template sets have a supported hash
 * Redirect to the task list after submitting application create/modify/delete tasks 
 * Use fast/tasks instead of appsvcs/task to gather a task list
+* Show errors on create/modify application page load instead of only after changes
 
 # 0.2
 ## Core

@@ -88,10 +88,13 @@ const newEditor = (tmplid, view) => {
             dispOutput(`Schema modified for the editor:\n${JSON.stringify(schema, null, 2)}`);
 
             // Create a new editor
+            const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema);
             // eslint-disable-next-line no-undef
             editor = new JSONEditor(formElement, {
                 schema,
+                startval: defaults,
                 compact: true,
+                show_errors: 'always',
                 disable_edit_json: true,
                 disable_properties: true,
                 disable_collapse: true,
@@ -101,10 +104,7 @@ const newEditor = (tmplid, view) => {
             });
             dispOutput('Editor loaded'); // Clear text on new editor load
 
-            // Load with defaults
             editor.on('ready', () => {
-                const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema);
-                editor.setValue(defaults);
                 dispOutput('Editor ready');
             });
 
