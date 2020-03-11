@@ -15,6 +15,7 @@
 * Add buttons to add and remove template sets
 * Add button to update template sets that are out-of-date with what shipped with the RPM
 * Show which template sets have a supported hash
+* Redirect to the task list after submitting application create/modify/delete tasks 
 
 # 0.2
 ## Core

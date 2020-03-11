@@ -141,6 +141,9 @@ const newEditor = (tmplid, view) => {
                     .then(response => response.json())
                     .then((result) => {
                         dispOutput(JSON.stringify(result, null, 2));
+                    })
+                    .then(() => {
+                        window.location.href = '#tasks';
                     });
             };
         })
@@ -285,7 +288,10 @@ route('', 'apps', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     fetch(`${endPointUrl}/applications/${appPairStr}`, {
                         method: 'DELETE'
-                    });
+                    })
+                        .then(() => {
+                            window.location.href = '#tasks';
+                        });
                 });
                 deleteBtn.classList.add('appListEntry');
                 row.appendChild(deleteBtn);
