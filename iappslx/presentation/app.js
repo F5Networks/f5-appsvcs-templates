@@ -302,23 +302,27 @@ route('', 'apps', () => {
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
 });
 route('create', 'create', () => {
-    const addTmplBtns = (tmplList) => {
+    const addTmplBtns = (sets) => {
         const elem = document.getElementById('tmpl-btns');
-        tmplList.forEach((item) => {
-            const btn = document.createElement('button');
-            btn.classList.add('btn');
-            btn.classList.add('btn-primary');
-            btn.classList.add('appListEntry');
-            btn.innerText = item;
-            btn.addEventListener('click', () => {
-                newEditor(item);
+        sets.forEach((setData) => {
+            const row = document.createElement('div');
+            elem.appendChild(row);
+            setData.templates.map(x => x.name).forEach((item) => {
+                const btn = document.createElement('button');
+                btn.classList.add('btn');
+                btn.classList.add('btn-primary');
+                btn.classList.add('appListEntry');
+                btn.innerText = item;
+                btn.addEventListener('click', () => {
+                    newEditor(item);
+                });
+                row.appendChild(btn);
             });
-            elem.appendChild(btn);
         });
     };
     outputElem = document.getElementById('output');
     dispOutput('Fetching templates');
-    getJSON('templates')
+    getJSON('templatesets')
         .then((data) => {
             addTmplBtns(data);
             dispOutput('');
