@@ -10,7 +10,7 @@ FAST Menu Tabs
 --------------
 
 When using FAST, the Applications List tab is selected. If you have never used FAST before
-the application list will likely be empty. See the :ref:`deploytab<Deploy section>` on deploying a new application.
+the application list will likely be empty. See the :ref:`deploytab` tab on deploying a new application.
 
 You see the following tabs in the FAST interface:
 
@@ -30,7 +30,7 @@ You see the following tabs in the FAST interface:
         - Summary
 
       * - :ref:`applisttab`
-        - This is a list of AS3 applications currently deployed to the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with (if they were deployed using a FAST Template). Applications can be modified or deleted from this page.
+        - This is a list of AS3 applications currently deployed to the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with (if deployed using a FAST Template). Applications can be modified or deleted from this page.
 
       * - :ref:`deploytab`
         - This is where you create a new application. Use this tab to choose a template and provide parameters to submit a new application to AS3.
@@ -95,7 +95,7 @@ The Deploy tab is where you create new AS3 applications using a FAST template.
 
 At the top of the Deploy pane, there are buttons for each installed template. 
 
-To open a template, click one of the template buttons. The template loads into the interface, with required fields marked with a red asterisk. 
+To open a template, click one of the template buttons. The template loads into the interface, with required fields marked by a red asterisk. 
 
 At the bottom of the template, you see the following options for what to do once the template is complete.
 
@@ -170,9 +170,10 @@ the REST API.
 Template sets may be provided by F5, sourced from the community, or custom written. 
 Template sets can be added or removed via the user interface by clicking either the **Add Set** or **Remove** buttons. 
 
-For information on authoring template sets, understanding the template set format, and uploading templates, see :ref:`authoring`.
+For information on authoring template sets and understanding the template set format, see :ref:`authoring`.
 
-|
+For information on updating, adding and removing template sets, see :ref:`managing-templates`.
+
 
 .. _deploylogtab:
 
