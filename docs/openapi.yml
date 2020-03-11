@@ -102,7 +102,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TaskCreation"
+                $ref: "#/components/schemas/Task"
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
@@ -390,24 +390,34 @@ components:
     Task:
       type: object
       required:
+        - id
         - name
         - parameters
+        - code
+        - message
+        - tenant
+        - application
       properties:
+        id:
+          description: The taskID of this task
+          type: string
         name:
           description: must be valid template in the system
           type: string
         parameters:
-          description: object must comform to specified template's schema
+          description: object must conform to specified template's schema
           type: object
-    TaskCreation:
-      allOf:
-        - $ref: "#/components/schemas/Task"
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          description: The taskID of this task
+        code:
+          description: current status code of the task
+          type: string
+        message:
+          description: any messages (such as "success" or "in progress") for the task
+          type: string
+        tenant:
+          description: tenant associated with the task
+          type: string
+        application:
+          description: application associated with the task
           type: string
     TaskList:
       type: array
