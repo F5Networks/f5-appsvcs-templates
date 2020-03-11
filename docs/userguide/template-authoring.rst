@@ -339,19 +339,6 @@ Arrays of primitives should work fine but have not been extensively tested.
 Objects are not yet supported.
 
 
-Adding New Template Sets
-------------------------
-
-FAST allows for the addition of pre-configured template sets. 
-From the Templates tab, click the **Add Set** button.  Navigate to the location of the template set, click **Open**.  The added templates will display in the template list.
-
-
-Removing Template Sets
-----------------------
-
-FAST allows for the removing of user added template sets.  From the Templates tab, under the Actions column, click the **Remove** button.
-
-.. NOTE:: Only user added template sets can be removed.
 
 .. |br| raw:: html
 

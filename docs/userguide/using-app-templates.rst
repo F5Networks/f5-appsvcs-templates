@@ -170,9 +170,10 @@ the REST API.
 Template sets may be provided by F5, sourced from the community, or custom written. 
 Template sets can be added or removed via the user interface by clicking either the **Add Set** or **Remove** buttons. 
 
-For information on authoring template sets, understanding the template set format, and uploading templates, see :ref:`authoring`.
+For information on authoring template sets and understanding the template set format, see :ref:`authoring`.
 
-|
+For information on updating, adding and removing template sets, see :ref:`managing-templates`.
+
 
 .. _deploylogtab:
 
