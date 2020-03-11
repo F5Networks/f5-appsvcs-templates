@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint-disable no-console */
 
 'use strict';
 
@@ -36,7 +37,7 @@ const multipartUpload = (file) => {
                 'Content-Type': 'application/octet-stream',
                 'Content-Range': `${start}-${end}/${file.size}`,
                 'Content-Length': (end - start) + 1,
-                'Connection': 'keep-alive'
+                Connection: 'keep-alive'
             },
             body: file.slice(start, end + 1, 'application/octet-stream')
         };
@@ -58,9 +59,9 @@ const multipartUpload = (file) => {
     };
 
     if (CHUNK_SIZE < file.size) {
-        return uploadPart(0, CHUNK_SIZE-1);
+        return uploadPart(0, CHUNK_SIZE - 1);
     }
-    return uploadPart(0, file.size-1);
+    return uploadPart(0, file.size - 1);
 };
 
 
@@ -87,6 +88,7 @@ const newEditor = (tmplid, view) => {
             dispOutput(`Schema modified for the editor:\n${JSON.stringify(schema, null, 2)}`);
 
             // Create a new editor
+            // eslint-disable-next-line no-undef
             editor = new JSONEditor(formElement, {
                 schema,
                 compact: true,
@@ -159,7 +161,7 @@ function addRouteToHeader(topRoute, title) {
 }
 
 function router() {
-    const rawUrl = location.hash.slice(1) || '';
+    const rawUrl = window.location.hash.slice(1) || '';
     const url = rawUrl.replace(/\/application.*?\/edit/, '');
     const urlParts = url.split('/');
     const routeInfo = routes[urlParts[0]];
@@ -242,7 +244,8 @@ route('', 'apps', () => {
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if (++count%2) row.classList.add('zebraRow');
+                count += 1;
+                if (count % 2) row.classList.add('zebraRow');
 
                 const appTenant = document.createElement('div');
                 if (appPair[0] !== lastTenant) {
@@ -344,7 +347,8 @@ route('tasks', 'tasks', () => {
                 data.items.forEach((item) => {
                     const rowDiv = document.createElement('div');
                     rowDiv.classList.add('appListRow');
-                    if (++count%2) rowDiv.classList.add('zebraRow');
+                    count += 1;
+                    if (count % 2) rowDiv.classList.add('zebraRow');
 
                     const idDiv = document.createElement('div');
                     idDiv.classList.add('appListTitle');
@@ -385,10 +389,10 @@ route('tasks', 'tasks', () => {
                 });
 
                 const inProgressJob = (
-                    data.items[0] &&
-                    data.items[0].results &&
-                    data.items[0].results[0] &&
-                    data.items[0].results[0].message === 'in progress'
+                    data.items[0]
+                    && data.items[0].results
+                    && data.items[0].results[0]
+                    && data.items[0].results[0].message === 'in progress'
                 );
                 if (inProgressJob) {
                     setTimeout(renderTaskList, 5000);
@@ -411,8 +415,8 @@ route('templates', 'templates', () => {
     document.getElementById('add-ts-btn').onclick = () => {
         document.getElementById('ts-file-input').click();
     };
-    document.getElementById('ts-file-input').onchange = (input) => {
-        const file = document.getElementById('ts-file-input').files[0]
+    document.getElementById('ts-file-input').onchange = () => {
+        const file = document.getElementById('ts-file-input').files[0];
         const tsName = file.name.slice(0, -4);
         dispOutput(`Uploading file: ${file.name}`);
         multipartUpload(file)
@@ -433,16 +437,15 @@ route('templates', 'templates', () => {
                 return Promise.resolve();
             })
             .then(() => dispOutput(`${tsName} installed successfully`))
-            .then(() => location.reload())
+            .then(() => window.location.reload())
             .catch(e => dispOutput(`Failed to install template set: ${e.stack}`));
     };
 
     Promise.all([
         getJSON('applications'),
-        getJSON('templates'),
         getJSON('templatesets')
     ])
-        .then(([applications, templates, templatesets]) => {
+        .then(([applications, templatesets]) => {
             const setMap = templatesets.reduce((acc, curr) => {
                 acc[curr.name] = curr;
                 return acc;
@@ -466,7 +469,8 @@ route('templates', 'templates', () => {
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if (++count%2) {
+                count += 1;
+                if (count % 2) {
                     row.classList.add('zebraRow');
                 }
 
@@ -506,7 +510,7 @@ route('templates', 'templates', () => {
                         return fetch(`${endPointUrl}/templatesets/${setName}`, {
                             method: 'DELETE'
                         })
-                            .then(() => location.reload());
+                            .then(() => window.location.reload());
                     }
                 };
 
@@ -525,7 +529,7 @@ route('templates', 'templates', () => {
                                     name: setName
                                 })
                             }))
-                            .then(() => location.reload());
+                            .then(() => window.location.reload());
                     };
                 }
 

@@ -7,7 +7,7 @@
   "main": "nodejs/templateWorker.js",
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
-    "lint": "eslint nodejs test",
+    "lint": "eslint nodejs test presentation/app.js",
     "buildapi": "cd presentation && js-yaml ../../docs/openapi.yml > openapi.json && browserify api.js -o api-bundle.js",
     "buildgui": "npm run buildapi && cd presentation && browserify app.js -o bundle.js",
     "buildrpm": "../scripts/rpmbuild.sh",
