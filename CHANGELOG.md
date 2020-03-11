@@ -1,10 +1,15 @@
 # 0.3
+## Core
+* Fix parsing issues when there are multiple dependencies
+* Expand task to include error messages, application name, and tenant name
+
 ## REST Worker
 * Persist template sets to data groups
 * Fix deleting template sets
 * Fix running on BIG-IP 13.1
 * Add initial TEEM integration
 * Add template hashes to /info endpoint
+* Expand tasks to include error messages, application name, and tenant name
 
 ## CLI
 * Print stack traces on errors
@@ -16,6 +21,7 @@
 * Add button to update template sets that are out-of-date with what shipped with the RPM
 * Show which template sets have a supported hash
 * Redirect to the task list after submitting application create/modify/delete tasks 
+* Use fast/tasks instead of appsvcs/task to gather a task list
 
 # 0.2
 ## Core
