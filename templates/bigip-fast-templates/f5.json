@@ -1,34 +1,44 @@
 {
     "$schema": "http://json-schema.org/draft-07/hyper-schema",
     "definitions": {
+      "non_empty_string": {
+        "type": "string",
+        "minLength": 1
+      },
       "ipv4": {
         "type": "string",
         "format": "ipv4",
         "default": "10.0.0.1"
       },
+      "ipv4_array": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ipv4"
+        }
+      },
       "port": {
         "type": "integer",
-        "minimuim": 0,
+        "minimum": 0,
         "maximum": 65535
       },
       "https_port": {
         "type": "integer",
-        "minimuim": 0,
+        "minimum": 0,
         "maximum": 65535,
         "default": 443
       },
       "http_port": {
         "type": "integer",
-        "minimuim": 0,
+        "minimum": 0,
         "maximum": 65535,
         "default": 80
       },
       "tls_cert_name": {
-        "type": "string",
+        "$ref": "#/definitions/non_empty_string",
         "default": "/Common/default.crt"
       },
       "tls_key_name": {
-        "type": "string",
+        "$ref": "#/definitions/non_empty_string",
         "default": "/Common/default.key"
       },
       "service": {

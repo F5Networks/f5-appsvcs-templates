@@ -25,6 +25,9 @@
 * Use fast/tasks instead of appsvcs/task to gather a task list
 * Show errors on create/modify application page load instead of only after changes
 
+## Templates
+* bigip-fast-templates: Add validation around minimum values
+
 # 0.2
 ## Core
 * Various fixes for parsing nested sections and partials
