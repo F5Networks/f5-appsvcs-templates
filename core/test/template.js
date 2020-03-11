@@ -142,7 +142,8 @@ describe('Template class tests', function () {
                 'number_variable'
             ],
             title: '',
-            description: ''
+            description: '',
+            definitions: {}
         };
         return Template.loadMst(mstWithTypes)
             .then((tmpl) => {
@@ -245,6 +246,7 @@ describe('Template class tests', function () {
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(tmpl.definitions.https_port.type, 'integer');
             });
     });
     it('render_array', function () {

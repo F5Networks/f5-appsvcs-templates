@@ -2,6 +2,7 @@
 ## Core
 * Fix parsing issues when there are multiple dependencies
 * Expand task to include error messages, application name, and tenant name
+* Add definitions from external schema to Template view schema
 
 ## REST Worker
 * Persist template sets to data groups

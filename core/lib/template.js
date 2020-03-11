@@ -56,6 +56,7 @@ class Template {
         this.title = '';
         this.description = '';
         this.definitions = {};
+        this.typeDefinitions = {};
         this._viewSchema = {};
         this.target = 'as3';
         this.templateText = '';
@@ -149,10 +150,13 @@ class Template {
                 }
 
                 if (schemaName) {
-                    acc.properties[defName] = typeSchemas[schemaName].definitions[defType];
+                    const schemaDef = typeSchemas[schemaName].definitions[defType];
+                    acc.properties[defName] = schemaDef;
                     if (!acc.properties[defName]) {
                         throw new Error(`No definition for ${defType} in ${schemaName} schema`);
                     }
+                    this.definitions[defType] = Object.assign({}, schemaDef);
+                    this.typeDefinitions[defType] = Object.assign({}, schemaDef);
                 } else if (defType === 'text') {
                     acc.properties[defName] = {
                         type: 'string',
@@ -406,7 +410,8 @@ class Template {
     getViewSchema() {
         return Object.assign({}, this._viewSchema, {
             title: this.title,
-            description: this.description
+            description: this.description,
+            definitions: this.typeDefinitions
         });
     }
 
