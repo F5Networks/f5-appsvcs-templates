@@ -336,11 +336,13 @@ describe('template worker tests', function () {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, [{
+                    application: '',
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
                     name: '',
-                    parameters: {}
+                    parameters: {},
+                    tenant: ''
                 }]);
             });
     });
@@ -367,11 +369,13 @@ describe('template worker tests', function () {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, {
+                    application: '',
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
                     name: '',
-                    parameters: {}
+                    parameters: {},
+                    tenant: ''
                 });
             });
     });

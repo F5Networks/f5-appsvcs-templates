@@ -242,18 +242,22 @@ describe('AS3 Driver tests', function () {
             });
         return assert.becomes(driver.getTasks(), [
             {
+                application: '',
                 id: 'foo1',
                 code: 200,
                 message: 'in progress',
                 name: '',
-                parameters: {}
+                parameters: {},
+                tenant: ''
             },
             {
+                application: 'appName',
                 id: 'foo2',
                 code: 200,
                 message: 'success',
                 name: appMetadata.template,
-                parameters: appMetadata.view
+                parameters: appMetadata.view,
+                tenant: 'tenantName'
             }
         ]);
     });

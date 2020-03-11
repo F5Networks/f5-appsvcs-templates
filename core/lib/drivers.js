@@ -184,16 +184,22 @@ class AS3Driver {
             || this._task_ids.includes(item.id)
         );
         const as3ToFAST = (item) => {
+            const changes = item.results.filter(r => r.message).map(r => r.message);
+            const errors = item.results.filter(r => r.errors).map(r => r.errors);
             const task = {
                 id: item.id,
                 code: item.results[0].code,
-                message: item.results[0].message,
+                message: `${errors.concat(changes).join('\n')}`,
                 name: '',
-                parameters: {}
+                parameters: {},
+                tenant: '',
+                application: ''
             };
             if (item.declaration.id) {
                 const idParts = item.declaration.id.split('-');
                 const [tenant, app] = idParts.slice(1, 3);
+                task.tenant = tenant;
+                task.application = app;
                 if (item.declaration[tenant]) {
                     const appDef = this._appFromDecl(item.declaration, tenant, app);
                     task.name = appDef.template;
