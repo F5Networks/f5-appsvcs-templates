@@ -342,8 +342,7 @@ route('modify', 'create', (appID) => {
 
 route('tasks', 'tasks', () => {
     const renderTaskList = () => {
-        fetch('/mgmt/shared/appsvcs/task')
-            .then(data => data.json())
+        getJSON('tasks')
             .then((data) => {
                 const taskList = document.getElementById('task-list');
                 taskList.innerHTML = `<div class="appListRow">
@@ -354,7 +353,7 @@ route('tasks', 'tasks', () => {
                 taskList.appendChild(document.createElement('hr'));
 
                 let count = 0;
-                data.items.forEach((item) => {
+                data.forEach((item) => {
                     const rowDiv = document.createElement('div');
                     rowDiv.classList.add('appListRow');
                     count += 1;
@@ -367,31 +366,12 @@ route('tasks', 'tasks', () => {
 
                     const tenantDiv = document.createElement('div');
                     tenantDiv.classList.add('appListTitle');
+                    tenantDiv.innerText = `${item.tenant}/${item.application}`;
+                    rowDiv.appendChild(tenantDiv);
 
                     const statusDiv = document.createElement('div');
                     statusDiv.classList.add('appListTitle');
-
-                    const changes = item.results.filter(r => r.message !== 'no change');
-                    if (changes.length === 0) {
-                        statusDiv.innerText = 'no change';
-                    } else {
-                        changes.forEach((change) => {
-                            const tDiv = document.createElement('div');
-                            tDiv.innerText = `${change.tenant}`;
-                            const mDiv = document.createElement('div');
-                            mDiv.innerText = `${change.message}`;
-                            if (change.errors) {
-                                mDiv.innerText += `\n${change.errors.join('\n')}`;
-                            }
-                            if (change.response) {
-                                mDiv.innerText += `\n${change.response}`;
-                            }
-                            tenantDiv.appendChild(tDiv);
-                            statusDiv.appendChild(mDiv);
-                        });
-                    }
-
-                    rowDiv.appendChild(tenantDiv);
+                    statusDiv.innerText = item.message;
                     rowDiv.appendChild(statusDiv);
 
                     taskList.appendChild(rowDiv);
@@ -399,10 +379,7 @@ route('tasks', 'tasks', () => {
                 });
 
                 const inProgressJob = (
-                    data.items[0]
-                    && data.items[0].results
-                    && data.items[0].results[0]
-                    && data.items[0].results[0].message === 'in progress'
+                    data.filter(x => x.message === 'in progress').length !== 0
                 );
                 if (inProgressJob) {
                     setTimeout(renderTaskList, 5000);
