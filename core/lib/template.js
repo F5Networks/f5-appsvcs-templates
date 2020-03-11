@@ -174,6 +174,9 @@ class Template {
                         type: defType
                     };
                 }
+                if (this.definitions[defName]) {
+                    Object.assign(acc.properties[defName], this.definitions[defName]);
+                }
                 if (acc.properties[defName].default === undefined) {
                     required.add(defName);
                 }
@@ -288,23 +291,16 @@ class Template {
             }
         });
 
-        // Use definitions to add more information to variables
-        const defKeys = Object.keys(this.definitions);
-        Object.keys(schema.properties).forEach((prop) => {
+        // Get propertyOrder from definition if available
+        Object.values(schema.properties).forEach((schemaDef) => {
+            schemaDef.propertyOrder = 1000;
+        });
+        Object.keys(this.definitions).forEach((prop, idx) => {
             const schemaDef = schema.properties[prop];
-            const def = this.definitions[prop];
-            if (typeof def === 'undefined') {
-                schemaDef.propertyOrder = 1000;
-                // No definition from template, nothing more to do
+            if (!schemaDef) {
                 return;
             }
-
-            // Set title and description from definitions
-            schemaDef.title = def.title || schemaDef.title;
-            schemaDef.description = def.description || schemaDef.description;
-
-            // Order properties based on the order they appear in definition
-            schemaDef.propertyOrder = defKeys.indexOf(prop);
+            schemaDef.propertyOrder = idx;
         });
 
         // Re-sort properties based on propertyOrder
