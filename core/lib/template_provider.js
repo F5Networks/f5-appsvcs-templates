@@ -11,6 +11,7 @@ const { FsSchemaProvider } = require('./schema_provider');
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '1c5977c927c90b1b2776741886f8109bee7e5d29e871ad3d9b896991b8cdcc68',
         'd67cd5ffdb60e6b42920147030d534ae3a123bb2ea13d15c00876937c717b67e',
         'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
     ],
