@@ -171,6 +171,7 @@ function router() {
 
     // render header menu
     const navBar = document.getElementById('navBar');
+    const navBarDisplay = navBar.style.display;
     navBar.innerHTML = '';
 
     Object.keys(navTitles).forEach((k) => {
@@ -208,10 +209,15 @@ function router() {
     const pageId = `#page-${routeInfo.pageName}`;
     const pageTmpl = document.querySelector(pageId);
     elem.appendChild(document.importNode(pageTmpl.content, true));
+    elem.style.display = 'none';
+    navBar.style.display = 'none';
 
-    if (routeInfo.pageFunc) {
-        routeInfo.pageFunc(urlParts.slice(1).join('/'));
-    }
+    const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
+    pageFunc(urlParts.slice(1).join('/'))
+        .finally(() => {
+            elem.style.display = 'block';
+            navBar.style.display = navBarDisplay;
+        });
 }
 
 window.addEventListener('hashchange', router);
@@ -232,7 +238,7 @@ route('', 'apps', () => {
     let count = 0;
     let lastTenant = '';
     dispOutput('Fetching applications list');
-    getJSON('applications')
+    return getJSON('applications')
         .then((appsList) => {
             listElem.innerHTML = `<div class="appListRow">
               <div class="appListTitle">Tenant</div>
@@ -322,7 +328,7 @@ route('create', 'create', () => {
     };
     outputElem = document.getElementById('output');
     dispOutput('Fetching templates');
-    getJSON('templatesets')
+    return getJSON('templatesets')
         .then((data) => {
             addTmplBtns(data);
             dispOutput('');
@@ -332,7 +338,7 @@ route('create', 'create', () => {
 route('modify', 'create', (appID) => {
     outputElem = document.getElementById('output');
     dispOutput(`Fetching app data for ${appID}`);
-    getJSON(`applications/${appID}`)
+    return getJSON(`applications/${appID}`)
         .then((appData) => {
             const appDef = appData.constants.fast;
             newEditor(appDef.template, appDef.view);
@@ -341,53 +347,51 @@ route('modify', 'create', (appID) => {
 });
 
 route('tasks', 'tasks', () => {
-    const renderTaskList = () => {
-        getJSON('tasks')
-            .then((data) => {
-                const taskList = document.getElementById('task-list');
-                taskList.innerHTML = `<div class="appListRow">
-                  <div class="appListTitle">Task ID</div>
-                  <div class="appListTitle">Tenant</div>
-                  <div class="appListTitle">Result</div>
-                </div>`;
+    const renderTaskList = () => getJSON('tasks')
+        .then((data) => {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Task ID</div>
+              <div class="appListTitle">Tenant</div>
+              <div class="appListTitle">Result</div>
+            </div>`;
+            taskList.appendChild(document.createElement('hr'));
+
+            let count = 0;
+            data.forEach((item) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('appListRow');
+                count += 1;
+                if (count % 2) rowDiv.classList.add('zebraRow');
+
+                const idDiv = document.createElement('div');
+                idDiv.classList.add('appListTitle');
+                idDiv.innerText = item.id;
+                rowDiv.appendChild(idDiv);
+
+                const tenantDiv = document.createElement('div');
+                tenantDiv.classList.add('appListTitle');
+                tenantDiv.innerText = `${item.tenant}/${item.application}`;
+                rowDiv.appendChild(tenantDiv);
+
+                const statusDiv = document.createElement('div');
+                statusDiv.classList.add('appListTitle');
+                statusDiv.innerText = item.message;
+                rowDiv.appendChild(statusDiv);
+
+                taskList.appendChild(rowDiv);
                 taskList.appendChild(document.createElement('hr'));
-
-                let count = 0;
-                data.forEach((item) => {
-                    const rowDiv = document.createElement('div');
-                    rowDiv.classList.add('appListRow');
-                    count += 1;
-                    if (count % 2) rowDiv.classList.add('zebraRow');
-
-                    const idDiv = document.createElement('div');
-                    idDiv.classList.add('appListTitle');
-                    idDiv.innerText = item.id;
-                    rowDiv.appendChild(idDiv);
-
-                    const tenantDiv = document.createElement('div');
-                    tenantDiv.classList.add('appListTitle');
-                    tenantDiv.innerText = `${item.tenant}/${item.application}`;
-                    rowDiv.appendChild(tenantDiv);
-
-                    const statusDiv = document.createElement('div');
-                    statusDiv.classList.add('appListTitle');
-                    statusDiv.innerText = item.message;
-                    rowDiv.appendChild(statusDiv);
-
-                    taskList.appendChild(rowDiv);
-                    taskList.appendChild(document.createElement('hr'));
-                });
-
-                const inProgressJob = (
-                    data.filter(x => x.message === 'in progress').length !== 0
-                );
-                if (inProgressJob) {
-                    setTimeout(renderTaskList, 5000);
-                }
             });
-    };
 
-    renderTaskList();
+            const inProgressJob = (
+                data.filter(x => x.message === 'in progress').length !== 0
+            );
+            if (inProgressJob) {
+                setTimeout(renderTaskList, 5000);
+            }
+        });
+
+    return renderTaskList();
 });
 
 route('api', 'api', () => {
@@ -428,7 +432,7 @@ route('templates', 'templates', () => {
             .catch(e => dispOutput(`Failed to install template set: ${e.stack}`));
     };
 
-    Promise.all([
+    return Promise.all([
         getJSON('applications'),
         getJSON('templatesets')
     ])
