@@ -61,12 +61,9 @@ const patchWorker = (worker) => {
     worker.logger = {
         severe: (str) => {
             console.error(str);
-            assert(false);
+            assert(false, 'worker hit a severe error');
         },
-        error: (str) => {
-            console.error(str);
-            assert(false);
-        },
+        error: console.log,
         info: console.log,
         fine: console.log,
         log: console.log
@@ -115,6 +112,8 @@ function createTemplateWorker() {
     tw.storage = testStorage;
     tw.templateProvider.storage = testStorage;
     tw.teemDevice = new TeemDeviceMock();
+
+    tw.hookCompleteRestOp();
     return tw;
 }
 

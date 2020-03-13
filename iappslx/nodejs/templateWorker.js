@@ -44,10 +44,21 @@ class TemplateWorker {
         });
     }
 
+    hookCompleteRestOp() {
+        // Hook completeRestOperation() so we can add additional logging
+        this._prevCompleteRestOp = this.completeRestOperation;
+        this.completeRestOperation = (restOperation) => {
+            this.recordRestResponse(restOperation);
+            this._prevCompleteRestOp(restOperation);
+        };
+    }
+
     /**
      * Worker Handlers
      */
     onStart(success, error) {
+        this.hookCompleteRestOp();
+
         // Find any template sets on disk (e.g., from the RPM) and add them to
         // the data store. Do not overwrite template sets already in the data store.
         const fsprovider = new FsTemplateProvider(templatesPath);
@@ -233,6 +244,27 @@ class TemplateWorker {
     /**
      * HTTP/REST handlers
      */
+    recordRestRequest(restOp) {
+        this.logger.fine(
+            `TemplateWorker received request: method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
+        );
+    }
+
+    recordRestResponse(restOp) {
+        const minOp = {
+            method: restOp.getMethod(),
+            path: restOp.getUri().path,
+            status: restOp.getStatusCode(),
+            body: restOp.getBody()
+        };
+        const msg = `TemplateWorker sending response:\n${JSON.stringify(minOp, null, 2)}`;
+        if (minOp.status >= 400) {
+            this.logger.error(msg);
+        } else {
+            this.logger.fine(msg);
+        }
+    }
+
     genRestResponse(restOperation, code, message) {
         restOperation.setStatusCode(code);
         restOperation.setBody({
@@ -352,6 +384,9 @@ class TemplateWorker {
         const pathElements = uri.path.split('/');
         const collection = pathElements[3];
         const itemid = pathElements[4];
+
+        this.recordRestRequest(restOperation);
+
         try {
             switch (collection) {
             case 'info':
@@ -463,6 +498,8 @@ class TemplateWorker {
         const pathElements = uri.path.split('/');
         const collection = pathElements[3];
 
+        this.recordRestRequest(restOperation);
+
         try {
             switch (collection) {
             case 'applications':
@@ -524,6 +561,8 @@ class TemplateWorker {
         const pathElements = uri.path.split('/');
         const collection = pathElements[3];
         const itemid = pathElements[4];
+
+        this.recordRestRequest(restOperation);
 
         try {
             switch (collection) {
