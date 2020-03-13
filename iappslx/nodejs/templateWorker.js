@@ -175,7 +175,10 @@ class TemplateWorker {
     generateTeemReportError(restOp) {
         const uri = restOp.getUri();
         const pathElements = uri.path.split('/');
-        const endpoint = pathElements.slice(0, 4).join('/');
+        let endpoint = pathElements.slice(0, 4).join('/');
+        if (pathElements[4]) {
+            endpoint = `${endpoint}/item`;
+        }
         const report = {
             method: restOp.getMethod(),
             endpoint,
