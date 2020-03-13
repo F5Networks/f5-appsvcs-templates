@@ -75,6 +75,15 @@ function runSharedTests(createProvider) {
             .then(() => assert.isFulfilled(provider.fetch('test/complex')))
             .then(() => assert.isFulfilled(provider.fetch('test/simple')));
     });
+    it('get_schemas', function () {
+        const provider = createProvider();
+        return provider.getSchemas()
+            .then((schemas) => {
+                const schemaNames = Object.keys(schemas);
+                console.log(JSON.stringify(schemas, null, 2));
+                assert(schemaNames.includes('test/types'), 'expected test/types to be in the schema list');
+            });
+    });
     it('list_tmpl_sources', function () {
         const provider = createProvider();
         return assert.becomes(provider.getNumTemplateSourceTypes('test'), {
@@ -84,8 +93,11 @@ function runSharedTests(createProvider) {
             .then(() => assert.becomes(provider.getNumTemplateSourceTypes(), {
                 MST: 1,
                 YAML: 2
-            }))
-            .then(() => assert.becomes(provider.getNumSchema('test'), 1))
+            }));
+    });
+    it('num_schemas', function () {
+        const provider = createProvider();
+        return assert.becomes(provider.getNumSchema('test'), 1)
             .then(() => assert.becomes(provider.getNumSchema(), 1));
     });
     it('fetch_set', function () {
@@ -112,6 +124,10 @@ function runSharedTests(createProvider) {
                     'test/complex',
                     'test/simple',
                     'test/simple_udp'
+                ]);
+                const schemaNames = setData.schemas.map(x => x.name).sort();
+                assert.deepStrictEqual(schemaNames, [
+                    'test/types'
                 ]);
             });
     });

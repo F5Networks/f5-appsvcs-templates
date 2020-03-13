@@ -3,6 +3,7 @@
 * Fix parsing issues when there are multiple dependencies
 * Expand task to include error messages, application name, and tenant name
 * Add definitions from external schema to Template view schema
+* Add hashes for templates and template sets
 
 ## REST Worker
 * Persist template sets to data groups
@@ -10,6 +11,7 @@
 * Fix running on BIG-IP 13.1
 * Add initial TEEM integration
 * Add template hashes to /info endpoint
+* Add schema and schema hashes to /info endpoint
 * Expand tasks to include error messages, application name, and tenant name
 * Log REST responses and requests
 

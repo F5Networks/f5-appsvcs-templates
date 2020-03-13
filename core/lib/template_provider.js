@@ -11,12 +11,10 @@ const { FsSchemaProvider } = require('./schema_provider');
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '1c5977c927c90b1b2776741886f8109bee7e5d29e871ad3d9b896991b8cdcc68',
-        'd67cd5ffdb60e6b42920147030d534ae3a123bb2ea13d15c00876937c717b67e',
-        'b29e5ebeb19803cf382bea0a033f1351d374ca327386ff6102deb44721caf2cb'
+        '47b595bb0bd4f471fe6f057ca1f1e71f5dc84ab2be420ae2a555aca7ea311989'
     ],
     examples: [
-        'ecf1dce5b54ecab68567c4e26a7bbee777f8f6b2affd005d408f4699192ffb1b'
+        '01e426ecd5457c46c0a59eac767b0fcb13085dc0a661b76f542a0b4b051fff60'
     ]
 };
 
@@ -32,7 +30,7 @@ class BaseTemplateProvider {
             'listSets',
             'removeSet',
             'list',
-            'getNumSchema'
+            'getSchemas'
         ];
         abstractMethods.forEach((method) => {
             if (this[method] === undefined) {
@@ -84,9 +82,17 @@ class BaseTemplateProvider {
             .then(() => sourceTypes);
     }
 
+    getNumSchema(filteredSetName) {
+        return this.getSchemas(filteredSetName)
+            .then(schemas => Object.keys(schemas).length);
+    }
+
     getSetData(setName) {
-        return this.fetchSet(setName)
-            .then((templates) => {
+        return Promise.all([
+            this.fetchSet(setName),
+            this.getSchemas(setName)
+        ])
+            .then(([templates, schemas]) => {
                 if (Object.keys(templates).length === 0) {
                     return Promise.reject(new Error(`No templates found for template set ${setName}`));
                 }
@@ -95,6 +101,11 @@ class BaseTemplateProvider {
                 tmplHashes.forEach((hash) => {
                     tsHash.update(hash);
                 });
+                const schemaHashes = Object.values(schemas).map(x => x.hash).sort();
+                schemaHashes.forEach((hash) => {
+                    tsHash.update(hash);
+                });
+
                 const tsHashDigest = tsHash.digest('hex');
                 const supported = (
                     Object.keys(supportedHashes).includes(setName)
@@ -109,6 +120,14 @@ class BaseTemplateProvider {
                         acc.push({
                             name: curr,
                             hash: tmpl.sourceHash
+                        });
+                        return acc;
+                    }, []),
+                    schemas: Object.keys(schemas).reduce((acc, curr) => {
+                        const schema = schemas[curr];
+                        acc.push({
+                            name: schema.name,
+                            hash: schema.hash
                         });
                         return acc;
                     }, [])
@@ -127,9 +146,7 @@ class FsTemplateProvider extends BaseTemplateProvider {
 
     _loadTemplate(templateName) {
         const tsName = templateName.split('/')[0];
-        if (!this.schemaProviders[tsName]) {
-            this.schemaProviders[tsName] = new FsSchemaProvider(`${this.config_template_path}/${tsName}`);
-        }
+        this._ensureSchemaaProvider(tsName);
         const schemaProvider = this.schemaProviders[tsName];
         let useMst = 0;
         let tmplpath = `${this.config_template_path}/${templateName}`;
@@ -152,6 +169,12 @@ class FsTemplateProvider extends BaseTemplateProvider {
                 }
             });
         }).then(tmpldata => Template[(useMst) ? 'loadMst' : 'loadYaml'](tmpldata, schemaProvider));
+    }
+
+    _ensureSchemaaProvider(tsName) {
+        if (!this.schemaProviders[tsName]) {
+            this.schemaProviders[tsName] = new FsSchemaProvider(`${this.config_template_path}/${tsName}`);
+        }
     }
 
     listSets() {
@@ -188,10 +211,15 @@ class FsTemplateProvider extends BaseTemplateProvider {
                             })
                     );
                 });
-            })))).then(sets => sets.reduce((acc, curr) => acc.concat(curr), []));
+            })))).then(sets => sets.reduce((acc, curr) => acc.concat(curr), []))
+            .then((sets) => {
+                sets.forEach(set => this._ensureSchemaaProvider(set));
+                return sets;
+            });
     }
 
-    getNumSchema(filteredSetName) {
+    getSchemas(filteredSetName) {
+        const schemas = {};
         return Promise.resolve()
             .then(() => {
                 if (filteredSetName) {
@@ -199,8 +227,27 @@ class FsTemplateProvider extends BaseTemplateProvider {
                 }
                 return this.listSets();
             })
-            .then(setList => setList.map(x => this.schemaProviders[x].list()))
-            .then(schemaLists => schemaLists.flat().length);
+            .then((setList) => {
+                setList.forEach(tsName => this._ensureSchemaaProvider(tsName));
+                return setList;
+            })
+            .then(setList => Promise.all(setList.map(
+                tsName => this.schemaProviders[tsName].list()
+                    .then(schemaList => Promise.all(schemaList.map(
+                        schemaName => this.schemaProviders[tsName].fetch(schemaName)
+                            .then((schemaData) => {
+                                const name = `${tsName}/${schemaName}`;
+                                const schemaHash = crypto.createHash('sha256');
+                                schemaHash.update(schemaData);
+                                schemas[name] = {
+                                    name,
+                                    data: schemaData,
+                                    hash: schemaHash.digest('hex')
+                                };
+                            })
+                    )))
+            )))
+            .then(() => schemas);
     }
 
     removeSet() {
@@ -281,7 +328,7 @@ class DataStoreTemplateProvider extends BaseTemplateProvider {
             .then(() => this.invalidateCache());
     }
 
-    getNumSchema(filteredSetName) {
+    getSchemas(filteredSetName) {
         return Promise.resolve()
             .then(() => {
                 if (filteredSetName) {
@@ -290,7 +337,22 @@ class DataStoreTemplateProvider extends BaseTemplateProvider {
                 return this.listSets();
             })
             .then(setNames => Promise.all(setNames.map(x => this.storage.getItem(x))))
-            .then(sets => sets.reduce((acc, curr) => acc + Object.keys(curr.schemas).length, 0));
+            .then(setData => setData.filter(x => x))
+            .then(setData => setData.reduce((acc, curr) => {
+                const tsName = curr.name;
+                Object.keys(curr.schemas).forEach((schemaName) => {
+                    const schemaData = curr.schemas[schemaName];
+                    const name = `${tsName}/${schemaName}`;
+                    const schemaHash = crypto.createHash('sha256');
+                    schemaHash.update(schemaData);
+                    acc[name] = {
+                        name,
+                        data: schemaData,
+                        hash: schemaHash.digest('hex')
+                    };
+                });
+                return acc;
+            }, {}));
     }
 
     static fromFs(datastore, templateRootPath, filteredSets) {
