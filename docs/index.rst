@@ -23,12 +23,13 @@ Previous buttons to explore the documentation.
 
    userguide/quick-start
    userguide/index
+   userguide/faq
    userguide/using-app-templates
    userguide/template-authoring
    userguide/managing-templates
    userguide/known-issues
    userguide/revision-history
-   userguide/faq
+   
 
 
 
