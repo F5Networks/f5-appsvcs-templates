@@ -11,6 +11,7 @@
 * Add initial TEEM integration
 * Add template hashes to /info endpoint
 * Expand tasks to include error messages, application name, and tenant name
+* Log REST responses and requests
 
 ## CLI
 * Print stack traces on errors
