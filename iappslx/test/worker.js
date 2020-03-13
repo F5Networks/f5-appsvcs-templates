@@ -56,8 +56,9 @@ class RestOp {
     }
 }
 
+// Update worker instance to mimic iControl LX environment
 const patchWorker = (worker) => {
-    worker.prototype.logger = {
+    worker.logger = {
         severe: (str) => {
             console.error(str);
             assert(false);
@@ -70,15 +71,15 @@ const patchWorker = (worker) => {
         fine: console.log,
         log: console.log
     };
-    worker.prototype.completedRestOp = false;
-    worker.prototype.completeRestOperation = function (op) {
+    worker.completedRestOp = false;
+    worker.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
         console.log(JSON.stringify(op, null, 2));
         this.completedRestOp = true;
     };
     const ensureCompletedOp = (fn) => {
-        worker.prototype[`_${fn}`] = worker.prototype[fn];
-        worker.prototype[fn] = function (op) {
+        worker[`_${fn}`] = worker[fn];
+        worker[fn] = function (op) {
             this.completedRestOp = false;
             return this[`_${fn}`](op)
                 .then(() => {
@@ -109,6 +110,8 @@ class TeemDeviceMock {
 
 function createTemplateWorker() {
     const tw = new TemplateWorker();
+    patchWorker(tw);
+
     tw.storage = testStorage;
     tw.templateProvider.storage = testStorage;
     tw.teemDevice = new TeemDeviceMock();
@@ -123,8 +126,6 @@ describe('template worker tests', function () {
         class: 'ADC',
         schemaVersion: '3.0.0'
     };
-
-    patchWorker(TemplateWorker);
 
     beforeEach(function () {
         testStorage = new fast.dataStores.StorageMemory();
