@@ -224,7 +224,13 @@ describe('AS3 Driver tests', function () {
                         id: 'foo2',
                         results: [{
                             code: 200,
-                            message: 'success'
+                            message: 'no change',
+                            tenant: 'other'
+                        },
+                        {
+                            code: 200,
+                            message: 'success',
+                            tenant: 'tenantName'
                         }],
                         declaration: Object.assign({}, as3WithApp, {
                             id: `${AS3DriverConstantsKey}-tenantName-appName-0`
