@@ -395,7 +395,7 @@ route('tasks', 'tasks', () => {
 });
 
 route('api', 'api', () => {
-
+    return Promise.resolve();
 });
 
 route('templates', 'templates', () => {
