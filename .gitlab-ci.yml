@@ -20,6 +20,7 @@ build:
     script:
         - apt-get update && apt-get install -y rpm git
         - cd iappslx && npm ci && npm run build
+        - cd ../core && npm ci && npm run buildbin
     artifacts:
         expire_in: 1 week
         name: f5-appsvcs-templates.$CI_BUILD_REF
