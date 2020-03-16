@@ -394,9 +394,7 @@ route('tasks', 'tasks', () => {
     return renderTaskList();
 });
 
-route('api', 'api', () => {
-    return Promise.resolve();
-});
+route('api', 'api', () => Promise.resolve());
 
 route('templates', 'templates', () => {
     outputElem = document.getElementById('output');
