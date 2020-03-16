@@ -24,7 +24,7 @@ build:
         expire_in: 1 week
         name: f5-appsvcs-templates.$CI_BUILD_REF
         paths:
-            - iappslx/dist/*
+            - dist/*
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}

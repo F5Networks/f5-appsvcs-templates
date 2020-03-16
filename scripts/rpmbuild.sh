@@ -15,7 +15,7 @@ if [ "$NUM_COMMITS_FROM_TAG" -ne 0 ]; then
 fi
 RELEASE=1
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
-OUTPUT_DIR=${MAINDIR}/dist
+OUTPUT_DIR=${MAINDIR}/../dist
 
 rm -rf rpmbuild
 
