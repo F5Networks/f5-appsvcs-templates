@@ -19,11 +19,11 @@ Examine the REST response:
 
 Template Set Hash
 
-F5 provided templates should not be modified. Template status is verified using a hash algorithm which is stored in <BIG-IP>/mgmt/shared/fast/info.
+F5 provided templates should not be modified. Template status is verified using a hash algorithm which is accessible from <BIG-IP>/mgmt/shared/fast/info.
 The gui has a visual indicator if an F5 provided template has been modified or an update to the RPM has been made. Navigate to **iApps > Package Management LX > Templates** tab.
 If a change has been made, an Update button will be present under the Actions column.
 
-View the template set hashes from a Linux shell using cURL:
+View the template set hashes using cURL:
 
   .. code-block:: shell
 
@@ -34,7 +34,7 @@ View the template set hashes from a Linux shell using cURL:
 Logging
 -------
 
-FAST logs to **/var/log/restnoded/restnoded.log** using f5-logger from the framework. FAST supports multiple log levels. The log entries contain a JSON block for easy search & reporting by external tools.
+FAST logs to **/var/log/restnoded/restnoded.log** using f5-logger from the framework supporting multiple log levels.
 
 |
 
@@ -91,4 +91,3 @@ For audit logs in **/var/log/audit**, no matter your BIG-IP user account name, a
 
     <br />
 
-    
