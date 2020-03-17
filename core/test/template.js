@@ -408,6 +408,7 @@ describe('Template class tests', function () {
                 https_port:
                     title: 'Foo'
                     description: Very Foo
+                    default: 500
             template: |
                 {{https_port:f5:https_port}}
         `;
@@ -419,7 +420,8 @@ describe('Template class tests', function () {
 
                 assert.strictEqual(schema.properties.https_port.title, 'Foo');
                 assert.strictEqual(schema.properties.https_port.description, 'Very Foo');
-                assert.strictEqual(schema.properties.https_port.default, 443);
+                assert.strictEqual(schema.properties.https_port.minimum, 0);
+                assert.strictEqual(schema.properties.https_port.default, 500);
             });
     });
 });
