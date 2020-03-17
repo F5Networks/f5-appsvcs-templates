@@ -151,7 +151,7 @@ class Template {
 
                 if (schemaName) {
                     const schemaDef = typeSchemas[schemaName].definitions[defType];
-                    acc.properties[defName] = schemaDef;
+                    acc.properties[defName] = Object.assign({}, schemaDef);
                     if (!acc.properties[defName]) {
                         throw new Error(`No definition for ${defType} in ${schemaName} schema`);
                     }
