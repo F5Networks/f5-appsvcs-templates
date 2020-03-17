@@ -10,8 +10,16 @@ FAST allows users the flexibility to update F5 supplied templates, add new templ
 Updating F5 Template Sets
 -------------------------
 
-From time to time, the F5 supplied template RPM may be updated.  The templates will not auto-update, however an **Update** button will appear on the Templates tab.
-Clicking the **Update** button will update the template without additional user input.
+From time to time, the F5 supplied template RPM may be updated. When this occurs, the following steps can be followed to update your system:
+
+1. Navigate to **iApps > Package Management LX**
+2. Click **Import**
+3. Click **Choose File** navigating to the location of the RPM File
+4. Click **Upload** (if the package has already been installed it will be noted)
+
+The Version number, Build (if applicable) , and Package name will update.
+
+.. NOTE:: The templates will not auto-update, however an **Update** button will appear on the Templates tab. Clicking the **Update** button will update the template without additional user input.
 
 
 Adding New Template Sets
