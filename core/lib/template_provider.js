@@ -14,7 +14,7 @@ const supportedHashes = {
         '47b595bb0bd4f471fe6f057ca1f1e71f5dc84ab2be420ae2a555aca7ea311989'
     ],
     examples: [
-        '01e426ecd5457c46c0a59eac767b0fcb13085dc0a661b76f542a0b4b051fff60'
+        'd0e708656e03573db98b96924e34ec22c1adfc71a6a78e3fa780d51c2b5dede5'
     ]
 };
 
