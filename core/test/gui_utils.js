@@ -64,4 +64,15 @@ describe('GUI utils test', function () {
 
         assert.deepStrictEqual(guiUtils.filterExtraProperties(view, {}), {});
     });
+    it('generate_html_preview', function () {
+        const schema = {
+            properties: {
+                foo: { type: 'string' }
+            }
+        };
+        const view = {};
+        const htmlData = guiUtils.generateHtmlPreview(schema, view);
+
+        assert.notStrictEqual(htmlData, '');
+    });
 });

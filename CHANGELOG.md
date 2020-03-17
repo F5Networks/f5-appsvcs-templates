@@ -17,6 +17,7 @@
 
 ## CLI
 * Print stack traces on errors
+* Add new htmlpreview command
 
 ## GUI
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
