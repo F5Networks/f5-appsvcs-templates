@@ -8,12 +8,26 @@ Use this section to read about common troubleshooting steps.
 FAST general troubleshooting tips
 ---------------------------------
 
-* Examine the restnoded failure log at /var/log/restnoded/restnoded.log.  See :ref:`loggingtab` for more information.
-* Examine the REST response:
-	
-    * A 400-level response will carry an error message with it
-    * If this message is missing, incorrect, or misleading, please let us know by filing an issue on Github.
+Restnoded Failure Log
 
+Examine the restnoded failure log at /var/log/restnoded/restnoded.log.  See :ref:`loggingtab` for more information.
+Examine the REST response:
+	
+ * A 400-level response will carry an error message with it
+ * If this message is missing, incorrect, or misleading, please let us know by filing an issue on Github.
+
+
+Template Set Hash
+
+F5 provided templates should not be modified. Template status is verified using a hash algorithm which is stored in <BIG-IP>/mgmt/shared/fast/info.
+The gui has a visual indicator if an F5 provided template has been modified or an update to the RPM has been made. Navigate to **iApps > Package Management LX > Templates** tab.
+If a change has been made, an Update button will be present under the Actions column.
+
+View the template set hashes from a Linux shell using cURL:
+
+  .. code-block:: shell
+
+   $ curl -sku <BIG-IP username>:<BIG-IP password>  https://<IP address of BIG-IP>/mgmt/shared/fast/info
 
 .. _loggingtab:
 
@@ -73,8 +87,6 @@ Fri, 13 Mar 2020 17:24:55 GMT - fine: TemplateWorker sending response:
 
 For audit logs in **/var/log/audit**, no matter your BIG-IP user account name, audit logs show all messages from **admin** and not the specific user name.
 
-
-
 .. |br| raw:: html
 
-   <br />
+    <br />
