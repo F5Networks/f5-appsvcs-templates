@@ -401,4 +401,25 @@ describe('Template class tests', function () {
                 ]);
             });
     });
+    it('schema_mix_types_and_defs', function () {
+        const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
+        const ymldata = `
+            definitions:
+                https_port:
+                    title: 'Foo'
+                    description: Very Foo
+            template: |
+                {{https_port:f5:https_port}}
+        `;
+
+        return Template.loadYaml(ymldata, schemaProvider)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(schema);
+
+                assert.strictEqual(schema.properties.https_port.title, 'Foo');
+                assert.strictEqual(schema.properties.https_port.description, 'Very Foo');
+                assert.strictEqual(schema.properties.https_port.default, 443);
+            });
+    });
 });

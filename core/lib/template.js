@@ -155,7 +155,7 @@ class Template {
                     if (!acc.properties[defName]) {
                         throw new Error(`No definition for ${defType} in ${schemaName} schema`);
                     }
-                    this.definitions[defType] = Object.assign({}, schemaDef);
+                    this.definitions[defType] = Object.assign({}, this.definitions[defType], schemaDef);
                     this.typeDefinitions[defType] = Object.assign({}, schemaDef);
                 } else if (defType === 'text') {
                     acc.properties[defName] = {
