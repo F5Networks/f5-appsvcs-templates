@@ -1,6 +1,6 @@
 {{!
 Example of an HTTPS application using an ASM Policy. Provide a Virtual IP address
-and port along with a list of HTTP server IP addresses, port, and a HTTPS
+and port along with a list of HTTP server IP addresses, port, and an HTTPS
 certificate and private key. Enter the path to an existing ASM policy (WAF) on
 BIG-IP to provide L7 security and logging features.
 }}

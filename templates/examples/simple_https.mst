@@ -1,7 +1,7 @@
 {{!
   An HTTPS application with load balancing. Provide a Virtual IP address and port
-  along with a list of HTTP server IP addresses, a port, and the HTTPS
-  certificate and private key to use.
+  along with a list of HTTP server IP addresses, server port, and the HTTPS
+  certificate and private key.
 }}
 {
   "class": "ADC",

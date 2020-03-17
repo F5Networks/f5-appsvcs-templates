@@ -1,6 +1,6 @@
 {{!
- Simple TCP application load balancer. Provide a Virtual IP address and a port
- for clients to connect to, and a list of IP addresses hosting a TCP service.
+ Simple TCP application load balancer. Provide a Virtual IP address and ports
+ for clients to connect to, along with a list of IP addresses hosting the TCP service.
 }}
 {
   "class": "ADC",
