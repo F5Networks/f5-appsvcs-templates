@@ -7,7 +7,7 @@
   "main": "nodejs/templateWorker.js",
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
-    "lint": "eslint nodejs test",
+    "lint": "eslint nodejs test presentation/app.js",
     "buildapi": "cd presentation && js-yaml ../../docs/openapi.yml > openapi.json && browserify api.js -o api-bundle.js",
     "buildgui": "npm run buildapi && cd presentation && browserify app.js -o bundle.js",
     "buildrpm": "../scripts/rpmbuild.sh",
@@ -25,12 +25,12 @@
     "@babel/core": "^7.8.7",
     "@babel/preset-env": "^7.8.7",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
-    "eslint": "^5.16.0",
-    "mocha": "^6.2.2",
-    "mock-fs": "^4.10.4",
-    "nock": "^11.7.2",
     "browserify": "^16.5.0",
-    "nyc": "^14.1.1",
+    "eslint": "^6.8.0",
+    "mocha": "^7.1.0",
+    "mock-fs": "^4.11.0",
+    "nock": "^12.0.3",
+    "nyc": "^15.0.0",
     "swagger-ui": "^3.25.0"
   },
   "eslintConfig": {

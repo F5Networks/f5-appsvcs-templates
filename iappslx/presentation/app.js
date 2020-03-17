@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint-disable no-console */
 
 'use strict';
 
@@ -36,7 +37,7 @@ const multipartUpload = (file) => {
                 'Content-Type': 'application/octet-stream',
                 'Content-Range': `${start}-${end}/${file.size}`,
                 'Content-Length': (end - start) + 1,
-                'Connection': 'keep-alive'
+                Connection: 'keep-alive'
             },
             body: file.slice(start, end + 1, 'application/octet-stream')
         };
@@ -58,9 +59,9 @@ const multipartUpload = (file) => {
     };
 
     if (CHUNK_SIZE < file.size) {
-        return uploadPart(0, CHUNK_SIZE-1);
+        return uploadPart(0, CHUNK_SIZE - 1);
     }
-    return uploadPart(0, file.size-1);
+    return uploadPart(0, file.size - 1);
 };
 
 
@@ -87,9 +88,13 @@ const newEditor = (tmplid, view) => {
             dispOutput(`Schema modified for the editor:\n${JSON.stringify(schema, null, 2)}`);
 
             // Create a new editor
+            const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema);
+            // eslint-disable-next-line no-undef
             editor = new JSONEditor(formElement, {
                 schema,
+                startval: defaults,
                 compact: true,
+                show_errors: 'always',
                 disable_edit_json: true,
                 disable_properties: true,
                 disable_collapse: true,
@@ -99,10 +104,7 @@ const newEditor = (tmplid, view) => {
             });
             dispOutput('Editor loaded'); // Clear text on new editor load
 
-            // Load with defaults
             editor.on('ready', () => {
-                const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema);
-                editor.setValue(defaults);
                 dispOutput('Editor ready');
             });
 
@@ -139,6 +141,9 @@ const newEditor = (tmplid, view) => {
                     .then(response => response.json())
                     .then((result) => {
                         dispOutput(JSON.stringify(result, null, 2));
+                    })
+                    .then(() => {
+                        window.location.href = '#tasks';
                     });
             };
         })
@@ -159,13 +164,14 @@ function addRouteToHeader(topRoute, title) {
 }
 
 function router() {
-    const rawUrl = location.hash.slice(1) || '';
+    const rawUrl = window.location.hash.slice(1) || '';
     const url = rawUrl.replace(/\/application.*?\/edit/, '');
     const urlParts = url.split('/');
     const routeInfo = routes[urlParts[0]];
 
     // render header menu
     const navBar = document.getElementById('navBar');
+    const navBarDisplay = navBar.style.display;
     navBar.innerHTML = '';
 
     Object.keys(navTitles).forEach((k) => {
@@ -203,10 +209,15 @@ function router() {
     const pageId = `#page-${routeInfo.pageName}`;
     const pageTmpl = document.querySelector(pageId);
     elem.appendChild(document.importNode(pageTmpl.content, true));
+    elem.style.display = 'none';
+    navBar.style.display = 'none';
 
-    if (routeInfo.pageFunc) {
-        routeInfo.pageFunc(urlParts.slice(1).join('/'));
-    }
+    const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
+    pageFunc(urlParts.slice(1).join('/'))
+        .finally(() => {
+            elem.style.display = 'block';
+            navBar.style.display = navBarDisplay;
+        });
 }
 
 window.addEventListener('hashchange', router);
@@ -227,7 +238,7 @@ route('', 'apps', () => {
     let count = 0;
     let lastTenant = '';
     dispOutput('Fetching applications list');
-    getJSON('applications')
+    return getJSON('applications')
         .then((appsList) => {
             listElem.innerHTML = `<div class="appListRow">
               <div class="appListTitle">Tenant</div>
@@ -242,7 +253,8 @@ route('', 'apps', () => {
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if (++count%2) row.classList.add('zebraRow');
+                count += 1;
+                if (count % 2) row.classList.add('zebraRow');
 
                 const appTenant = document.createElement('div');
                 if (appPair[0] !== lastTenant) {
@@ -282,7 +294,10 @@ route('', 'apps', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     fetch(`${endPointUrl}/applications/${appPairStr}`, {
                         method: 'DELETE'
-                    });
+                    })
+                        .then(() => {
+                            window.location.href = '#tasks';
+                        });
                 });
                 deleteBtn.classList.add('appListEntry');
                 row.appendChild(deleteBtn);
@@ -293,23 +308,27 @@ route('', 'apps', () => {
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
 });
 route('create', 'create', () => {
-    const addTmplBtns = (tmplList) => {
+    const addTmplBtns = (sets) => {
         const elem = document.getElementById('tmpl-btns');
-        tmplList.forEach((item) => {
-            const btn = document.createElement('button');
-            btn.classList.add('btn');
-            btn.classList.add('btn-primary');
-            btn.classList.add('appListEntry');
-            btn.innerText = item;
-            btn.addEventListener('click', () => {
-                newEditor(item);
+        sets.forEach((setData) => {
+            const row = document.createElement('div');
+            elem.appendChild(row);
+            setData.templates.map(x => x.name).forEach((item) => {
+                const btn = document.createElement('button');
+                btn.classList.add('btn');
+                btn.classList.add('btn-primary');
+                btn.classList.add('appListEntry');
+                btn.innerText = item;
+                btn.addEventListener('click', () => {
+                    newEditor(item);
+                });
+                row.appendChild(btn);
             });
-            elem.appendChild(btn);
         });
     };
     outputElem = document.getElementById('output');
     dispOutput('Fetching templates');
-    getJSON('templates')
+    return getJSON('templatesets')
         .then((data) => {
             addTmplBtns(data);
             dispOutput('');
@@ -319,7 +338,7 @@ route('create', 'create', () => {
 route('modify', 'create', (appID) => {
     outputElem = document.getElementById('output');
     dispOutput(`Fetching app data for ${appID}`);
-    getJSON(`applications/${appID}`)
+    return getJSON(`applications/${appID}`)
         .then((appData) => {
             const appDef = appData.constants.fast;
             newEditor(appDef.template, appDef.view);
@@ -328,80 +347,54 @@ route('modify', 'create', (appID) => {
 });
 
 route('tasks', 'tasks', () => {
-    const renderTaskList = () => {
-        fetch('/mgmt/shared/appsvcs/task')
-            .then(data => data.json())
-            .then((data) => {
-                const taskList = document.getElementById('task-list');
-                taskList.innerHTML = `<div class="appListRow">
-                  <div class="appListTitle">Task ID</div>
-                  <div class="appListTitle">Tenant</div>
-                  <div class="appListTitle">Result</div>
-                </div>`;
+    const renderTaskList = () => getJSON('tasks')
+        .then((data) => {
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = `<div class="appListRow">
+              <div class="appListTitle">Task ID</div>
+              <div class="appListTitle">Tenant</div>
+              <div class="appListTitle">Result</div>
+            </div>`;
+            taskList.appendChild(document.createElement('hr'));
+
+            let count = 0;
+            data.forEach((item) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('appListRow');
+                count += 1;
+                if (count % 2) rowDiv.classList.add('zebraRow');
+
+                const idDiv = document.createElement('div');
+                idDiv.classList.add('appListTitle');
+                idDiv.innerText = item.id;
+                rowDiv.appendChild(idDiv);
+
+                const tenantDiv = document.createElement('div');
+                tenantDiv.classList.add('appListTitle');
+                tenantDiv.innerText = `${item.tenant}/${item.application}`;
+                rowDiv.appendChild(tenantDiv);
+
+                const statusDiv = document.createElement('div');
+                statusDiv.classList.add('appListTitle');
+                statusDiv.innerText = item.message;
+                rowDiv.appendChild(statusDiv);
+
+                taskList.appendChild(rowDiv);
                 taskList.appendChild(document.createElement('hr'));
-
-                let count = 0;
-                data.items.forEach((item) => {
-                    const rowDiv = document.createElement('div');
-                    rowDiv.classList.add('appListRow');
-                    if (++count%2) rowDiv.classList.add('zebraRow');
-
-                    const idDiv = document.createElement('div');
-                    idDiv.classList.add('appListTitle');
-                    idDiv.innerText = item.id;
-                    rowDiv.appendChild(idDiv);
-
-                    const tenantDiv = document.createElement('div');
-                    tenantDiv.classList.add('appListTitle');
-
-                    const statusDiv = document.createElement('div');
-                    statusDiv.classList.add('appListTitle');
-
-                    const changes = item.results.filter(r => r.message !== 'no change');
-                    if (changes.length === 0) {
-                        statusDiv.innerText = 'no change';
-                    } else {
-                        changes.forEach((change) => {
-                            const tDiv = document.createElement('div');
-                            tDiv.innerText = `${change.tenant}`;
-                            const mDiv = document.createElement('div');
-                            mDiv.innerText = `${change.message}`;
-                            if (change.errors) {
-                                mDiv.innerText += `\n${change.errors.join('\n')}`;
-                            }
-                            if (change.response) {
-                                mDiv.innerText += `\n${change.response}`;
-                            }
-                            tenantDiv.appendChild(tDiv);
-                            statusDiv.appendChild(mDiv);
-                        });
-                    }
-
-                    rowDiv.appendChild(tenantDiv);
-                    rowDiv.appendChild(statusDiv);
-
-                    taskList.appendChild(rowDiv);
-                    taskList.appendChild(document.createElement('hr'));
-                });
-
-                const inProgressJob = (
-                    data.items[0] &&
-                    data.items[0].results &&
-                    data.items[0].results[0] &&
-                    data.items[0].results[0].message === 'in progress'
-                );
-                if (inProgressJob) {
-                    setTimeout(renderTaskList, 5000);
-                }
             });
-    };
 
-    renderTaskList();
+            const inProgressJob = (
+                data.filter(x => x.message === 'in progress').length !== 0
+            );
+            if (inProgressJob) {
+                setTimeout(renderTaskList, 5000);
+            }
+        });
+
+    return renderTaskList();
 });
 
-route('api', 'api', () => {
-
-});
+route('api', 'api', () => Promise.resolve());
 
 route('templates', 'templates', () => {
     outputElem = document.getElementById('output');
@@ -411,8 +404,8 @@ route('templates', 'templates', () => {
     document.getElementById('add-ts-btn').onclick = () => {
         document.getElementById('ts-file-input').click();
     };
-    document.getElementById('ts-file-input').onchange = (input) => {
-        const file = document.getElementById('ts-file-input').files[0]
+    document.getElementById('ts-file-input').onchange = () => {
+        const file = document.getElementById('ts-file-input').files[0];
         const tsName = file.name.slice(0, -4);
         dispOutput(`Uploading file: ${file.name}`);
         multipartUpload(file)
@@ -433,16 +426,15 @@ route('templates', 'templates', () => {
                 return Promise.resolve();
             })
             .then(() => dispOutput(`${tsName} installed successfully`))
-            .then(() => location.reload())
+            .then(() => window.location.reload())
             .catch(e => dispOutput(`Failed to install template set: ${e.stack}`));
     };
 
-    Promise.all([
+    return Promise.all([
         getJSON('applications'),
-        getJSON('templates'),
         getJSON('templatesets')
     ])
-        .then(([applications, templates, templatesets]) => {
+        .then(([applications, templatesets]) => {
             const setMap = templatesets.reduce((acc, curr) => {
                 acc[curr.name] = curr;
                 return acc;
@@ -466,7 +458,8 @@ route('templates', 'templates', () => {
 
                 const row = document.createElement('div');
                 row.classList.add('appListRow');
-                if (++count%2) {
+                count += 1;
+                if (count % 2) {
                     row.classList.add('zebraRow');
                 }
 
@@ -506,7 +499,7 @@ route('templates', 'templates', () => {
                         return fetch(`${endPointUrl}/templatesets/${setName}`, {
                             method: 'DELETE'
                         })
-                            .then(() => location.reload());
+                            .then(() => window.location.reload());
                     }
                 };
 
@@ -525,7 +518,7 @@ route('templates', 'templates', () => {
                                     name: setName
                                 })
                             }))
-                            .then(() => location.reload());
+                            .then(() => window.location.reload());
                     };
                 }
 

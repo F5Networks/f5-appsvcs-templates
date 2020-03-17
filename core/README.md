@@ -30,13 +30,21 @@ fast <command>
 
 Commands:
   fast validate <file>                      validate given template file
-  fast schema <file>                        get view schema for given template file
-  fast validateView <tmplFile> <viewFile>   validate supplied view with given template
-  fast render <tmplFile> [viewFile]         render given template file with supplied view
+  fast schema <file>                        get view schema for given template
+                                            file
+  fast validateView <tmplFile> <viewFile>   validate supplied view with given
+                                            template
+  fast render <tmplFile> [viewFile]         render given template file with
+                                            supplied view
+  fast validateTemplateSet                  validate supplied template set
+  <templateSetPath>
+  fast htmlpreview <tmplFile> [viewFile]    generate a static HTML file with a
+                                            preview editor to standard out
 
 Options:
-  --help     Show help                                                              [boolean]
-  --version  Show version number                                                    [boolean]
+  --help     Show help                                                 [boolean]
+  --version  Show version number                                       [boolean]
+
 ```
 
 For more information on a given command use the `--help` flag combined with a command:

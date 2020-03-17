@@ -224,7 +224,13 @@ describe('AS3 Driver tests', function () {
                         id: 'foo2',
                         results: [{
                             code: 200,
-                            message: 'success'
+                            message: 'no change',
+                            tenant: 'other'
+                        },
+                        {
+                            code: 200,
+                            message: 'success',
+                            tenant: 'tenantName'
                         }],
                         declaration: Object.assign({}, as3WithApp, {
                             id: `${AS3DriverConstantsKey}-tenantName-appName-0`
@@ -242,18 +248,22 @@ describe('AS3 Driver tests', function () {
             });
         return assert.becomes(driver.getTasks(), [
             {
+                application: '',
                 id: 'foo1',
                 code: 200,
                 message: 'in progress',
                 name: '',
-                parameters: {}
+                parameters: {},
+                tenant: ''
             },
             {
+                application: 'appName',
                 id: 'foo2',
                 code: 200,
                 message: 'success',
                 name: appMetadata.template,
-                parameters: appMetadata.view
+                parameters: appMetadata.view,
+                tenant: 'tenantName'
             }
         ]);
     });

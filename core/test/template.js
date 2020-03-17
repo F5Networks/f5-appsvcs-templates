@@ -142,7 +142,8 @@ describe('Template class tests', function () {
                 'number_variable'
             ],
             title: '',
-            description: ''
+            description: '',
+            definitions: {}
         };
         return Template.loadMst(mstWithTypes)
             .then((tmpl) => {
@@ -245,6 +246,7 @@ describe('Template class tests', function () {
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(tmpl.definitions.https_port.type, 'integer');
             });
     });
     it('render_array', function () {
@@ -359,8 +361,14 @@ describe('Template class tests', function () {
                     description: 'BarBar'
                 baz:
                     title: 'Baz'
+                section:
+                    title: 'Section'
+                inv_section:
+                    title: 'Inverted'
             template: |
                 {{foo}}{{baz}}{{empty}}
+                {{#section}}{{/section}}
+                {{^inv_section}}{{/inv_section}}
         `;
 
         return Template.loadYaml(ymldata)
@@ -376,6 +384,12 @@ describe('Template class tests', function () {
                 const emptyDef = tmpl.getViewSchema().properties.empty;
                 assert.strictEqual(typeof emptyDef.title, 'undefined');
                 assert.strictEqual(typeof emptyDef.description, 'undefined');
+
+                const secDef = tmpl.getViewSchema().properties.section;
+                assert.strictEqual(secDef.title, 'Section');
+
+                const invSecDef = tmpl.getViewSchema().properties.inv_section;
+                assert.strictEqual(invSecDef.title, 'Inverted');
             });
     });
     it('schema_prop_order_from_def', function () {
@@ -397,6 +411,29 @@ describe('Template class tests', function () {
                     'bar',
                     'other'
                 ]);
+            });
+    });
+    it('schema_mix_types_and_defs', function () {
+        const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
+        const ymldata = `
+            definitions:
+                https_port:
+                    title: 'Foo'
+                    description: Very Foo
+                    default: 500
+            template: |
+                {{https_port:f5:https_port}}
+        `;
+
+        return Template.loadYaml(ymldata, schemaProvider)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(schema);
+
+                assert.strictEqual(schema.properties.https_port.title, 'Foo');
+                assert.strictEqual(schema.properties.https_port.description, 'Very Foo');
+                assert.strictEqual(schema.properties.https_port.minimum, 0);
+                assert.strictEqual(schema.properties.https_port.default, 500);
             });
     });
 });

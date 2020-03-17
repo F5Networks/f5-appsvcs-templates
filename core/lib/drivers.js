@@ -184,23 +184,33 @@ class AS3Driver {
             || this._task_ids.includes(item.id)
         );
         const as3ToFAST = (item) => {
-            const task = {
-                id: item.id,
-                code: item.results[0].code,
-                message: item.results[0].message,
-                name: '',
-                parameters: {}
-            };
+            let tenant = '';
+            let application = '';
+            let name = '';
+            let parameters = {};
+            let results = item.results;
             if (item.declaration.id) {
                 const idParts = item.declaration.id.split('-');
-                const [tenant, app] = idParts.slice(1, 3);
+                [tenant, application] = idParts.slice(1, 3);
                 if (item.declaration[tenant]) {
-                    const appDef = this._appFromDecl(item.declaration, tenant, app);
-                    task.name = appDef.template;
-                    task.parameters = appDef.view;
+                    const appDef = this._appFromDecl(item.declaration, tenant, application);
+                    name = appDef.template;
+                    parameters = appDef.view;
                 }
+
+                results = item.results.filter(r => r.tenant === tenant);
             }
-            return task;
+            const changes = results.filter(r => r.message).map(r => r.message);
+            const errors = results.filter(r => r.error).map(r => r.error);
+            return {
+                id: item.id,
+                code: item.results[0].code,
+                message: `${errors.concat(changes).join('\n')}`,
+                name,
+                parameters,
+                tenant,
+                application
+            };
         };
         return httpUtils.makeRequest(opts)
             .then(result => result.body.items.filter(itemMatch).map(as3ToFAST));

@@ -75,6 +75,15 @@ function runSharedTests(createProvider) {
             .then(() => assert.isFulfilled(provider.fetch('test/complex')))
             .then(() => assert.isFulfilled(provider.fetch('test/simple')));
     });
+    it('get_schemas', function () {
+        const provider = createProvider();
+        return provider.getSchemas()
+            .then((schemas) => {
+                const schemaNames = Object.keys(schemas);
+                console.log(JSON.stringify(schemas, null, 2));
+                assert(schemaNames.includes('test/types'), 'expected test/types to be in the schema list');
+            });
+    });
     it('list_tmpl_sources', function () {
         const provider = createProvider();
         return assert.becomes(provider.getNumTemplateSourceTypes('test'), {
@@ -84,9 +93,43 @@ function runSharedTests(createProvider) {
             .then(() => assert.becomes(provider.getNumTemplateSourceTypes(), {
                 MST: 1,
                 YAML: 2
-            }))
-            .then(() => assert.becomes(provider.getNumSchema('test'), 1))
+            }));
+    });
+    it('num_schemas', function () {
+        const provider = createProvider();
+        return assert.becomes(provider.getNumSchema('test'), 1)
             .then(() => assert.becomes(provider.getNumSchema(), 1));
+    });
+    it('fetch_set', function () {
+        const provider = createProvider();
+        return provider.fetchSet('test')
+            .then((templates) => {
+                console.log(JSON.stringify(templates, null, 2));
+                assert.ok(templates['test/simple']);
+                assert.ok(templates['test/complex']);
+            });
+    });
+    it('get_set_data', function () {
+        const provider = createProvider();
+        return provider.getSetData('test')
+            .then((setData) => {
+                console.log(JSON.stringify(setData, null, 2));
+                assert.ok(setData);
+
+                assert.strictEqual(setData.name, 'test');
+                assert.strictEqual(setData.supported, false);
+
+                const tmplNames = setData.templates.map(x => x.name).sort();
+                assert.deepStrictEqual(tmplNames, [
+                    'test/complex',
+                    'test/simple',
+                    'test/simple_udp'
+                ]);
+                const schemaNames = setData.schemas.map(x => x.name).sort();
+                assert.deepStrictEqual(schemaNames, [
+                    'test/types'
+                ]);
+            });
     });
 }
 

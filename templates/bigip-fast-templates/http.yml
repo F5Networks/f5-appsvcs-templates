@@ -60,11 +60,12 @@ definitions:
   app_pool_def:
     template: |
       {{^existing_pool}}
-        "{{app_name}}_pool": {
+        "{{app_name:f5:non_empty_string}}_pool": {
           "class": "Pool",
           "members": [{
-             "serverAddresses": {{pool_members::array}},
-             "servicePort": {{pool_port:f5:http_port}}
+             "serverAddresses": {{pool_members:f5:ipv4_array}},
+             "servicePort": {{pool_port:f5:http_port}},
+             "shareNodes": true
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           {{#existing_monitor}}
@@ -78,11 +79,11 @@ definitions:
   app_tls_server_def:
     template: |
       {{^existing_tls_server}}
-        "{{app_name}}_tls_server": {
+        "{{app_name:f5:non_empty_string}}_tls_server": {
           "class": "TLS_Server",
-          "certificates": [{ "certificate": "{{app_name}}_certificate" }]
+          "certificates": [{ "certificate": "{{app_name:f5:non_empty_string}}_certificate" }]
         },
-        "{{app_name}}_certificate": {
+        "{{app_name:f5:non_empty_string}}_certificate": {
           "class": "Certificate",
           "certificate": { "bigip": "{{tls_cert_name:f5:tls_cert_name}}" },
           "privateKey": { "bigip": "{{tls_key_name:f5:tls_key_name}}" }
@@ -91,7 +92,7 @@ definitions:
   app_tls_client_def:
     template: |
       {{^existing_tls_client}}
-        "{{app_name}}_tls_client": {
+        "{{app_name:f5:non_empty_string}}_tls_client": {
           "class": "TLS_Client"
         },
       {{/existing_tls_client}}
@@ -108,7 +109,7 @@ definitions:
         },
       {{/existing_pool}}
       {{^existing_pool}}
-        "pool": "{{app_name}}_pool",
+        "pool": "{{app_name:f5:non_empty_string}}_pool",
       {{/existing_pool}}
   service_tls_server_def:
     template: |
@@ -118,7 +119,7 @@ definitions:
         },
       {{/existing_tls_server}}
       {{^existing_tls_server}}
-        "serverTLS": "{{app_name}}_tls_server",
+        "serverTLS": "{{app_name:f5:non_empty_string}}_tls_server",
       {{/existing_tls_server}}
   service_tls_client_def:
     template: |
@@ -128,7 +129,7 @@ definitions:
         },
       {{/existing_tls_client}}
       {{^existing_tls_client}}
-        "clientTLS": "{{app_name}}_tls_client",
+        "clientTLS": "{{app_name:f5:non_empty_string}}_tls_client",
       {{/existing_tls_client}}
   service_http_def:
     template: |
@@ -175,9 +176,9 @@ template: |
     "class": "ADC",
     "schemaVersion": "3.0.0",
     "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
-    "{{tenant_name}}": {
+    "{{tenant_name:f5:non_empty_string}}": {
       "class": "Tenant",
-      "{{app_name}}": {
+      "{{app_name:f5:non_empty_string}}": {
         "class": "Application",
         "template": "https",
         {{> app_pool_def}}

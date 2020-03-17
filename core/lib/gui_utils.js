@@ -1,5 +1,9 @@
 'use strict';
 
+const Mustache = require('mustache');
+
+const htmlStub = require('./html_stub');
+
 const injectFormatsIntoSchema = (schema) => {
     Object.values(schema).forEach((item) => {
         if (item !== null && typeof item === 'object') {
@@ -40,6 +44,8 @@ const modSchemaForJSONEditor = (schema) => {
     schema.title = schema.title || 'Template';
     injectFormatsIntoSchema(schema);
     addDepsToSchema(schema);
+
+    return schema;
 };
 
 const filterExtraProperties = (view, schema) => {
@@ -54,9 +60,18 @@ const filterExtraProperties = (view, schema) => {
     }, {});
 };
 
+const generateHtmlPreview = (schema, view) => {
+    const htmlView = {
+        schema_data: JSON.stringify(modSchemaForJSONEditor(schema)),
+        default_view: JSON.stringify(filterExtraProperties(view, schema))
+    };
+    return Mustache.render(htmlStub, htmlView);
+};
+
 module.exports = {
     injectFormatsIntoSchema,
     addDepsToSchema,
     modSchemaForJSONEditor,
-    filterExtraProperties
+    filterExtraProperties,
+    generateHtmlPreview
 };

@@ -56,6 +56,7 @@ class Template {
         this.title = '';
         this.description = '';
         this.definitions = {};
+        this.typeDefinitions = {};
         this._viewSchema = {};
         this.target = 'as3';
         this.templateText = '';
@@ -149,10 +150,13 @@ class Template {
                 }
 
                 if (schemaName) {
-                    acc.properties[defName] = typeSchemas[schemaName].definitions[defType];
+                    const schemaDef = typeSchemas[schemaName].definitions[defType];
+                    acc.properties[defName] = Object.assign({}, schemaDef);
                     if (!acc.properties[defName]) {
                         throw new Error(`No definition for ${defType} in ${schemaName} schema`);
                     }
+                    this.definitions[defType] = Object.assign({}, schemaDef, this.definitions[defType]);
+                    this.typeDefinitions[defType] = Object.assign({}, schemaDef);
                 } else if (defType === 'text') {
                     acc.properties[defName] = {
                         type: 'string',
@@ -169,6 +173,9 @@ class Template {
                     acc.properties[defName] = {
                         type: defType
                     };
+                }
+                if (this.definitions[defName]) {
+                    Object.assign(acc.properties[defName], this.definitions[defName]);
                 }
                 if (acc.properties[defName].default === undefined) {
                     required.add(defName);
@@ -216,6 +223,11 @@ class Template {
                         type: 'boolean'
                     };
                 }
+
+                if (this.definitions[mstName]) {
+                    Object.assign(acc.properties[mstName], this.definitions[mstName]);
+                }
+
                 required.add(mstName);
 
                 if (items.properties) {
@@ -248,6 +260,10 @@ class Template {
                         }
                         items.properties[item].invertDependency.push(mstName);
                     });
+                }
+
+                if (this.definitions[mstName]) {
+                    Object.assign(acc.properties[mstName], this.definitions[mstName]);
                 }
                 this._mergeSchemaInto(acc, items, dependencies);
                 break;
@@ -284,23 +300,16 @@ class Template {
             }
         });
 
-        // Use definitions to add more information to variables
-        const defKeys = Object.keys(this.definitions);
-        Object.keys(schema.properties).forEach((prop) => {
+        // Get propertyOrder from definition if available
+        Object.values(schema.properties).forEach((schemaDef) => {
+            schemaDef.propertyOrder = 1000;
+        });
+        Object.keys(this.definitions).forEach((prop, idx) => {
             const schemaDef = schema.properties[prop];
-            const def = this.definitions[prop];
-            if (typeof def === 'undefined') {
-                schemaDef.propertyOrder = 1000;
-                // No definition from template, nothing more to do
+            if (!schemaDef) {
                 return;
             }
-
-            // Set title and description from definitions
-            schemaDef.title = def.title || schemaDef.title;
-            schemaDef.description = def.description || schemaDef.description;
-
-            // Order properties based on the order they appear in definition
-            schemaDef.propertyOrder = defKeys.indexOf(prop);
+            schemaDef.propertyOrder = idx;
         });
 
         // Re-sort properties based on propertyOrder
@@ -406,7 +415,8 @@ class Template {
     getViewSchema() {
         return Object.assign({}, this._viewSchema, {
             title: this.title,
-            description: this.description
+            description: this.description,
+            definitions: this.typeDefinitions
         });
     }
 

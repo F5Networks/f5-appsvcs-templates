@@ -56,29 +56,27 @@ class RestOp {
     }
 }
 
+// Update worker instance to mimic iControl LX environment
 const patchWorker = (worker) => {
-    worker.prototype.logger = {
+    worker.logger = {
         severe: (str) => {
             console.error(str);
-            assert(false);
+            assert(false, 'worker hit a severe error');
         },
-        error: (str) => {
-            console.error(str);
-            assert(false);
-        },
+        error: console.log,
         info: console.log,
         fine: console.log,
         log: console.log
     };
-    worker.prototype.completedRestOp = false;
-    worker.prototype.completeRestOperation = function (op) {
+    worker.completedRestOp = false;
+    worker.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
         console.log(JSON.stringify(op, null, 2));
         this.completedRestOp = true;
     };
     const ensureCompletedOp = (fn) => {
-        worker.prototype[`_${fn}`] = worker.prototype[fn];
-        worker.prototype[fn] = function (op) {
+        worker[`_${fn}`] = worker[fn];
+        worker[fn] = function (op) {
             this.completedRestOp = false;
             return this[`_${fn}`](op)
                 .then(() => {
@@ -109,9 +107,13 @@ class TeemDeviceMock {
 
 function createTemplateWorker() {
     const tw = new TemplateWorker();
+    patchWorker(tw);
+
     tw.storage = testStorage;
     tw.templateProvider.storage = testStorage;
     tw.teemDevice = new TeemDeviceMock();
+
+    tw.hookCompleteRestOp();
     return tw;
 }
 
@@ -123,8 +125,6 @@ describe('template worker tests', function () {
         class: 'ADC',
         schemaVersion: '3.0.0'
     };
-
-    patchWorker(TemplateWorker);
 
     beforeEach(function () {
         testStorage = new fast.dataStores.StorageMemory();
@@ -336,11 +336,13 @@ describe('template worker tests', function () {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, [{
+                    application: '',
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
                     name: '',
-                    parameters: {}
+                    parameters: {},
+                    tenant: ''
                 }]);
             });
     });
@@ -367,11 +369,13 @@ describe('template worker tests', function () {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, {
+                    application: '',
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
                     name: '',
-                    parameters: {}
+                    parameters: {},
+                    tenant: ''
                 });
             });
     });
@@ -544,6 +548,7 @@ describe('template worker tests', function () {
     it('post_templateset', function () {
         const worker = createTemplateWorker();
         const op = new RestOp('templatesets');
+        const infoOp = new RestOp('info');
         const tsPath = path.join(process.cwd(), '..', 'templates');
 
         op.setBody({
@@ -556,6 +561,10 @@ describe('template worker tests', function () {
             [tsPath]: {}
         });
 
+        nock('http://localhost:8100')
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(404);
+
         return worker.onPost(op)
             .then(() => {
                 assert.equal(op.status, 200);
@@ -564,6 +573,13 @@ describe('template worker tests', function () {
             .then((tmplSets) => {
                 assert(fs.existsSync(`${tsPath}/scratch`));
                 assert(tmplSets.includes('testset'));
+            })
+            .then(() => worker.onGet(infoOp))
+            .then(() => {
+                assert.strictEqual(infoOp.status, 200);
+
+                const tsNames = infoOp.body.installedTemplates.map(x => x.name);
+                assert(tsNames.includes('testset'));
             })
             .finally(() => mockfs.restore());
     });

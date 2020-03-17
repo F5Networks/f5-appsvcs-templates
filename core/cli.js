@@ -9,6 +9,7 @@ const path = require('path');
 
 const Template = require('./lib/template').Template;
 const FsTemplateProvider = require('./lib/template_provider').FsTemplateProvider;
+const generateHtmlPreview = require('./lib/gui_utils').generateHtmlPreview;
 
 const loadTemplate = (templatePath) => {
     const tmplName = path.basename(templatePath, path.extname(templatePath));
@@ -77,6 +78,13 @@ const validateTemplateSet = (tsPath) => {
         });
 };
 
+const htmlPreview = (templatePath, viewPath) => loadTemplateAndView(templatePath, viewPath)
+    .then(([tmpl, view]) => generateHtmlPreview(
+        tmpl.getViewSchema(),
+        tmpl.getCombinedView(view)
+    ))
+    .then(htmlData => console.log(htmlData));
+
 
 /* eslint-disable-next-line no-unused-expressions */
 require('yargs')
@@ -116,6 +124,15 @@ require('yargs')
                 describe: 'path to template set'
             });
     }, argv => validateTemplateSet(argv.templateSetPath))
+    .command('htmlpreview <tmplFile> [viewFile]', 'generate a static HTML file with a preview editor to standard out', (yargs) => {
+        yargs
+            .positional('tmplFile', {
+                describe: 'template to preview'
+            })
+            .positional('viewFile', {
+                describe: 'optional view file to use in addition to any defined view in the template file'
+            });
+    }, argv => htmlPreview(argv.tmplFile, argv.viewFile))
     .demandCommand(1, 'A command is required')
     .strict()
     .argv;
