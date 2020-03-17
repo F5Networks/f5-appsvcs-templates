@@ -361,8 +361,14 @@ describe('Template class tests', function () {
                     description: 'BarBar'
                 baz:
                     title: 'Baz'
+                section:
+                    title: 'Section'
+                inv_section:
+                    title: 'Inverted'
             template: |
                 {{foo}}{{baz}}{{empty}}
+                {{#section}}{{/section}}
+                {{^inv_section}}{{/inv_section}}
         `;
 
         return Template.loadYaml(ymldata)
@@ -378,6 +384,12 @@ describe('Template class tests', function () {
                 const emptyDef = tmpl.getViewSchema().properties.empty;
                 assert.strictEqual(typeof emptyDef.title, 'undefined');
                 assert.strictEqual(typeof emptyDef.description, 'undefined');
+
+                const secDef = tmpl.getViewSchema().properties.section;
+                assert.strictEqual(secDef.title, 'Section');
+
+                const invSecDef = tmpl.getViewSchema().properties.inv_section;
+                assert.strictEqual(invSecDef.title, 'Inverted');
             });
     });
     it('schema_prop_order_from_def', function () {

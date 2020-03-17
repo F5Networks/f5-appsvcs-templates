@@ -223,6 +223,11 @@ class Template {
                         type: 'boolean'
                     };
                 }
+
+                if (this.definitions[mstName]) {
+                    Object.assign(acc.properties[mstName], this.definitions[mstName]);
+                }
+
                 required.add(mstName);
 
                 if (items.properties) {
@@ -255,6 +260,10 @@ class Template {
                         }
                         items.properties[item].invertDependency.push(mstName);
                     });
+                }
+
+                if (this.definitions[mstName]) {
+                    Object.assign(acc.properties[mstName], this.definitions[mstName]);
                 }
                 this._mergeSchemaInto(acc, items, dependencies);
                 break;
