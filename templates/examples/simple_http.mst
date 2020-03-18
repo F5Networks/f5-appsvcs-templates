@@ -1,7 +1,6 @@
 {{!
-  A simple HTTP application with HTTP load balancing. Provide a virtual address
-  and port to host on, and a list of HTTP server IP addresses and a port to
-  load balance requests to.
+  A simple HTTP application with load balancing. Provide a Virtual IP address and port
+  along with a list of HTTP server IP addresses.
 }}
 {
   "class": "ADC",

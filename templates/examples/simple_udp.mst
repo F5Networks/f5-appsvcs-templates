@@ -1,6 +1,6 @@
 {{!
 Simple UDP application. Provide a Virtual IP Address and a port for client
-to connect to, and a list of IP Addresses with a port hosting a UDP service.
+connection. Enter a list of IP Addresses with a port hosting a UDP service.
 }}
 {
   "class": "ADC",
