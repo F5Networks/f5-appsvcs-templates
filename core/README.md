@@ -54,11 +54,15 @@ For example:
 
 ## Development
 
-`npm` commands should be run in the iappslx subdirectory, not at the top-level.
+`npm` commands should be run in the core subdirectory, not at the top-level.
 * To check for lint errors run `npm run lint` 
 * To run unit tests use `npm test`
 
 Both of these are run as part of the CI pipeline for this repo.
+
+## Documentation
+
+For more information about FAST, see [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
 ## License
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-iApps LX package provides a REST front-end and a GUI for managing and deploying applications via FAST templates.
+This iApps LX package provides a REST front-end and a GUI for managing and deploying applications via FAST templates.
 
 ## Development
 
@@ -35,6 +35,10 @@ npm run buildrpm
 The built RPM package and associated sha256 hash will be placed in the `dist` directory.
 The package can be installed on a BIG-IP using the usual mechanisms for installing iApp LX packages.
 There is also an `install-rpm` script provided in `../scripts` that installs the latest RPM found in `dist` to a target BIG-IP via the REST API.
+
+## Documentation
+
+For more information about FAST, see [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
 ## License
 
