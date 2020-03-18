@@ -1,7 +1,7 @@
 'use strict';
 
 const url = require('url');
-const uuid4 = require('uuid/v4');
+const uuid4 = require('uuid').v4;
 const httpUtils = require('./http_utils');
 
 const AS3DriverConstantsKey = 'fast';
