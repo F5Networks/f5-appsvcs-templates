@@ -17,11 +17,11 @@ CREDS="$2"
 TARGET_RPM="$3"
 
 if [ -z "$TARGET_RPM" ]; then
-    TARGET_RPM=$(ls -t dist/*.rpm 2>/dev/null | head -1)
+    TARGET_RPM=$(ls -t ../dist/*.rpm 2>/dev/null | head -1)
 fi
 
 if [ -z "$TARGET_RPM" ]; then
-    echo "Could not find RPM in ./dist folder. Verify that ./dist folder contains" \
+    echo "Could not find RPM in ../dist folder. Verify that ../dist folder contains" \
         "an rpm or provide specific file path to RPM."
     exit 0
 fi
