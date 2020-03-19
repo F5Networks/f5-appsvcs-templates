@@ -22,7 +22,7 @@ npm install path/to/fast/core
 ## CLI
 
 A command line interface is provided via a `fast` binary.
-The help text is provided below and can also be accessed via `fast --help`:
+The help text is provided below and also accessed via `fast --help`:
 
 
 ```
@@ -62,9 +62,15 @@ For example:
 
 ## Development
 
-`npm` commands should be run in this subdirectory and not the top-level.
-Run `npm run lint` to check for lint errors and `npm test` to run unit tests.
+`npm` commands should be run in the core subdirectory, not at the top-level.
+* To check for lint errors run `npm run lint` 
+* To run unit tests use `npm test`
+
 Both of these are run as part of the CI pipeline for this repo.
+
+## Documentation
+
+For more information about FAST, see [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
 ## License
 

@@ -6,8 +6,10 @@ This iApps LX package provides a REST front-end and a GUI for managing and deplo
 
 ## Development
 
-`npm` commands should be run in this subdirectory and not the top-level.
-Run `npm run lint` to check for lint errors and `npm test` to run unit tests.
+`npm` commands should be run in the iappslx subdirectory, not at the top-level.
+* To check for lint errors run `npm run lint` 
+* To run unit tests use `npm test`
+
 Both of these are run as part of the CI pipeline for this repo.
 
 ## Building
@@ -31,7 +33,7 @@ npm run buildrpm
 ```
 
 The built RPM package and associated sha256 hash will be placed in the `dist` directory.
-The package can be installed to a BIG-IP using the usual mechanisms for installing iApp LX packages.
+The package can be installed on a BIG-IP using the usual mechanisms for installing iApp LX packages.
 There is also an `install-rpm` script provided in `../scripts` that installs the latest RPM found in `dist` to a target BIG-IP via the REST API.
 
 ## Logging
@@ -49,6 +51,10 @@ A `finest` is also available, but already gets spammed with a lot of socket info
 
 All requests and responses are logged at a `fine` log level by default.
 Any response that contains an error status code (>=400) will default to an `error`.
+
+## Documentation
+
+For more information about FAST, see [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
 ## License
 

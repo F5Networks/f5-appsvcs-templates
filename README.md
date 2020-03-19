@@ -46,6 +46,11 @@ In other words, run `npm` commands for a given subproject in that subproject's d
 
 4. Click **F5 Application Services Templates** to start using FAST. 
 
+## Documentation
+
+For more information about FAST, see [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
+
+
 
 ## License
 
