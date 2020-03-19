@@ -19,6 +19,7 @@
 * Print stack traces on errors
 * Add new htmlpreview command
 * Ship stand-alone binary builds of the CLI
+* Form buttons (e.g., "View Template") in the Deploy tab are disabled until a template is loaded
 
 ## GUI
 * Set iApps LX application state to BOUND instead of UNBOUND (dot is now green)
