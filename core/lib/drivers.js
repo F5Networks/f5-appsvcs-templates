@@ -192,7 +192,7 @@ class AS3Driver {
             if (item.declaration.id) {
                 const idParts = item.declaration.id.split('-');
                 [tenant, application] = idParts.slice(1, 3);
-                if (item.declaration[tenant] && item.declaration[application]) {
+                if (item.declaration[tenant] && item.declaration[tenant][application]) {
                     const appDef = this._appFromDecl(item.declaration, tenant, application);
                     name = appDef.template;
                     parameters = appDef.view;
