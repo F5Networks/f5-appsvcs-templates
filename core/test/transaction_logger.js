@@ -86,7 +86,7 @@ describe('TransactionLogger', function () {
                     onExitCalled = true;
                     assert.strictEqual(transaction, 'a transaction');
                     assert.ok(exitTime);
-                    assert.ok(deltaTime);
+                    assert(typeof deltaTime !== 'undefined');
                 }
             );
             return Promise.resolve()
@@ -104,7 +104,7 @@ describe('TransactionLogger', function () {
                     called = true;
                     assert.strictEqual(transaction, 'a transaction');
                     assert.ok(exitTime);
-                    assert.ok(deltaTime);
+                    assert(typeof deltaTime !== 'undefined');
                 }
             );
             return Promise.resolve()
