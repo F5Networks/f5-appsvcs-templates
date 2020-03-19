@@ -25,8 +25,8 @@ The Version number, Build (if applicable) , and Package name will update.
 Adding New Template Sets
 ------------------------
 
-FAST allows for the addition of pre-configured template sets. 
-From the Templates tab, click the **Add Set** button.  Navigate to the location of the template set, click **Open**.  The added templates will display in the template list.
+FAST allows for the addition of pre-configured template sets in .zip file format. 
+From the Templates tab, click the **Add Set** button.  Navigate to the location of the template set .zip file, click **Open**.  The added templates will display in the template list.
 
 
 Removing Template Sets
