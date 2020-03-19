@@ -16,6 +16,7 @@ const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const httpUtils = fast.httpUtils;
 const AS3Driver = fast.AS3Driver;
+const TransactionLogger = fast.TransactionLogger;
 
 const pkg = require('../package.json');
 
@@ -43,6 +44,19 @@ class TemplateWorker {
             name: projectName,
             version: pkg.version
         });
+        this.transactionLogger = new TransactionLogger(
+            (transaction, enterTime) => {
+                const [id, text] = transaction.split('@@');
+                this.logger.info(`TemplateWorker [${id}]: Entering ${text} at ${enterTime}`);
+            },
+            (transaction, exitTime, deltaTime) => {
+                const [id, text] = transaction.split('@@');
+                this.logger.info(`TemplateWorker [${id}]: Exiting ${text} at ${exitTime}`);
+                this.logger.fine(`TemplateWorker [${id}]: ${text} took ${deltaTime}ms to complete`);
+            }
+        );
+
+        this.requestTimes = {};
     }
 
     hookCompleteRestOp() {
@@ -67,6 +81,7 @@ class TemplateWorker {
         this.logger.fine('TemplateWorker: Begin startup');
         return Promise.resolve()
             // Load template sets from disk (i.e., those from the RPM)
+            .then(() => this.enterTransaction(0, 'loading template sets from disk'))
             .then(() => Promise.all([fsprovider.listSets(), this.templateProvider.listSets()]))
             .then(([fsSets, knownSets]) => {
                 const sets = fsSets.filter(setName => !knownSets.includes(setName));
@@ -81,9 +96,11 @@ class TemplateWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
             })
+            .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
-            .then(() => saveState && this.storage.persist())
+            .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
             // Automatically add a block
+            .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
             .then(() => httpUtils.makeGet('/shared/iapp/blocks'))
             .then((results) => {
                 if (results.status !== 200) {
@@ -117,6 +134,7 @@ class TemplateWorker {
                 }
                 return Promise.resolve();
             })
+            .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'))
             // Done
             .then(() => success())
             // Errors
@@ -208,6 +226,17 @@ class TemplateWorker {
         return uuid4();
     }
 
+    enterTransaction(reqid, text) {
+        this.transactionLogger.enter(`${reqid}@@${text}`);
+    }
+
+    exitTransaction(reqid, text) {
+        this.transactionLogger.exit(`${reqid}@@${text}`);
+    }
+
+    recordTransaction(reqid, text, promise) {
+        return this.transactionLogger.enterPromise(`${reqid}@@${text}`, promise);
+    }
 
     gatherTemplateSet(tsid) {
         const fsprovider = new FsTemplateProvider(templatesPath);
@@ -225,7 +254,8 @@ class TemplateWorker {
             });
     }
 
-    gatherInfo() {
+    gatherInfo(requestId) {
+        requestId = requestId || 0;
         const info = {
             version: pkg.version,
             as3Info: {},
@@ -233,17 +263,22 @@ class TemplateWorker {
         };
 
         return Promise.resolve()
-            .then(() => httpUtils.makeGet('/mgmt/shared/appsvcs/info'))
+            .then(() => this.recordTransaction(
+                requestId, 'GET to appsvcs/info',
+                httpUtils.makeGet('/mgmt/shared/appsvcs/info')
+            ))
             .then((as3response) => {
                 if (as3response.status < 300) {
                     info.as3Info = as3response.body;
                 }
             })
+            .then(() => this.enterTransaction(requestId, 'gathering template set data'))
             .then(() => this.templateProvider.listSets())
             .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName))))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
+            .then(() => this.exitTransaction(requestId, 'gathering template set data'))
             .then(() => info);
     }
 
@@ -253,7 +288,7 @@ class TemplateWorker {
     recordRestRequest(restOp) {
         this.requestTimes[restOp.requestId] = new Date();
         this.logger.fine(
-            `TemplateWorker [${restOp.requestId}] received request: method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
+            `TemplateWorker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
         );
     }
 
@@ -265,7 +300,7 @@ class TemplateWorker {
             body: restOp.getBody()
         };
         const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
-        const msg = `TemplateWorker [${restOp.requestId}] sending response after ${dt}ms:\n${JSON.stringify(minOp, null, 2)}`;
+        const msg = `TemplateWorker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];
         if (minOp.status >= 400) {
             this.logger.error(msg);
@@ -289,7 +324,7 @@ class TemplateWorker {
 
     getInfo(restOperation) {
         return Promise.resolve()
-            .then(() => this.gatherInfo())
+            .then(() => this.gatherInfo(restOperation.requestId))
             .then((info) => {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation);
@@ -298,12 +333,17 @@ class TemplateWorker {
     }
 
     getTemplates(restOperation, tmplid) {
+        const reqid = restOperation.requestId;
         if (tmplid) {
             const uri = restOperation.getUri();
             const pathElements = uri.path.split('/');
             tmplid = pathElements.slice(4, 6).join('/');
 
-            return this.templateProvider.fetch(tmplid)
+            return Promise.resolve()
+                .then(() => this.recordTransaction(
+                    reqid, 'fetching template',
+                    this.templateProvider.fetch(tmplid)
+                ))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
                     restOperation.setBody(tmpl);
@@ -311,7 +351,11 @@ class TemplateWorker {
                 }).catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
-        return this.templateProvider.list()
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'fetching template list',
+                this.templateProvider.list()
+            ))
             .then((templates) => {
                 restOperation.setBody(templates);
                 this.completeRestOperation(restOperation);
@@ -320,12 +364,17 @@ class TemplateWorker {
     }
 
     getApplications(restOperation, appid) {
+        const reqid = restOperation.requestId;
         if (appid) {
             const uri = restOperation.getUri();
             const pathElements = uri.path.split('/');
             const tenant = pathElements[4];
             const app = pathElements[5];
-            return httpUtils.makeGet('/mgmt/shared/appsvcs/declare')
+            return Promise.resolve()
+                .then(() => this.recordTransaction(
+                    reqid, 'GET request to appsvcs/declare',
+                    httpUtils.makeGet('/mgmt/shared/appsvcs/declare')
+                ))
                 .then((resp) => {
                     const decl = resp.body;
                     restOperation.setBody(decl[tenant][app]);
@@ -334,7 +383,11 @@ class TemplateWorker {
                 .catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
-        return this.driver.listApplications()
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'gathering a list of applications from the driver',
+                this.driver.listApplications()
+            ))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);
@@ -342,8 +395,13 @@ class TemplateWorker {
     }
 
     getTasks(restOperation, taskid) {
+        const reqid = restOperation.requestId;
         if (taskid) {
-            return this.driver.getTasks()
+            return Promise.resolve()
+                .then(() => this.recordTransaction(
+                    reqid, 'gathering a list of tasks from the driver',
+                    this.driver.getTasks()
+                ))
                 .then(taskList => taskList.filter(x => x.id === taskid))
                 .then((taskList) => {
                     if (taskList.length === 0) {
@@ -356,7 +414,11 @@ class TemplateWorker {
                 .catch(e => this.genRestResponse(restOperation, 500, e.stack));
         }
 
-        return this.driver.getTasks()
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'gathering a list of tasks from the driver',
+                this.driver.getTasks()
+            ))
             .then((tasksList) => {
                 restOperation.setBody(tasksList);
                 this.completeRestOperation(restOperation);
@@ -365,8 +427,13 @@ class TemplateWorker {
     }
 
     getTemplateSets(restOperation, tsid) {
+        const reqid = restOperation.requestId;
         if (tsid) {
-            return this.gatherTemplateSet(tsid)
+            return Promise.resolve()
+                .then(() => this.recordTransaction(
+                    reqid, 'gathering a template set',
+                    this.gatherTemplateSet(tsid)
+                ))
                 .then((tmplSet) => {
                     restOperation.setBody(tmplSet);
                     this.completeRestOperation(restOperation);
@@ -379,7 +446,11 @@ class TemplateWorker {
                 });
         }
 
-        return this.templateProvider.listSets()
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'gathering a list of template sets',
+                this.templateProvider.listSets()
+            ))
             .then(setList => Promise.all(setList.map(x => this.gatherTemplateSet(x))))
             .then((setList) => {
                 restOperation.setBody(setList);
@@ -419,6 +490,7 @@ class TemplateWorker {
     }
 
     postApplications(restOperation, data) {
+        const reqid = restOperation.requestId;
         const tmplid = data.name;
         const tmplView = data.parameters;
         const currentTime = new Date();
@@ -427,9 +499,16 @@ class TemplateWorker {
             view: tmplView,
             lastModified: currentTime.toISOString()
         };
-        return this.templateProvider.fetch(tmplid)
-            .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
-            .then(declaration => this.driver.createApplication(declaration, metadata))
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'loading template',
+                this.templateProvider.fetch(tmplid)
+                    .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
+            ))
+            .then(declaration => this.recordTransaction(
+                reqid, 'requesting new application from the driver',
+                this.driver.createApplication(declaration, metadata)
+            ))
             .catch(e => Promise.reject(
                 this.genRestResponse(restOperation, 400, `unable to load template: ${tmplid}\n${e.stack}`)
             ))
@@ -461,6 +540,7 @@ class TemplateWorker {
 
     postTemplateSets(restOperation, data) {
         const tsid = data.name;
+        const reqid = restOperation.requestId;
         const setpath = `${uploadPath}/${tsid}.zip`;
         const scratch = `${scratchPath}/${tsid}`;
         const onDiskPath = `${templatesPath}/${tsid}`;
@@ -474,10 +554,13 @@ class TemplateWorker {
         }
 
         // Setup a scratch location we can use while validating the template set
+        this.enterTransaction(reqid, 'prepare scratch space');
         fs.removeSync(scratch);
         fs.mkdirsSync(scratch);
+        this.exitTransaction(reqid, 'prepare scratch space');
 
         return Promise.resolve()
+            .then(() => this.enterTransaction(reqid, 'extract template set'))
             .then(() => {
                 if (fs.existsSync(onDiskPath)) {
                     return fs.copy(onDiskPath, scratch);
@@ -490,7 +573,12 @@ class TemplateWorker {
                     });
                 });
             })
-            .then(() => this._validateTemplateSet(scratchPath))
+            .then(() => this.exitTransaction(reqid, 'extract template set'))
+            .then(() => this.recordTransaction(
+                reqid, 'validate template set',
+                this._validateTemplateSet(scratchPath)
+            ))
+            .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
             .then(() => {
@@ -498,6 +586,7 @@ class TemplateWorker {
             })
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack))
             .finally(() => fs.removeSync(scratch));
@@ -528,6 +617,7 @@ class TemplateWorker {
     }
 
     deleteApplications(restOperation, appid) {
+        const reqid = restOperation.requestId;
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
         const tenant = pathElements[4];
@@ -537,7 +627,11 @@ class TemplateWorker {
             return this.genRestResponse(restOperation, 405, 'DELETE is only supported for individual applications');
         }
 
-        return this.driver.deleteApplication(tenant, app)
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'requesting driver to delete an application',
+                this.driver.deleteApplication(tenant, app)
+            ))
             .then((result) => {
                 restOperation.setHeaders('Content-Type', 'text/json');
                 restOperation.setBody(result);
@@ -550,16 +644,24 @@ class TemplateWorker {
     }
 
     deleteTemplateSets(restOperation, tsid) {
+        const reqid = restOperation.requestId;
         if (!tsid) {
             return this.genRestResponse(restOperation, 405, 'DELETE is only supported for individual template sets');
         }
 
-        return this.templateProvider.removeSet(tsid)
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'deleting a template set from the data store',
+                this.templateProvider.removeSet(tsid)
+            ))
             .then(() => {
                 this.generateTeemReportTemplateSet('delete', tsid);
             })
-            .then(() => this.storage.persist())
-            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            .then(() => this.recordTransaction(
+                reqid, 'persisting the data store',
+                this.storage.persist()
+                    .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            ))
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
             .catch((e) => {
                 if (e.message.match(/failed to find template set/)) {

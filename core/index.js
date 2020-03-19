@@ -8,6 +8,7 @@ const Template = require('./lib/template').Template;
 const httpUtils = require('./lib/http_utils');
 const { NullDriver, AS3Driver, AS3DriverConstantsKey } = require('./lib/drivers');
 const guiUtils = require('./lib/gui_utils');
+const TransactionLogger = require('./lib/transaction_logger');
 
 module.exports = {
     FsSchemaProvider,
@@ -19,5 +20,6 @@ module.exports = {
     AS3Driver,
     AS3DriverConstantsKey,
     guiUtils,
-    dataStores
+    dataStores,
+    TransactionLogger
 };
