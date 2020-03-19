@@ -6,6 +6,7 @@ const fs = require('fs-extra');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
+const uuid4 = require('uuid').v4;
 
 const fast = require('@f5devcentral/fast');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
@@ -203,6 +204,11 @@ class TemplateWorker {
     /**
      * Helper functions
      */
+    generateRequestId() {
+        return uuid4();
+    }
+
+
     gatherTemplateSet(tsid) {
         const fsprovider = new FsTemplateProvider(templatesPath);
         return Promise.all([
@@ -245,8 +251,9 @@ class TemplateWorker {
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
+        this.requestTimes[restOp.requestId] = new Date();
         this.logger.fine(
-            `TemplateWorker received request: method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
+            `TemplateWorker [${restOp.requestId}] received request: method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
         );
     }
 
@@ -257,7 +264,9 @@ class TemplateWorker {
             status: restOp.getStatusCode(),
             body: restOp.getBody()
         };
-        const msg = `TemplateWorker sending response:\n${JSON.stringify(minOp, null, 2)}`;
+        const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
+        const msg = `TemplateWorker [${restOp.requestId}] sending response after ${dt}ms:\n${JSON.stringify(minOp, null, 2)}`;
+        delete this.requestTimes[restOp.requestId];
         if (minOp.status >= 400) {
             this.logger.error(msg);
         } else {
@@ -385,6 +394,8 @@ class TemplateWorker {
         const collection = pathElements[3];
         const itemid = pathElements[4];
 
+        restOperation.requestId = this.generateRequestId();
+
         this.recordRestRequest(restOperation);
 
         try {
@@ -498,6 +509,8 @@ class TemplateWorker {
         const pathElements = uri.path.split('/');
         const collection = pathElements[3];
 
+        restOperation.requestId = this.generateRequestId();
+
         this.recordRestRequest(restOperation);
 
         try {
@@ -561,6 +574,8 @@ class TemplateWorker {
         const pathElements = uri.path.split('/');
         const collection = pathElements[3];
         const itemid = pathElements[4];
+
+        restOperation.requestId = this.generateRequestId();
 
         this.recordRestRequest(restOperation);
 
