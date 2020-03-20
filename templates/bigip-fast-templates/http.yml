@@ -92,14 +92,14 @@ definitions:
     template: |
       {{#enable_pool}}
         {{#make_pool}}
-          "{{app_name:bigip:non_empty_string}}_pool": {
+          "{{app_name:f5:non_empty_string}}_pool": {
             "class": "Pool",
             "members": [{
-              "serverAddresses": {{pool_members:bigip:ipv4_array}},
-              "servicePort": {{pool_port:bigip:port}},
+              "serverAddresses": {{pool_members:f5:ipv4_array}},
+              "servicePort": {{pool_port:f5:port}},
               "shareNodes": true
             }],
-            "loadBalancingMode": "{{load_balancing_mode:bigip:load_balancing_mode}}",
+            "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             {{#enable_monitor}}
               {{#make_monitor}}
                 {{#enable_tls_client}}
@@ -121,9 +121,9 @@ definitions:
       {{#enable_snat}}
         {{^snat_automap}}
           {{#make_snatpool}}
-            "{{app_name:bigip:non_empty_string}}_snatpool": {
+            "{{app_name:f5:non_empty_string}}_snatpool": {
               "class": "SNAT_Pool",
-              "members": {{snatpool_members:bigip:ipv4_array}}
+              "members": {{snatpool_members:f5:ipv4_array}}
             },
           {{/make_snatpool}}
         {{/snat_automap}}
@@ -132,14 +132,14 @@ definitions:
     template: |
       {{#enable_tls_server}}
         {{#make_tls_server_profile}}
-          "{{app_name:bigip:non_empty_string}}_tls_server": {
+          "{{app_name:f5:non_empty_string}}_tls_server": {
             "class": "TLS_Server",
-            "certificates": [{ "certificate": "{{app_name:bigip:non_empty_string}}_certificate" }]
+            "certificates": [{ "certificate": "{{app_name:f5:non_empty_string}}_certificate" }]
           },
-          "{{app_name:bigip:non_empty_string}}_certificate": {
+          "{{app_name:f5:non_empty_string}}_certificate": {
             "class": "Certificate",
-            "certificate": { "bigip": "{{tls_cert_name:bigip:non_empty_string}}" },
-            "privateKey": { "bigip": "{{tls_key_name:bigip:non_empty_string}}" }
+            "certificate": { "bigip": "{{tls_cert_name:f5:non_empty_string}}" },
+            "privateKey": { "bigip": "{{tls_key_name:f5:non_empty_string}}" }
           },
         {{/make_tls_server_profile}}
       {{/enable_tls_server}}
@@ -147,7 +147,7 @@ definitions:
     template: |
       {{#enable_tls_client}}
         {{#make_tls_client_profile}}
-          "{{app_name:bigip:non_empty_string}}_tls_client": {
+          "{{app_name:f5:non_empty_string}}_tls_client": {
             "class": "TLS_Client"
           },
         {{/make_tls_client_profile}}
@@ -156,7 +156,7 @@ definitions:
     template: |
       {{#enable_pool}}
         {{#make_pool}}
-          "pool": "{{app_name:bigip:non_empty_string}}_pool",
+          "pool": "{{app_name:f5:non_empty_string}}_pool",
         {{/make_pool}}
         {{^make_pool}}
           "pool": {
@@ -173,7 +173,7 @@ definitions:
         {{^snat_automap}}
           {{#make_snatpool}}
             "snat": {
-              "use": "{{app_name:bigip:non_empty_string}}_snatpool",
+              "use": "{{app_name:f5:non_empty_string}}_snatpool",
             },
           {{/make_snatpool}}
           {{^make_snatpool}}
@@ -187,7 +187,7 @@ definitions:
     template: |
       {{#enable_tls_server}}
         {{#make_tls_server_profile}}
-          "serverTLS": "{{app_name:bigip:non_empty_string}}_tls_server",
+          "serverTLS": "{{app_name:f5:non_empty_string}}_tls_server",
         {{/make_tls_server_profile}}
         {{^make_tls_server_profile}}
           "serverTLS": {
@@ -199,7 +199,7 @@ definitions:
     template: |
       {{#enable_tls_client}}
         {{#make_tls_client_profile}}
-          "clientTLS": "{{app_name:bigip:non_empty_string}}_tls_client",
+          "clientTLS": "{{app_name:f5:non_empty_string}}_tls_client",
         {{/make_tls_client_profile}}
         {{^make_tls_client_profile}}
           "clientTLS": {
@@ -214,7 +214,7 @@ definitions:
       {{/make_http_profile}}
       {{^make_http_profile}}
         "profileHTTP": {
-          "bigip": "{{http_profile_name:bigip:non_empty_string}}"
+          "bigip": "{{http_profile_name:f5:non_empty_string}}"
         },
       {{/make_http_profile}}
   service_acceleration_def:
@@ -225,7 +225,7 @@ definitions:
         {{/make_acceleration_profile}}
         {{^make_acceleration_profile}}
           "profileHTTPAcceleration": {
-            "bigip": "{{acceleration_profile_name:bigip:non_empty_string}}"
+            "bigip": "{{acceleration_profile_name:f5:non_empty_string}}"
           },
         {{/make_acceleration_profile}}
       {{/enable_acceleration}}
@@ -237,7 +237,7 @@ definitions:
         {{/make_compression_profile}}
         {{^make_compression_profile}}
           "profileHTTPCompression": {
-            "bigip": "{{compression_profile_name:bigip:non_empty_string}}"
+            "bigip": "{{compression_profile_name:f5:non_empty_string}}"
           },
         {{/make_compression_profile}}
       {{/enable_compression}}
@@ -249,7 +249,7 @@ definitions:
         {{/make_multiplex_profile}}
         {{^make_multiplex_profile}}
           "profileMultiplex": {
-            "bigip": "{{multiplex_profile_name:bigip:non_empty_string}}"
+            "bigip": "{{multiplex_profile_name:f5:non_empty_string}}"
           },
         {{/make_multiplex_profile}}
       {{/enable_multiplex}}
@@ -296,9 +296,9 @@ template: |
     "class": "ADC",
     "schemaVersion": "3.0.0",
     "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
-    "{{tenant_name:bigip:non_empty_string}}": {
+    "{{tenant_name:f5:non_empty_string}}": {
       "class": "Tenant",
-      "{{app_name:bigip:non_empty_string}}": {
+      "{{app_name:f5:non_empty_string}}": {
         "class": "Application",
         "template": "https",
         {{> app_pool_def}}
@@ -307,8 +307,8 @@ template: |
         {{> app_tls_client_def}}
         "serviceMain": {
           "class": "Service_HTTPS",
-          "virtualAddresses": ["{{virtual_address:bigip:ipv4}}"],
-          "virtualPort": {{virtual_port:bigip:port}},
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualPort": {{virtual_port:f5:port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
           {{> service_tls_server_def}}
