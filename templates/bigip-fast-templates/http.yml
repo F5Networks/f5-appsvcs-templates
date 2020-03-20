@@ -173,7 +173,7 @@ definitions:
         {{^snat_automap}}
           {{#make_snatpool}}
             "snat": {
-              "use": "{{app_name:f5:non_empty_string}}_snatpool",
+              "use": "{{app_name:f5:non_empty_string}}_snatpool"
             },
           {{/make_snatpool}}
           {{^make_snatpool}}
@@ -284,6 +284,7 @@ view:
   http_profile_name: /Common/http
   enable_acceleration: true
   make_acceleration_profile: true
+  acceleration_profile_name: /Common/webacceleration
   enable_compression: true
   make_compression_profile: true
   compression_profile_name: /Common/httpcompression
