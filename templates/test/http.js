@@ -101,7 +101,7 @@ const expected = {
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
-                members: ['10.3.1.1', '10.3.1.2'],
+                members: ['10.3.1.1', '10.3.1.2']
             },
             app1_tls_server: {
                 class: 'TLS_Server',
