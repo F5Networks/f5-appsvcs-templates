@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/hyper-schema",
+  "definitions": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ipv4": {
+      "type": "string",
+      "format": "ipv4",
+      "default": "10.0.0.1"
+    },
+    "ipv4_array": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ipv4"
+      }
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "https_port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535,
+      "default": 443
+    },
+    "http_port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535,
+      "default": 80
+    },
+    "load_balancing_mode": {
+      "type": "string",
+      "enum": [
+        "dynamic-ratio-member",
+        "dynamic-ratio-node",
+        "fastest-app-response",
+        "fastest-node",
+        "least-connections-member",
+        "least-connections-node",
+        "least-sessions",
+        "observed-member",
+        "observed-node",
+        "predictive-member",
+        "predictive-node",
+        "ratio-least-connections-member",
+        "ratio-least-connections-node",
+        "ratio-member",
+        "ratio-node",
+        "ratio-session",
+        "round-robin",
+        "weighted-least-connections-member",
+        "weighted-least-connections-node"
+      ],
+      "default": "least-connections-member"
+    }
+  }
+}
