@@ -69,6 +69,8 @@ definitions:
     title: 'Use AS3 to manage your HTTP profile'
   http_profile_name:
     title: 'Specify the name of an existing BIG-IP HTTP profile.'
+  xForwardedFor:
+    title: 'Insert the x-forwarded-for header'
   enable_acceleration:
     title: 'Web Acceleration or Caching'
     description: 'Web Acceleration or web caching will be enabled depending on your BIG-IP license.'
@@ -293,6 +295,7 @@ view:
   tls_key_name: /Common/default.key
   tls_cleint_profile_name: /Common/serverssl
   make_http_profile: true
+  x_forwarded_for: true
   http_profile_name: /Common/http
   enable_acceleration: true
   make_acceleration_profile: true
