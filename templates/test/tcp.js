@@ -32,9 +32,8 @@ const view = {
 
     // persistence
     enable_persistence: true,
-    persistence_type: 'cookie',
-    enable_fallback_persistence: true,
-    fallback_persistence_type: 'source-address'
+    persistence_type: 'source-address',
+    enable_fallback_persistence: false
 };
 
 const expected = {
@@ -54,8 +53,7 @@ const expected = {
                 snat: {
                     use: 'app1_snatpool'
                 },
-                persistenceMethods: ['cookie'],
-                fallbackPersistenceMethod: 'source-address'
+                persistenceMethods: ['source-address']
             },
             app1_pool: {
                 class: 'Pool',

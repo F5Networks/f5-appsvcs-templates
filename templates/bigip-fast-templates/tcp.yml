@@ -143,8 +143,8 @@ view:
   snat_automap: true
   make_snatpool: true
   enable_persistence: true
-  persistence_type: cookie
-  enable_fallback_persistence: true
+  persistence_type: source-address
+  enable_fallback_persistence: false
   fallback_persistence_type: source-address
 template: |
   {
