@@ -32,6 +32,12 @@ const view = {
     snat_automap: false,
     snat_addresses: ['10.3.1.1', '10.3.1.2'],
 
+    // persistence
+    enable_persistence: true,
+    persistence_type: 'cookie',
+    enable_fallback_persistence: true,
+    fallback_persistence_type: 'source-address',
+
     // tls encryption profile spec
     enable_tls_server: true,
     make_tls_server_profile: true,
@@ -82,6 +88,8 @@ const expected = {
                 snat: {
                     use: 'app1_snatpool'
                 },
+                persistenceMethods: ['cookie'],
+                fallbackPersistenceMethod: 'source-address',
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
                 profileHTTP: {

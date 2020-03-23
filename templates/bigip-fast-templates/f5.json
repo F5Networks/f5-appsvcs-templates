@@ -22,16 +22,22 @@
       "maximum": 65535
     },
     "https_port": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 65535,
+      "$ref": "#/definitions/port",
       "default": 443
     },
     "http_port": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 65535,
+      "$ref": "#/definitions/port",
       "default": 80
+    },
+    "persistence": {
+      "type": "string",
+      "enum": [
+        "cookie",
+        "destination-address",
+        "msrdp",
+        "source-address",
+        "tls-session-id"
+      ]
     },
     "load_balancing_mode": {
       "type": "string",
