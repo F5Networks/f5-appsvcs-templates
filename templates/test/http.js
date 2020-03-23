@@ -26,6 +26,7 @@ const view = {
     pool_members: ['10.2.1.1', '10.2.1.2'],
     pool_port: 4433,
     load_balancing_mode: 'round-robin',
+    slow_ramp_time: 300,
 
     // snat
     enable_snat: true,
@@ -107,6 +108,7 @@ const expected = {
                     shareNodes: true
                 }],
                 loadBalancingMode: view.load_balancing_mode,
+                slowRampTime: 300,
                 monitors: ['https']
             },
             app1_snatpool: {

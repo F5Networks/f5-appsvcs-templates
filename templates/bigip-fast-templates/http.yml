@@ -27,6 +27,8 @@ definitions:
   load_balancing_mode:
     title: Which load balancing method do you want to use?
     description: A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.
+  slow_ramp_time:
+    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
   enable_monitor:
     title: Pool Monitor
   make_monitor:
@@ -110,6 +112,7 @@ definitions:
               "shareNodes": true
             }],
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+            "slowRampTime": {{slow_ramp_time::integer}},
             {{#enable_monitor}}
               {{#make_monitor}}
                 {{#enable_tls_client}}
@@ -296,6 +299,7 @@ view:
   enable_pool: true
   make_pool: true
   pool_port: 80
+  slow_ramp_time: 300
   enable_monitor: true
   make_monitor: true
   monitor_name: /Common/http
