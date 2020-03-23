@@ -239,13 +239,10 @@ describe('Template class tests', function () {
     it('render_type_defaults', function () {
         const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
         const mstdata = '{{virtual_port:f5:port}}';
-        const view = {};
-        const reference = '443';
 
         return Template.loadMst(mstdata, schemaProvider)
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
-                assert.strictEqual(tmpl.render(view), reference);
                 assert.strictEqual(tmpl.definitions.port.type, 'integer');
             });
     });
