@@ -415,7 +415,7 @@ describe('Template class tests', function () {
         const ymldata = `
             definitions:
                 https_port:
-                    title: 'Foo'
+                    title: Foo
                     description: Very Foo
                     default: 500
             template: |
