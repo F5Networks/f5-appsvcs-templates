@@ -43,7 +43,7 @@ definitions:
     title: 'Use AS3 to manage your SNAT pool.'
   snatpool_name:
     title: 'Specify the name of an existing BIG-IP SNAT pool.'
-  snatpool_members:
+  snat_addresses:
     title: SNAT Pool Addresses
   enable_tls_server:
     title: 'TLS Server'
@@ -110,7 +110,9 @@ definitions:
                 {{/enable_tls_client}}
               {{/make_monitor}}
               {{^make_monitor}}
-                "monitors": [ "{{monitor_name}}" ]
+                "monitors": [{
+                  "bigip": "{{monitor_name}}"
+                }]
               {{/make_monitor}}
             {{/enable_monitor}}
           },
@@ -123,7 +125,7 @@ definitions:
           {{#make_snatpool}}
             "{{app_name:f5:non_empty_string}}_snatpool": {
               "class": "SNAT_Pool",
-              "members": {{snatpool_members:f5:ipv4_array}}
+              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
             },
           {{/make_snatpool}}
         {{/snat_automap}}
@@ -152,6 +154,14 @@ definitions:
           },
         {{/make_tls_client_profile}}
       {{/enable_tls_client}}
+  app_http_def:
+    template: |
+      {{#make_http_profile}}
+        "{{app_name:f5:non_empty_string}}_http": {
+          "class": "HTTP_Profile",
+          "xForwardedFor": {{x_forwarded_for::boolean}}
+        },
+      {{/make_http_profile}}
   service_pool_def:
     template: |
       {{#enable_pool}}
@@ -210,7 +220,9 @@ definitions:
   service_http_def:
     template: |
       {{#make_http_profile}}
-        "profileHTTP": "basic",
+        "profileHTTP": {
+          "use": "{{app_name:f5:non_empty_string}}_http"
+        },
       {{/make_http_profile}}
       {{^make_http_profile}}
         "profileHTTP": {
@@ -306,6 +318,7 @@ template: |
         {{> app_snatpool_def}}
         {{> app_tls_server_def}}
         {{> app_tls_client_def}}
+        {{> app_http_def}}
         "serviceMain": {
           "class": "Service_HTTPS",
           "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],

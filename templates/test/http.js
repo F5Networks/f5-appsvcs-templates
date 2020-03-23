@@ -30,7 +30,7 @@ const view = {
     // snat
     enable_snat: true,
     snat_automap: false,
-    snatpool_members: ['10.3.1.1', '10.3.1.2'],
+    snat_addresses: ['10.3.1.1', '10.3.1.2'],
 
     // tls encryption profile spec
     enable_tls_server: true,
@@ -41,8 +41,8 @@ const view = {
     make_tls_client_profile: true,
 
     // http, xff, caching, compression, and oneconnect
-    x_forwarded_for: true,
     make_http_profile: true,
+    x_forwarded_for: true,
     enable_acceleration: true,
     make_acceleration_profile: true,
     enable_compression: true,
@@ -84,7 +84,9 @@ const expected = {
                 },
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
-                profileHTTP: 'basic',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
                 profileHTTPAcceleration: 'basic',
                 profileHTTPCompression: 'basic',
                 profileMultiplex: 'basic'
@@ -101,7 +103,7 @@ const expected = {
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
-                members: ['10.3.1.1', '10.3.1.2']
+                snatAddresses: view.snat_addresses
             },
             app1_tls_server: {
                 class: 'TLS_Server',
@@ -116,6 +118,10 @@ const expected = {
             },
             app1_tls_client: {
                 class: 'TLS_Client'
+            },
+            app1_http: {
+                class: 'HTTP_Profile',
+                xForwardedFor: true
             }
         }
     }
@@ -128,9 +134,12 @@ describe(template, function () {
 
     describe('tls bridging with default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
-            // default https pool port
+            // default https pool port and existing monitor
             delete view.pool_port;
             expected.t1.app1.app1_pool.members[0].servicePort = 80;
+            view.make_monitor = false;
+            view.monitor_name = '/Common/monitor1';
+            expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
 
             // existing TLS profiles
             view.make_tls_server_profile = false;
@@ -144,6 +153,7 @@ describe(template, function () {
             expected.t1.app1.serviceMain.clientTLS = { bigip: '/Common/serverssl' };
 
             // existing caching, compression, and multiplex profiles
+            delete expected.t1.app1.app1_http;
             view.make_http_profile = false;
             view.http_profile_name = '/Common/http1';
             expected.t1.app1.serviceMain.profileHTTP = { bigip: '/Common/http1' };
@@ -179,9 +189,6 @@ describe(template, function () {
             expected.t1.app1.serviceMain.snat = 'auto';
 
             // default caching, compression, and multiplex profiles
-            delete view.http_profile_name;
-            view.make_http_profile = true;
-            expected.t1.app1.serviceMain.profileHTTP = 'basic';
             delete view.acceleration_profile_name;
             view.make_acceleration_profile = true;
             expected.t1.app1.serviceMain.profileHTTPAcceleration = 'basic';
