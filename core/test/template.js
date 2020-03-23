@@ -238,7 +238,7 @@ describe('Template class tests', function () {
     });
     it('render_type_defaults', function () {
         const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
-        const mstdata = '{{virtual_port:f5:https_port}}';
+        const mstdata = '{{virtual_port:f5:port}}';
         const view = {};
         const reference = '443';
 
@@ -246,7 +246,7 @@ describe('Template class tests', function () {
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
                 assert.strictEqual(tmpl.render(view), reference);
-                assert.strictEqual(tmpl.definitions.https_port.type, 'integer');
+                assert.strictEqual(tmpl.definitions.port.type, 'integer');
             });
     });
     it('render_array', function () {
@@ -422,7 +422,7 @@ describe('Template class tests', function () {
                     description: Very Foo
                     default: 500
             template: |
-                {{https_port:f5:https_port}}
+                {{https_port:f5:port}}
         `;
 
         return Template.loadYaml(ymldata, schemaProvider)
@@ -430,10 +430,10 @@ describe('Template class tests', function () {
                 const schema = tmpl.getViewSchema();
                 console.log(schema);
 
-                assert.strictEqual(schema.properties.https_port.title, 'Foo');
-                assert.strictEqual(schema.properties.https_port.description, 'Very Foo');
-                assert.strictEqual(schema.properties.https_port.minimum, 0);
-                assert.strictEqual(schema.properties.https_port.default, 500);
+                assert.strictEqual(schema.properties.port.title, 'Foo');
+                assert.strictEqual(schema.properties.port.description, 'Very Foo');
+                assert.strictEqual(schema.properties.port.minimum, 0);
+                assert.strictEqual(schema.properties.port.default, 500);
             });
     });
 });
