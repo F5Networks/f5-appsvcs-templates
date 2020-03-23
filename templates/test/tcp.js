@@ -34,7 +34,7 @@ const view = {
     enable_persistence: true,
     persistence_type: 'cookie',
     enable_fallback_persistence: true,
-    fallback_persistence_type: 'source-address',
+    fallback_persistence_type: 'source-address'
 };
 
 const expected = {
