@@ -427,10 +427,10 @@ describe('Template class tests', function () {
                 const schema = tmpl.getViewSchema();
                 console.log(schema);
 
-                assert.strictEqual(schema.properties.port.title, 'Foo');
-                assert.strictEqual(schema.properties.port.description, 'Very Foo');
-                assert.strictEqual(schema.properties.port.minimum, 0);
-                assert.strictEqual(schema.properties.port.default, 500);
+                assert.strictEqual(schema.properties.https_port.title, 'Foo');
+                assert.strictEqual(schema.properties.https_port.description, 'Very Foo');
+                assert.strictEqual(schema.properties.https_port.minimum, 0);
+                assert.strictEqual(schema.properties.https_port.default, 500);
             });
     });
 });
