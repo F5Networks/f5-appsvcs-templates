@@ -34,6 +34,7 @@
 ## Templates
 * bigip-fast-templates: Add validation around minimum values
 * bigip-fast-templates/http: Use shareNodes for pool members
+* bigip-fast-templates/tcp added
 
 # 0.2
 ## Core
