@@ -11,6 +11,10 @@ Document Revision History
         - Description
         - Date
         
+      * - 2.0 
+        - Updated the documentation for FAST v0.3.0. This release contains the following changes: |br| * Added a TCP template |br| * Added validation around minimum values to bigip-fast-templates |br| * Added use shareNodes for pool members bigip-fast-templates/http |br| * Auto-refresh the Deploy Log when there is an "in progress" task |br| * Added buttons to Add and Remove template sets |br| * Added button to Update template sets that are out-of-date with the RPM |br| * Added support for logging REST responses and requests |br| * Added hashes for templates and template sets to /info endpoint |br| * The Interface now displays which template sets have a supported hash |br| * Added support for showing which template sets have a supported hash |br| * Added schema and schema hashes to /info endpoint |br| * Added initial TEEM integration |br| * Changed the form buttons on the Deploy tab to disable until a template is loaded |br| * Changed iApps LX application state to BOUND instead of UNBOUND.  Status dot on Application Service List is now green |br| |br| Issues Resolved |br| * Fixed an issue deleting template sets |br| * Fixed an issue running FAST on BIG-IP 13.1 |br| * Fixed parsing issues when there are multiple dependencies
+        - 03-25-20
+
       * - 1.0
         - Documentation for the community-supported preview of FAST templates, version 0.2.0.  This release contains the following changes from the v0.1.0 release: |br| * Various fixes for parsing nested sections and partials |br| * Allow coercion of sections into strings |br| * Add defaults for primitive types (default to empty/false values) |br| * Allow getting variable title and descriptions from the template definitions list |br| * Added descriptions and titles added to the HTTP template |br| * Improved ordering of fields in the HTTP template
         - 02-27-20
