@@ -10,7 +10,7 @@ Known Issues
 * Checkboxes must be clicked multiple times before their intended dependents show/hide correctly.
 * Multi-select list boxes are not supported at this time.
 
- **HTTP Template Issues**
+ **HTTP and TCP Template Issues**
 
-* Template is missing many of the advanced features of the f5.http iApp.  These will be added in subsequent releases.
+* Templates are missing many of the advanced features of the f5.http/tcp iApps.  These will be added in subsequent releases.
 * Drop-down selector does not include a list of BIG-IP objects 
