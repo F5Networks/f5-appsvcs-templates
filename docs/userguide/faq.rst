@@ -24,7 +24,7 @@ See :ref:`about` for a more in-depth description of FAST.
 **Does FAST collect any usage data?**
 
 The F5 Application Services Template (FAST) gathers non-identifiable usage data for the 
-purposes of improving the product as outlines in the end user license agreement for BIG-IP.
+purposes of improving the product as outlined in the end user license agreement for BIG-IP.
 To opt out of data collection, disable the BIG-IP systems phone home feature as described in `K15000: Overview of the Automatic Update check and Automatic Phone Home features <https://support.f5.com/csp/article/K15000/>`_,
 Disabling the Automatic Phone Home feature section.
 
