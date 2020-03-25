@@ -1,0 +1,171 @@
+definitions:
+  tenant_name:
+    title: What is the tenant name?
+    description: The tenant is the high-level grouping in an AS3 declaration. AS3 deploys all configuration for a given tenant in a BIG-IP partition of the same name.
+  app_name:
+    title: What is the application name?
+    description: The application is the low-level grouping in an AS3 declaration. AS3 deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
+  virtual_address:
+    title: What IP address do you want to use for the virtual server?
+    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the web servers.
+  virtual_port:
+    title: What TCP port do you want to use for the virtual server?
+  enable_pool:
+    title: Server Pool
+  make_pool:
+    title: Use AS3 to manage your pool
+    description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
+  pool_name:
+    title: Specify the name of an existing BIG-IP pool.
+  pool_members:
+    title: Server Addresses
+    description: Add the IP addresses of your pool members.
+  pool_port:
+    title: What TCP port do you want to use for the pool members?
+  load_balancing_mode:
+    title: Which load balancing method do you want to use?
+    description: A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.
+  slow_ramp_time:
+    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
+  enable_monitor:
+    title: Pool Monitor
+  make_monitor:
+    title: Use AS3 to manage your pool monitor
+  monitor_name:
+    title: Specify the name of an existing BIG-IP monitor.
+    description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
+  enable_snat:
+    title: SNAT
+    description: Network address translation
+  snat_automap:
+    title: SNAT Automap
+  make_snatpool:
+    title: Use AS3 to manage your SNAT pool.
+  snatpool_name:
+    title: Specify the name of an existing BIG-IP SNAT pool.
+  snat_addresses:
+    title: SNAT Pool Addresses
+  enable_persistence:
+    title: Persistence
+  persistence_type:
+    title: Specify the type of persistence
+  enable_fallback_persistence:
+    title: Fallback Persistence
+  fallback_persistence_type:
+    title: Specify the type of fallback persistence
+  app_pool_def:
+    template: |
+      {{#enable_pool}}
+        {{#make_pool}}
+          "{{app_name:f5:non_empty_string}}_pool": {
+            "class": "Pool",
+            "members": [{
+              "serverAddresses": {{pool_members:f5:ipv4_array}},
+              "servicePort": {{pool_port:f5:port}},
+              "shareNodes": true
+            }],
+            "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+            "slowRampTime": {{slow_ramp_time::integer}},
+            {{#enable_monitor}}
+              {{#make_monitor}}
+                "monitors": [ "tcp" ]
+              {{/make_monitor}}
+              {{^make_monitor}}
+                "monitors": [{
+                  "bigip": "{{monitor_name}}"
+                }]
+              {{/make_monitor}}
+            {{/enable_monitor}}
+          },
+        {{/make_pool}}
+      {{/enable_pool}}
+  app_snatpool_def:
+    template: |
+      {{#enable_snat}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "{{app_name:f5:non_empty_string}}_snatpool": {
+              "class": "SNAT_Pool",
+              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
+  service_pool_def:
+    template: |
+      {{#enable_pool}}
+        {{#make_pool}}
+          "pool": "{{app_name:f5:non_empty_string}}_pool",
+        {{/make_pool}}
+        {{^make_pool}}
+          "pool": {
+            "bigip": "{{pool_name}}"
+          },
+        {{/make_pool}}
+      {{/enable_pool}}
+  service_snat_def:
+    template: |
+      {{#enable_snat}}
+        {{#snat_automap}}
+          "snat": "auto",
+        {{/snat_automap}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "snat": {
+              "use": "{{app_name:f5:non_empty_string}}_snatpool"
+            },
+          {{/make_snatpool}}
+          {{^make_snatpool}}
+            "snat": {
+              "bigip": "{{snatpool_name}}"
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
+  service_persistence:
+    template: |
+      {{#enable_persistence}}
+        "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
+        {{#enable_fallback_persistence}}
+          "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
+        {{/enable_fallback_persistence}}
+      {{/enable_persistence}}
+view:
+  virtual_port: 443
+  enable_pool: true
+  make_pool: true
+  pool_port: 80
+  slow_ramp_time: 300
+  enable_monitor: true
+  make_monitor: true
+  monitor_name: /Common/http
+  enable_snat: true
+  snat_automap: true
+  make_snatpool: true
+  enable_persistence: true
+  persistence_type: source-address
+  enable_fallback_persistence: false
+  fallback_persistence_type: source-address
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
+    "{{tenant_name:f5:non_empty_string}}": {
+      "class": "Tenant",
+      "{{app_name:f5:non_empty_string}}": {
+        "class": "Application",
+        "template": "tcp",
+        {{> app_pool_def}}
+        {{> app_snatpool_def}}
+        "serviceMain": {
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_pool_def}}
+          {{> service_snat_def}}
+          {{> service_persistence}}
+          "class": "Service_TCP"
+        }
+      }
+    }
+  }

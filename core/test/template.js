@@ -238,15 +238,12 @@ describe('Template class tests', function () {
     });
     it('render_type_defaults', function () {
         const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
-        const mstdata = '{{virtual_port:f5:https_port}}';
-        const view = {};
-        const reference = '443';
+        const mstdata = '{{virtual_port:f5:port}}';
 
         return Template.loadMst(mstdata, schemaProvider)
             .then((tmpl) => {
                 console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
-                assert.strictEqual(tmpl.render(view), reference);
-                assert.strictEqual(tmpl.definitions.https_port.type, 'integer');
+                assert.strictEqual(tmpl.definitions.port.type, 'integer');
             });
     });
     it('render_array', function () {
@@ -418,11 +415,11 @@ describe('Template class tests', function () {
         const ymldata = `
             definitions:
                 https_port:
-                    title: 'Foo'
+                    title: Foo
                     description: Very Foo
                     default: 500
             template: |
-                {{https_port:f5:https_port}}
+                {{https_port:f5:port}}
         `;
 
         return Template.loadYaml(ymldata, schemaProvider)

@@ -106,6 +106,13 @@ const newEditor = (tmplid, view) => {
 
             editor.on('ready', () => {
                 dispOutput('Editor ready');
+
+                // Enable form button now that the form is ready
+                document.getElementById('view-tmpl-btn').disabled = false;
+                document.getElementById('view-schema-btn').disabled = false;
+                document.getElementById('view-view-btn').disabled = false;
+                document.getElementById('view-render-btn').disabled = false;
+                document.getElementById('form-btn').disabled = false;
             });
 
             editor.on('change', () => {

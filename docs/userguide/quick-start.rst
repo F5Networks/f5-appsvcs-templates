@@ -11,7 +11,7 @@ Requirements:
 
 Use the following procedure to get started with FAST 
 
-1. Download the FAST Extension (http://github.com/F5devcentral/f5-appsvcs-templates) to a location accessible from the BIG-IP.
+1. Download the FAST Extension (https://github.com/F5devcentral/f5-appsvcs-templates) to a location accessible from the BIG-IP.
 
 2. From the BIG-IP system, install the extension by navigating to **iApps > Package Management LX**. Click **Import** and then select the RPM you downloaded.
 
