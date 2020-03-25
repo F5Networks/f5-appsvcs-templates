@@ -1,176 +1,336 @@
 definitions:
   tenant_name:
-    title: 'What is the tenant name?'
-    description: 'The tenant is the high-level grouping in an AS3 declaration. AS3 deploys all configuration for a given tenant in a BIG-IP partition of the same name.'
+    title: What is the tenant name?
+    description: The tenant is the high-level grouping in an AS3 declaration. AS3 deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
-    title: 'What is the application name?'
-    description: 'The application is the low-level grouping in an AS3 declaration. AS3 deploys all configuration for a given application in a BIG-IP folder within the tenant partition.'
+    title: What is the application name?
+    description: The application is the low-level grouping in an AS3 declaration. AS3 deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   virtual_address:
-    title: 'What IP address do you want to use for the virtual server?'
-    description: 'This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the web servers.'
+    title: What IP address do you want to use for the virtual server?
+    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the web servers.
   virtual_port:
-    title: 'What TCP port do you want to use for the virtual server?'
-  redirect:
-    title: 'Redirect port 80 traffic to this virtual server'
-  existing_pool:
-    title: 'Use an existing pool'
-    description: 'A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.'
+    title: What TCP port do you want to use for the virtual server?
+  enable_redirect:
+    title: Redirect port 80 traffic to this virtual server
+  enable_pool:
+    title: Server Pool
+  make_pool:
+    title: Use AS3 to manage your pool
+    description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
   pool_name:
-    title: 'Specify the name of an existing BIG-IP pool.'
+    title: Specify the name of an existing BIG-IP pool.
+  pool_members:
+    title: Server Addresses
+    description: Add the IP addresses of your pool members.
   pool_port:
-    title: 'What TCP port do you want to use for the pool members?'
+    title: What TCP port do you want to use for the pool members?
   load_balancing_mode:
-    title: 'Which load balancing method do you want to use?'
-    description: 'A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.'
-  existing_monitor:
-    title: 'Use an existing monitor'
+    title: Which load balancing method do you want to use?
+    description: A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.
+  slow_ramp_time:
+    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
+  enable_monitor:
+    title: Pool Monitor
+  make_monitor:
+    title: Use AS3 to manage your pool monitor
   monitor_name:
-    title: 'Specify the name of an existing BIG-IP monitor.'
-    description: 'Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.'
-  existing_tls_server:
-    title: 'Use an existing TLS server profile'
+    title: Specify the name of an existing BIG-IP monitor.
+    description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
+  enable_snat:
+    title: SNAT
+    description: Network address translation
+  snat_automap:
+    title: SNAT Automap
+  make_snatpool:
+    title: Use AS3 to manage your SNAT pool.
+  snatpool_name:
+    title: Specify the name of an existing BIG-IP SNAT pool.
+  snat_addresses:
+    title: SNAT Pool Addresses
+  enable_persistence:
+    title: Persistence
+  persistence_type:
+    title: Specify the type of persistence
+  enable_fallback_persistence:
+    title: Fallback Persistence
+  fallback_persistence_type:
+    title: Specify the type of fallback persistence
+  enable_tls_server:
+    title: TLS Server
+    description: Enable TLS server to decrypt client-side connections
+  make_tls_server_profile:
+    title: Use AS3 to manage your TLS server profile
   tls_server_profile_name:
-    title: 'Specify the name of an existing BIG-IP clientssl profile.'
-    description: 'TLS server profiles are of type "ltm clientssl" on BIG-IP.'
+    title: Specify the name of an existing BIG-IP clientssl profile.
+    description: TLS server profiles are of type "ltm clientssl" on BIG-IP.
   tls_cert_name:
-    title: 'Specify the name of an existing BIG-IP SSL certificate.'
+    title: Specify the name of an existing BIG-IP SSL certificate.
   tls_key_name:
-    title: 'Specify the name of an existing BIG-IP SSL key.'
-  existing_tls_client:
-    title: 'Use an existing TLS client profile'
+    title: Specify the name of an existing BIG-IP SSL key.
+  enable_tls_client:
+    title: TLS Client
+    description: Enable TLS client to encrypt server-side connections
+  make_tls_client_profile:
+    title: Use AS3 to manage your TLS client profile
   tls_client_profile_name:
-    title: 'Specify the name of an existing BIG-IP serverssl profile.'
-    description: 'TLS client profiles are of type "ltm serverssl" on BIG-IP.'
-  existing_http_profile:
-    title: 'Use an existing HTTP profile'
+    title: Specify the name of an existing BIG-IP serverssl profile.
+    description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+  make_http_profile:
+    title: Use AS3 to manage your HTTP profile
   http_profile_name:
-    title: 'Specify the name of an existing BIG-IP HTTP profile.'
-  existing_acceleration_profile:
-    title: 'Use an existing Web Acceleration profile'
+    title: Specify the name of an existing BIG-IP HTTP profile.
+  x_forwarded_for:
+    title: Insert the x-forwarded-for header
+  enable_acceleration:
+    title: Web Acceleration or Caching
+    description: Web Acceleration or web caching will be enabled depending on your BIG-IP license.
+  make_acceleration_profile:
+    title: Use AS3 to manage your Web Acceleration profile
   acceleration_profile_name:
-    title: 'Specify the name of an existing BIG-IP web acceleration profile.'
-  existing_compression_profile:
-    title: 'Use an existing HTTP Compression profile'
+    title: Specify the name of an existing BIG-IP web acceleration profile.
+  enable_compression:
+    title: HTTP Compression
+  make_compression_profile:
+    title: Use AS3 to manage your HTTP Compression profile
   compression_profile_name:
-    title: 'Specify the name of an existing BIG-IP HTTP compression profile.'
-  existing_multiplex_profile:
-    title: 'Use an existing Multiplex (OneConnect) profile'
+    title: Specify the name of an existing BIG-IP HTTP compression profile.
+  enable_multiplex:
+    title: Connection Multiplexing
+  make_multiplex_profile:
+    title: Use AS3 to manage your Multiplex (OneConnect) profile
   multiplex_profile_name:
-    title: 'Specify the name of an existing BIG-IP OneConnect profile.'
+    title: Specify the name of an existing BIG-IP OneConnect profile
   app_pool_def:
     template: |
-      {{^existing_pool}}
-        "{{app_name:f5:non_empty_string}}_pool": {
-          "class": "Pool",
-          "members": [{
-             "serverAddresses": {{pool_members:f5:ipv4_array}},
-             "servicePort": {{pool_port:f5:http_port}},
-             "shareNodes": true
-          }],
-          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
-          {{#existing_monitor}}
-            "monitors": [ "{{monitor_name}}" ]
-          {{/existing_monitor}}
-          {{^existing_monitor}}
-            "monitors": [ "https" ]
-          {{/existing_monitor}}
-        },
-      {{/existing_pool}}
+      {{#enable_pool}}
+        {{#make_pool}}
+          "{{app_name:f5:non_empty_string}}_pool": {
+            "class": "Pool",
+            "members": [{
+              "serverAddresses": {{pool_members:f5:ipv4_array}},
+              "servicePort": {{pool_port:f5:port}},
+              "shareNodes": true
+            }],
+            "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+            "slowRampTime": {{slow_ramp_time::integer}},
+            {{#enable_monitor}}
+              {{#make_monitor}}
+                {{#enable_tls_client}}
+                  "monitors": [ "https" ]
+                {{/enable_tls_client}}
+                {{^enable_tls_client}}
+                  "monitors": [ "http" ]
+                {{/enable_tls_client}}
+              {{/make_monitor}}
+              {{^make_monitor}}
+                "monitors": [{
+                  "bigip": "{{monitor_name}}"
+                }]
+              {{/make_monitor}}
+            {{/enable_monitor}}
+          },
+        {{/make_pool}}
+      {{/enable_pool}}
+  app_snatpool_def:
+    template: |
+      {{#enable_snat}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "{{app_name:f5:non_empty_string}}_snatpool": {
+              "class": "SNAT_Pool",
+              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
   app_tls_server_def:
     template: |
-      {{^existing_tls_server}}
-        "{{app_name:f5:non_empty_string}}_tls_server": {
-          "class": "TLS_Server",
-          "certificates": [{ "certificate": "{{app_name:f5:non_empty_string}}_certificate" }]
-        },
-        "{{app_name:f5:non_empty_string}}_certificate": {
-          "class": "Certificate",
-          "certificate": { "bigip": "{{tls_cert_name:f5:tls_cert_name}}" },
-          "privateKey": { "bigip": "{{tls_key_name:f5:tls_key_name}}" }
-        },
-      {{/existing_tls_server}}
+      {{#enable_tls_server}}
+        {{#make_tls_server_profile}}
+          "{{app_name:f5:non_empty_string}}_tls_server": {
+            "class": "TLS_Server",
+            "certificates": [{ "certificate": "{{app_name:f5:non_empty_string}}_certificate" }]
+          },
+          "{{app_name:f5:non_empty_string}}_certificate": {
+            "class": "Certificate",
+            "certificate": { "bigip": "{{tls_cert_name:f5:non_empty_string}}" },
+            "privateKey": { "bigip": "{{tls_key_name:f5:non_empty_string}}" }
+          },
+        {{/make_tls_server_profile}}
+      {{/enable_tls_server}}
   app_tls_client_def:
     template: |
-      {{^existing_tls_client}}
-        "{{app_name:f5:non_empty_string}}_tls_client": {
-          "class": "TLS_Client"
-        },
-      {{/existing_tls_client}}
-  redirect80_def:
+      {{#enable_tls_client}}
+        {{#make_tls_client_profile}}
+          "{{app_name:f5:non_empty_string}}_tls_client": {
+            "class": "TLS_Client"
+          },
+        {{/make_tls_client_profile}}
+      {{/enable_tls_client}}
+  app_http_def:
     template: |
-      {{#redirect}}
-          "redirect80": true,
-      {{/redirect}}
+      {{#make_http_profile}}
+        "{{app_name:f5:non_empty_string}}_http": {
+          "class": "HTTP_Profile",
+          "xForwardedFor": {{x_forwarded_for::boolean}}
+        },
+      {{/make_http_profile}}
   service_pool_def:
     template: |
-      {{#existing_pool}}
-        "pool": {
-          "bigip": "{{pool_name}}"
-        },
-      {{/existing_pool}}
-      {{^existing_pool}}
-        "pool": "{{app_name:f5:non_empty_string}}_pool",
-      {{/existing_pool}}
+      {{#enable_pool}}
+        {{#make_pool}}
+          "pool": "{{app_name:f5:non_empty_string}}_pool",
+        {{/make_pool}}
+        {{^make_pool}}
+          "pool": {
+            "bigip": "{{pool_name}}"
+          },
+        {{/make_pool}}
+      {{/enable_pool}}
+  service_snat_def:
+    template: |
+      {{#enable_snat}}
+        {{#snat_automap}}
+          "snat": "auto",
+        {{/snat_automap}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "snat": {
+              "use": "{{app_name:f5:non_empty_string}}_snatpool"
+            },
+          {{/make_snatpool}}
+          {{^make_snatpool}}
+            "snat": {
+              "bigip": "{{snatpool_name}}"
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
+  service_persistence:
+    template: |
+      {{#enable_persistence}}
+        "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
+        {{#enable_fallback_persistence}}
+          "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
+        {{/enable_fallback_persistence}}
+      {{/enable_persistence}}
   service_tls_server_def:
     template: |
-      {{#existing_tls_server}}
-        "serverTLS": {
-          "bigip": "{{tls_server_profile_name}}"
-        },
-      {{/existing_tls_server}}
-      {{^existing_tls_server}}
-        "serverTLS": "{{app_name:f5:non_empty_string}}_tls_server",
-      {{/existing_tls_server}}
+      {{#enable_tls_server}}
+        {{#make_tls_server_profile}}
+          "serverTLS": "{{app_name:f5:non_empty_string}}_tls_server",
+        {{/make_tls_server_profile}}
+        {{^make_tls_server_profile}}
+          "serverTLS": {
+            "bigip": "{{tls_server_profile_name}}"
+          },
+        {{/make_tls_server_profile}}
+      {{/enable_tls_server}}
   service_tls_client_def:
     template: |
-      {{#existing_tls_client}}
-        "clientTLS": {
-          "bigip": "{{tls_client_profile_name}}"
-        },
-      {{/existing_tls_client}}
-      {{^existing_tls_client}}
-        "clientTLS": "{{app_name:f5:non_empty_string}}_tls_client",
-      {{/existing_tls_client}}
+      {{#enable_tls_client}}
+        {{#make_tls_client_profile}}
+          "clientTLS": "{{app_name:f5:non_empty_string}}_tls_client",
+        {{/make_tls_client_profile}}
+        {{^make_tls_client_profile}}
+          "clientTLS": {
+            "bigip": "{{tls_client_profile_name}}"
+          },
+        {{/make_tls_client_profile}}
+      {{/enable_tls_client}}
   service_http_def:
     template: |
-      {{#existing_http_profile}}
+      {{#make_http_profile}}
         "profileHTTP": {
-          "bigip": "{{http_profile_name}}"
+          "use": "{{app_name:f5:non_empty_string}}_http"
         },
-      {{/existing_http_profile}}
-      {{^existing_http_profile}}
-        "profileHTTP": "basic",
-      {{/existing_http_profile}}
+      {{/make_http_profile}}
+      {{^make_http_profile}}
+        "profileHTTP": {
+          "bigip": "{{http_profile_name:f5:non_empty_string}}"
+        },
+      {{/make_http_profile}}
   service_acceleration_def:
     template: |
-      {{#existing_acceleration_profile}}
-        "profileHTTPAcceleration": {
-          "bigip": "{{acceleration_profile_name}}"
-        },
-      {{/existing_acceleration_profile}}
-      {{^existing_acceleration_profile}}
-        "profileHTTPAcceleration": "basic",
-      {{/existing_acceleration_profile}}
+      {{#enable_acceleration}}
+        {{#make_acceleration_profile}}
+          "profileHTTPAcceleration": "basic",
+        {{/make_acceleration_profile}}
+        {{^make_acceleration_profile}}
+          "profileHTTPAcceleration": {
+            "bigip": "{{acceleration_profile_name:f5:non_empty_string}}"
+          },
+        {{/make_acceleration_profile}}
+      {{/enable_acceleration}}
   service_compression_def:
     template: |
-      {{#existing_compression_profile}}
-        "profileHTTPCompression": {
-          "bigip": "{{compression_profile_name}}"
-        },
-      {{/existing_compression_profile}}
-      {{^existing_compression_profile}}
-        "profileHTTPCompression": "basic",
-      {{/existing_compression_profile}}
+      {{#enable_compression}}
+        {{#make_compression_profile}}
+          "profileHTTPCompression": "basic",
+        {{/make_compression_profile}}
+        {{^make_compression_profile}}
+          "profileHTTPCompression": {
+            "bigip": "{{compression_profile_name:f5:non_empty_string}}"
+          },
+        {{/make_compression_profile}}
+      {{/enable_compression}}
   service_multiplex_def:
     template: |
-      {{#existing_multiplex_profile}}
+      {{#enable_multiplex}}
+        {{#make_multiplex_profile}}
+          "profileMultiplex": "basic",
+        {{/make_multiplex_profile}}
+        {{^make_multiplex_profile}}
           "profileMultiplex": {
-            "bigip": "{{multiplex_profile_name}}"
-          }
-      {{/existing_multiplex_profile}}
-      {{^existing_multiplex_profile}}
-          "profileMultiplex": "basic"
-      {{/existing_multiplex_profile}}
+            "bigip": "{{multiplex_profile_name:f5:non_empty_string}}"
+          },
+        {{/make_multiplex_profile}}
+      {{/enable_multiplex}}
+  redirect80_def:
+    template: |
+      {{#enable_tls_server}}
+        "redirect80": {{enable_redirect::boolean}}
+      {{/enable_tls_server}}
+      {{^enable_tls_server}}
+        "redirect80": false
+      {{/enable_tls_server}}
+view:
+  virtual_port: 443
+  enable_pool: true
+  make_pool: true
+  pool_port: 80
+  slow_ramp_time: 300
+  enable_monitor: true
+  make_monitor: true
+  monitor_name: /Common/http
+  enable_snat: true
+  snat_automap: true
+  make_snatpool: true
+  enable_persistence: true
+  persistence_type: cookie
+  enable_fallback_persistence: true
+  fallback_persistence_type: source-address
+  enable_tls_server: true
+  make_tls_server_profile: true
+  tls_server_profile_name: /Common/clientssl
+  enable_tls_client: false
+  make_tls_client_profile: true
+  tls_cert_name: /Common/default.crt
+  tls_key_name: /Common/default.key
+  tls_cleint_profile_name: /Common/serverssl
+  make_http_profile: true
+  x_forwarded_for: true
+  http_profile_name: /Common/http
+  enable_acceleration: true
+  make_acceleration_profile: true
+  acceleration_profile_name: /Common/webacceleration
+  enable_compression: true
+  make_compression_profile: true
+  compression_profile_name: /Common/httpcompression
+  enable_multiplex: true
+  make_multiplex_profile: true
+  multiplex_profile_name: /Common/oneconnect
+  enable_redirect: true
 template: |
   {
     "class": "ADC",
@@ -182,21 +342,24 @@ template: |
         "class": "Application",
         "template": "https",
         {{> app_pool_def}}
+        {{> app_snatpool_def}}
         {{> app_tls_server_def}}
         {{> app_tls_client_def}}
+        {{> app_http_def}}
         "serviceMain": {
           "class": "Service_HTTPS",
           "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
-          "virtualPort": {{virtual_port:f5:https_port}},
-          "snat": "auto",
-          {{> redirect80_def}}
+          "virtualPort": {{virtual_port:f5:port}},
           {{> service_pool_def}}
+          {{> service_snat_def}}
+          {{> service_persistence}}
           {{> service_tls_server_def}}
           {{> service_tls_client_def}}
           {{> service_http_def}}
           {{> service_acceleration_def}}
           {{> service_compression_def}}
           {{> service_multiplex_def}}
+          {{> redirect80_def}}
         }
       }
     }
