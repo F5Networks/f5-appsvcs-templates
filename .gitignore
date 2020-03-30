@@ -10,3 +10,4 @@ node_modules
 rpmbuild
 test-output.txt
 iappslx/presentation/openapi.json
+venv/
