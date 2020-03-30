@@ -1,6 +1,6 @@
 {
   "name": "@f5devcentral/fast",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "main": "index.js",
