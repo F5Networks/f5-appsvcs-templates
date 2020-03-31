@@ -31,7 +31,7 @@ info:
 
     ## Task Tracking
 
-    When an application is created in may not happen instantly. A task is run to
+    When an application is created, it may not happen instantly. A task is run to
     deploy the AS3 declaration. These endpoints are for retrieving information
     about currently running and previously run tasks. These endpoints will report
     the success or failure of a particular deployment action, such as creating
@@ -169,7 +169,7 @@ paths:
         default: *defaultResponse
   /templates/{setName}/{templateName}:
     get:
-      summary: get the specified template
+      summary: Get the specified template
       operationId: getTemplate
       tags:
         - Template Management
@@ -229,7 +229,7 @@ paths:
         - name: taskId
           in: path
           required: true
-          description: The id of the task to retrieve
+          description: The ID of the task to retrieve
           schema:
             type: string
       responses:
@@ -255,7 +255,7 @@ paths:
         - Template Management
       responses:
         '200':
-          description: a list of installed template sets
+          description: A list of installed template sets
           content:
             application/jason:
               type: array
@@ -288,7 +288,7 @@ paths:
               description: a zip file containing template schema or mustache files
       responses:
         '200':
-          description: template set installed successfully
+          description: The template set installed successfully
         '400':
           description: The supplied template set name is invalid or missing
           content:
