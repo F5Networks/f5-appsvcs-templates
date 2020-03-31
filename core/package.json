@@ -50,7 +50,7 @@
     "atg-storage": "git+https://github.com/dstokesf5/atg-storage.git#234a935",
     "js-yaml": "^3.13.1",
     "mustache": "^3.2.1",
-    "uuid": "^7.0.2",
+    "uuid": "^7.0.3",
     "yargs": "^15.3.1"
   }
 }
