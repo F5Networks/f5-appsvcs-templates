@@ -27,6 +27,13 @@ build:
         paths:
             - dist/*
 
+audit_packages:
+    stage: test
+    tags:
+        - docker-executor
+    script:
+        - ./scripts/audit-packages.sh
+
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
   stage: build
