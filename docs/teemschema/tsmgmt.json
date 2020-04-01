@@ -1,0 +1,17 @@
+{
+    "type": "object",
+    "title": "f5-appsvcs-templates: Template Set Management v1",
+    "description": "sent when f5-appsvcs-templates creates or deletes a template set",
+    "allOf": [{ "$ref": "common.json" }],
+    "properties": {
+        "action": {
+            "description": "the action performed on the template set",
+            "type": "string",
+            "enum": ["create", "delete"]
+        },
+        "templateSetName": {
+            "description": "the name of the template set the action was performed on",
+            "type": "string"
+        }
+    }
+}
