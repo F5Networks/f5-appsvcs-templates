@@ -75,7 +75,7 @@ paths:
         '500': *serverError
         default: *defaultResponse
     post:
-      summary: Create an application from a template
+      summary: Create one or more applications from templates
       description: |
         This is the main method to deploy a templated application. The parameters posted will be used
         to render a template, and that template will get posted to AS3.
@@ -93,7 +93,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Task'
+              oneOf:
+                - $ref: "#/components/schemas/ApplicationDefinition"
+                - $ref: "#/components/schemas/ApplicationDefinitionList"
       responses:
         '202':
           description: |
@@ -362,6 +364,22 @@ paths:
         default: *defaultResponse
 components:
   schemas:
+    ApplicationDefinition:
+      type: object
+      required:
+        - name
+        - parameters
+      properties:
+        name:
+          description: must be valid template in the system
+          type: string
+        parameters:
+          description: object must conform to specified template's schema
+          type: object
+    ApplicationDefinitionList:
+      type: array
+      items:
+        $ref: "#/components/schemas/ApplicationDefinition"
     Application:
       type: object
       required:

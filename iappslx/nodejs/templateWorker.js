@@ -491,42 +491,88 @@ class TemplateWorker {
 
     postApplications(restOperation, data) {
         const reqid = restOperation.requestId;
-        const tmplid = data.name;
-        const tmplView = data.parameters;
-        const currentTime = new Date();
-        const metadata = {
-            template: tmplid,
-            view: tmplView,
-            lastModified: currentTime.toISOString()
-        };
+        const lastModified = new Date().toISOString();
+        if (!Array.isArray(data)) {
+            data = [data];
+        }
+
+        this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
+
         return Promise.resolve()
-            .then(() => this.recordTransaction(
-                reqid, 'loading template',
-                this.templateProvider.fetch(tmplid)
-                    .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
+            .then(() => {
+                const appsData = [];
+                let promiseChain = Promise.resolve();
+                data.forEach((x) => {
+                    promiseChain = promiseChain
+                        .then(() => {
+                            this.generateTeemReportApplication('modify', x.name);
+                        })
+                        .then(() => this.recordTransaction(
+                            reqid, `loading template (${x.name})`,
+                            this.templateProvider.fetch(x.name)
+                        ))
+                        .catch(e => Promise.reject(
+                            this.genRestResponse(
+                                restOperation,
+                                404,
+                                `unable to load template: ${x.name}\n${e.stack}`
+                            )
+                        ))
+                        .then(tmpl => this.recordTransaction(
+                            reqid, `rendering template (${x.name})`,
+                            Promise.resolve(yaml.safeLoad(tmpl.render(x.parameters)))
+                        ))
+                        .catch((e) => {
+                            if (restOperation.status >= 400) {
+                                return Promise.reject();
+                            }
+                            return Promise.reject(this.genRestResponse(
+                                restOperation,
+                                400,
+                                `failed to render template: ${x.name}\n${e.stack}`
+                            ));
+                        })
+                        .then((decl) => {
+                            appsData.push({
+                                appDef: decl,
+                                metaData: {
+                                    template: x.name,
+                                    view: x.parameters,
+                                    lastModified
+                                }
+                            });
+                        });
+                });
+                return promiseChain.then(() => appsData);
+            })
+            .then(appsData => this.recordTransaction(
+                reqid, 'requesting new application(s) from the driver',
+                this.driver.createApplications(appsData)
             ))
-            .then(declaration => this.recordTransaction(
-                reqid, 'requesting new application from the driver',
-                this.driver.createApplication(declaration, metadata)
-            ))
-            .catch(e => Promise.reject(
-                this.genRestResponse(restOperation, 400, `unable to load template: ${tmplid}\n${e.stack}`)
-            ))
+            .catch((e) => {
+                if (restOperation >= 400) {
+                    return Promise.reject();
+                }
+                return Promise.reject(this.genRestResponse(
+                    restOperation,
+                    400,
+                    `error generating AS3 declaration\n${e.stack}`
+                ));
+            })
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
                 }
-                return this.genRestResponse(restOperation, response.status, {
-                    id: response.body.id,
-                    name: tmplid,
-                    parameters: tmplView
-                });
-            })
-            .then(() => {
-                this.generateTeemReportApplication('modify', tmplid);
+                return this.genRestResponse(restOperation, response.status, data.map(
+                    x => ({
+                        id: response.body.id,
+                        name: x.name,
+                        parameters: x.parameters
+                    })
+                ));
             })
             .catch((e) => {
-                if (restOperation.status !== 400) {
+                if (restOperation.status < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });

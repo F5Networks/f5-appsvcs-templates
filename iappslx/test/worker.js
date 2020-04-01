@@ -444,7 +444,7 @@ describe('template worker tests', function () {
         });
         return worker.onPost(op)
             .then(() => {
-                assert.equal(op.status, 400);
+                assert.equal(op.status, 404);
             });
     });
     it('post_apps', function () {
