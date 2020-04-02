@@ -19,6 +19,7 @@ definitions:
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
   pool_name:
     title: Specify the name of an existing BIG-IP pool.
+    enumFromBigip: 'ltm/pool'
   pool_members:
     title: Server Addresses
     description: Add the IP addresses of your pool members.
@@ -36,6 +37,7 @@ definitions:
   monitor_name:
     title: Specify the name of an existing BIG-IP monitor.
     description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
+    enumFromBigip: 'ltm/monitor/http'
   enable_snat:
     title: SNAT
     description: Network address translation
@@ -63,6 +65,7 @@ definitions:
   tls_server_profile_name:
     title: Specify the name of an existing BIG-IP clientssl profile.
     description: TLS server profiles are of type "ltm clientssl" on BIG-IP.
+    enumFromBigip: 'ltm/profile/client-ssl'
   tls_cert_name:
     title: Specify the name of an existing BIG-IP SSL certificate.
   tls_key_name:
@@ -75,6 +78,7 @@ definitions:
   tls_client_profile_name:
     title: Specify the name of an existing BIG-IP serverssl profile.
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+    enumFromBigip: 'ltm/profile/server-ssl'
   make_http_profile:
     title: Use AS3 to manage your HTTP profile
   http_profile_name:
@@ -88,18 +92,21 @@ definitions:
     title: Use AS3 to manage your Web Acceleration profile
   acceleration_profile_name:
     title: Specify the name of an existing BIG-IP web acceleration profile.
+    enumFromBigip: 'ltm/profile/web-acceleration'
   enable_compression:
     title: HTTP Compression
   make_compression_profile:
     title: Use AS3 to manage your HTTP Compression profile
   compression_profile_name:
     title: Specify the name of an existing BIG-IP HTTP compression profile.
+    enumFromBigip: 'ltm/profile/http-compression'
   enable_multiplex:
     title: Connection Multiplexing
   make_multiplex_profile:
     title: Use AS3 to manage your Multiplex (OneConnect) profile
   multiplex_profile_name:
     title: Specify the name of an existing BIG-IP OneConnect profile
+    enumFromBigip: 'ltm/profile/one-connect'
   app_pool_def:
     template: |
       {{#enable_pool}}
@@ -124,7 +131,7 @@ definitions:
               {{/make_monitor}}
               {{^make_monitor}}
                 "monitors": [{
-                  "bigip": "{{monitor_name}}"
+                  "bigip": "{{monitor_name:f5:bigip_path}}"
                 }]
               {{/make_monitor}}
             {{/enable_monitor}}
@@ -222,7 +229,7 @@ definitions:
         {{/make_tls_server_profile}}
         {{^make_tls_server_profile}}
           "serverTLS": {
-            "bigip": "{{tls_server_profile_name}}"
+            "bigip": "{{tls_server_profile_name:f5:bigip_path}}"
           },
         {{/make_tls_server_profile}}
       {{/enable_tls_server}}
@@ -234,7 +241,7 @@ definitions:
         {{/make_tls_client_profile}}
         {{^make_tls_client_profile}}
           "clientTLS": {
-            "bigip": "{{tls_client_profile_name}}"
+            "bigip": "{{tls_client_profile_name:f5:bigip_path}}"
           },
         {{/make_tls_client_profile}}
       {{/enable_tls_client}}
@@ -258,7 +265,7 @@ definitions:
         {{/make_acceleration_profile}}
         {{^make_acceleration_profile}}
           "profileHTTPAcceleration": {
-            "bigip": "{{acceleration_profile_name:f5:non_empty_string}}"
+            "bigip": "{{acceleration_profile_name:f5:bigip_path}}"
           },
         {{/make_acceleration_profile}}
       {{/enable_acceleration}}
@@ -270,7 +277,7 @@ definitions:
         {{/make_compression_profile}}
         {{^make_compression_profile}}
           "profileHTTPCompression": {
-            "bigip": "{{compression_profile_name:f5:non_empty_string}}"
+            "bigip": "{{compression_profile_name:f5:bigip_path}}"
           },
         {{/make_compression_profile}}
       {{/enable_compression}}
@@ -282,7 +289,7 @@ definitions:
         {{/make_multiplex_profile}}
         {{^make_multiplex_profile}}
           "profileMultiplex": {
-            "bigip": "{{multiplex_profile_name:f5:non_empty_string}}"
+            "bigip": "{{multiplex_profile_name:f5:bigip_path}}"
           },
         {{/make_multiplex_profile}}
       {{/enable_multiplex}}
@@ -317,7 +324,7 @@ view:
   make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
-  tls_cleint_profile_name: /Common/serverssl
+  tls_client_profile_name: /Common/serverssl
   make_http_profile: true
   x_forwarded_for: true
   http_profile_name: /Common/http
