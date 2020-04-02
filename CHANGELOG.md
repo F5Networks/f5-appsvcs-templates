@@ -1,3 +1,14 @@
+# 0.4
+## Added
+* POST to /applications can now take an array of applications
+
+## Fixed
+* GUI elements not showing/hiding consistently
+
+## Changed
+
+## Removed
+
 # 0.3
 ## Core
 * Fix parsing issues when there are multiple dependencies
