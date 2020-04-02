@@ -284,6 +284,44 @@ class TemplateWorker {
             .then(() => info);
     }
 
+    hydrateSchema(schema, requestId) {
+        const enumFromBigipProps = Object.entries(schema.properties)
+            .reduce((acc, curr) => {
+                const [key, value] = curr;
+                if (value.enumFromBigip) {
+                    acc[key] = value;
+                }
+                return acc;
+            }, {});
+        const propNames = Object.keys(enumFromBigipProps);
+        this.logger.fine(
+            `TemplateWorker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
+        );
+
+        return Promise.resolve()
+            .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
+                const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
+                return Promise.resolve()
+                    .then(() => this.recordTransaction(
+                        requestId, `fetching data from ${endPoint}`,
+                        httpUtils.makeGet(endPoint)
+                    ))
+                    .then((response) => {
+                        if (response.status !== 200) {
+                            return Promise.reject(new Error(
+                                `failed GET to ${endPoint}:\n${JSON.stringify(response, null, 2)}`
+                            ));
+                        }
+                        return Promise.resolve(response.body.items.map(x => x.fullPath));
+                    })
+                    .then((items) => {
+                        prop.enum = items;
+                        delete prop.enumFromBigip;
+                    });
+            })))
+            .then(() => schema);
+    }
+
     /**
      * HTTP/REST handlers
      */
@@ -347,8 +385,11 @@ class TemplateWorker {
                 ))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
-                    restOperation.setBody(tmpl);
-                    this.completeRestOperation(restOperation);
+                    return this.hydrateSchema(tmpl._viewSchema, reqid)
+                        .then(() => {
+                            restOperation.setBody(tmpl);
+                            this.completeRestOperation(restOperation);
+                        });
                 }).catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
