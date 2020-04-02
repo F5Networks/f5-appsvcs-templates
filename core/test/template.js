@@ -24,7 +24,8 @@ const mstWithTypes = `{
     ],
     "boolean_type" : {{boolean_variable::boolean}},
     "number_type" : {{number_variable::number}},
-    "duplicate_key": "{{variable1}}"
+    "duplicate_key": "{{variable1}}",
+    "hidden_type": {{hidden_variable::hidden}}
 `;
 
 describe('Template class tests', function () {
@@ -132,7 +133,8 @@ describe('Template class tests', function () {
                     default: []
                 },
                 boolean_variable: { type: 'boolean', default: false },
-                number_variable: { type: 'number', default: 0 }
+                number_variable: { type: 'number', default: 0 },
+                hidden_variable: { type: 'string', format: 'hidden', default: '' }
             },
             required: [
                 'variable1',

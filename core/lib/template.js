@@ -131,7 +131,8 @@ class Template {
             string: '',
             integer: 0,
             array: [],
-            text: ''
+            text: '',
+            hidden: ''
         };
 
         const required = new Set();
@@ -169,6 +170,12 @@ class Template {
                             type: 'string'
                         }
                     };
+                } else if (defType === 'hidden') {
+                    acc.properties[defName] = {
+                        type: 'string',
+                        format: 'hidden',
+                        default: ''
+                    };
                 } else {
                     acc.properties[defName] = {
                         type: defType
@@ -177,7 +184,8 @@ class Template {
                 if (this.definitions[defName]) {
                     Object.assign(acc.properties[defName], this.definitions[defName]);
                 }
-                if (acc.properties[defName].default === undefined) {
+                const propDef = acc.properties[defName];
+                if (typeof propDef.default === 'undefined' && propDef.format !== 'hidden') {
                     required.add(defName);
                 }
                 break;
