@@ -9,6 +9,7 @@
     "test": "mocha --recursive \"./test/*.js\"",
     "lint": "eslint lib test cli.js",
     "buildbin": "../scripts/build-fastbin.sh",
+    "buildpack": "../scripts/build-npmpack.sh",
     "coverage": "nyc npm test"
   },
   "keywords": [
