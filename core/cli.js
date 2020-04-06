@@ -85,6 +85,20 @@ const htmlPreview = (templatePath, viewPath) => loadTemplateAndView(templatePath
     ))
     .then(htmlData => console.log(htmlData));
 
+const packageTemplateSet = (tsPath, dst) => validateTemplateSet(tsPath)
+    .then(() => {
+        const tsName = path.basename(tsPath);
+        const tsDir = path.dirname(tsPath);
+        const provider = new FsTemplateProvider(tsDir, [tsName]);
+
+        dst = dst || `./${tsName}.zip`;
+
+        return provider.buildPackage(tsName, dst)
+            .then(() => {
+                console.log(`Template set "${tsName}" packaged as ${dst}`);
+            });
+    });
+
 
 /* eslint-disable-next-line no-unused-expressions */
 require('yargs')
@@ -133,6 +147,15 @@ require('yargs')
                 describe: 'optional view file to use in addition to any defined view in the template file'
             });
     }, argv => htmlPreview(argv.tmplFile, argv.viewFile))
+    .command('packageTemplateSet <templateSetPath> [dst]', 'build a package for a given template set', (yargs) => {
+        yargs
+            .positional('templateSetPath', {
+                describe: 'path to template set'
+            })
+            .positional('dst', {
+                describe: 'optional location for the built package (defaults to the current working directory)'
+            });
+    }, argv => packageTemplateSet(argv.templateSetPath, argv.dst))
     .demandCommand(1, 'A command is required')
     .strict()
     .argv;

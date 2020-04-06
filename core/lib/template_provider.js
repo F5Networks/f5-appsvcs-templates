@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const archiver = require('archiver');
 
 const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
@@ -252,6 +253,21 @@ class FsTemplateProvider extends BaseTemplateProvider {
 
     removeSet() {
         return Promise.reject(new Error('Set removal not implemented'));
+    }
+
+    buildPackage(setName, dst) {
+        const archive = archiver('zip');
+        const output = fs.createWriteStream(dst);
+        const source = `${this.config_template_path}/${setName}`;
+
+        return new Promise((resolve, reject) => {
+            archive
+                .directory(source, false)
+                .on('error', err => reject(err))
+                .pipe(output);
+            output.on('close', () => resolve());
+            archive.finalize();
+        });
     }
 }
 
