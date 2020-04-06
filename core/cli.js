@@ -50,7 +50,11 @@ const validateViewData = (tmpl, view) => {
         tmpl.validateView(view);
     } catch (e) {
         console.error('view failed validation:');
-        console.error(`${e.stack}`);
+        if (e.stack) {
+            console.error(e.stack);
+        } else {
+            console.error(e);
+        }
         process.exit(1);
     }
 };
