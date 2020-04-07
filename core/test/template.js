@@ -43,18 +43,14 @@ describe('Template class tests', function () {
             }
         `;
 
-        const reference = new Template();
-        reference.description = 'Just a basic template';
-        reference.templateText = mstdata;
-        reference.sourceType = 'MST';
-        reference.sourceText = mstdata;
-        reference.sourceHash = '6ac8bbb53fdfe637931e0dfc9e4259ef685ab5fc8e1e13b796dbf6d3145fe213';
-
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                reference._viewSchema = tmpl._viewSchema;
                 assert.ok(tmpl);
-                assert.deepStrictEqual(tmpl, reference);
+                assert.strictEqual(tmpl.description, 'Just a basic template');
+                assert.strictEqual(tmpl.templateText, mstdata);
+                assert.strictEqual(tmpl.sourceType, 'MST');
+                assert.strictEqual(tmpl.sourceText, mstdata);
+                assert.strictEqual(tmpl.sourceHash, '6ac8bbb53fdfe637931e0dfc9e4259ef685ab5fc8e1e13b796dbf6d3145fe213');
             });
     });
     it('load_yaml', function () {
@@ -73,39 +69,48 @@ describe('Template class tests', function () {
               </html>
         `;
 
-        const reference = new Template();
-        reference.description = '';
-        reference.defaultView = {
-            message: 'Hello!'
-        };
-        reference.definitions = {
-            body: {
-                template: '<body> <h1>{{message}}</h1> </body>'
-            }
-        };
-        reference.templateText = '<html>\n  {{> body}}\n</html>\n';
-        reference.sourceType = 'YAML';
-        reference.sourceText = ymldata;
-        reference.sourceHash = '99223c057171b3aceb955c953a8efdf237e65e36b287138ecd953585217fe783';
-
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
                 assert.ok(tmpl);
-
-                reference._viewSchema = tmpl._viewSchema;
-                assert.deepStrictEqual(tmpl, reference);
+                assert.strictEqual(tmpl.description, '');
+                assert.deepStrictEqual(tmpl.defaultView, {
+                    message: 'Hello!'
+                });
+                assert.deepStrictEqual(tmpl.definitions, {
+                    body: {
+                        template: '<body> <h1>{{message}}</h1> </body>'
+                    }
+                });
+                assert.strictEqual(tmpl.templateText, '<html>\n  {{> body}}\n</html>\n');
+                assert.strictEqual(tmpl.sourceType, 'YAML');
+                assert.strictEqual(tmpl.sourceText, ymldata);
+                assert.strictEqual(tmpl.sourceHash, '99223c057171b3aceb955c953a8efdf237e65e36b287138ecd953585217fe783');
+                assert.strictEqual(tmpl._viewSchema, tmpl._viewSchema);
             });
     });
-    it('from_json', function () {
+    it('from_json_str', function () {
+        let tmpl = null;
         return Template.loadMst(mstWithTypes)
-            .then((tmpl) => {
-                const jsondata = JSON.stringify(tmpl);
-                let jsontmpl = Template.fromJson(jsondata);
-                console.log(jsondata);
-                console.log(jsontmpl);
+            .then((tmplData) => {
+                tmpl = tmplData;
+                return Template.fromJson(JSON.stringify(tmpl));
+            })
+            .then((jsontmpl) => {
+                delete jsontmpl._viewValidator;
+                delete tmpl._viewValidator;
                 assert.deepEqual(jsontmpl, tmpl);
-
-                jsontmpl = Template.fromJson(JSON.parse(jsondata));
+            });
+    });
+    it('from_json_obj', function () {
+        let tmpl = null;
+        return Template.loadMst(mstWithTypes)
+            .then((tmplData) => {
+                tmpl = tmplData;
+                return Template.fromJson(JSON.parse(JSON.stringify(tmpl)));
+            })
+            .then((jsontmpl) => {
+                delete jsontmpl._viewValidator;
+                delete tmpl._viewValidator;
                 assert.deepEqual(jsontmpl, tmpl);
             });
     });

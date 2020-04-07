@@ -297,7 +297,8 @@ class DataStoreTemplateProvider extends BaseTemplateProvider {
                     return Promise.reject(new Error(`Could not find template "${templateName}" in template set "${tsName}"`));
                 }
                 return Template.fromJson(JSON.parse(templateData));
-            });
+            })
+            .then(tmpl => tmpl);
     }
 
     invalidateCache() {
