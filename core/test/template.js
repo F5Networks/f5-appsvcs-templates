@@ -239,8 +239,8 @@ describe('Template class tests', function () {
             });
     });
     it('render_type_defaults', function () {
-        const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
-        const mstdata = '{{virtual_port:f5:port}}';
+        const schemaProvider = new FsSchemaProvider(templatesPath);
+        const mstdata = '{{virtual_port:types:port}}';
 
         return Template.loadMst(mstdata, schemaProvider)
             .then((tmpl) => {
@@ -413,7 +413,7 @@ describe('Template class tests', function () {
             });
     });
     it('schema_mix_types_and_defs', function () {
-        const schemaProvider = new FsSchemaProvider('./../templates/bigip-fast-templates');
+        const schemaProvider = new FsSchemaProvider(templatesPath);
         const ymldata = `
             definitions:
                 https_port:
@@ -421,7 +421,7 @@ describe('Template class tests', function () {
                     description: Very Foo
                     default: 500
             template: |
-                {{https_port:f5:port}}
+                {{https_port:types:port}}
         `;
 
         return Template.loadYaml(ymldata, schemaProvider)
