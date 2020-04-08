@@ -10,11 +10,27 @@ a more detailed explanation of the templates and their syntax.
 We recommend template authors read the overview of the FAST Engine
 to fully understand how templates are processed in the system.
 
+In order to create a custom template/template set, Node Package Manager, or npm, must be installed.  
+NPM is a community-supported authoring tool that template authors may use.  
+NPM is installed onto the client PC/laptop, not on BIG-IP, and is used to validate templates as they are being built or modified.  
+For more information on the npm tool and community, visit `<https://www.npmjs.com/>`_
+
 Some familiarity with the command line is assumed, and we recommend the FAST
-@f5devcentral/fast npm module is installed globally. This provides the
+npm module is installed globally @f5devcentral/fast. This provides the
 command line tools to validate and render templates during authoring.
 
-Use the following command to install the NPM module:  ``npm install -g f5devcentral/fast``
+.. image:: NPM-Flow.png
+   :width: 800
+
+
+
+
+Use the following command to clone the FAST repository ``git clone https://github.com/F5Networks/f5-appsvcs-templates.git`` |br|
+Use the following command to install the npm module:  ``npm install -g f5devcentral/fast`` |br|
+Use the following command to validate your template ``fast validate <filename>`` |br|
+Use the following command to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` |br|
+Upload and install your zip file using steps 8 and 9 from the example below
+
 
 Hello World example
 -------------------
@@ -148,7 +164,6 @@ Templates abide by the following rules:
   * array
 
 |
-
 Example
 -------
 
