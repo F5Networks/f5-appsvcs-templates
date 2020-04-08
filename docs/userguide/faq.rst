@@ -49,7 +49,11 @@ iApp templates will not be removed or disabled and users are free to continue us
 
 For additional information, see `K13422: F5-supported and F5-contributed iApp templates <https://support.f5.com/csp/article/K13422/>`_.
 
+|
 
+**Are self-authored templates encrypted?**
+
+When authoring a template, the template may contain sensitive data such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
 
 
 .. |br| raw:: html

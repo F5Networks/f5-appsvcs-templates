@@ -338,7 +338,7 @@ Arrays of primitives should work fine but have not been extensively tested.
 
 Objects are not yet supported.
 
-
+.. IMPORTANT::  When authoring a template, the template may contain sensitive data such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
 
 .. |br| raw:: html
 
