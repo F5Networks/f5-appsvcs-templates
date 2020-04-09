@@ -7,8 +7,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-const yargs = require('yargs');
-
 const Template = require('./lib/template').Template;
 const FsTemplateProvider = require('./lib/template_provider').FsTemplateProvider;
 const generateHtmlPreview = require('./lib/gui_utils').generateHtmlPreview;
@@ -107,7 +105,7 @@ const packageTemplateSet = (tsPath, dst) => validateTemplateSet(tsPath)
 
 
 /* eslint-disable-next-line no-unused-expressions */
-yargs
+require('yargs')
     .command('validate <file>', 'validate given template source file', (yargs) => {
         yargs
             .positional('file', {
