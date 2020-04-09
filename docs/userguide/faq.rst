@@ -53,7 +53,7 @@ For additional information, see `K13422: F5-supported and F5-contributed iApp te
 
 **Are self-authored templates encrypted?**
 
-When authoring a template, the template may contain sensitive data such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
+When authoring a template, be cautious when entering sensitive data into your template such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
 
 
 .. |br| raw:: html
