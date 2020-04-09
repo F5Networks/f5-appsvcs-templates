@@ -290,7 +290,7 @@ class TemplateWorker {
     recordRestRequest(restOp) {
         this.requestTimes[restOp.requestId] = new Date();
         this.logger.fine(
-            `TemplateWorker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
+            `TemplateWorker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}`
         );
     }
 
@@ -298,8 +298,7 @@ class TemplateWorker {
         const minOp = {
             method: restOp.getMethod(),
             path: restOp.getUri().path,
-            status: restOp.getStatusCode(),
-            body: restOp.getBody()
+            status: restOp.getStatusCode()
         };
         const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
         const msg = `TemplateWorker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
@@ -498,7 +497,7 @@ class TemplateWorker {
             data = [data];
         }
 
-        this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
+        // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
 
         return Promise.resolve()
             .then(() => {
@@ -660,7 +659,7 @@ class TemplateWorker {
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
         } catch (e) {
-            return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
+            return this.genRestResponse(restOperation, 500, e.message);
         }
     }
 
@@ -739,7 +738,7 @@ class TemplateWorker {
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
         } catch (e) {
-            return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
+            return this.genRestResponse(restOperation, 500, e.stack);
         }
     }
 }

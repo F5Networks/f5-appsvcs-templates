@@ -10,6 +10,7 @@
 
 ## Changed
 * Do not mark properties with the "hidden" format as required
+* Stop logging the bodies of REST responses and requests in the REST worker
 
 ## Removed
 
