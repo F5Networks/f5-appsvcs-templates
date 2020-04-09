@@ -7,6 +7,8 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+const yargs = require('yargs');
+
 const Template = require('./lib/template').Template;
 const FsTemplateProvider = require('./lib/template_provider').FsTemplateProvider;
 const generateHtmlPreview = require('./lib/gui_utils').generateHtmlPreview;
@@ -37,7 +39,7 @@ const loadTemplateAndView = (templatePath, viewPath) => Promise.all([
 
 const validateTemplate = templatePath => loadTemplate(templatePath)
     .then(() => {
-        console.log(`template at ${templatePath} is valid`);
+        console.log(`template source at ${templatePath} is valid`);
     });
 
 const templateToViewSchema = templatePath => loadTemplate(templatePath)
@@ -49,7 +51,7 @@ const validateViewData = (tmpl, view) => {
     try {
         tmpl.validateView(view);
     } catch (e) {
-        console.error('view failed validation:');
+        console.error('parameters failed validation:');
         if (e.stack) {
             console.error(e.stack);
         } else {
@@ -105,61 +107,62 @@ const packageTemplateSet = (tsPath, dst) => validateTemplateSet(tsPath)
 
 
 /* eslint-disable-next-line no-unused-expressions */
-require('yargs')
-    .command('validate <file>', 'validate given template file', (yargs) => {
+yargs
+    .command('validate <file>', 'validate given template source file', (yargs) => {
         yargs
             .positional('file', {
-                describe: 'template file to validate'
+                describe: 'template source file to validate'
             });
     }, argv => validateTemplate(argv.file))
-    .command('schema <file>', 'get view schema for given template file', (yargs) => {
+    .command('schema <file>', 'get template parameter schema for given template source file', (yargs) => {
         yargs
             .positional('file', {
-                describe: 'template file to parse'
+                describe: 'template source file to parse'
             });
     }, argv => templateToViewSchema(argv.file))
-    .command('validateView <tmplFile> <viewFile>', 'validate supplied view with given template', (yargs) => {
+    .command('validateView <tmplFile> <parameterFile>', 'validate supplied template parameters with given template', (yargs) => {
         yargs
             .positional('tmplFile', {
-                describe: 'template to get view schema from'
+                describe: 'template to get template parameters schema from'
             })
-            .positional('viewFile', {
-                describe: 'view file validate'
+            .positional('parameterFile', {
+                describe: 'file with template parameters to validate'
             });
-    }, argv => validateView(argv.tmplFile, argv.viewFile))
-    .command('render <tmplFile> [viewFile]', 'render given template file with supplied view', (yargs) => {
+    }, argv => validateView(argv.tmplFile, argv.parameterFile))
+    .command('render <tmplFile> [parameterFile]', 'render given template file with supplied parameters', (yargs) => {
         yargs
             .positional('tmplFile', {
-                describe: 'template to render'
+                describe: 'template source file to render'
             })
-            .positional('viewFile', {
-                describe: 'optional view file to use in addition to any defined view in the template file'
+            .positional('parameterFile', {
+                describe: 'optional file with template parameters to use in addition to any defined in the view in the template source file'
             });
-    }, argv => renderTemplate(argv.tmplFile, argv.viewFile))
+    }, argv => renderTemplate(argv.tmplFile, argv.parameterFile))
     .command('validateTemplateSet <templateSetPath>', 'validate supplied template set', (yargs) => {
         yargs
             .positional('templateSetPath', {
-                describe: 'path to template set'
+                describe: 'path to the directory containing template sources'
             });
     }, argv => validateTemplateSet(argv.templateSetPath))
-    .command('htmlpreview <tmplFile> [viewFile]', 'generate a static HTML file with a preview editor to standard out', (yargs) => {
+    .command('htmlpreview <tmplFile> [parameterFile]', 'generate a static HTML file with a preview editor to standard out', (yargs) => {
         yargs
             .positional('tmplFile', {
-                describe: 'template to preview'
+                describe: 'template source file to render'
             })
-            .positional('viewFile', {
-                describe: 'optional view file to use in addition to any defined view in the template file'
+            .positional('parameterFile', {
+                describe: 'optional file with template parameters to use in addition to any defined in the view in the template source file'
             });
-    }, argv => htmlPreview(argv.tmplFile, argv.viewFile))
+    }, argv => htmlPreview(argv.tmplFile, argv.parameterFile))
     .command('packageTemplateSet <templateSetPath> [dst]', 'build a package for a given template set', (yargs) => {
         yargs
             .positional('templateSetPath', {
-                describe: 'path to template set'
+                describe: 'path to the directory containing template sources'
             })
             .positional('dst', {
                 describe: 'optional location for the built package (defaults to the current working directory)'
             });
     }, argv => packageTemplateSet(argv.templateSetPath, argv.dst))
     .demandCommand(1, 'A command is required')
+    .wrap(120)
     .strict()
     .argv;

@@ -29,22 +29,17 @@ The help text is provided below and also accessed via `fast --help`:
 fast <command>
 
 Commands:
-  fast validate <file>                      validate given template file
-  fast schema <file>                        get view schema for given template
-                                            file
-  fast validateView <tmplFile> <viewFile>   validate supplied view with given
-                                            template
-  fast render <tmplFile> [viewFile]         render given template file with
-                                            supplied view
-  fast validateTemplateSet                  validate supplied template set
-  <templateSetPath>
-  fast htmlpreview <tmplFile> [viewFile]    generate a static HTML file with a
-                                            preview editor to standard out
+  fast validate <file>                             validate given template source file
+  fast schema <file>                               get template parameter schema for given template source file
+  fast validateView <tmplFile> <parameterFile>     validate supplied template parameters with given template
+  fast render <tmplFile> [parameterFile]           render given template file with supplied parameters
+  fast validateTemplateSet <templateSetPath>       validate supplied template set
+  fast htmlpreview <tmplFile> [parameterFile]      generate a static HTML file with a preview editor to standard out
+  fast packageTemplateSet <templateSetPath> [dst]  build a package for a given template set
 
 Options:
-  --help     Show help                                                 [boolean]
-  --version  Show version number                                       [boolean]
-
+  --help     Show help                                                                                         [boolean]
+  --version  Show version number                                                                               [boolean]
 ```
 
 For more information on a given command use the `--help` flag combined with a command:
