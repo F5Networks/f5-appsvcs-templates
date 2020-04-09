@@ -6,6 +6,7 @@
 ## Fixed
 * GUI elements not showing/hiding consistently
 * Print better errors when schema validation fails using the FAST CLI
+* JSHINT errors showing up in restnoded log when loading the REST worker
 
 ## Changed
 * Do not mark properties with the "hidden" format as required
