@@ -387,6 +387,8 @@ class Template {
             loadSchema,
             unknownFormats: 'ignore'
         });
+        ajv.addFormat('text', /.*/);
+        ajv.addFormat('hidden', /.*/);
         return ajv.compileAsync(this.getViewSchema())
             .then((validate) => {
                 this._viewValidator = validate;
