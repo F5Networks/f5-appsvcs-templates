@@ -5,6 +5,12 @@
       "type": "string",
       "minLength": 1
     },
+    "bigip_path": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^\\x2f[^\\x00-\\x19\\x22#'*<>?\\x5b-\\x5d\\x7b-\\x7d\\x7f]+$",
+        "maxLength": 255
+    },
     "ipv4": {
       "type": "string",
       "format": "ipv4",

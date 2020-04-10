@@ -225,6 +225,17 @@ describe('template worker tests', function () {
     it('get_template_item_with_schema', function () {
         const worker = createTemplateWorker();
         const op = new RestOp('templates/bigip-fast-templates/http');
+        nock('http://localhost:8100')
+            .persist()
+            .get(/mgmt\/tm\/.*/)
+            .reply(200, {
+                kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression?$select=fullPath&ver=15.0.1.1',
+                items: [
+                    { fullPath: '/Common/httpcompression' },
+                    { fullPath: '/Common/wan-optimized-compression' }
+                ]
+            });
         return worker.onGet(op)
             .then(() => {
                 const tmpl = op.body;
@@ -645,5 +656,35 @@ describe('template worker tests', function () {
                 undefined,
                 ''
             ));
+    });
+    it('hydrateSchema', function () {
+        const worker = createTemplateWorker();
+        const inputSchema = {
+            properties: {
+                foo: {
+                    type: 'string',
+                    enumFromBigip: 'ltm/profile/http-compression'
+                }
+            }
+        };
+        nock('http://localhost:8100')
+            .persist()
+            .get(/mgmt\/tm\/.*/)
+            .reply(200, {
+                kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression?$select=fullPath&ver=15.0.1.1',
+                items: [
+                    { fullPath: '/Common/httpcompression' },
+                    { fullPath: '/Common/wan-optimized-compression' }
+                ]
+            });
+
+        return worker.hydrateSchema(inputSchema, 0)
+            .then((schema) => {
+                assert.deepEqual(schema.properties.foo.enum, [
+                    '/Common/httpcompression',
+                    '/Common/wan-optimized-compression'
+                ]);
+            });
     });
 });
