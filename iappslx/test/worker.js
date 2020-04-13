@@ -128,7 +128,11 @@ describe('template worker tests', function () {
 
     beforeEach(function () {
         testStorage = new fast.dataStores.StorageMemory();
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS);
+        const tsNames = [
+            'bigip-fast-templates',
+            'examples'
+        ];
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 
     afterEach(function () {

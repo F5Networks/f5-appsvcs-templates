@@ -376,38 +376,38 @@ class DataStoreTemplateProvider extends BaseTemplateProvider {
     static fromFs(datastore, templateRootPath, filteredSets) {
         filteredSets = new Set(filteredSets || []);
         const fsprovider = new FsTemplateProvider(templateRootPath, filteredSets);
-        const tsList = {};
-        return fsprovider.list()
-            .then(tmplList => Promise.all(tmplList.map(
-                tmplPath => fsprovider.fetch(tmplPath)
-                    .then((tmplData) => {
-                        const [tsName, tmplName] = tmplPath.split('/');
-                        if (!tsList[tsName]) {
-                            tsList[tsName] = {};
-                        }
-                        tsList[tsName][tmplName] = JSON.stringify(tmplData);
-                    })
-            )))
-            .then(() => {
-                let promiseChain = Promise.resolve();
-                Object.keys(tsList).forEach((tsName) => {
-                    const tmplData = tsList[tsName];
-                    const schemas = fs.readdirSync(`${templateRootPath}/${tsName}`)
-                        .filter(x => x.split('.').pop() === 'json')
-                        .reduce((acc, curr) => {
-                            const schemaPath = `${templateRootPath}/${tsName}/${curr}`;
-                            acc[curr.slice(0, -5)] = fs.readFileSync(schemaPath, { encoding: 'utf8' });
-                            return acc;
-                        }, {});
+        let promiseChain = Promise.resolve();
+
+        return Promise.resolve()
+            .then(() => fsprovider.listSets())
+            .then(setList => Promise.all(setList.map(tsName => Promise.all([
+                fsprovider.fetchSet(tsName),
+                fsprovider.getSchemas(tsName)
+            ])
+                .then(([setTemplates, setSchemas]) => {
+                    const templates = Object.entries(setTemplates).reduce((acc, curr) => {
+                        const [tmplPath, tmplData] = curr;
+                        const tmplName = tmplPath.split('/')[1];
+                        acc[tmplName] = JSON.stringify(tmplData);
+                        return acc;
+                    }, {});
+                    const schemas = Object.entries(setSchemas).reduce((acc, curr) => {
+                        const [schemaPath, schemaData] = curr;
+                        const schemaName = schemaPath.split('/')[1];
+                        acc[schemaName] = schemaData.data;
+                        return acc;
+                    }, {});
+
                     const tsData = {
                         name: tsName,
-                        schemas,
-                        templates: tmplData
+                        templates,
+                        schemas
                     };
+
+                    // DataStores do not guarantee support for parallel writes
                     promiseChain = promiseChain.then(() => datastore.setItem(tsName, tsData));
-                });
-                return promiseChain;
-            });
+                }))))
+            .then(() => promiseChain);
     }
 }
 
