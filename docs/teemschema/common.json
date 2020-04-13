@@ -1,0 +1,15 @@
+{
+    "type": "object",
+    "description": "Telemetry data common to all f5-appsvcs-templates telemetry records",
+    "properties": {
+        "platform": {
+            "description": "Platform that the product is running on",
+            "type": "string",
+            "enum": ["BIG-IP"]
+        },
+        "platformVersion": {
+            "description": "Version as reported by the platform",
+            "type": "string"
+        }
+    }
+}

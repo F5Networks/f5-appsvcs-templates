@@ -92,7 +92,7 @@ class AS3Driver {
             });
     }
 
-    createApplication(appDef, metaData) {
+    _prepareAppDef(appDef, metaData) {
         appDef = JSON.parse(JSON.stringify(appDef)); // copy appDef to avoid modifying it
         appDef = appDef.declaration || appDef;
         metaData = metaData || {};
@@ -127,9 +127,26 @@ class AS3Driver {
             [AS3DriverConstantsKey]: metaData
         });
 
-        return this._getDecl()
-            .then(decl => this._stitchDecl(decl, appDef))
+        return Promise.resolve(appDef);
+    }
+
+
+    createApplication(appDef, metaData) {
+        return Promise.all([this._getDecl(), this._prepareAppDef(appDef, metaData)])
+            .then(([decl, processedAppDef]) => this._stitchDecl(decl, processedAppDef))
             .then(decl => this._postDecl(decl));
+    }
+
+    createApplications(appsData) {
+        return Promise.resolve()
+            .then(() => Promise.all([
+                Promise.all(appsData.map(data => this._prepareAppDef(data.appDef, data.metaData))),
+                this._getDecl()
+            ]))
+            .then(([appDefs, decl]) => Promise.all(
+                appDefs.map(appDef => this._stitchDecl(decl, appDef))
+            ))
+            .then(declList => this._postDecl(declList[0]));
     }
 
     _validateTenantApp(decl, tenant, app) {

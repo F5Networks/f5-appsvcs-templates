@@ -1,3 +1,20 @@
+# 0.4
+## Added
+* POST to /applications can now take an array of applications
+* Better support for external schema references when using the FAST CLI
+
+## Fixed
+* GUI elements not showing/hiding consistently
+* Print better errors when schema validation fails using the FAST CLI
+* JSHINT errors showing up in restnoded log when loading the REST worker
+
+## Changed
+* Do not mark properties with the "hidden" format as required
+* Stop logging the bodies of REST responses and requests in the REST worker
+* Use ReDoc instead of Swagger-UI for the API docs tab
+
+## Removed
+
 # 0.3
 ## Core
 * Fix parsing issues when there are multiple dependencies

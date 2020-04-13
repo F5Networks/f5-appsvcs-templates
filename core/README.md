@@ -29,22 +29,17 @@ The help text is provided below and also accessed via `fast --help`:
 fast <command>
 
 Commands:
-  fast validate <file>                      validate given template file
-  fast schema <file>                        get view schema for given template
-                                            file
-  fast validateView <tmplFile> <viewFile>   validate supplied view with given
-                                            template
-  fast render <tmplFile> [viewFile]         render given template file with
-                                            supplied view
-  fast validateTemplateSet                  validate supplied template set
-  <templateSetPath>
-  fast htmlpreview <tmplFile> [viewFile]    generate a static HTML file with a
-                                            preview editor to standard out
+  fast validate <file>                             validate given template source file
+  fast schema <file>                               get template parameter schema for given template source file
+  fast validateView <tmplFile> <parameterFile>     validate supplied template parameters with given template
+  fast render <tmplFile> [parameterFile]           render given template file with supplied parameters
+  fast validateTemplateSet <templateSetPath>       validate supplied template set
+  fast htmlpreview <tmplFile> [parameterFile]      generate a static HTML file with a preview editor to standard out
+  fast packageTemplateSet <templateSetPath> [dst]  build a package for a given template set
 
 Options:
-  --help     Show help                                                 [boolean]
-  --version  Show version number                                       [boolean]
-
+  --help     Show help                                                                                         [boolean]
+  --version  Show version number                                                                               [boolean]
 ```
 
 For more information on a given command use the `--help` flag combined with a command:
@@ -75,3 +70,20 @@ For more information about FAST, see [FAST Documentation](https://clouddocs.f5.c
 ## License
 
 [Apache License 2.0](https://choosealicense.com/licenses/apache-2.0/)
+
+## Copyright
+
+Copyright 2014-2020 F5 Networks Inc.
+
+
+### F5 Networks Contributor License Agreement
+
+Before you start contributing to any project sponsored by F5 Networks, Inc. (F5) on GitHub, you will need to sign a Contributor License Agreement (CLA).
+
+If you are signing as an individual, we recommend that you talk to your employer (if applicable) before signing the CLA since some employment agreements may have restrictions on your contributions to other projects.
+Otherwise by submitting a CLA you represent that you are legally entitled to grant the licenses recited therein.
+
+If your employer has rights to intellectual property that you create, such as your contributions, you represent that you have received permission to make contributions on behalf of that employer, that your employer has waived such rights for your contributions, or that your employer has executed a separate CLA with F5.
+
+If you are signing on behalf of a company, you represent that you are legally entitled to grant the license recited therein.
+You represent further that each employee of the entity that submits contributions is authorized to submit such contributions on behalf of the entity pursuant to the CLA.
