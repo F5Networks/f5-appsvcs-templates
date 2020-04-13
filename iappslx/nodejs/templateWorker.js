@@ -10,7 +10,7 @@ const yaml = require('js-yaml');
 const extract = require('extract-zip');
 const uuid4 = require('uuid').v4;
 
-const fast = require('@f5devcentral/fast');
+const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const FsTemplateProvider = fast.FsTemplateProvider;

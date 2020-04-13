@@ -14,7 +14,7 @@ const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
 
-const fast = require('@f5devcentral/fast');
+const fast = require('@f5devcentral/f5-fast-core');
 
 const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
 

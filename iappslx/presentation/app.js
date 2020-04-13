@@ -6,7 +6,7 @@
 
 const yaml = require('js-yaml');
 
-const { Template, guiUtils } = require('@f5devcentral/fast');
+const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const endPointUrl = '/mgmt/shared/fast';
 
