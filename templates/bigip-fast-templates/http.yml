@@ -1,10 +1,10 @@
 definitions:
   tenant_name:
     title: What is the tenant name?
-    description: The tenant is the high-level grouping in a FAST declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
+    description: The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
     title: What is the application name?
-    description: The application is the low-level grouping in a FAST declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
+    description: The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   virtual_address:
     title: What IP address do you want to use for the virtual server?
     description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.
@@ -60,12 +60,12 @@ definitions:
     title: Specify the type of persistence
   enable_fallback_persistence:
     title: Fallback Persistence
-    description: Create a secondary, or fallback, persistence record for each new client connection
+    description: Create a secondary, or fallback, persistence record for each new client connection.
   fallback_persistence_type:
     title: Specify the type of fallback persistence
   enable_tls_server:
     title: TLS Server
-    description: Enable TLS server to decrypt client-side connections
+    description: Enable TLS server to decrypt client-side connections.
   make_tls_server_profile:
     title: Automatically manage the TLS server profile
   tls_server_profile_name:
@@ -78,7 +78,7 @@ definitions:
     title: Specify the name of an existing BIG-IP SSL key.
   enable_tls_client:
     title: TLS Client
-    description: Enable TLS client to encrypt server-side connections
+    description: Enable TLS client to encrypt server-side connections.
   make_tls_client_profile:
     title: Automatically manage the TLS client profile
   tls_client_profile_name:
