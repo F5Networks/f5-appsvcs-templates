@@ -32,6 +32,17 @@ const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
+// Known good hashes for template sets
+const supportedHashes = {
+    'bigip-fast-templates': [
+        '3d6fe84f925f76edd40778c80f311adde74c434a24e54f920708efb18a6a3dea', // v0.4
+        '76cb4510149798456ae271ed8c43c195a67f5e4f249ec6550dff5eb3137ed281' //  v0.3
+    ],
+    examples: [
+        'd0e708656e03573db98b96924e34ec22c1adfc71a6a78e3fa780d51c2b5dede5' //  v0.3
+    ]
+};
+
 class TemplateWorker {
     constructor() {
         this.state = {};
@@ -41,7 +52,7 @@ class TemplateWorker {
         this.WORKER_URI_PATH = `shared/${endpointName}`;
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
         this.storage = new StorageDataGroup(dataGroupPath);
-        this.templateProvider = new DataStoreTemplateProvider(this.storage);
+        this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version

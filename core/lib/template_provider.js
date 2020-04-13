@@ -9,20 +9,8 @@ const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
 const { FsSchemaProvider } = require('./schema_provider');
 
-// Known good hashes for template sets
-const supportedHashes = {
-    'bigip-fast-templates': [
-        '3d6fe84f925f76edd40778c80f311adde74c434a24e54f920708efb18a6a3dea', // v0.4
-        '76cb4510149798456ae271ed8c43c195a67f5e4f249ec6550dff5eb3137ed281' //  v0.3
-    ],
-    examples: [
-        'd0e708656e03573db98b96924e34ec22c1adfc71a6a78e3fa780d51c2b5dede5' //  v0.3
-    ]
-};
-
-
 class BaseTemplateProvider {
-    constructor() {
+    constructor(supportedHashes) {
         if (new.target === BaseTemplateProvider) {
             throw new TypeError('Cannot instantiate Abstract BaseTemplateProvider');
         }
@@ -40,6 +28,7 @@ class BaseTemplateProvider {
             }
         });
 
+        this.supportedHashes = supportedHashes || {};
 
         this.cache = new ResourceCache((tmplName => this._loadTemplate(tmplName)));
     }
@@ -110,8 +99,8 @@ class BaseTemplateProvider {
 
                 const tsHashDigest = tsHash.digest('hex');
                 const supported = (
-                    Object.keys(supportedHashes).includes(setName)
-                    && supportedHashes[setName].includes(tsHashDigest)
+                    Object.keys(this.supportedHashes).includes(setName)
+                    && this.supportedHashes[setName].includes(tsHashDigest)
                 );
                 return Promise.resolve({
                     name: setName,
@@ -139,8 +128,8 @@ class BaseTemplateProvider {
 }
 
 class FsTemplateProvider extends BaseTemplateProvider {
-    constructor(templateRootPath, filteredSets) {
-        super();
+    constructor(templateRootPath, filteredSets, supportedHashes) {
+        super(supportedHashes);
         this.config_template_path = templateRootPath;
         this.schemaProviders = {};
         this.filteredSets = new Set(filteredSets || []);
@@ -273,8 +262,8 @@ class FsTemplateProvider extends BaseTemplateProvider {
 }
 
 class DataStoreTemplateProvider extends BaseTemplateProvider {
-    constructor(datastore, filteredSets) {
-        super();
+    constructor(datastore, filteredSets, supportedHashes) {
+        super(supportedHashes);
         this.filteredSets = new Set(filteredSets || []);
         this.storage = datastore;
         this.keyCache = [];
