@@ -1,27 +1,28 @@
 definitions:
   tenant_name:
     title: What is the tenant name?
-    description: The tenant is the high-level grouping in an AS3 declaration. AS3 deploys all configuration for a given tenant in a BIG-IP partition of the same name.
+    description: The tenant is the high-level grouping in a FAST declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
     title: What is the application name?
-    description: The application is the low-level grouping in an AS3 declaration. AS3 deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
+    description: The application is the low-level grouping in a FAST declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   virtual_address:
     title: What IP address do you want to use for the virtual server?
-    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the web servers.
+    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.
   virtual_port:
     title: What TCP port do you want to use for the virtual server?
   enable_redirect:
     title: Redirect port 80 traffic to this virtual server
   enable_pool:
-    title: Server Pool
+    title: Create Pool
+    description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
   make_pool:
-    title: Use AS3 to manage your pool
+    title: Automatically manage the pool
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
   pool_name:
     title: Specify the name of an existing BIG-IP pool.
   pool_members:
     title: Server Addresses
-    description: Add the IP addresses of your pool members.
+    description: Add the IP addresses of a pool member.
   pool_port:
     title: What TCP port do you want to use for the pool members?
   load_balancing_mode:
@@ -29,37 +30,42 @@ definitions:
     description: A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.
   slow_ramp_time:
     title: What slow ramp time do you want to use? (recommended value is 300 seconds)
+    description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
   enable_monitor:
     title: Pool Monitor
+    description: Determine the availability and performance of devices, links, and services on a network.
   make_monitor:
-    title: Use AS3 to manage your pool monitor
+    title: Automatically manage the pool monitor
   monitor_name:
     title: Specify the name of an existing BIG-IP monitor.
     description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
   enable_snat:
     title: SNAT
-    description: Network address translation
+    description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
   snat_automap:
     title: SNAT Automap
+    description: SNAT automap uses BIG-IP self IP addresses as the translation address.
   make_snatpool:
-    title: Use AS3 to manage your SNAT pool.
+    title: Automatically manage the SNAT pool.
   snatpool_name:
     title: Specify the name of an existing BIG-IP SNAT pool.
   snat_addresses:
     title: SNAT Pool Addresses
   enable_persistence:
     title: Persistence
+    description: Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.
   persistence_type:
     title: Specify the type of persistence
   enable_fallback_persistence:
     title: Fallback Persistence
+    description: Create a secondary, or fallback, persistence record for each new client connection
   fallback_persistence_type:
     title: Specify the type of fallback persistence
   enable_tls_server:
     title: TLS Server
     description: Enable TLS server to decrypt client-side connections
   make_tls_server_profile:
-    title: Use AS3 to manage your TLS server profile
+    title: Automatically manage the TLS server profile
   tls_server_profile_name:
     title: Specify the name of an existing BIG-IP clientssl profile.
     description: TLS server profiles are of type "ltm clientssl" on BIG-IP.
@@ -71,33 +77,35 @@ definitions:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections
   make_tls_client_profile:
-    title: Use AS3 to manage your TLS client profile
+    title: Automatically manage the TLS client profile
   tls_client_profile_name:
     title: Specify the name of an existing BIG-IP serverssl profile.
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
   make_http_profile:
-    title: Use AS3 to manage your HTTP profile
+    title: Automatically manage the HTTP profile
   http_profile_name:
     title: Specify the name of an existing BIG-IP HTTP profile.
   x_forwarded_for:
     title: Insert the x-forwarded-for header
+    description: Inserts the original client IP address in an HTTP header and configures the web server receiving the request to log the client IP address instead of the SNAT address.
   enable_acceleration:
     title: Web Acceleration or Caching
-    description: Web Acceleration or web caching will be enabled depending on your BIG-IP license.
+    description: Web Acceleration or web caching will be enabled depending on the BIG-IP license.
   make_acceleration_profile:
-    title: Use AS3 to manage your Web Acceleration profile
+    title: Automatically manage the Web Acceleration profile
   acceleration_profile_name:
     title: Specify the name of an existing BIG-IP web acceleration profile.
   enable_compression:
     title: HTTP Compression
   make_compression_profile:
-    title: Use AS3 to manage your HTTP Compression profile
+    title: Automatically manage the HTTP Compression profile
   compression_profile_name:
     title: Specify the name of an existing BIG-IP HTTP compression profile.
   enable_multiplex:
     title: Connection Multiplexing
+    description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
   make_multiplex_profile:
-    title: Use AS3 to manage your Multiplex (OneConnect) profile
+    title: Automatically manage the Multiplex (OneConnect) profile
   multiplex_profile_name:
     title: Specify the name of an existing BIG-IP OneConnect profile
   app_pool_def:
