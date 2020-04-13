@@ -11,6 +11,7 @@
 ## Changed
 * Do not mark properties with the "hidden" format as required
 * Stop logging the bodies of REST responses and requests in the REST worker
+* Use ReDoc instead of Swagger-UI for the API docs tab
 
 ## Removed
 
