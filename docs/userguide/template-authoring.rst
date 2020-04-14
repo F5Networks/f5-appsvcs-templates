@@ -10,14 +10,17 @@ a more detailed explanation of the templates and their syntax.
 We recommend template authors read the overview of the FAST Engine
 to fully understand how templates are processed in the system.
 
-In order to create a custom template/template set, Node Package Manager, or npm, must be installed.  
-NPM is a community-supported authoring tool that template authors may use.  
-NPM is installed onto the client PC/laptop, not on BIG-IP, and is used to validate templates as they are being built or modified.  
-For more information on the npm tool and community, visit `<https://www.npmjs.com/>`_
+In order to use the FAST CLI, which provides template validation and previewing, Node Package Manager (npm) must be installed.  
+FAST CLI is a community-supported authoring tool that template authors may use.  It is installed onto the client PC/laptop, not on BIG-IP, and is used to validate templates as they are being built or modified. |br|
+For more information on the npm tool and community, visit `<https://www.npmjs.com/>`_ |br|
 
 Some familiarity with the command line is assumed, and we recommend the FAST
-npm module is installed globally @f5devcentral/fast. This provides the
-command line tools to validate and render templates during authoring.
+npm module is installed globally @f5devcentral/f5-fast-core. This provides the FAST
+command line tools to validate and render templates during authoring. |br|
+
+Help text is provided and accessed via:  ``fast --help`` |br|
+For more information on a given command use the ``--help`` flag combined with a command:  ``fast <command> --help``
+
 
 .. image:: NPM-Flow.png
    :width: 800
@@ -26,9 +29,9 @@ command line tools to validate and render templates during authoring.
 
 
 Use the following command to clone the FAST repository ``git clone https://github.com/F5Networks/f5-appsvcs-templates.git`` |br|
-Use the following command to install the npm module:  ``npm install -g f5devcentral/fast`` |br|
+Use the following command to install the npm module:  ``npm install -g f5devcentral/f5-fast-core`` |br|
 Use the following command to validate your template ``fast validate <filename>`` |br|
-Use the following command to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` |br|
+Use one of the following commands to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` or  ``fast packageTemplateSet <templateSetPath>`` |br|
 Upload and install your zip file using steps 8 and 9 from the example below
 
 
