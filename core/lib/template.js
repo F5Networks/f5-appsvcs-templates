@@ -389,6 +389,7 @@ class Template {
         });
         ajv.addFormat('text', /.*/);
         ajv.addFormat('hidden', /.*/);
+        ajv.addFormat('password', /.*/);
         return ajv.compileAsync(this.getViewSchema())
             .then((validate) => {
                 this._viewValidator = validate;
