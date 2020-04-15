@@ -28,8 +28,7 @@ For more information on a given command use the ``--help`` flag combined with a 
 
 
 
-Use the following command to clone the FAST repository ``git clone https://github.com/F5Networks/f5-appsvcs-templates.git`` |br|
-Use the following command to install the npm module:  ``npm install -g f5devcentral/f5-fast-core`` |br|
+Use the following command to install the npm module:  ``npm install -g @f5devcentral/f5-fast-core`` |br|
 Use the following command to validate your template ``fast validate <filename>`` |br|
 Use one of the following commands to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` or  ``fast packageTemplateSet <templateSetPath>`` |br|
 Upload and install your zip file using steps 8 and 9 from the example below
@@ -357,6 +356,71 @@ Arrays of primitives should work fine but have not been extensively tested.
 Objects are not yet supported.
 
 .. IMPORTANT::  When authoring a template, be cautious when entering sensitive data into your template such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
+
+
+AS3 Secrets
+-----------
+
+Secrets are things such as passphrases, ssl certificate/keys, etc. AS3 declarations made for FAST templates should follow best practices for AS3 secrets outside of FAST. 
+
+Keeping a Variable Hidden
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In order to keep a template variable secret, identify it as type: string, format: password.  This will cause the UI to hide characters as they are typed.  
+When the application is re-deployed, the secret value will return to the same field in the UI, where it can be altered, but not seen.  
+
+A schema example showing hidden password text in the gui:
+
+.. code-block:: json
+
+  definitions:
+    secret_var:
+      title: Secret
+      description: This will show up as a password field
+      format: password
+  template: |
+    {{secret_var}}
+
+Keeping Template Text Secret
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The template may be viewed from the FAST UI via the :ref:`templatetab`  tab.  If there is a static, plain text passphrase in the template, it will be displayed.  
+For cases where the passphrase is part of an AS3 declaration, the template author may wish to substitute an encrypted passphrase to prevent leaking the password when sharing or backing up the template files.  To obtain the encrypted value, submit the declaration directly to AS3, and retrieve the passphrase object that is returned by AS3 into the FAST template. |br|
+
+For example, if the template contains the following certificate definition:
+
+.. code-block:: json
+
+    "webcert": {
+    "class": "Certificate",
+    "remark": "in practice we recommend using a passphrase",
+    "certificate": "-----BEGIN CERTIFICATE-----\nMIICnDCCAgWgAwIBAgIJAJ5n2b0OCEjwMA0GCSqGSIb3DQEBCwUAMGcxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApXYXNoaW5ndG9uMRAwDgYDVQQHDAdTZWF0dGxlMRQwEgYDVQQKDAtmNV9OZXR3b3JrczEbMBkGA1UEAwwSc2FtcGxlLmV4YW1wbGUubmV0MB4XDTE3MTEyNjE5NTAyNFoXDTE4MDIyNTE5NTAyNFowZzELMAkGA1UEBhMCVVMxEzARBgNVBAgMCldhc2hpbmd0b24xEDAOBgNVBAcMB1NlYXR0bGUxFDASBgNVBAoMC2Y1X05ldHdvcmtzMRswGQYDVQQDDBJzYW1wbGUuZXhhbXBsZS5uZXQwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALEsuXmSXVQpYjrZPW+WiTBjn491mwZYT7Q92V1HlSBtM6WdWlK1aZN5sovfKtOX7Yrm8xa+e4o/zJ2QYLyyv5O+t2EGN/4qUEjEAPY9mwJdfzRQy6Hyzm84J0QkTuUJ/EjNuPji3D0QJRALUTzu1UqqDCEtiN9OGyXEkh7uvb7BAgMBAAGjUDBOMB0GA1UdDgQWBBSVHPNrGWrjWyZvckQxFYWO59FRFjAfBgNVHSMEGDAWgBSVHPNrGWrjWyZvckQxFYWO59FRFjAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4GBAJeJ9SEckEwPhkXOm+IuqfbUS/RcziifBCTmVyE+Fa/j9pKSYTgiEBNdbJeBEa+gPMlQtbV7Y2dy8TKx/8axVBHiXC5geDML7caxOrAyHYBpnx690xJTh5OIORBBM/a/NvaR+P3CoVebr/NPRh9oRNxnntnqvqD7SW0U3ZPe3tJc\n-----END CERTIFICATE-----",
+    "privateKey": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-256-CBC,D8FFCE6B255601587CB54EC29B737D31\n\nkv4Fc3Jn0Ujkj0yRjt+gQQfBLSNF2aRLUENXnlr7Xpzqu0Ahr3jS1bAAnd8IWnsR\nyILqVmKsYF2DoHh0tWiEAQ7/y/fe5DTFhK7N4Wml6kp2yVMkP6KC4ssyYPw27kjK\nDBwBZ5O8Ioej08A5sgsLCmglbmtSPHJUn14pQnMTmLOpEtOsu6S+2ibPgSNpdg0b\nCAJNG/KHe+Vkx59qNDyDeKb7FZOlsX30+y67zUq9GQqJEDuysPJ2BUNP0IJXAjst\nFIt1qNoZew+5KDYs7u/lPxcMGTirUhgI84Jy4WcDvSOsP/tKlxj04TbIE3epmSKy\n+TihHkwY7ngIGtcm3Sfqk5jz2RXoj1/Ac3SW8kVTYaOUogBhn7zAq4Wju6Et4hQG\nRGapsJp1aCeZ/a4RCDTxspcKoMaRa97/URQb0hBRGx3DGUhzpmX9zl7JI2Xa5D3R\nmdBXtjLKYJTdIMdd27prBEKhMUpae2rz5Mw4J907wZeBq/wu+zp8LAnecfTe2nGY\nE32x1U7gSEdYOGqnwxsOexb1jKgCa67Nw9TmcMPV8zmH7R9qdvgxAbAtwBl1F9OS\nfcGaC7epf1AjJLtaX7krWmzgASHl28Ynh9lmGMdv+5QYMZvKG0LOg/n3m8uJ6sKy\nIzzvaJswwn0j5P5+czyoV5CvvdCfKnNb+3jUEN8I0PPwjBGKr4B1ojwhogTM248V\nHR69D6TxFVMfGpyJhCPkbGEGbpEpcffpgKuC/mEtMqyDQXJNaV5HO6HgAJ9F1P6v\n5ehHHTMRvzCCFiwndHdlMXUjqSNjww6me6dr6LiAPbejdzhL2vWx1YqebOcwQx3G\n-----END RSA PRIVATE KEY-----",
+    "passphrase": {
+      "ciphertext": "ZjVmNQ==",
+      "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+    }
+  }
+
+The “protected” field (in base64) indicates that the value of “ciphertext” is in plain text. 
+Literal translation to {"alg":"dir","enc":"none"}.  Submit a declaration containing this definition to AS3. |br|
+In the body of the response, you will find:
+
+.. code-block:: json
+
+   "passphrase": {
+      "ciphertext": "JE0kbGkkOFpmMi9oMnpYb1VkVjJpbFpHd28vUT09",
+       "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJmNXN2In0="
+       "miniJWE": true
+    }
+
+In the response, the value of “protected” has changed to indicate SecureVault encryption (literally {"alg":"dir","enc":"f5sv"}), and “ciphertext” is the encrypted secret.  
+These examples are directly tied to AS3, and works only for protected ciphertext elements in a declaration.
+
+See `Secrets in AS3 Declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/declaration-purpose-function.html?highlight=secret#secrets-in-as3-declarations>`_ for a more expanded definition of AS3 secrets.
+
+
+
 
 .. |br| raw:: html
 
