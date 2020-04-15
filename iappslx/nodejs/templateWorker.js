@@ -1,3 +1,5 @@
+/* jshint ignore: start */
+
 'use strict';
 
 require('core-js');
@@ -8,7 +10,7 @@ const yaml = require('js-yaml');
 const extract = require('extract-zip');
 const uuid4 = require('uuid').v4;
 
-const fast = require('@f5devcentral/fast');
+const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const FsTemplateProvider = fast.FsTemplateProvider;
@@ -282,13 +284,51 @@ class TemplateWorker {
             .then(() => info);
     }
 
+    hydrateSchema(schema, requestId) {
+        const enumFromBigipProps = Object.entries(schema.properties)
+            .reduce((acc, curr) => {
+                const [key, value] = curr;
+                if (value.enumFromBigip) {
+                    acc[key] = value;
+                }
+                return acc;
+            }, {});
+        const propNames = Object.keys(enumFromBigipProps);
+        this.logger.fine(
+            `TemplateWorker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
+        );
+
+        return Promise.resolve()
+            .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
+                const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
+                return Promise.resolve()
+                    .then(() => this.recordTransaction(
+                        requestId, `fetching data from ${endPoint}`,
+                        httpUtils.makeGet(endPoint)
+                    ))
+                    .then((response) => {
+                        if (response.status !== 200) {
+                            return Promise.reject(new Error(
+                                `failed GET to ${endPoint}:\n${JSON.stringify(response, null, 2)}`
+                            ));
+                        }
+                        return Promise.resolve(response.body.items.map(x => x.fullPath));
+                    })
+                    .then((items) => {
+                        prop.enum = items;
+                        delete prop.enumFromBigip;
+                    });
+            })))
+            .then(() => schema);
+    }
+
     /**
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
         this.requestTimes[restOp.requestId] = new Date();
         this.logger.fine(
-            `TemplateWorker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}; data=${JSON.stringify(restOp.body)}`
+            `TemplateWorker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}`
         );
     }
 
@@ -296,8 +336,7 @@ class TemplateWorker {
         const minOp = {
             method: restOp.getMethod(),
             path: restOp.getUri().path,
-            status: restOp.getStatusCode(),
-            body: restOp.getBody()
+            status: restOp.getStatusCode()
         };
         const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
         const msg = `TemplateWorker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
@@ -346,8 +385,11 @@ class TemplateWorker {
                 ))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
-                    restOperation.setBody(tmpl);
-                    this.completeRestOperation(restOperation);
+                    return this.hydrateSchema(tmpl._viewSchema, reqid)
+                        .then(() => {
+                            restOperation.setBody(tmpl);
+                            this.completeRestOperation(restOperation);
+                        });
                 }).catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
@@ -491,42 +533,88 @@ class TemplateWorker {
 
     postApplications(restOperation, data) {
         const reqid = restOperation.requestId;
-        const tmplid = data.name;
-        const tmplView = data.parameters;
-        const currentTime = new Date();
-        const metadata = {
-            template: tmplid,
-            view: tmplView,
-            lastModified: currentTime.toISOString()
-        };
+        const lastModified = new Date().toISOString();
+        if (!Array.isArray(data)) {
+            data = [data];
+        }
+
+        // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
+
         return Promise.resolve()
-            .then(() => this.recordTransaction(
-                reqid, 'loading template',
-                this.templateProvider.fetch(tmplid)
-                    .then(tmpl => yaml.safeLoad(tmpl.render(tmplView)))
+            .then(() => {
+                const appsData = [];
+                let promiseChain = Promise.resolve();
+                data.forEach((x) => {
+                    promiseChain = promiseChain
+                        .then(() => {
+                            this.generateTeemReportApplication('modify', x.name);
+                        })
+                        .then(() => this.recordTransaction(
+                            reqid, `loading template (${x.name})`,
+                            this.templateProvider.fetch(x.name)
+                        ))
+                        .catch(e => Promise.reject(
+                            this.genRestResponse(
+                                restOperation,
+                                404,
+                                `unable to load template: ${x.name}\n${e.stack}`
+                            )
+                        ))
+                        .then(tmpl => this.recordTransaction(
+                            reqid, `rendering template (${x.name})`,
+                            Promise.resolve(yaml.safeLoad(tmpl.render(x.parameters)))
+                        ))
+                        .catch((e) => {
+                            if (restOperation.status >= 400) {
+                                return Promise.reject();
+                            }
+                            return Promise.reject(this.genRestResponse(
+                                restOperation,
+                                400,
+                                `failed to render template: ${x.name}\n${e.stack}`
+                            ));
+                        })
+                        .then((decl) => {
+                            appsData.push({
+                                appDef: decl,
+                                metaData: {
+                                    template: x.name,
+                                    view: x.parameters,
+                                    lastModified
+                                }
+                            });
+                        });
+                });
+                return promiseChain.then(() => appsData);
+            })
+            .then(appsData => this.recordTransaction(
+                reqid, 'requesting new application(s) from the driver',
+                this.driver.createApplications(appsData)
             ))
-            .then(declaration => this.recordTransaction(
-                reqid, 'requesting new application from the driver',
-                this.driver.createApplication(declaration, metadata)
-            ))
-            .catch(e => Promise.reject(
-                this.genRestResponse(restOperation, 400, `unable to load template: ${tmplid}\n${e.stack}`)
-            ))
+            .catch((e) => {
+                if (restOperation >= 400) {
+                    return Promise.reject();
+                }
+                return Promise.reject(this.genRestResponse(
+                    restOperation,
+                    400,
+                    `error generating AS3 declaration\n${e.stack}`
+                ));
+            })
             .then((response) => {
                 if (response.status >= 300) {
                     return this.genRestResponse(restOperation, response.status, response.body);
                 }
-                return this.genRestResponse(restOperation, response.status, {
-                    id: response.body.id,
-                    name: tmplid,
-                    parameters: tmplView
-                });
-            })
-            .then(() => {
-                this.generateTeemReportApplication('modify', tmplid);
+                return this.genRestResponse(restOperation, response.status, data.map(
+                    x => ({
+                        id: response.body.id,
+                        name: x.name,
+                        parameters: x.parameters
+                    })
+                ));
             })
             .catch((e) => {
-                if (restOperation.status !== 400) {
+                if (restOperation.status < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });
@@ -612,7 +700,7 @@ class TemplateWorker {
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
         } catch (e) {
-            return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
+            return this.genRestResponse(restOperation, 500, e.message);
         }
     }
 
@@ -691,7 +779,7 @@ class TemplateWorker {
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
             }
         } catch (e) {
-            return this.genRestResponse(restOperation, 500, `${e.message}\n${restOperation.getBody()}`);
+            return this.genRestResponse(restOperation, 500, e.stack);
         }
     }
 }

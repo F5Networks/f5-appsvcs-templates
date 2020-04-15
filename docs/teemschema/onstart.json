@@ -1,0 +1,20 @@
+{
+    "type": "object",
+    "title": "f5-appsvcs-templates: onStart v1",
+    "description": "sent when f5-appsvcs-templates REST worker starts",
+    "allOf": [{ "$ref": "common.json" }],
+    "properties": {
+        "version": {
+            "description": "version of FAST",
+            "type": "string"
+        },
+        "as3Info": {
+            "description": "information on installed AS3 extension",
+            "type": "object"
+        },
+        "installedTemplates": {
+            "description": "a list of templates found by FAST",
+            "type": "array"
+        }
+    }
+}

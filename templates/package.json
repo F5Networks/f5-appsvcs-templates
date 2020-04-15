@@ -18,7 +18,7 @@
   "devDependencies": {
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "eslint": "^5.16.0",
-    "mocha": "^6.2.2",
+    "mocha": "^6.2.3",
     "nyc": "^14.1.1"
   },
   "eslintConfig": {

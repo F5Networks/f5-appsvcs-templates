@@ -3,7 +3,7 @@
   "definitions": {
     "port": {
       "type": "integer",
-      "minimuim": 0,
+      "minimum": 0,
       "maximum": 65535,
       "default": 443
     }

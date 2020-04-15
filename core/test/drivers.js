@@ -128,6 +128,50 @@ describe('AS3 Driver tests', function () {
 
         return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
     });
+    it('create_multiple_apps', function () {
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+
+        const secondAppDef = {
+            tenantName: {
+                class: 'Tenant',
+                secondApp: {
+                    class: 'Application'
+                }
+            }
+        };
+        const as3WithMultipleApps = Object.assign({}, as3WithApp, { id: 'STATIC' });
+        as3WithMultipleApps.tenantName.secondApp = {
+            class: 'Application',
+            constants: {
+                class: 'Constants',
+                [AS3DriverConstantsKey]: appMetadata
+            }
+        };
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .reply(200, as3stub);
+
+        nock(host)
+            .post(as3ep, as3WithMultipleApps)
+            .query(true)
+            .reply(202, {});
+
+        return driver.createApplications([
+            {
+                appDef,
+                metaData: appMetadata
+            },
+            {
+                appDef: secondAppDef,
+                metaData: appMetadata
+            }
+        ])
+            .then((response) => {
+                assert.strictEqual(response.status, 202);
+            });
+    });
     it('delete_app', function () {
         const driver = new AS3Driver();
         nock(host)

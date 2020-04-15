@@ -4,6 +4,11 @@ const Mustache = require('mustache');
 
 const htmlStub = require('./html_stub');
 
+// Disable HTML escaping
+Mustache.escape = function escape(text) {
+    return text;
+};
+
 const injectFormatsIntoSchema = (schema) => {
     Object.values(schema).forEach((item) => {
         if (item !== null && typeof item === 'object') {
@@ -63,9 +68,10 @@ const filterExtraProperties = (view, schema) => {
 const generateHtmlPreview = (schema, view) => {
     const htmlView = {
         schema_data: JSON.stringify(modSchemaForJSONEditor(schema)),
-        default_view: JSON.stringify(filterExtraProperties(view, schema))
+        default_view: JSON.stringify(filterExtraProperties(view, schema)),
+        jsoneditor: htmlStub.jsonEditorData
     };
-    return Mustache.render(htmlStub, htmlView);
+    return Mustache.render(htmlStub.htmlData, htmlView);
 };
 
 module.exports = {

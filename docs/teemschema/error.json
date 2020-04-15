@@ -1,0 +1,23 @@
+{
+    "type": "object",
+    "title": "f5-appsvcs-templates: Error v1",
+    "description": "sent when f5-appsvcs-templates REST worker encounters an error while servicing a request",
+    "allOf": [{ "$ref": "common.json" }],
+    "properties": {
+        "endpoint": {
+            "description": "the FAST REST endpoint being access while the error was generated",
+            "type": "string"
+        },
+        "method": {
+            "description": "the HTTP method used to access the endpoint",
+            "type": "string",
+            "enum": ["GET", "POST", "DELETE"]
+        },
+        "code": {
+            "description": "the HTTP response code sent by FAST in for the error",
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+        }
+    }
+}

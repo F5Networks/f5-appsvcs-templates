@@ -1,0 +1,17 @@
+{
+    "type": "object",
+    "title": "f5-appsvcs-templates: Application Management v1",
+    "description": "sent when f5-appsvcs-templates creates, modifies, or deletes an application",
+    "allOf": [{ "$ref": "common.json" }],
+    "properties": {
+        "action": {
+            "description": "the action performed on the application",
+            "type": "string",
+            "enum": ["modify", "delete"]
+        },
+        "templateName": {
+            "description": "the name of the template used to perform the action",
+            "type": "string"
+        }
+    }
+}

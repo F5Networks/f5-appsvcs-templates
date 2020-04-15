@@ -5,6 +5,8 @@ const crypto = require('crypto');
 const Ajv = require('ajv');
 const Mustache = require('mustache');
 const yaml = require('js-yaml');
+const url = require('url');
+const httpUtils = require('./http_utils');
 
 const _templateSchemaData = require('./template_schema').schema;
 
@@ -64,6 +66,7 @@ class Template {
         this.sourceType = 'UNKNOWN';
         this.sourceText = '';
         this.sourceHash = '';
+        this._viewValidator = undefined;
     }
 
     _loadTypeSchemas(schemaProvider) {
@@ -131,7 +134,8 @@ class Template {
             string: '',
             integer: 0,
             array: [],
-            text: ''
+            text: '',
+            hidden: ''
         };
 
         const required = new Set();
@@ -169,6 +173,12 @@ class Template {
                             type: 'string'
                         }
                     };
+                } else if (defType === 'hidden') {
+                    acc.properties[defName] = {
+                        type: 'string',
+                        format: 'hidden',
+                        default: ''
+                    };
                 } else {
                     acc.properties[defName] = {
                         type: defType
@@ -177,7 +187,8 @@ class Template {
                 if (this.definitions[defName]) {
                     Object.assign(acc.properties[defName], this.definitions[defName]);
                 }
-                if (acc.properties[defName].default === undefined) {
+                const propDef = acc.properties[defName];
+                if (typeof propDef.default === 'undefined' && propDef.format !== 'hidden') {
                     required.add(defName);
                 }
                 break;
@@ -355,6 +366,36 @@ class Template {
         this.sourceHash = hash.digest('hex');
     }
 
+    _createViewValidator() {
+        const loadSchema = (uri) => {
+            uri = url.parse(uri);
+            const opts = {
+                host: uri.host,
+                port: uri.port,
+                parth: uri.pathName,
+                method: 'GET'
+            };
+            return httpUtils.makeRequest(opts)
+                .then((res) => {
+                    if (res.statusCode >= 400) {
+                        return Promise.reject(new Error(`error loading ${uri}: ${res.statusCode}`));
+                    }
+                    return Promise.resolve(res.body);
+                });
+        };
+        const ajv = new Ajv({
+            loadSchema,
+            unknownFormats: 'ignore'
+        });
+        ajv.addFormat('text', /.*/);
+        ajv.addFormat('hidden', /.*/);
+        return ajv.compileAsync(this.getViewSchema())
+            .then((validate) => {
+                this._viewValidator = validate;
+                return Promise.resolve();
+            });
+    }
+
     static loadMst(msttext, schemaProvider) {
         this.validate(msttext);
         const tmpl = new this();
@@ -364,9 +405,9 @@ class Template {
             .then((typeSchemas) => {
                 tmpl._descriptionFromTemplate();
                 tmpl._viewSchemaFromTemplate(typeSchemas);
-
-                return tmpl;
-            });
+            })
+            .then(() => tmpl._createViewValidator())
+            .then(() => tmpl);
     }
 
     static loadYaml(yamltext, schemaProvider) {
@@ -384,9 +425,9 @@ class Template {
         return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
                 tmpl._viewSchemaFromTemplate(typeSchemas);
-
-                return tmpl;
-            });
+            })
+            .then(() => tmpl._createViewValidator())
+            .then(() => tmpl);
     }
 
     static fromJson(obj) {
@@ -395,7 +436,9 @@ class Template {
         }
         const tmpl = new this();
         Object.assign(tmpl, obj);
-        return tmpl;
+        return Promise.resolve()
+            .then(() => tmpl._createViewValidator())
+            .then(() => tmpl);
     }
 
     static isValid(tmpldata) {
@@ -444,12 +487,8 @@ class Template {
 
     validateView(view) {
         const combView = this.getCombinedView(view);
-
-        const viewValidator = new Ajv({
-            unknownFormats: 'ignore'
-        }).compile(this.getViewSchema());
-        if (!viewValidator(combView)) {
-            throw new Error(JSON.stringify(viewValidator.errors, null, 2));
+        if (!this._viewValidator(combView)) {
+            throw new Error(JSON.stringify(this._viewValidator.errors, null, 2));
         }
     }
 

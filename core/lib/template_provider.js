@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const archiver = require('archiver');
 
 const ResourceCache = require('./resource_cache').ResourceCache;
 const Template = require('./template').Template;
@@ -11,10 +12,11 @@ const { FsSchemaProvider } = require('./schema_provider');
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '76cb4510149798456ae271ed8c43c195a67f5e4f249ec6550dff5eb3137ed281'
+        '6f5c442bf7a601605c610448e1c7e79edcd3d502c09b5e11ec7b6c081f4cab7b', // v0.4
+        '76cb4510149798456ae271ed8c43c195a67f5e4f249ec6550dff5eb3137ed281' //  v0.3
     ],
     examples: [
-        'd0e708656e03573db98b96924e34ec22c1adfc71a6a78e3fa780d51c2b5dede5'
+        'd0e708656e03573db98b96924e34ec22c1adfc71a6a78e3fa780d51c2b5dede5' //  v0.3
     ]
 };
 
@@ -253,6 +255,21 @@ class FsTemplateProvider extends BaseTemplateProvider {
     removeSet() {
         return Promise.reject(new Error('Set removal not implemented'));
     }
+
+    buildPackage(setName, dst) {
+        const archive = archiver('zip');
+        const output = fs.createWriteStream(dst);
+        const source = `${this.config_template_path}/${setName}`;
+
+        return new Promise((resolve, reject) => {
+            archive
+                .directory(source, false)
+                .on('error', err => reject(err))
+                .pipe(output);
+            output.on('close', () => resolve());
+            archive.finalize();
+        });
+    }
 }
 
 class DataStoreTemplateProvider extends BaseTemplateProvider {
@@ -281,7 +298,8 @@ class DataStoreTemplateProvider extends BaseTemplateProvider {
                     return Promise.reject(new Error(`Could not find template "${templateName}" in template set "${tsName}"`));
                 }
                 return Template.fromJson(JSON.parse(templateData));
-            });
+            })
+            .then(tmpl => tmpl);
     }
 
     invalidateCache() {
