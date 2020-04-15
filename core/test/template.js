@@ -174,6 +174,126 @@ describe('Template class tests', function () {
         // const ymldata = 'title: foo';
         // assert.throws(() => Template.validate(ymldata));
     });
+    it('schema_sections_array', function () {
+        const mstdata = '{{#section}}{{foo}}{{/section}}';
+        return Template.loadMst(mstdata)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
+                assert(
+                    schema.required.includes('section'),
+                    'section should be required'
+                );
+                assert(
+                    !schema.required.includes('foo'),
+                    'foo should not be required on base schema'
+                );
+                assert(
+                    !Object.keys(schema.properties).includes('foo'),
+                    'foo should not have been hoisted to global scope'
+                );
+                assert.ok(schema.dependencies);
+                assert.deepStrictEqual(schema.dependencies.foo, ['section']);
+
+                const sectionDef = schema.properties.section;
+                console.log(JSON.stringify(sectionDef, null, 2));
+                assert.ok(sectionDef);
+                assert.strictEqual(sectionDef.type, 'array');
+                assert.ok(sectionDef.items.properties.foo, 'foo variable should be nested in section');
+                assert(
+                    sectionDef.items.required.includes('foo'),
+                    'foo variable should be required on section'
+                );
+            });
+    });
+    it('schema_sections_dot_array', function () {
+        const mstdata = '{{#section}}{{.}}{{/section}}';
+        return Template.loadMst(mstdata)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
+                assert(
+                    schema.required.includes('section'),
+                    'section should be required'
+                );
+                assert(!schema.dependencies, 'schema should have no dependencies');
+
+                const sectionDef = schema.properties.section;
+                console.log(JSON.stringify(sectionDef, null, 2));
+                assert.ok(sectionDef);
+                assert.strictEqual(sectionDef.type, 'array');
+                assert.strictEqual(sectionDef.items.type, 'string');
+            });
+    });
+    it('schema_sections_boolean', function () {
+        const ymldata = `
+            definitions:
+                section:
+                    type: "boolean"
+            template: |
+                {{#section}}{{foo}}{{/section}}
+        `;
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
+                assert(
+                    schema.required.includes('section'),
+                    'section should be required'
+                );
+                assert(
+                    !schema.required.includes('foo'),
+                    'foo should not be required on base schema'
+                );
+                assert.ok(schema.properties.foo, 'foo variable should have been hoisted to global scope');
+                assert.ok(schema.dependencies);
+                assert.deepStrictEqual(schema.dependencies.foo, ['section']);
+
+                const sectionDef = schema.properties.section;
+                console.log(JSON.stringify(sectionDef, null, 2));
+                assert.ok(sectionDef);
+                assert.strictEqual(sectionDef.type, 'boolean');
+                assert(!sectionDef.items);
+            });
+    });
+    it('schema_sections_object', function () {
+        const ymldata = `
+            definitions:
+                section:
+                    type: "object"
+            template: |
+                {{#section}}{{foo}}{{/section}}
+        `;
+        return Template.loadYaml(ymldata)
+            .then((tmpl) => {
+                const schema = tmpl.getViewSchema();
+                console.log(JSON.stringify(schema, null, 2));
+                assert(
+                    schema.required.includes('section'),
+                    'section should be required'
+                );
+                assert(
+                    !schema.required.includes('foo'),
+                    'foo should not be required on base schema'
+                );
+                assert(
+                    !Object.keys(schema.properties).includes('foo'),
+                    'foo should not have been hoisted to global scope'
+                );
+                assert.ok(schema.dependencies);
+                assert.deepStrictEqual(schema.dependencies.foo, ['section']);
+
+                const sectionDef = schema.properties.section;
+                console.log(JSON.stringify(sectionDef, null, 2));
+                assert.ok(sectionDef);
+                assert.strictEqual(sectionDef.type, 'object');
+                assert.ok(sectionDef.properties.foo, 'foo variable should be nested in section');
+                assert(
+                    sectionDef.required.includes('foo'),
+                    'foo variable should be required on section'
+                );
+            });
+    });
     it('render', function () {
         const mstdata = `
             {{foo::string}}
@@ -273,29 +393,11 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.render(view), reference);
             });
     });
-    it('render_nested_section', function () {
-        const mstdata = `
-            {{#outer_val}}
-                {{outer_val::array}}
-            {{/outer_val}}
-            {{^outer_val}}
-                {{#inner_val}}
-                    {{inner_val::array}}
-                {{/inner_val}}
-            {{/outer_val}}
-        `;
-        const view = { outer_val: [], inner_val: ['1', '2', '3'] };
-        const reference = '["1","2","3"]';
-
-        return Template.loadMst(mstdata)
-            .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
-                assert.strictEqual(tmpl.render(view).trim(), reference);
-            });
-    });
     it('render_merged_sections', function () {
         const ymldata = `
             definitions:
+                value:
+                    type: string
                 part_nothing:
                     template: |
                         {{^value}}

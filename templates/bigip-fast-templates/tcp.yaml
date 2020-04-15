@@ -12,12 +12,15 @@ definitions:
     title: What TCP port do you want to use for the virtual server?
   enable_redirect:
     title: Redirect port 80 traffic to this virtual server
+    type: boolean
   enable_pool:
     title: Create Pool
     description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
+    type: boolean
   make_pool:
     title: Automatically manage the pool
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
+    type: boolean
   pool_name:
     title: Specify the name of an existing BIG-IP pool.
     enumFromBigip: 'ltm/pool'
@@ -35,8 +38,10 @@ definitions:
   enable_monitor:
     title: Pool Monitor
     description: Determine the availability and performance of devices, links, and services on a network.
+    type: boolean
   make_monitor:
     title: Automatically manage the pool monitor
+    type: boolean
   monitor_name:
     title: Specify the name of an existing BIG-IP monitor.
     description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
@@ -44,11 +49,14 @@ definitions:
   enable_snat:
     title: SNAT
     description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
+    type: boolean
   snat_automap:
     title: SNAT Automap
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
+    type: boolean
   make_snatpool:
     title: Automatically manage the SNAT pool.
+    type: boolean
   snatpool_name:
     title: Specify the name of an existing BIG-IP SNAT pool.
     enumFromBigip: 'ltm/snatpool'
@@ -57,18 +65,22 @@ definitions:
   enable_persistence:
     title: Persistence
     description: Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.
+    type: boolean
   persistence_type:
     title: Specify the type of persistence
   enable_fallback_persistence:
     title: Fallback Persistence
     description: Create a secondary, or fallback, persistence record for each new client connection.
+    type: boolean
   fallback_persistence_type:
     title: Specify the type of fallback persistence
   enable_tls_server:
     title: TLS Server
     description: Enable TLS server to decrypt client-side connections.
+    type: boolean
   make_tls_server_profile:
     title: Automatically manage the TLS server profile
+    type: boolean
   tls_server_profile_name:
     title: Specify the name of an existing BIG-IP clientssl profile.
     description: TLS server profiles are of type "ltm clientssl" on BIG-IP.
@@ -82,14 +94,17 @@ definitions:
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
+    type: boolean
   make_tls_client_profile:
     title: Automatically manage the TLS client profile
+    type: boolean
   tls_client_profile_name:
     title: Specify the name of an existing BIG-IP serverssl profile.
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
     enumFromBigip: 'ltm/profile/server-ssl'
   make_tcp_ingress_profile:
     title: Automatically manage the ingress TCP profile
+    type: boolean
   tcp_ingress_topology:
     title: Specify the type of network that connects clients to the BIG-IP system
   tcp_ingress_profile_name:
@@ -97,6 +112,7 @@ definitions:
     enumFromBigip: 'ltm/profile/tcp'
   make_tcp_egress_profile:
     title: Automatically manage the egress TCP profile
+    type: boolean
   tcp_egress_topology:
     title: Specify the type of network that connects servers to the BIG-IP system
   tcp_egress_profile_name:
@@ -104,6 +120,7 @@ definitions:
     enumFromBigip: 'ltm/profile/tcp'
   make_http_profile:
     title: Automatically manage the HTTP profile
+    type: boolean
   http_profile_name:
     title: Specify the name of an existing BIG-IP HTTP profile.
     enumFromBigip: 'ltm/profile/http'
@@ -113,23 +130,29 @@ definitions:
   enable_acceleration:
     title: Web Acceleration or Caching
     description: Web Acceleration or web caching will be enabled depending on the BIG-IP license.
+    type: boolean
   make_acceleration_profile:
     title: Automatically manage the Web Acceleration profile
+    type: boolean
   acceleration_profile_name:
     title: Specify the name of an existing BIG-IP web acceleration profile.
     enumFromBigip: 'ltm/profile/web-acceleration'
   enable_compression:
     title: HTTP Compression
+    type: boolean
   make_compression_profile:
     title: Automatically manage the HTTP Compression profile
+    type: boolean
   compression_profile_name:
     title: Specify the name of an existing BIG-IP HTTP compression profile.
     enumFromBigip: 'ltm/profile/http-compression'
   enable_multiplex:
     title: Connection Multiplexing
     description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
+    type: boolean
   make_multiplex_profile:
     title: Automatically manage the Multiplex (OneConnect) profile
+    type: boolean
   multiplex_profile_name:
     title: Specify the name of an existing BIG-IP OneConnect profile
     enumFromBigip: 'ltm/profile/one-connect'
