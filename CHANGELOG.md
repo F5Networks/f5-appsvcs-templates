@@ -2,16 +2,20 @@
 ## Added
 * POST to /applications can now take an array of applications
 * Better support for external schema references when using the FAST CLI
+* packageTemplateSet command in the FAST CLI
+* enumFromBigip property for use in templates to create a enum from BIG-IP queries
 
 ## Fixed
 * GUI elements not showing/hiding consistently
-* Print better errors when schema validation fails using the FAST CLI
 * JSHINT errors showing up in restnoded log when loading the REST worker
+* Ajv warnings when using text, hidden, or password formats
 
 ## Changed
+* Print better errors when schema validation fails using the FAST CLI
 * Do not mark properties with the "hidden" format as required
 * Stop logging the bodies of REST responses and requests in the REST worker
 * Use ReDoc instead of Swagger-UI for the API docs tab
+* Cleaned up titles and descriptions in bigip-fast-templates templates
 
 ## Removed
 
