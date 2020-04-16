@@ -19,7 +19,9 @@ This module is not currently on NPM, and as such needs to be installed via a fil
 npm install path/to/fast/core
 ```
 
-## CLI
+## Usage
+
+### CLI
 
 A command line interface is provided via a `fast` binary.
 The help text is provided below and also accessed via `fast --help`:
@@ -53,6 +55,86 @@ For example:
 
 ```bash
 ./cli.js render path/to/template
+```
+
+### Module
+
+Below is a basic example for loading a template without any additional type schema:
+
+```javascript
+const fast = require('@f5devcentral/f5-fast-core');
+
+const ymldata = `
+    view:
+      message: Hello!
+    definitions:
+      body:
+        template:
+          <body>
+            <h1>{{message}}</h1>
+          </body>
+    template: |
+      <html>
+        {{> body}}
+      </html>
+`;
+
+fast.Template.loadYaml(ymldata)
+    .then((template) => {
+        console.log(template.getViewSchema());
+        console.log(template.render({message: "Hello world!"}));
+    });
+```
+
+In addition to `Template.loadYaml()`, a `Template` can be created from Mustache data using `Template.loadMst()`:
+
+```javascript
+const fast = require('@f5devcentral/f5-fast-core');
+
+const mstdata = '{{message}}';
+
+fast.Template.loadMst(ymldata)
+    .then((template) => {
+        console.log(template.getViewSchema());
+        console.log(template.render({message: "Hello world!"}));
+    });
+```
+
+To support user-defined types, a `SchemaProvider` must be used.
+The `FsSchemaProvider` can be used to load schema from disk:
+
+```javascript
+const fast = require('@f5devcentral/f5-fast-core');
+
+const templatesPath = '/path/to/templatesdir'; // directory containing types.json
+const schemaProvider = new fast.FsSchemaProvider(templatesPath);
+const mstdata = '{{virtual_port:types:port}}';
+
+fast.Template.loadMst(mstdata, schemaProvider)
+    .then((template) => {
+        console.log(template.getViewSchema());
+        console.log(template.render({virtual_port: 443});
+    });
+```
+
+A higher-level API is available for loading templates via `TemplateProvider` classes.
+These classes will handle calling the correct load function (`Template.loadYaml()` vs `Template.loadMst()`) and can also handle schemas.
+For example, to load "templates sets" (a collection of template source files) from a given directory, the `FsTemplateProvider` class can be used:
+
+```javascript
+const fast = require('@f5devcentral/f5-fast-core');
+
+const templatesPath = '/path/to/templatesdir';
+const templateProvider = fast.FsTemplateProvider(templatesPath);
+
+templateProvider.fetch('templateSetName/templateName')
+    .then((template) => {
+        console.log(template.getViewSchema());
+        console.log(template.render({
+            var: "value",
+            boolVar: false
+        }));
+    });
 ```
 
 ## Development
