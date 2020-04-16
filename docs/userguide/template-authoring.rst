@@ -384,7 +384,7 @@ A schema example showing hidden password text in the gui:
 Keeping Template Text Secret
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The template may be viewed from the FAST UI via the :ref:`templatetab`  tab.  If there is a static, plain text passphrase in the template, it will be displayed.  
+The template may be viewed from the FAST UI via the View Template button located on the :ref:`deploytab` tab.  If there is a static, plain text passphrase in the template, it will be displayed.  
 For cases where the passphrase is part of an AS3 declaration, the template author may wish to substitute an encrypted passphrase to prevent leaking the password when sharing or backing up the template files.  To obtain the encrypted value, submit the declaration directly to AS3, and retrieve the passphrase object that is returned by AS3 into the FAST template. |br|
 
 For example, if the template contains the following certificate definition:
