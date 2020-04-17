@@ -1,10 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/hyper-schema",
   "definitions": {
-    "non_empty_string": {
-      "type": "string",
-      "minLength": 1
-    },
     "bigip_path": {
         "type": "string",
         "minLength": 1,
@@ -21,29 +17,6 @@
       "items": {
         "$ref": "#/definitions/ipv4"
       }
-    },
-    "port": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 65535
-    },
-    "https_port": {
-      "$ref": "#/definitions/port",
-      "default": 443
-    },
-    "http_port": {
-      "$ref": "#/definitions/port",
-      "default": 80
-    },
-    "persistence": {
-      "type": "string",
-      "enum": [
-        "cookie",
-        "destination-address",
-        "msrdp",
-        "source-address",
-        "tls-session-id"
-      ]
     },
     "load_balancing_mode": {
       "type": "string",
@@ -69,6 +42,33 @@
         "weighted-least-connections-node"
       ],
       "default": "least-connections-member"
+    },
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "persistence": {
+      "type": "string",
+      "enum": [
+        "cookie",
+        "destination-address",
+        "msrdp",
+        "source-address",
+        "tls-session-id"
+      ]
+    },
+    "topology": {
+      "type": "string",
+      "enum": [
+        "lan",
+        "wan",
+        "mobile"
+      ]
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
     }
   }
 }
