@@ -81,7 +81,6 @@ On this tab, there are two buttons for each application: **Modify** and **Delete
 .. WARNING:: Once you delete an application, there is no easy way to recall an application's deployment parameters
 
 |
-
 .. _deploytab:
 
 Deploy
@@ -135,9 +134,6 @@ in the list view.
 
 |
 
-
-
-
 .. _templatetab:
 
 Templates
@@ -182,7 +178,6 @@ Deploy Log
 The deploy log is a summary of AS3's async task results, newer jobs are nearer to the top. The output includes the Task ID, the Tenant (BIG-IP partition), and the result.
 
 |
-
 .. _apitab:
 
 API
