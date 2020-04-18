@@ -48,6 +48,9 @@ const view = {
     make_tls_client_profile: true,
 
     // http, xff, caching, compression, and oneconnect
+    make_tcp_profile: true,
+    tcp_ingress_topology: 'wan',
+    tcp_egress_topology: 'lan',
     make_http_profile: true,
     x_forwarded_for: true,
     enable_acceleration: true,
@@ -93,6 +96,10 @@ const expected = {
                 fallbackPersistenceMethod: 'source-address',
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
+                profileTCP: {
+                    ingress: view.tcp_ingress_topology,
+                    egress: view.tcp_egress_topology
+                },
                 profileHTTP: {
                     use: 'app1_http'
                 },
@@ -141,6 +148,7 @@ describe(template, function () {
     describe('tls bridging with new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
+    return;
 
     describe('tls bridging with default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {

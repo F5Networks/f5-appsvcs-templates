@@ -283,7 +283,7 @@ definitions:
           },
         {{/make_tcp_ingress_profile}}
         {{#make_tcp_egress_profile}}
-          "egress": "{{tcp_egress_topology:f5:topology}}",
+          "egress": "{{tcp_egress_topology:f5:topology}}"
         {{/make_tcp_egress_profile}}
         {{^make_tcp_egress_profile}}
           "egress": {
