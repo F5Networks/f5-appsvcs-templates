@@ -2,10 +2,16 @@
   "$schema": "http://json-schema.org/draft-07/hyper-schema",
   "definitions": {
     "bigip_path": {
-        "type": "string",
-        "minLength": 1,
-        "pattern": "^\\x2f[^\\x00-\\x19\\x22#'*<>?\\x5b-\\x5d\\x7b-\\x7d\\x7f]+$",
-        "maxLength": 255
+        "oneOf": [{
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^\\x2f[^\\x00-\\x19\\x22#'*<>?\\x5b-\\x5d\\x7b-\\x7d\\x7f]+$",
+          "maxLength": 255
+        },
+        {
+          "type": "string",
+          "maxLength": 0
+        }]
     },
     "ipv4": {
       "type": "string",
