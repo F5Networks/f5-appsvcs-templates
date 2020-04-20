@@ -23,8 +23,6 @@ s/Service_HTTPS/Service_TCP
 /> app_tls_server_def
 +0,+2d
 /> service_tls_server
-+0,+1d
-+1,+4d
-d
++0,+6d
 w
 q' | ed ${DIR}/tcp.yaml
