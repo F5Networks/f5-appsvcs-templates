@@ -53,7 +53,11 @@ const expected = {
                 snat: {
                     use: 'app1_snatpool'
                 },
-                persistenceMethods: ['source-address']
+                persistenceMethods: ['source-address'],
+                profileTCP: {
+                    ingress: 'wan',
+                    egress: 'lan'
+                }
             },
             app1_pool: {
                 class: 'Pool',
