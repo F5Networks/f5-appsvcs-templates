@@ -1,4 +1,4 @@
-# 0.4
+# 1.0
 ## Added
 * POST to /applications can now take an array of applications
 * Better support for external schema references when using the FAST CLI
