@@ -181,8 +181,8 @@ definitions:
           },
           "{{app_name:f5:non_empty_string}}_certificate": {
             "class": "Certificate",
-            "certificate": { "bigip": "{{tls_cert_name:f5:non_empty_string}}" },
-            "privateKey": { "bigip": "{{tls_key_name:f5:non_empty_string}}" }
+            "certificate": { "bigip": "{{tls_cert_name:f5:bigip_path}}" },
+            "privateKey": { "bigip": "{{tls_key_name:f5:bigip_path}}" }
           },
         {{/make_tls_server_profile}}
       {{/enable_tls_server}}
@@ -211,7 +211,7 @@ definitions:
         {{/make_pool}}
         {{^make_pool}}
           "pool": {
-            "bigip": "{{pool_name}}"
+            "bigip": "{{pool_name:f5:bigip_path}}"
           },
         {{/make_pool}}
       {{/enable_pool}}
@@ -229,7 +229,7 @@ definitions:
           {{/make_snatpool}}
           {{^make_snatpool}}
             "snat": {
-              "bigip": "{{snatpool_name}}"
+              "bigip": "{{snatpool_name:f5:bigip_path}}"
             },
           {{/make_snatpool}}
         {{/snat_automap}}
@@ -275,7 +275,7 @@ definitions:
       {{/make_http_profile}}
       {{^make_http_profile}}
         "profileHTTP": {
-          "bigip": "{{http_profile_name:f5:non_empty_string}}"
+          "bigip": "{{http_profile_name:f5:bigip_path}}"
         },
       {{/make_http_profile}}
   service_acceleration_def:
@@ -330,7 +330,7 @@ definitions:
         {{/make_tcp_ingress_profile}}
         {{^make_tcp_ingress_profile}}
           "ingress": {
-            "bigip": "{{tcp_ingress_profile_name:f5:non_empty_string}}"
+            "bigip": "{{tcp_ingress_profile_name:f5:bigip_path}}"
           },
         {{/make_tcp_ingress_profile}}
         {{#make_tcp_egress_profile}}
@@ -338,7 +338,7 @@ definitions:
         {{/make_tcp_egress_profile}}
         {{^make_tcp_egress_profile}}
           "egress": {
-            "bigip": "{{tcp_egress_profile_name:f5:non_empty_string}}"
+            "bigip": "{{tcp_egress_profile_name:f5:bigip_path}}"
           }
         {{/make_tcp_egress_profile}}
       }
@@ -355,8 +355,8 @@ view:
   snat_automap: true
   make_snatpool: true
   enable_persistence: true
-  persistence_type: cookie
-  enable_fallback_persistence: true
+  persistence_type: source-address
+  enable_fallback_persistence: false
   fallback_persistence_type: source-address
   enable_tls_server: true
   make_tls_server_profile: true

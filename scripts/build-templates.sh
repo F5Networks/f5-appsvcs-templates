@@ -15,6 +15,14 @@ s/https/tcp
 w
 q' | ed ${DIR}/tcp.yaml
 
+# change initial persistence choices
+echo -e '/^  persistence_type: cookie
+s/cookie/source-address
+/^  enable_fallback_persistence: true
+s/true/false
+w
+q' | ed ${DIR}/tcp.yaml
+
 # remove http-specific properties from service definition
 echo -e '/"template": "https"
 s/https/tcp
