@@ -394,11 +394,11 @@ template: |
       "class": "Tenant",
       "{{app_name:f5:non_empty_string}}": {
         "class": "Application",
-        "template": "https",
+        "template": "tcp",
         {{> app_pool_def}}
         {{> app_snatpool_def}}
         "serviceMain": {
-          "class": "Service_HTTPS",
+          "class": "Service_TCP",
           "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_pool_def}}

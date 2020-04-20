@@ -16,7 +16,11 @@ w
 q' | ed ${DIR}/tcp.yaml
 
 # remove http-specific properties from service definition
-echo -e '/> app_tls_server_def
+echo -e '/"template": "https"
+s/https/tcp
+/Service_HTTPS
+s/Service_HTTPS/Service_TCP
+/> app_tls_server_def
 +0,+2d
 /> service_tls_server
 +0,+1d
