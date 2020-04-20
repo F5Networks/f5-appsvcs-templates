@@ -148,12 +148,7 @@ definitions:
             "slowRampTime": {{slow_ramp_time::integer}},
             {{#enable_monitor}}
               {{#make_monitor}}
-                {{#enable_tls_client}}
-                  "monitors": [ "https" ]
-                {{/enable_tls_client}}
-                {{^enable_tls_client}}
-                  "monitors": [ "http" ]
-                {{/enable_tls_client}}
+                "monitors": [ "tcp" ]
               {{/make_monitor}}
               {{^make_monitor}}
                 "monitors": [{
@@ -339,7 +334,7 @@ definitions:
           },
         {{/make_multiplex_profile}}
       {{/enable_multiplex}}
-  redirect80_def:
+  service_redirect80_def:
     template: |
       {{#enable_tls_server}}
         "redirect80": {{enable_redirect::boolean}}
@@ -402,9 +397,6 @@ template: |
         "template": "https",
         {{> app_pool_def}}
         {{> app_snatpool_def}}
-        {{> app_tls_server_def}}
-        {{> app_tls_client_def}}
-        {{> app_http_def}}
         "serviceMain": {
           "class": "Service_HTTPS",
           "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
@@ -412,14 +404,7 @@ template: |
           {{> service_pool_def}}
           {{> service_snat_def}}
           {{> service_persistence}}
-          {{> service_tls_server_def}}
-          {{> service_tls_client_def}}
           {{> service_tcp_def}}
-          {{> service_http_def}}
-          {{> service_acceleration_def}}
-          {{> service_compression_def}}
-          {{> service_multiplex_def}}
-          {{> redirect80_def}}
         }
       }
     }
