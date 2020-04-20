@@ -26,7 +26,7 @@ describe('TransactionLogger', function () {
         it('should store transaction', function () {
             const tl = new TransactionLogger();
             tl.enter('a');
-            assert.ok(tl.transactions.a);
+            assert.ok(tl.transactions['a-0']);
         });
         it('should call onEnter callback', function () {
             let called = false;

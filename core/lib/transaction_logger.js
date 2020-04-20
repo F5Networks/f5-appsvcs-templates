@@ -1,5 +1,7 @@
 'use strict';
 
+const uuid4 = require('uuid').v4;
+
 class TransactionLogger {
     constructor(onEnter, onExit) {
         this.onEnterCb = onEnter || (() => {});
@@ -15,32 +17,36 @@ class TransactionLogger {
         return endTime.getTime() - startTime.getTime();
     }
 
-    enter(transaction) {
+    enter(transaction, tid) {
         if (!transaction) {
             throw new Error('Missing required argument transaction');
         }
+        tid = tid || 0;
         const enterTime = this._getTime();
         this.onEnterCb(transaction, enterTime);
-        this.transactions[transaction] = enterTime;
+        this.transactions[`${transaction}-${tid}`] = enterTime;
     }
 
-    exit(transaction) {
+    exit(transaction, tid) {
         if (!transaction) {
             throw new Error('Missing required argument transaction');
         }
-        if (!this.transactions[transaction]) {
+        tid = tid || 0;
+        const tkey = `${transaction}-${tid}`;
+        if (!this.transactions[tkey]) {
             throw new Error('exit() called without enter()');
         }
         const exitTime = this._getTime();
-        const enterTime = this.transactions[transaction];
+        const enterTime = this.transactions[tkey];
         this.onExitCb(transaction, exitTime, this._deltaTime(enterTime, exitTime));
-        delete this.transactions[transaction];
+        delete this.transactions[tkey];
     }
 
     enterPromise(transaction, promise) {
-        this.enter(transaction);
+        const tid = uuid4();
+        this.enter(transaction, tid);
         return promise
-            .finally(() => this.exit(transaction));
+            .finally(() => this.exit(transaction, tid));
     }
 }
 
