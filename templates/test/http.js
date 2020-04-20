@@ -148,7 +148,6 @@ describe(template, function () {
     describe('tls bridging with new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
-    return;
 
     describe('tls bridging with default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
