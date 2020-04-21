@@ -35,7 +35,7 @@ const dataGroupPath = `/Common/${projectName}/dataStore`;
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '3872013da9d7c9ce69a9fc927845c33f08485d0f89a17ae00f0e51aae0976ee4' //  v1.0
+        'f465c23a70742e07f423230c0bd38c7aaa79ff52ac552f44cc9b4d6182458d02' //  v1.0
     ],
     examples: [
         'fffa80a94a8ccd2edd3cdea406c68183c1aada851a200268bca5e2aad9f33e66' //  v1.0
