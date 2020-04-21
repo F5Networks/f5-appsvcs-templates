@@ -355,7 +355,7 @@ Arrays of primitives should work fine but have not been extensively tested.
 
 Objects are not yet supported.
 
-When designing a template, the appropriate schema definition should be used for each variable. |br|
+Up-front validation using the schema will help to prevent failed deployments by notifying the user prior to deployment when a value has an invalid format.  Therefore, when designing a template, the appropriate schema definition should be used for each variable. |br|
 For example, if the virtual IP address is a variable, use schema to validate the input is an IPv4 or IPv6 address. |br|
 For more information on writing schema, see https://json-schema.org/
 
