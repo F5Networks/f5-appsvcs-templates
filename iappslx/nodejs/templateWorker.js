@@ -325,7 +325,9 @@ class TemplateWorker {
                         return Promise.resolve(response.body.items.map(x => x.fullPath));
                     })
                     .then((items) => {
-                        prop.enum = items;
+                        if (items.length !== 0) {
+                            prop.enum = items;
+                        }
                         delete prop.enumFromBigip;
                     });
             })))
