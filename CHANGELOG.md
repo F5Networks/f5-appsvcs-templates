@@ -4,6 +4,7 @@
 * Better support for external schema references when using the FAST CLI
 * packageTemplateSet command in the FAST CLI
 * enumFromBigip property for use in templates to create a enum from BIG-IP queries
+* SNAT, Persistence, and support for various profiles added to the HTTP and TCP templates
 
 ## Fixed
 * GUI elements not showing/hiding consistently
