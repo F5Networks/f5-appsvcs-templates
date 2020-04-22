@@ -43,14 +43,6 @@ You can trace the request through the response sent. |br|
 A request ID of 0 is startup:
 ::
 
-  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: received request method=Get; path=/shared/fast/info
-  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Entering GET to appsvcs/info at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
-  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Exiting GET to appsvcs/info at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
-  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: GET to appsvcs/info took 5ms to complete
-  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Entering gathering template set data at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
-  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Exiting gathering template set data at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
-  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: gathering template set data took 135ms to complete
-  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: sending response after 141ms
   Wed, 15 Apr 2020 20:28:21 GMT - info: TemplateWorker [0]: Entering loading template sets from disk at Wed Apr 15 2020 13:28:21 GMT-0700 (PDT)
   Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker: Loading template sets from disk: [] (skipping: ["bigip-fast-templates","examples"])
   Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Exiting loading template sets from disk at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
@@ -64,10 +56,14 @@ A request ID of 0 is startup:
   Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Entering gathering template set data at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
   Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Exiting gathering template set data at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
   Wed, 15 Apr 2020 20:28:23 GMT - fine: TemplateWorker [0]: gathering template set data took 329ms to complete
-
-|
-
-.. code-block:: json
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: received request method=Get; path=/shared/fast/info
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Entering GET to appsvcs/info at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Exiting GET to appsvcs/info at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: GET to appsvcs/info took 5ms to complete
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Entering gathering template set data at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Exiting gathering template set data at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: gathering template set data took 135ms to complete
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: sending response after 141ms
 
  {
   "method": "Get",
