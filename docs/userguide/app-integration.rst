@@ -7,6 +7,7 @@ Overview
 --------
 
 Integrating FAST technology into other JavaScript projects can be done with the ``@f5devcentral/f5-fast-core`` NPM module.
+
 The ``@f5devcentral/f5-fast-core`` module:
 
 * Parses Mustache templates and an extended template format (in YAML)
@@ -71,6 +72,7 @@ In addition to ``Template.loadYaml()``, a ``Template`` can be created from Musta
        });
 
 To support user-defined types, a ``SchemaProvider`` must be used.
+
 The ``FsSchemaProvider`` can be used to load schema from disk:
 
 .. code-block:: javascript
@@ -89,6 +91,7 @@ The ``FsSchemaProvider`` can be used to load schema from disk:
 
 A higher-level API is available for loading templates via ``TemplateProvider`` classes.
 These classes will handle calling the correct load function (``Template.loadYaml()`` vs ``Template.loadMst()``) and can also handle schemas.
+
 For example, to load "templates sets" (a collection of template source files) from a given directory, the ``FsTemplateProvider`` class can be used:
 
 .. code-block:: javascript
