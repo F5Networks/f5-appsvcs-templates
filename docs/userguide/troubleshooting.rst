@@ -25,9 +25,9 @@ If a change has been made, an Update button will be present under the Actions co
 
 View the template set hashes using cURL:
 
-  .. code-block:: shell
+ .. code-block:: shell
 
-   $ curl -sku <BIG-IP username>:<BIG-IP password>  https://<IP address of BIG-IP>/mgmt/shared/fast/info
+  $ curl -sku <BIG-IP username>:<BIG-IP password>  https://<IP address of BIG-IP>/mgmt/shared/fast/info
 
 .. _loggingtab:
 
@@ -38,50 +38,39 @@ FAST logs to **/var/log/restnoded/restnoded.log** using f5-logger from the frame
 
 |
 
-Example log entry
+Example log entry where the UUID in the square brackets is a unique to each request received by the REST worker. 
+You can trace the request through the response sent. |br|
+A request ID of 0 is startup:
+::
 
-Fri, 13 Mar 2020 17:24:40 GMT - info: TemplateWorker: Loading template sets from disk: [] (skipping: ["bigip-fast-templates","examples","testset"]) |br|
-Fri, 13 Mar 2020 17:24:55 GMT - fine: TemplateWorker received request: method=Get; path=/shared/fast/applications; data=null |br|
-Fri, 13 Mar 2020 17:24:55 GMT - fine: TemplateWorker sending response:
-
-
-.. code-block:: json
+  Wed, 15 Apr 2020 20:28:21 GMT - info: TemplateWorker [0]: Entering loading template sets from disk at Wed Apr 15 2020 13:28:21 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker: Loading template sets from disk: [] (skipping: ["bigip-fast-templates","examples"])
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Exiting loading template sets from disk at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - fine: TemplateWorker [0]: loading template sets from disk took 2012ms to complete
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Entering ensure FAST is in iApps blocks at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Exiting ensure FAST is in iApps blocks at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - fine: TemplateWorker [0]: ensure FAST is in iApps blocks took 5ms to complete
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Entering GET to appsvcs/info at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Exiting GET to appsvcs/info at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - fine: TemplateWorker [0]: GET to appsvcs/info took 55ms to complete
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Entering gathering template set data at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - info: TemplateWorker [0]: Exiting gathering template set data at Wed Apr 15 2020 13:28:23 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:23 GMT - fine: TemplateWorker [0]: gathering template set data took 329ms to complete
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: received request method=Get; path=/shared/fast/info
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Entering GET to appsvcs/info at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Exiting GET to appsvcs/info at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: GET to appsvcs/info took 5ms to complete
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Entering gathering template set data at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - info: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: Exiting gathering template set data at Wed Apr 15 2020 13:28:24 GMT-0700 (PDT)
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: gathering template set data took 135ms to complete
+  Wed, 15 Apr 2020 20:28:24 GMT - fine: TemplateWorker [c4dd5b9d-3057-4e46-8514-94e3b12c8ab5]: sending response after 141ms
 
  {
-   "method": "Get",
-   "path": "/shared/fast/applications",
-   "status": 200,
-   "body": [
-    {
-      "template": "bigip-fast-templates/http",
-      "view": {
-        "tenant_name": "t1",
-        "app_name": "a1",
-        "virtual_address": "10.0.0.1",
-        "virtual_port": 443,
-        "redirect": false,
-        "existing_pool": false,
-        "pool_port": 8080,
-        "load_balancing_mode": "least-connections-member",
-        "existing_monitor": false,
-        "existing_tls_server": false,
-        "tls_cert_name": "/Common/default.crt",
-        "tls_key_name": "/Common/default.key",
-        "existing_tls_client": false,
-        "existing_http_profile": false,
-        "existing_acceleration_profile": false,
-        "existing_compression_profile": false,
-        "existing_multiplex_profile": false,
-        "pool_members": [
-          "10.0.0.10"
-        ]
-      },
-      "lastModified": "2020-03-12T20:41:00.369Z",
-      "tenant": "t1",
-      "name": "a1"
-    }
- }  
-          ]
+  "method": "Get",
+  "path": "/shared/fast/info",
+  "status": 200
+ }
+      
 
 
 

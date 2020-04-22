@@ -103,7 +103,7 @@ entire feature set.
 
 6. To add this to the system, the template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
 
-7. Make note of the file location, and the size of the file (in bytes).  Note it must be less than 1MB or the transfer fails.
+7. Make note of the file location, and the size of the file (in bytes).  **Note:** file size must be less than 1MB or the transfer fails.
 
 8. Upload the file to the BIG-IP system using cURL from a Linux shell using the following syntax:
    
@@ -314,7 +314,7 @@ syntax:
 * **schema_name** is the name of the JSON schema file, excluding the extension
 * **type** is the property name of the definition being referenced
 
-for example,
+for example:
 
 .. code-block:: json
 
@@ -354,6 +354,11 @@ The definition from f5.json:
 Arrays of primitives should work fine but have not been extensively tested.
 
 Objects are not yet supported.
+
+Up-front validation using the schema will help to prevent failed deployments by notifying the user prior to deployment when a value has an invalid format.  Therefore, when designing a template, the appropriate schema definition should be used for each variable. |br|
+For example, if the virtual IP address is a variable, use schema to validate the input is an IPv4 or IPv6 address. |br|
+For more information on writing schema, see https://json-schema.org/
+
 
 .. IMPORTANT::  When authoring a template, be cautious when entering sensitive data into your template such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
 
