@@ -17,6 +17,8 @@
 * Stop logging the bodies of REST responses and requests in the REST worker
 * Use ReDoc instead of Swagger-UI for the API docs tab
 * Cleaned up titles and descriptions in bigip-fast-templates templates
+* Template sections now default to arrays instead of booleans
+  * This can be overridden by giving a section variable a type of "boolean"
 
 ## Removed
 

@@ -208,37 +208,19 @@ class Template {
             }
             case '#': {
                 const items = this._handleParsed(curr[4], typeSchemas);
-                const dotItems = curr[4].filter(item => item[0] === 'name' && item[1] === '.');
-                const asArray = dotItems.length !== 0;
-                const typeDefined = (
-                    items.properties
-                    && items.properties[mstName]
-                    && items.properties[mstName].type
-                    && items.properties[mstName].type === 'string'
-                );
-                if (asArray) {
-                    acc.properties[mstName] = {
-                        type: 'array',
-                        skip_xform: true,
-                        items
-                    };
-                    if (items.properties && Object.keys(items.properties) < 1) {
-                        acc.properties.items = {
-                            type: 'string'
-                        };
-                    }
-                } else if (typeDefined) {
-                    acc.properties[mstName] = items.properties[mstName];
-                } else {
-                    acc.properties[mstName] = {
-                        type: 'boolean'
-                    };
+                const defType = (this.definitions[mstName] && this.definitions[mstName].type) || 'array';
+                const newDef = Object.assign({ type: defType }, this.definitions[mstName]);
+                const asBool = defType === 'boolean' || defType === 'string';
+                if (defType === 'array') {
+                    newDef.skip_xform = true;
+                    newDef.items = Object.assign({}, items);
+                } else if (defType === 'object') {
+                    Object.assign(newDef, items);
+                } else if (!asBool) {
+                    throw new Error(`unsupported type for section "${mstName}": ${defType}`);
                 }
 
-                if (this.definitions[mstName]) {
-                    Object.assign(acc.properties[mstName], this.definitions[mstName]);
-                }
-
+                acc.properties[mstName] = Object.assign({}, newDef);
                 required.add(mstName);
 
                 if (items.properties) {
@@ -249,7 +231,11 @@ class Template {
                         dependencies[item].push(mstName);
                     });
                 }
-                this._mergeSchemaInto(acc, items, dependencies);
+
+                if (asBool) {
+                    // Hoist properties to global scope
+                    this._mergeSchemaInto(acc, items, dependencies);
+                }
                 break;
             }
             case '^': {
@@ -272,6 +258,9 @@ class Template {
                         items.properties[item].invertDependency.push(mstName);
                     });
                 }
+
+                // If an inverted section is present, the section variable is not required
+                required.delete(mstName);
 
                 if (this.definitions[mstName]) {
                     Object.assign(acc.properties[mstName], this.definitions[mstName]);
