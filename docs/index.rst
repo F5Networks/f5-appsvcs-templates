@@ -27,6 +27,7 @@ Previous buttons to explore the documentation.
    userguide/using-app-templates
    userguide/template-authoring
    userguide/managing-templates
+   userguide/app-integration
    userguide/troubleshooting
    userguide/known-issues
    userguide/revision-history
