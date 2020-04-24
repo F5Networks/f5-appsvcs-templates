@@ -76,7 +76,7 @@ class TemplateWorker {
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
             this.recordRestResponse(restOperation);
-            this._prevCompleteRestOp(restOperation);
+            return this._prevCompleteRestOp(restOperation);
         };
     }
 
@@ -354,7 +354,7 @@ class TemplateWorker {
         const msg = `TemplateWorker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];
         if (minOp.status >= 400) {
-            this.logger.error(msg);
+            this.logger.info(msg);
         } else {
             this.logger.fine(msg);
         }
