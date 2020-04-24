@@ -161,34 +161,40 @@ class Template {
                     }
                     this.definitions[defType] = Object.assign({}, schemaDef, this.definitions[defType]);
                     this.typeDefinitions[defType] = Object.assign({}, schemaDef);
-                } else if (defType === 'text') {
-                    acc.properties[defName] = {
-                        type: 'string',
-                        format: 'text'
-                    };
-                } else if (defType === 'array') {
-                    acc.properties[defName] = {
-                        type: defType,
-                        items: {
-                            type: 'string'
-                        }
-                    };
-                } else if (defType === 'hidden') {
-                    acc.properties[defName] = {
-                        type: 'string',
-                        format: 'hidden',
-                        default: ''
-                    };
                 } else {
-                    acc.properties[defName] = {
-                        type: defType
-                    };
+                    if (defType === 'text') {
+                        acc.properties[defName] = {
+                            type: 'string',
+                            format: 'text'
+                        };
+                    } else if (defType === 'array') {
+                        acc.properties[defName] = {
+                            type: defType,
+                            items: {
+                                type: 'string'
+                            }
+                        };
+                    } else if (defType === 'hidden') {
+                        acc.properties[defName] = {
+                            type: 'string',
+                            format: 'hidden'
+                        };
+                    } else {
+                        acc.properties[defName] = {
+                            type: defType
+                        };
+                    }
+
+                    const propType = acc.properties[defName].type;
+                    if (!this.definitions[defName] && typeof primitives[propType] !== 'undefined') {
+                        acc.properties[defName].default = primitives[propType];
+                    }
                 }
                 if (this.definitions[defName]) {
                     Object.assign(acc.properties[defName], this.definitions[defName]);
                 }
                 const propDef = acc.properties[defName];
-                if (typeof propDef.default === 'undefined' && propDef.format !== 'hidden') {
+                if (propDef.format !== 'hidden') {
                     required.add(defName);
                 }
                 break;
@@ -220,9 +226,6 @@ class Template {
                     throw new Error(`unsupported type for section "${mstName}": ${defType}`);
                 }
 
-                acc.properties[mstName] = Object.assign({}, newDef);
-                required.add(mstName);
-
                 if (items.properties) {
                     Object.keys(items.properties).forEach((item) => {
                         if (!dependencies[item]) {
@@ -235,7 +238,14 @@ class Template {
                 if (asBool) {
                     // Hoist properties to global scope
                     this._mergeSchemaInto(acc, items, dependencies);
+                    if (typeof newDef.default === 'undefined') {
+                        newDef.default = primitives[newDef.type];
+                    }
                 }
+
+                acc.properties[mstName] = Object.assign({}, newDef);
+                required.add(mstName);
+
                 break;
             }
             case '^': {
@@ -243,7 +253,8 @@ class Template {
 
                 if (!acc.properties[mstName]) {
                     acc.properties[mstName] = {
-                        type: 'boolean'
+                        type: 'boolean',
+                        default: primitives.boolean
                     };
                 }
                 if (items.properties) {
@@ -292,13 +303,6 @@ class Template {
                 default: primitives.string
             };
         }
-        // Set default values for any primitives
-        Object.keys(schema.properties).forEach((prop) => {
-            const def = schema.properties[prop];
-            if (typeof def.default === 'undefined' && typeof primitives[def.type] !== 'undefined') {
-                schema.properties[prop].default = primitives[def.type];
-            }
-        });
 
         // Get propertyOrder from definition if available
         Object.values(schema.properties).forEach((schemaDef) => {

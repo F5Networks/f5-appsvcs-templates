@@ -134,8 +134,7 @@ describe('Template class tests', function () {
                     items: {
                         default: '',
                         type: 'string'
-                    },
-                    default: []
+                    }
                 },
                 boolean_variable: { type: 'boolean', default: false },
                 number_variable: { type: 'number', default: 0 },
