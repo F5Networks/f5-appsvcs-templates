@@ -58,7 +58,7 @@ class AS3Driver {
 
     _appFromDecl(declaration, tenant, app) {
         const as3App = declaration[tenant][app];
-        const fastApp = as3App.constants && as3App.constants[AS3DriverConstantsKey] || {};
+        const fastApp = (as3App.constants && as3App.constants[AS3DriverConstantsKey]) || {};
         return Object.assign({}, fastApp, {
             tenant,
             name: app
