@@ -18,7 +18,7 @@ info:
   license:
     name: Apache 2.0
   description: |
-    # F5 Application Services Templates (*FAST*)
+    # F5 Application Services Templates (FAST)
 
     This is the documentation for the FAST templating extension. This document
     catalogs the API endpoints exposed by the extension.
