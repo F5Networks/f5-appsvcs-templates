@@ -57,13 +57,13 @@ class FASTWorker {
             version: pkg.version
         });
         this.transactionLogger = new TransactionLogger(
-            (transaction, enterTime) => {
+            (transaction) => {
                 const [id, text] = transaction.split('@@');
-                this.logger.info(`FAST Worker [${id}]: Entering ${text} at ${enterTime}`);
+                this.logger.info(`FAST Worker [${id}]: Entering ${text}`);
             },
-            (transaction, exitTime, deltaTime) => {
+            (transaction, _exitTime, deltaTime) => {
                 const [id, text] = transaction.split('@@');
-                this.logger.info(`FAST Worker [${id}]: Exiting ${text} at ${exitTime}`);
+                this.logger.info(`FAST Worker [${id}]: Exiting ${text}`);
                 this.logger.fine(`FAST Worker [${id}]: ${text} took ${deltaTime}ms to complete`);
             }
         );
