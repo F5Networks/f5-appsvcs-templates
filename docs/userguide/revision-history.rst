@@ -10,6 +10,11 @@ Document Revision History
       * - Doc Revision
         - Description
         - Date
+
+      * - 3.0
+        - Updated the documentation for FAST v1.0. This release contains the following changes: |br| * Added improved support for external schema references when using the FAST CLI |br| * Added packageTemplateSet commant to the FAST CLI |br| * Added functionality for POST to/applications which can now take an array of applications |br| * Added SNAT, Persistance and support for various profiles to the HTTP and TCP templates |br| * Improved error reporting when schema validation fails using the FAST CLI |br| * Improved titles and descriptions in the bigip-fast-templates |br| * Template sections now default to arrays instead of booleans which can be overwritten by using a section variable type of “boolean” |br| |br| Issues Resolved: |br| * GUI elements were not showing/hiding consistently |br| * JSHINT errors were showing up in restnoded log when loading the REST worker |br| * Aiv warnings when using text, hidden or password formats
+        - 04-30-20
+
         
       * - 2.0 
         - Updated the documentation for FAST v0.3.0. This release contains the following changes: |br| * Added a TCP template |br| * Added validation around minimum values to bigip-fast-templates |br| * Added use shareNodes for pool members bigip-fast-templates/http |br| * Auto-refresh the Deploy Log when there is an "in progress" task |br| * Added buttons to Add and Remove template sets |br| * Added button to Update template sets that are out-of-date with the RPM |br| * Added support for logging REST responses and requests |br| * Added hashes for templates and template sets to /info endpoint |br| * The Interface now displays which template sets have a supported hash |br| * Added support for showing which template sets have a supported hash |br| * Added schema and schema hashes to /info endpoint |br| * Added initial TEEM integration |br| * Changed the form buttons on the Deploy tab to disable until a template is loaded |br| * Changed iApps LX application state to BOUND instead of UNBOUND.  Status dot on Application Service List is now green |br| |br| Issues Resolved |br| * Fixed an issue deleting template sets |br| * Fixed an issue running FAST on BIG-IP 13.1 |br| * Fixed parsing issues when there are multiple dependencies
