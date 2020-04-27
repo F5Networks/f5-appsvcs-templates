@@ -13,10 +13,10 @@ This module provides a framework for handling templates.
 
 ## Installation
 
-This module is not currently on NPM, and as such needs to be installed via a file path:
+To install this module run:
 
 ```bash
-npm install path/to/fast/core
+npm install @f5devcentral/f5-fast-core
 ```
 
 ## Usage
