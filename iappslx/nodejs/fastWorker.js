@@ -42,7 +42,7 @@ const supportedHashes = {
     ]
 };
 
-class TemplateWorker {
+class FASTWorker {
     constructor() {
         this.state = {};
 
@@ -796,4 +796,4 @@ class TemplateWorker {
     }
 }
 
-module.exports = TemplateWorker;
+module.exports = FASTWorker;

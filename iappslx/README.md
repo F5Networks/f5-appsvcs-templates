@@ -38,7 +38,7 @@ There is also an `install-rpm` script provided in `../scripts` that installs the
 
 ## Logging
 
-All log messages should contain the worker name (TemplateWorker) for easier filtering.
+All log messages should contain the worker name (FAST Worker) for easier filtering.
 
 The following logging levels are used (from low priority to high):
 

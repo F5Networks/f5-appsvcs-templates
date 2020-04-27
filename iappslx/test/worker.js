@@ -18,7 +18,7 @@ const fast = require('@f5devcentral/f5-fast-core');
 
 const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
 
-const TemplateWorker = require('../nodejs/templateWorker.js');
+const FASTWorker = require('../nodejs/fastWorker.js');
 
 class RestOp {
     constructor(uri) {
@@ -105,16 +105,16 @@ class TeemDeviceMock {
     }
 }
 
-function createTemplateWorker() {
-    const tw = new TemplateWorker();
-    patchWorker(tw);
+function createWorker() {
+    const worker = new FASTWorker();
+    patchWorker(worker);
 
-    tw.storage = testStorage;
-    tw.templateProvider.storage = testStorage;
-    tw.teemDevice = new TeemDeviceMock();
+    worker.storage = testStorage;
+    worker.templateProvider.storage = testStorage;
+    worker.teemDevice = new TeemDeviceMock();
 
-    tw.hookCompleteRestOp();
-    return tw;
+    worker.hookCompleteRestOp();
+    return worker;
 }
 
 describe('template worker tests', function () {
@@ -140,7 +140,7 @@ describe('template worker tests', function () {
     });
 
     it('info', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('info');
         nock('http://localhost:8100')
             .get('/mgmt/shared/appsvcs/info')
@@ -171,7 +171,7 @@ describe('template worker tests', function () {
             });
     });
     it('info_without_as3', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('info');
         nock('http://localhost:8100')
             .get('/mgmt/shared/appsvcs/info')
@@ -190,7 +190,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_bad_end_point', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('bad');
         return worker.onGet(op)
             .then(() => {
@@ -198,7 +198,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_templates', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templates');
         return worker.onGet(op)
             .then(() => {
@@ -208,7 +208,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_template_bad', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templates/foobar');
         return worker.onGet(op)
             .then(() => {
@@ -216,7 +216,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_template_item', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templates/examples/simple_udp');
         return worker.onGet(op)
             .then(() => {
@@ -227,7 +227,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_template_item_with_schema', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templates/bigip-fast-templates/http');
         nock('http://localhost:8100')
             .persist()
@@ -249,7 +249,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_apps', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications');
         nock(host)
             .get(as3ep)
@@ -274,7 +274,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_apps_empty', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications');
         nock(host)
             .get(as3ep)
@@ -286,7 +286,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_apps_item_bad', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications/foobar');
         nock(host)
             .get(as3ep)
@@ -304,7 +304,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_apps_item', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications/tenant/app');
         const appData = {
             foo: 'bar'
@@ -329,7 +329,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_tasks', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('tasks');
         worker.driver._task_ids.unshift('foo1');
         nock(host)
@@ -362,7 +362,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_tasks_item', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('tasks/foo1');
         worker.driver._task_ids.unshift('foo1');
         nock(host)
@@ -395,7 +395,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_tasks_bad', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('tasks/foo1');
         nock(host)
             .get(as3TaskEp)
@@ -409,7 +409,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_templatesets', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templatesets');
         return worker.onGet(op)
             .then(() => {
@@ -422,7 +422,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_templatesets_item', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templatesets/bigip-fast-templates');
         return worker.onGet(op)
             .then(() => {
@@ -436,7 +436,7 @@ describe('template worker tests', function () {
             });
     });
     it('get_templatesets_bad', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templatesets/foo1');
         return worker.onGet(op)
             .then(() => {
@@ -444,7 +444,7 @@ describe('template worker tests', function () {
             });
     });
     it('post_bad_end_point', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('bad');
         return worker.onPost(op)
             .then(() => {
@@ -452,7 +452,7 @@ describe('template worker tests', function () {
             });
     });
     it('post_apps_bad_tmplid', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
             name: 'foobar'
@@ -463,7 +463,7 @@ describe('template worker tests', function () {
             });
     });
     it('post_apps', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
             name: 'examples/simple_udp_defaults',
@@ -484,7 +484,7 @@ describe('template worker tests', function () {
             });
     });
     it('delete_app_bad', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications/foobar');
         nock(host)
             .get(as3ep)
@@ -502,7 +502,7 @@ describe('template worker tests', function () {
             });
     });
     it('delete_app', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications/tenant/app');
         nock(host)
             .get(as3ep)
@@ -527,7 +527,7 @@ describe('template worker tests', function () {
             });
     });
     it('delete_all_apps', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('applications');
         return worker.onDelete(op)
             .then(() => {
@@ -535,7 +535,7 @@ describe('template worker tests', function () {
             });
     });
     it('delete_bad_end_point', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('bad');
         return worker.onDelete(op)
             .then(() => {
@@ -543,7 +543,7 @@ describe('template worker tests', function () {
             });
     });
     it('post_templateset_missing', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templatesets');
         op.setBody({
             name: 'badname'
@@ -561,7 +561,7 @@ describe('template worker tests', function () {
             .finally(() => mockfs.restore());
     });
     it('post_templateset', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templatesets');
         const infoOp = new RestOp('info');
         const tsPath = path.join(process.cwd(), '..', 'templates');
@@ -599,7 +599,7 @@ describe('template worker tests', function () {
             .finally(() => mockfs.restore());
     });
     it('delete_templateset', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const templateSet = 'bigip-fast-templates';
         const op = new RestOp(`templatesets/${templateSet}`);
 
@@ -611,7 +611,7 @@ describe('template worker tests', function () {
             .then(result => assert(!result));
     });
     it('delete_templateset_bad', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const op = new RestOp('templatesets/does_not_exist');
 
         return worker.onDelete(op)
@@ -620,7 +620,7 @@ describe('template worker tests', function () {
             });
     });
     it('on_start', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
 
         // Clear the data store
         worker.storage.data = {};
@@ -649,7 +649,7 @@ describe('template worker tests', function () {
             });
     });
     it('onStartCompleted', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         nock('http://localhost:8100')
             .get('/mgmt/shared/appsvcs/info')
             .reply(200, {});
@@ -662,7 +662,7 @@ describe('template worker tests', function () {
             ));
     });
     it('hydrateSchema', function () {
-        const worker = createTemplateWorker();
+        const worker = createWorker();
         const inputSchema = {
             properties: {
                 foo: {
