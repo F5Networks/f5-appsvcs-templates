@@ -59,12 +59,12 @@ class TemplateWorker {
         this.transactionLogger = new TransactionLogger(
             (transaction, enterTime) => {
                 const [id, text] = transaction.split('@@');
-                this.logger.info(`TemplateWorker [${id}]: Entering ${text} at ${enterTime}`);
+                this.logger.info(`FAST Worker [${id}]: Entering ${text} at ${enterTime}`);
             },
             (transaction, exitTime, deltaTime) => {
                 const [id, text] = transaction.split('@@');
-                this.logger.info(`TemplateWorker [${id}]: Exiting ${text} at ${exitTime}`);
-                this.logger.fine(`TemplateWorker [${id}]: ${text} took ${deltaTime}ms to complete`);
+                this.logger.info(`FAST Worker [${id}]: Exiting ${text} at ${exitTime}`);
+                this.logger.fine(`FAST Worker [${id}]: ${text} took ${deltaTime}ms to complete`);
             }
         );
 
@@ -90,7 +90,7 @@ class TemplateWorker {
         // the data store. Do not overwrite template sets already in the data store.
         const fsprovider = new FsTemplateProvider(templatesPath);
         let saveState = true;
-        this.logger.fine('TemplateWorker: Begin startup');
+        this.logger.fine('FAST Worker: Begin startup');
         return Promise.resolve()
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
@@ -98,7 +98,7 @@ class TemplateWorker {
             .then(([fsSets, knownSets]) => {
                 const sets = fsSets.filter(setName => !knownSets.includes(setName));
                 this.logger.info(
-                    `TemplateWorker: Loading template sets from disk: ${JSON.stringify(sets)} (skipping: ${JSON.stringify(knownSets)})`
+                    `FAST Worker: Loading template sets from disk: ${JSON.stringify(sets)} (skipping: ${JSON.stringify(knownSets)})`
                 );
                 if (sets.length === 0) {
                     // Nothing to do
@@ -151,14 +151,14 @@ class TemplateWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                this.logger.severe(`TemplateWorker: Failed to start: ${e.stack}`);
+                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
                 error();
             });
     }
 
     onStartCompleted(success, error, _loadedState, errMsg) {
         if (typeof errMsg === 'string' && errMsg !== '') {
-            this.logger.error(`TemplateWorker onStart error: ${errMsg}`);
+            this.logger.error(`FAST Worker onStart error: ${errMsg}`);
             return error();
         }
 
@@ -172,13 +172,13 @@ class TemplateWorker {
     sendTeemReport(reportName, reportVersion, data) {
         const documentName = `${projectName}: ${reportName}`;
         return this.teemDevice.report(documentName, `${reportVersion}`, {}, data)
-            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+            .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportOnStart() {
         return this.gatherInfo()
             .then(info => this.sendTeemReport('onStart', 1, info))
-            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+            .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportApplication(action, templateName) {
@@ -188,7 +188,7 @@ class TemplateWorker {
         };
         return Promise.resolve()
             .then(() => this.sendTeemReport('Application Management', 1, report))
-            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+            .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportTemplateSet(action, templateSetName) {
@@ -211,7 +211,7 @@ class TemplateWorker {
                 return Promise.resolve();
             })
             .then(() => this.sendTeemReport('Template Set Management', 1, report))
-            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+            .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportError(restOp) {
@@ -228,7 +228,7 @@ class TemplateWorker {
         };
         return Promise.resolve()
             .then(() => this.sendTeemReport('Error', 1, report))
-            .catch(e => this.logger.error(`TemplateWorker failed to send telemetry data: ${e.stack}`));
+            .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     /**
@@ -305,7 +305,7 @@ class TemplateWorker {
             }, {});
         const propNames = Object.keys(enumFromBigipProps);
         this.logger.fine(
-            `TemplateWorker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
+            `FAST Worker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
         );
 
         return Promise.resolve()
@@ -340,7 +340,7 @@ class TemplateWorker {
     recordRestRequest(restOp) {
         this.requestTimes[restOp.requestId] = new Date();
         this.logger.fine(
-            `TemplateWorker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}`
+            `FAST Worker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}`
         );
     }
 
@@ -351,7 +351,7 @@ class TemplateWorker {
             status: restOp.getStatusCode()
         };
         const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
-        const msg = `TemplateWorker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
+        const msg = `FAST Worker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];
         if (minOp.status >= 400) {
             this.logger.info(msg);
