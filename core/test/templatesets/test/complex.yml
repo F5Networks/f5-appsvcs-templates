@@ -1,5 +1,5 @@
 title: chat window
-view:
+parameters:
   title: My Chat Window
   chatlog:
     - name: ricky

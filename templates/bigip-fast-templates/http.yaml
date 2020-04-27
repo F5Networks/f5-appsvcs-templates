@@ -370,7 +370,7 @@ definitions:
           }
         {{/make_tcp_egress_profile}}
       }
-view:
+parameters:
   virtual_port: 443
   enable_pool: true
   make_pool: true

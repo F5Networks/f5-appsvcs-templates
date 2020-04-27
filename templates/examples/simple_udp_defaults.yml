@@ -1,6 +1,6 @@
 title: Simple UDP Application
 description: Simple UDP load balancer using the same port on client and server side.
-view:
+parameters:
   tenant_name: foo
   application_name: bar
   virtual_address: 192.0.2.1

@@ -24,15 +24,15 @@ const loadTemplate = (templatePath) => {
         });
 };
 
-const loadView = (viewPath) => {
-    if (!viewPath) return Promise.resolve({});
-    return fs.readFile(viewPath, 'utf8')
-        .then(viewData => JSON.parse(viewData));
+const loadParameters = (parametersPath) => {
+    if (!parametersPath) return Promise.resolve({});
+    return fs.readFile(parametersPath, 'utf8')
+        .then(paramsData => JSON.parse(paramsData));
 };
 
-const loadTemplateAndView = (templatePath, viewPath) => Promise.all([
+const loadTemplateAndParameters = (templatePath, parametersPath) => Promise.all([
     loadTemplate(templatePath),
-    loadView(viewPath)
+    loadParameters(parametersPath)
 ]);
 
 const validateTemplate = templatePath => loadTemplate(templatePath)
@@ -40,14 +40,14 @@ const validateTemplate = templatePath => loadTemplate(templatePath)
         console.log(`template source at ${templatePath} is valid`);
     });
 
-const templateToViewSchema = templatePath => loadTemplate(templatePath)
+const templateToParametersSchema = templatePath => loadTemplate(templatePath)
     .then((tmpl) => {
-        console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+        console.log(JSON.stringify(tmpl.getParametersSchema(), null, 2));
     });
 
-const validateViewData = (tmpl, view) => {
+const validateParamData = (tmpl, parameters) => {
     try {
-        tmpl.validateView(view);
+        tmpl.validateParameters(parameters);
     } catch (e) {
         console.error('parameters failed validation:');
         if (e.stack) {
@@ -59,15 +59,15 @@ const validateViewData = (tmpl, view) => {
     }
 };
 
-const validateView = (templatePath, viewPath) => loadTemplateAndView(templatePath, viewPath)
-    .then(([tmpl, view]) => {
-        validateViewData(tmpl, view);
+const validateParameters = (templatePath, parametersPath) => loadTemplateAndParameters(templatePath, parametersPath)
+    .then(([tmpl, parameters]) => {
+        validateParamData(tmpl, parameters);
     });
 
-const renderTemplate = (templatePath, viewPath) => loadTemplateAndView(templatePath, viewPath)
-    .then(([tmpl, view]) => {
-        validateViewData(tmpl, view);
-        console.log(tmpl.render(view));
+const renderTemplate = (templatePath, parametersPath) => loadTemplateAndParameters(templatePath, parametersPath)
+    .then(([tmpl, parameters]) => {
+        validateParamData(tmpl, parameters);
+        console.log(tmpl.render(parameters));
     });
 
 const validateTemplateSet = (tsPath) => {
@@ -82,10 +82,10 @@ const validateTemplateSet = (tsPath) => {
         });
 };
 
-const htmlPreview = (templatePath, viewPath) => loadTemplateAndView(templatePath, viewPath)
-    .then(([tmpl, view]) => generateHtmlPreview(
-        tmpl.getViewSchema(),
-        tmpl.getCombinedView(view)
+const htmlPreview = (templatePath, parametersPath) => loadTemplateAndParameters(templatePath, parametersPath)
+    .then(([tmpl, parameters]) => generateHtmlPreview(
+        tmpl.getParametersSchema(),
+        tmpl.getCombinedParameters(parameters)
     ))
     .then(htmlData => console.log(htmlData));
 
@@ -117,8 +117,8 @@ require('yargs')
             .positional('file', {
                 describe: 'template source file to parse'
             });
-    }, argv => templateToViewSchema(argv.file))
-    .command('validateView <tmplFile> <parameterFile>', 'validate supplied template parameters with given template', (yargs) => {
+    }, argv => templateToParametersSchema(argv.file))
+    .command('validateParameters <tmplFile> <parameterFile>', 'validate supplied template parameters with given template', (yargs) => {
         yargs
             .positional('tmplFile', {
                 describe: 'template to get template parameters schema from'
@@ -126,14 +126,14 @@ require('yargs')
             .positional('parameterFile', {
                 describe: 'file with template parameters to validate'
             });
-    }, argv => validateView(argv.tmplFile, argv.parameterFile))
+    }, argv => validateParameters(argv.tmplFile, argv.parameterFile))
     .command('render <tmplFile> [parameterFile]', 'render given template file with supplied parameters', (yargs) => {
         yargs
             .positional('tmplFile', {
                 describe: 'template source file to render'
             })
             .positional('parameterFile', {
-                describe: 'optional file with template parameters to use in addition to any defined in the view in the template source file'
+                describe: 'optional file with template parameters to use in addition to any defined in the parameters in the template source file'
             });
     }, argv => renderTemplate(argv.tmplFile, argv.parameterFile))
     .command('validateTemplateSet <templateSetPath>', 'validate supplied template set', (yargs) => {
@@ -148,7 +148,7 @@ require('yargs')
                 describe: 'template source file to render'
             })
             .positional('parameterFile', {
-                describe: 'optional file with template parameters to use in addition to any defined in the view in the template source file'
+                describe: 'optional file with template parameters to use in addition to any defined in the parameters in the template source file'
             });
     }, argv => htmlPreview(argv.tmplFile, argv.parameterFile))
     .command('packageTemplateSet <templateSetPath> [dst]', 'build a package for a given template set', (yargs) => {

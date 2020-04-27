@@ -80,7 +80,7 @@ const newEditor = (tmplid, view) => {
             return Template.fromJson(data);
         })
         .then((tmpl) => {
-            const schema = JSON.parse(JSON.stringify(tmpl.getViewSchema())); // Deep copy schema before modifying
+            const schema = JSON.parse(JSON.stringify(tmpl.getParametersSchema())); // Deep copy schema before modifying
             dispOutput(`Creating editor with schema:\n${JSON.stringify(schema, null, 2)}`);
 
             // Prep the schema for JSON editor
@@ -88,7 +88,7 @@ const newEditor = (tmplid, view) => {
             dispOutput(`Schema modified for the editor:\n${JSON.stringify(schema, null, 2)}`);
 
             // Create a new editor
-            const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedView(view), schema);
+            const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedParameters(view), schema);
             // eslint-disable-next-line no-undef
             editor = new JSONEditor(formElement, {
                 schema,
@@ -127,7 +127,7 @@ const newEditor = (tmplid, view) => {
                 dispOutput(JSON.stringify(schema, null, 2));
             };
             document.getElementById('view-view-btn').onclick = () => {
-                dispOutput(JSON.stringify(tmpl.getCombinedView(editor.getValue()), null, 2));
+                dispOutput(JSON.stringify(tmpl.getCombinedParameters(editor.getValue()), null, 2));
             };
             document.getElementById('view-render-btn').onclick = () => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));

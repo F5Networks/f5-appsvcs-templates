@@ -30,7 +30,7 @@ validator.addFormat('mustache', {
 });
 const _validateSchema = validator.compile(tmplSchema);
 
-class JSONViewTransform {
+class JSONParametersTransform {
     transform(schema, value) {
         if (typeof value === 'undefined') {
             return value;
@@ -59,14 +59,14 @@ class Template {
         this.description = '';
         this.definitions = {};
         this.typeDefinitions = {};
-        this._viewSchema = {};
+        this._parametersSchema = {};
         this.target = 'as3';
         this.templateText = '';
-        this.defaultView = {};
+        this.defaultParameters = {};
         this.sourceType = 'UNKNOWN';
         this.sourceText = '';
         this.sourceHash = '';
-        this._viewValidator = undefined;
+        this._parametersValidator = undefined;
     }
 
     _loadTypeSchemas(schemaProvider) {
@@ -340,13 +340,13 @@ class Template {
         return schema;
     }
 
-    _viewSchemaFromTemplate(typeSchemas) {
-        this._viewSchema = this._handleParsed(Mustache.parse(this.templateText), typeSchemas);
+    _parametersSchemaFromTemplate(typeSchemas) {
+        this._parametersSchema = this._handleParsed(Mustache.parse(this.templateText), typeSchemas);
 
         // If we just ended up with an empty string type, then we have no types and we
         // should return an empty object instead.
-        if (this._viewSchema.type === 'string' && !this._viewSchema.properties) {
-            this._viewSchema.type = 'object';
+        if (this._parametersSchema.type === 'string' && !this._parametersSchema.properties) {
+            this._parametersSchema.type = 'object';
         }
     }
 
@@ -359,7 +359,7 @@ class Template {
         this.sourceHash = hash.digest('hex');
     }
 
-    _createViewValidator() {
+    _createParametersValidator() {
         const loadSchema = (uri) => {
             uri = url.parse(uri);
             const opts = {
@@ -383,9 +383,9 @@ class Template {
         ajv.addFormat('text', /.*/);
         ajv.addFormat('hidden', /.*/);
         ajv.addFormat('password', /.*/);
-        return ajv.compileAsync(this.getViewSchema())
+        return ajv.compileAsync(this.getParametersSchema())
             .then((validate) => {
-                this._viewValidator = validate;
+                this._parametersValidator = validate;
                 return Promise.resolve();
             });
     }
@@ -398,9 +398,9 @@ class Template {
         return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
                 tmpl._descriptionFromTemplate();
-                tmpl._viewSchemaFromTemplate(typeSchemas);
+                tmpl._parametersSchemaFromTemplate(typeSchemas);
             })
-            .then(() => tmpl._createViewValidator())
+            .then(() => tmpl._createParametersValidator())
             .then(() => tmpl);
     }
 
@@ -414,13 +414,13 @@ class Template {
         if (yamldata.title) tmpl.title = yamldata.title;
         if (yamldata.description) tmpl.description = yamldata.description;
         if (yamldata.definitions) tmpl.definitions = yamldata.definitions;
-        if (yamldata.view) tmpl.defaultView = yamldata.view;
+        if (yamldata.parameters) tmpl.defaultParameters = yamldata.parameters;
 
         return tmpl._loadTypeSchemas(schemaProvider)
             .then((typeSchemas) => {
-                tmpl._viewSchemaFromTemplate(typeSchemas);
+                tmpl._parametersSchemaFromTemplate(typeSchemas);
             })
-            .then(() => tmpl._createViewValidator())
+            .then(() => tmpl._createParametersValidator())
             .then(() => tmpl);
     }
 
@@ -431,7 +431,7 @@ class Template {
         const tmpl = new this();
         Object.assign(tmpl, obj);
         return Promise.resolve()
-            .then(() => tmpl._createViewValidator())
+            .then(() => tmpl._createParametersValidator())
             .then(() => tmpl);
     }
 
@@ -449,16 +449,16 @@ class Template {
         }
     }
 
-    getViewSchema() {
-        return Object.assign({}, this._viewSchema, {
+    getParametersSchema() {
+        return Object.assign({}, this._parametersSchema, {
             title: this.title,
             description: this.description,
             definitions: this.typeDefinitions
         });
     }
 
-    getCombinedView(view) {
-        const typeProps = this.getViewSchema().properties;
+    getCombinedParameters(parameters) {
+        const typeProps = this.getParametersSchema().properties;
         const typeDefaults = typeProps && Object.keys(typeProps).reduce((acc, key) => {
             const value = typeProps[key];
             if (value.default !== undefined) {
@@ -466,7 +466,7 @@ class Template {
             }
             return acc;
         }, {});
-        return Object.assign({}, typeDefaults || {}, this.defaultView, view || {});
+        return Object.assign({}, typeDefaults || {}, this.defaultParameters, parameters || {});
     }
 
     _getPartials() {
@@ -479,18 +479,18 @@ class Template {
         }, {});
     }
 
-    validateView(view) {
-        const combView = this.getCombinedView(view);
-        if (!this._viewValidator(combView)) {
-            throw new Error(JSON.stringify(this._viewValidator.errors, null, 2));
+    validateParameters(parameters) {
+        const combParams = this.getCombinedParameters(parameters);
+        if (!this._parametersValidator(combParams)) {
+            throw new Error(JSON.stringify(this._parametersValidator.errors, null, 2));
         }
     }
 
-    transformView(view) {
-        const schema = this.getViewSchema();
-        const transform = new JSONViewTransform();
-        return Object.keys(view).reduce((acc, curr) => {
-            const value = view[curr];
+    transformParameters(parameters) {
+        const schema = this.getParametersSchema();
+        const transform = new JSONParametersTransform();
+        return Object.keys(parameters).reduce((acc, curr) => {
+            const value = parameters[curr];
             const valueSchema = schema.properties && schema.properties[curr];
 
             if (valueSchema) {
@@ -507,11 +507,11 @@ class Template {
         return text.replace(/{{([_a-zA-Z0-9]+):.*}}/g, '{{$1}}');
     }
 
-    render(view) {
-        this.validateView(view);
-        const xfview = this.transformView(this.getCombinedView(view));
+    render(parameters) {
+        this.validateParameters(parameters);
+        const xfparams = this.transformParameters(this.getCombinedParameters(parameters));
         const partials = this._getPartials();
-        return Mustache.render(this._cleanTemplateText(this.templateText), xfview, partials);
+        return Mustache.render(this._cleanTemplateText(this.templateText), xfparams, partials);
     }
 }
 

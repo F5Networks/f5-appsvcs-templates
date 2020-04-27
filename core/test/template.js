@@ -55,7 +55,7 @@ describe('Template class tests', function () {
     });
     it('load_yaml', function () {
         const ymldata = `
-            view:
+            parameters:
               message: Hello!
             definitions:
               body:
@@ -73,7 +73,7 @@ describe('Template class tests', function () {
             .then((tmpl) => {
                 assert.ok(tmpl);
                 assert.strictEqual(tmpl.description, '');
-                assert.deepStrictEqual(tmpl.defaultView, {
+                assert.deepStrictEqual(tmpl.defaultParameters, {
                     message: 'Hello!'
                 });
                 assert.deepStrictEqual(tmpl.definitions, {
@@ -84,8 +84,8 @@ describe('Template class tests', function () {
                 assert.strictEqual(tmpl.templateText, '<html>\n  {{> body}}\n</html>\n');
                 assert.strictEqual(tmpl.sourceType, 'YAML');
                 assert.strictEqual(tmpl.sourceText, ymldata);
-                assert.strictEqual(tmpl.sourceHash, '99223c057171b3aceb955c953a8efdf237e65e36b287138ecd953585217fe783');
-                assert.strictEqual(tmpl._viewSchema, tmpl._viewSchema);
+                assert.strictEqual(tmpl.sourceHash, 'adec093e096e713e8d16e4e213b42c488179da5d42d0928ef729eaef04ee7f92');
+                assert.strictEqual(tmpl._parametersSchema, tmpl._parametersSchema);
             });
     });
     it('from_json_str', function () {
@@ -96,8 +96,8 @@ describe('Template class tests', function () {
                 return Template.fromJson(JSON.stringify(tmpl));
             })
             .then((jsontmpl) => {
-                delete jsontmpl._viewValidator;
-                delete tmpl._viewValidator;
+                delete jsontmpl._parametersValidator;
+                delete tmpl._parametersValidator;
                 assert.deepEqual(jsontmpl, tmpl);
             });
     });
@@ -109,8 +109,8 @@ describe('Template class tests', function () {
                 return Template.fromJson(JSON.parse(JSON.stringify(tmpl)));
             })
             .then((jsontmpl) => {
-                delete jsontmpl._viewValidator;
-                delete tmpl._viewValidator;
+                delete jsontmpl._parametersValidator;
+                delete tmpl._parametersValidator;
                 assert.deepEqual(jsontmpl, tmpl);
             });
     });
@@ -153,7 +153,7 @@ describe('Template class tests', function () {
         };
         return Template.loadMst(mstWithTypes)
             .then((tmpl) => {
-                assert.deepStrictEqual(tmpl.getViewSchema(), reference);
+                assert.deepStrictEqual(tmpl.getParametersSchema(), reference);
             });
     });
     it('load_complex_yaml', function () {
@@ -177,7 +177,7 @@ describe('Template class tests', function () {
         const mstdata = '{{#section}}{{foo}}{{/section}}';
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert(
                     schema.required.includes('section'),
@@ -209,7 +209,7 @@ describe('Template class tests', function () {
         const mstdata = '{{#section}}{{.}}{{/section}}';
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert(
                     schema.required.includes('section'),
@@ -234,7 +234,7 @@ describe('Template class tests', function () {
         `;
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert(
                     schema.required.includes('section'),
@@ -265,7 +265,7 @@ describe('Template class tests', function () {
         `;
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert(
                     schema.required.includes('section'),
@@ -297,7 +297,7 @@ describe('Template class tests', function () {
         const mstdata = `
             {{foo::string}}
         `;
-        const view = {
+        const parameters = {
             foo: 'bar'
         };
         const reference = `
@@ -305,7 +305,7 @@ describe('Template class tests', function () {
         `;
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(tmpl.render(parameters), reference);
             });
     });
     it('load_partials', function () {
@@ -317,7 +317,7 @@ describe('Template class tests', function () {
     });
     it('render_partial_with_type', function () {
         const ymldata = `
-            view:
+            parameters:
                 numb: 5
                 arr:
                     - "1"
@@ -341,24 +341,24 @@ describe('Template class tests', function () {
     });
     it('render_empty_template', function () {
         const mstdata = '';
-        const view = {};
+        const parameters = {};
         const reference = '';
 
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(tmpl.render(parameters), reference);
             });
     });
     it('render_inverted_section', function () {
         const mstdata = '{{^skip_foo}}{{foo}}{{/skip_foo}}{{^skip_bar}}bar{{/skip_bar}}';
-        const view = { skip_foo: true };
+        const parameters = { skip_foo: true };
         const reference = 'bar';
 
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
-                assert.strictEqual(tmpl.render(view), reference);
+                assert.strictEqual(tmpl.render(parameters), reference);
                 assert.deepStrictEqual(schema.properties.foo.invertDependency, ['skip_foo']);
             });
     });
@@ -368,28 +368,28 @@ describe('Template class tests', function () {
 
         return Template.loadMst(mstdata, schemaProvider)
             .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
+                console.log(JSON.stringify(tmpl.getParametersSchema(), null, 2));
                 assert.strictEqual(tmpl.definitions.port.type, 'integer');
             });
     });
     it('render_array', function () {
         const mstdata = '{{values::array}}';
-        const view = { values: ['1', '2', '3'] };
+        const parameters = { values: ['1', '2', '3'] };
         const reference = '["1","2","3"]';
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
-                assert.strictEqual(tmpl.render(view), reference);
+                console.log(JSON.stringify(tmpl.getParametersSchema(), null, 2));
+                assert.strictEqual(tmpl.render(parameters), reference);
             });
     });
     it('render_text', function () {
         const mstdata = '{{textvar::text}}';
-        const view = { textvar: 'multi\nline' };
+        const parameters = { textvar: 'multi\nline' };
         const reference = '"multi\\nline"';
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
-                assert.strictEqual(tmpl.render(view), reference);
+                console.log(JSON.stringify(tmpl.getParametersSchema(), null, 2));
+                assert.strictEqual(tmpl.render(parameters), reference);
             });
     });
     it('render_merged_sections', function () {
@@ -411,13 +411,13 @@ describe('Template class tests', function () {
                 {{> part_value}}
                 {{> part_nothing}}
         `;
-        const view = { value: 'foo' };
+        const parameters = { value: 'foo' };
         const reference = 'foo';
 
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
-                console.log(JSON.stringify(tmpl.getViewSchema(), null, 2));
-                assert.strictEqual(tmpl.render(view).trim(), reference);
+                console.log(JSON.stringify(tmpl.getParametersSchema(), null, 2));
+                assert.strictEqual(tmpl.render(parameters).trim(), reference);
             });
     });
     it('schema_nested_sections', function () {
@@ -437,7 +437,7 @@ describe('Template class tests', function () {
             .then((tmpl) => {
                 assert.ok(tmpl);
 
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert.deepStrictEqual(schema.dependencies.value, ['use_existing_a', 'make_new_b']);
             });
@@ -452,7 +452,7 @@ describe('Template class tests', function () {
 
         return Template.loadMst(mstdata)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(JSON.stringify(schema, null, 2));
                 assert(schema.required.includes('app_name'));
                 assert(typeof schema.dependencies === 'undefined');
@@ -478,22 +478,22 @@ describe('Template class tests', function () {
 
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
-                const fooDef = tmpl.getViewSchema().properties.foo;
+                const fooDef = tmpl.getParametersSchema().properties.foo;
                 assert.strictEqual(fooDef.title, 'Foo');
                 assert.strictEqual(fooDef.description, 'BarBar');
 
-                const bazDef = tmpl.getViewSchema().properties.baz;
+                const bazDef = tmpl.getParametersSchema().properties.baz;
                 assert.strictEqual(bazDef.title, 'Baz');
                 assert.strictEqual(typeof bazDef.description, 'undefined');
 
-                const emptyDef = tmpl.getViewSchema().properties.empty;
+                const emptyDef = tmpl.getParametersSchema().properties.empty;
                 assert.strictEqual(typeof emptyDef.title, 'undefined');
                 assert.strictEqual(typeof emptyDef.description, 'undefined');
 
-                const secDef = tmpl.getViewSchema().properties.section;
+                const secDef = tmpl.getParametersSchema().properties.section;
                 assert.strictEqual(secDef.title, 'Section');
 
-                const invSecDef = tmpl.getViewSchema().properties.inv_section;
+                const invSecDef = tmpl.getParametersSchema().properties.inv_section;
                 assert.strictEqual(invSecDef.title, 'Inverted');
             });
     });
@@ -510,7 +510,7 @@ describe('Template class tests', function () {
 
         return Template.loadYaml(ymldata)
             .then((tmpl) => {
-                assert.deepStrictEqual(Object.keys(tmpl.getViewSchema().properties), [
+                assert.deepStrictEqual(Object.keys(tmpl.getParametersSchema().properties), [
                     'foo',
                     'baz',
                     'bar',
@@ -532,7 +532,7 @@ describe('Template class tests', function () {
 
         return Template.loadYaml(ymldata, schemaProvider)
             .then((tmpl) => {
-                const schema = tmpl.getViewSchema();
+                const schema = tmpl.getParametersSchema();
                 console.log(schema);
 
                 assert.strictEqual(schema.properties.https_port.title, 'Foo');

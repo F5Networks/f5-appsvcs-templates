@@ -384,7 +384,7 @@ components:
       type: object
       required:
         - template
-        - view
+        - parameters
         - lastModified
         - tenant
         - name
@@ -392,7 +392,7 @@ components:
         template:
           description: must be valid template in the system
           type: string
-        view:
+        parameters:
           description: object must conform to specified template's schema
           type: object
         lastModified:

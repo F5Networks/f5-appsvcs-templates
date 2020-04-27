@@ -245,7 +245,7 @@ describe('template worker tests', function () {
                 const tmpl = op.body;
                 assert.equal(op.status, 200);
                 assert.notEqual(tmpl, {});
-                assert.notEqual(tmpl.getViewSchema(), {});
+                assert.notEqual(tmpl.getParametersSchema(), {});
             });
     });
     it('get_apps', function () {

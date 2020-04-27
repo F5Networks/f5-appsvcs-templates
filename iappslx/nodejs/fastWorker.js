@@ -35,10 +35,10 @@ const dataGroupPath = `/Common/${projectName}/dataStore`;
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        'f26b596ccf0e527f873de424e2c9fd87d7a06e38afeb18b6e536f171162878c5' //  v1.0
+        '39752a4fadcf9a048d5806b8df957c2b8106c2ae742ad75dd7985c781e77738e' //  v1.0
     ],
     examples: [
-        'fffa80a94a8ccd2edd3cdea406c68183c1aada851a200268bca5e2aad9f33e66' //  v1.0
+        'c2952188146772dc1adbcde6d7618b330cccd5d18c0c20952b2bd339b8889c87' //  v1.0
     ]
 };
 
@@ -397,7 +397,7 @@ class FASTWorker {
                 ))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
-                    return this.hydrateSchema(tmpl._viewSchema, reqid)
+                    return this.hydrateSchema(tmpl._parametersSchema, reqid)
                         .then(() => {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);
