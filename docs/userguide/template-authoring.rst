@@ -75,11 +75,9 @@ entire feature set.
         }
       }
 
-
-
-    This is a basic template that creates an HTTP Virtual IP allowing you to specify
-    the Virtual IP, a list of server addresses, and a port to use for both the
-    front and back end. The tenant name and application name are also specified by the user.
+  This is a basic template that creates an HTTP Virtual IP allowing you to specify
+  the Virtual IP, a list of server addresses, and a port to use for both the
+  front and back end. The tenant name and application name are also specified by the user.
 
 2. Save the file.
 

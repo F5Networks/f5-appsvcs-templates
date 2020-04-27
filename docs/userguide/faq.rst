@@ -21,6 +21,14 @@ See :ref:`about` for a more in-depth description of FAST.
 
 |
 
+**Do FAST templates utilize AS3?**
+
+FAST uses AS3 declarations to deploy applications and tenants. The declarative API represents the configuration which AS3 is responsible for creating on a BIG-IP system. 
+Therefore, if you manually edit a FAST template outside of FAST using a method such as TMSH for example, the changes will be overwritten the next time FAST modifies the tenant. 
+Once a FAST template is used to deploy an application and tenant on a BIG-IP, it should be used for that application and tenant.
+
+|
+
 **Does FAST collect any usage data?**
 
 The F5 Application Services Template (FAST) gathers non-identifiable usage data for the 
