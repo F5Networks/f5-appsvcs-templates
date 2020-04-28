@@ -31,13 +31,13 @@ The help text is provided below and also accessed via `fast --help`:
 fast <command>
 
 Commands:
-  fast validate <file>                             validate given template source file
-  fast schema <file>                               get template parameter schema for given template source file
-  fast validateView <tmplFile> <parameterFile>     validate supplied template parameters with given template
-  fast render <tmplFile> [parameterFile]           render given template file with supplied parameters
-  fast validateTemplateSet <templateSetPath>       validate supplied template set
-  fast htmlpreview <tmplFile> [parameterFile]      generate a static HTML file with a preview editor to standard out
-  fast packageTemplateSet <templateSetPath> [dst]  build a package for a given template set
+  fast validate <file>                                validate given template source file
+  fast schema <file>                                  get template parameter schema for given template source file
+  fast validateParameters <tmplFile> <parameterFile>  validate supplied template parameters with given template
+  fast render <tmplFile> [parameterFile]              render given template file with supplied parameters
+  fast validateTemplateSet <templateSetPath>          validate supplied template set
+  fast htmlpreview <tmplFile> [parameterFile]         generate a static HTML file with a preview editor to standard out
+  fast packageTemplateSet <templateSetPath> [dst]     build a package for a given template set
 
 Options:
   --help     Show help                                                                                         [boolean]
