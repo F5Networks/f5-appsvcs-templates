@@ -14,6 +14,9 @@ Both of these are run as part of the CI pipeline for this repo.
 
 ## Building
 
+`rpmbuild` is required to build the RPM.
+All other dependencies are handled by NPM (make sure to do an `npm install` before trying to build).
+
 To build everything (recommended), run:
 
 ```bash
