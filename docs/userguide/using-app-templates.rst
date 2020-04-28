@@ -80,7 +80,6 @@ On this tab, there are two buttons for each application: **Modify** and **Delete
 
 .. WARNING:: Once you delete an application, there is no easy way to recall an application's deployment parameters
 
-|
 .. _deploytab:
 
 Deploy
@@ -132,7 +131,6 @@ in the list view.
   :width: 300
   :alt: The application list showing our new application
 
-|
 
 .. _templatetab:
 
@@ -177,9 +175,10 @@ Deploy Log
 ----------
 The deploy log is a summary of AS3's async task results, newer jobs are nearer to the top. The output includes the Task ID, the Tenant (BIG-IP partition), and the result.
 
-|
 .. _apitab:
 
 API
 ---
 The API tab contains documentation for the F5 Application Services API and SDK.  Use the index in the left pane to find specific information.
+
+.. IMPORTANT:: If you manually modify a FAST tenant outside of FAST via TMSH, GUI, REST API for example, FAST will overwrite those changes the next time the FAST template modifies the tenant. See :ref:`faq` for more information.
