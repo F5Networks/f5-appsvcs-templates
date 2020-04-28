@@ -1,7 +1,7 @@
 F5 Application Services Templates (FAST)
 ========================================
 
-.. WARNING::  This FAST Application Services template release is a community-supported preview. Your feedback is appreciated, either via `GitHub issues <https://github.com/F5devcentral/f5-appsvcs-templates/issues>`_ or by emailing |sf|. We will provide a fully F5-supported FAST offering early next calendar quarter (Q2CY20).
+.. WARNING::  This FAST Application Services template release is a community-supported preview. Your feedback is appreciated, either via `GitHub issues <https://github.com/F5networks/f5-appsvcs-templates/issues>`_ or by emailing |sf|. We will provide a fully F5-supported FAST offering early next calendar quarter (Q2CY20).
 
 F5 Application Services Templates (FAST) are an easy and effective way to deploy applications on the BIG-IP system using |as3|.  
 

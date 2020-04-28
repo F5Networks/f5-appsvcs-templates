@@ -11,7 +11,7 @@ We will provide a fully F5-supported FAST offering early next calendar quarter (
 
 ### Filing Issues and Getting Help
 
-If you come across a bug or other issue, please use [GitHub Issues](https://github.com/f5devcentral/f5-appsvcs-templates/issues) to submit an issue for our team.
+If you come across a bug or other issue, please use [GitHub Issues](https://github.com/F5networks/f5-appsvcs-templates/issues) to submit an issue for our team.
 You can also see current known issues on that page.
 
 ## Repository Overview
@@ -34,7 +34,7 @@ In other words, run `npm` commands for a given subproject in that subproject's d
 
 ### Installing the FAST Extension
 
-1. Download the FAST extension RPM the [GitHub Release](https://github.com/f5devcentral/f5-appsvcs-templates/releases) Assets.
+1. Download the FAST extension RPM the [GitHub Release](https://github.com/F5networks/f5-appsvcs-templates/releases) Assets.
 
 2. From the BIG-IP system, install the extension by navigating to **iApps > Package Management LX**. Click **Import** and then select the RPM you downloaded.
 
