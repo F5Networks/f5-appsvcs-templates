@@ -8,8 +8,7 @@
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
     "lint": "eslint nodejs test presentation/app.js",
-    "buildapi": "cd presentation && js-yaml ../../docs/openapi.yml > openapi.json && redoc-cli bundle -o apidoc.html openapi.json",
-    "buildgui": "npm run buildapi && cd presentation && browserify app.js -o bundle.js",
+    "buildgui": "../scripts/build-presentation-layer.sh",
     "buildrpm": "../scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
     "coverage": "nyc npm test"
