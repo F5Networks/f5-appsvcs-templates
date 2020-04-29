@@ -390,6 +390,7 @@ parameters:
   virtual_port: 443
   enable_pool: true
   make_pool: true
+  pool_name: ''
   pool_port: 80
   slow_ramp_time: 300
   enable_monitor: true
@@ -398,6 +399,7 @@ parameters:
   enable_snat: true
   snat_automap: true
   make_snatpool: true
+  snatpool_name: ''
   enable_persistence: true
   persistence_type: cookie
   enable_fallback_persistence: true
