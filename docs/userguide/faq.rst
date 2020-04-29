@@ -72,7 +72,7 @@ FAST does not a mechanism for this, as part of the stable API. The following tms
 The daemon for FAST will need to be restarted using the following command ``bigstart restart restnoded`` |br|
 See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for more information on restarting BIG-IP daemons.
 
-Saved templates can be removed individually using the GUI interface.
+Saved templates can be removed individually using the BIG-IP GUI.
 
 
 .. |br| raw:: html
