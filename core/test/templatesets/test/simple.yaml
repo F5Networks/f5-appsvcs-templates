@@ -1,6 +1,0 @@
-title: Simple YAML file
-description: A simple template to test we can handle the .yaml file extension
-parameters:
-  str_var: foo 
-template: |
-  {{str_var}}
