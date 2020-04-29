@@ -16,7 +16,8 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/ipv4"
-      }
+      },
+      "default": []
     },
     "load_balancing_mode": {
       "type": "string",
