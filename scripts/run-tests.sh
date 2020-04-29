@@ -3,7 +3,6 @@ set -eux
 projects=("$@")
 if [ -z "${projects[*]}" ]; then
     projects=(
-        core
         iappslx
         templates
     )
