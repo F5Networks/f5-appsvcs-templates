@@ -21,7 +21,7 @@ See :ref:`about` for a more in-depth description of FAST.
 
 |
 
-**Do FAST templates utilize AS3?**
+**Do FAST templates utilize AS3?**  
 
 FAST uses AS3 declarations to deploy applications and tenants. The declarative API represents the configuration which AS3 is responsible for creating on a BIG-IP system. 
 Therefore, if you manually edit a FAST template outside of FAST using a method such as TMSH for example, the changes will be overwritten the next time FAST modifies the tenant. 
@@ -62,6 +62,17 @@ For additional information, see `K13422: F5-supported and F5-contributed iApp te
 **Are self-authored templates encrypted?**
 
 When authoring a template, be cautious when entering sensitive data into your template such as passwords, certificates and monitor information to name a few.  FAST does not encrypt the data and it will remain as plain text.  Careful consideration should be made when adding this type of data onto the template.
+
+|
+
+**I want to remove all saved templates at once, how do I do this?**
+
+FAST does not a mechanism for this, as part of the stable API. The following tmsh command can be used to globally remove saved templates, but is subject to change: |br|
+``tmsh delete ltm data-group internal /Common/f5-appsvcs-templates/datastore`` |br|
+The daemon for FAST will need to be restarted using the following command ``bigstart restart restnoded`` |br|
+See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for more information on restarting BIG-IP daemons.
+
+Saved templates can be removed individually using the GUI interface.
 
 
 .. |br| raw:: html
