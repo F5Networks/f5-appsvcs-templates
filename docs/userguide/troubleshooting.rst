@@ -29,6 +29,21 @@ View the template set hashes using cURL:
 
   $ curl -sku <BIG-IP username>:<BIG-IP password>  https://<IP address of BIG-IP>/mgmt/shared/fast/info
 
+.. _uninstallingtab:
+
+Uninstalling FAST
+-----------------
+
+F5 Applications Services Templates entry remains in the GUI after uninstalling the package from Package Management LX. |br|  
+To uninstall, and remove, the F5 Applications Services Templates from the GUI the following steps must be completed:
+
+ 1. **iApps> Package Management LX** select f5-appsvcs-templates, click **Uninstall**
+ 2. **iApps> Application Services> Applications LX** select F5 Applications Services Templates, click **Undeploy**
+ 3. **iApps> Application Services> Applications LX** select F5 Applications Services Templates, click **Delete** then **Yes** to confirm deletion
+ 
+The result should be a Status of *There are no applications listed.*
+
+
 .. _loggingtab:
 
 Logging
