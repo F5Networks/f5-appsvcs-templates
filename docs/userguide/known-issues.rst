@@ -7,7 +7,6 @@ Known Issues
  
 **GUI Issues**
 
-* Checkboxes must be clicked multiple times before their intended dependents show/hide correctly.
 * Multi-select list boxes are not supported at this time.
 
  **HTTP and TCP Template Issues**
