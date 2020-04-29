@@ -156,6 +156,14 @@ definitions:
   multiplex_profile_name:
     title: Specify the name of an existing BIG-IP OneConnect profile
     enumFromBigip: 'ltm/profile/one-connect'
+  app_type_def:
+    template: |
+      {{#enable_tls_server}}
+        "template": "https",
+      {{/enable_tls_server}}
+      {{^enable_tls_server}}
+        "template": "http",
+      {{/enable_tls_server}}
   app_pool_def:
     template: |
       {{#enable_pool}}
@@ -430,7 +438,7 @@ template: |
       "class": "Tenant",
       "{{app_name:f5:non_empty_string}}": {
         "class": "Application",
-        "template": "https",
+        {{> app_type_def}}
         {{> app_pool_def}}
         {{> app_snatpool_def}}
         {{> app_tls_server_def}}
