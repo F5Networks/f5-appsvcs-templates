@@ -532,7 +532,7 @@ route('templates', 'templates', () => {
                 createRow(setName, (setData.supported) ? ['supported'] : [], setActions);
                 setMap[setName].templates.forEach((tmpl) => {
                     const templateName = tmpl.name;
-                    const appList = appDict[`${setName}/${templateName}`] || [];
+                    const appList = appDict[templateName] || [];
                     createRow(`&nbsp;&nbsp;&nbsp;&nbsp;/${templateName}`, appList.map(app => `${app.tenant} ${app.name}`));
                 });
             });
