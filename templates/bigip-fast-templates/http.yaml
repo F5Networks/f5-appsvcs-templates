@@ -231,6 +231,14 @@ definitions:
           "xForwardedFor": {{x_forwarded_for::boolean}}
         },
       {{/make_http_profile}}
+  service_type_def:
+    template: |
+      {{#enable_tls_server}}
+        "class": "Service_HTTPS",
+      {{/enable_tls_server}}
+      {{^enable_tls_server}}
+        "class": "Service_HTTP",
+      {{/enable_tls_server}}
   service_pool_def:
     template: |
       {{#enable_pool}}
@@ -429,9 +437,9 @@ template: |
         {{> app_tls_client_def}}
         {{> app_http_def}}
         "serviceMain": {
-          "class": "Service_HTTPS",
           "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
           "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
           {{> service_pool_def}}
           {{> service_snat_def}}
           {{> service_persistence}}
