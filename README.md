@@ -3,13 +3,12 @@ F5 Application Services Templates (FAST) are an easy and effective way to deploy
 
 The FAST Extension provides a toolset for templating and managing AS3 Applications on BIG-IP.
 
-## Support Information
+## Documentation
 
-This F5 Application Services Template (FAST) release is a community-supported preview. Your feedback is appreciated.
+For more information about FAST, including installation and usage information, see the [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
-We will provide a fully F5-supported FAST offering early next calendar quarter (Q2CY20).
 
-### Filing Issues and Getting Help
+## Filing Issues and Getting Help
 
 If you come across a bug or other issue, please use [GitHub Issues](https://github.com/F5networks/f5-appsvcs-templates/issues) to submit an issue for our team.
 You can also see current known issues on that page.
@@ -45,10 +44,6 @@ In other words, run `npm` commands for a given subproject in that subproject's d
 3. Click **iApps > Application Services > Applications LX**.
 
 4. Click **F5 Application Services Templates** to start using FAST.
-
-## Documentation
-
-For more information about FAST, see [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
 
 
