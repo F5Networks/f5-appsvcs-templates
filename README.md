@@ -17,7 +17,7 @@ You can also see current known issues on that page.
 
 This repo is broken into subprojects
 
-* An NPM package in [core](core)
+* An NPM package in [core](https://github.com/f5devcentral/f5-fast-core)
 * An iApps LX package in [iappslx](iappslx)
 * A set of default templates in [templates](templates)
 
