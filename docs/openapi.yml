@@ -13,7 +13,7 @@ x-errors:
           schema:
             $ref: "#/components/schemas/Error"
 info:
-  version: 1.0.0
+  version: 1.1.0
   title: F5 Application Services API
   license:
     name: Apache 2.0
