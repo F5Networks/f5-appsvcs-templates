@@ -4,6 +4,7 @@
 ## Fixed
 
 ## Changed
+* Request IDs in the REST worker log have been switch from uuid4 IDs to an incrementing counter
 
 ## Removed
 

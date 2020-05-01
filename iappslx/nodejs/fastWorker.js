@@ -8,7 +8,6 @@ const fs = require('fs-extra');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
-const uuid4 = require('uuid').v4;
 
 const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
@@ -69,6 +68,7 @@ class FASTWorker {
         );
 
         this.requestTimes = {};
+        this.requestCounter = 1;
     }
 
     hookCompleteRestOp() {
@@ -235,7 +235,9 @@ class FASTWorker {
      * Helper functions
      */
     generateRequestId() {
-        return uuid4();
+        const retval = this.requestCounter;
+        this.requestCounter += 1;
+        return retval;
     }
 
     enterTransaction(reqid, text) {
