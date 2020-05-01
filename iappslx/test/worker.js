@@ -637,6 +637,15 @@ describe('template worker tests', function () {
                 assert.equal(op.status, 404);
             });
     });
+    it('delete_all_templatesets', function () {
+        const worker = createWorker();
+        const op = new RestOp('templatesets');
+
+        return worker.onDelete(op)
+            .then(() => assert.equal(op.status, 200))
+            .then(() => worker.templateProvider.listSets())
+            .then(setNames => assert.strictEqual(setNames.length, 0));
+    });
     it('on_start', function () {
         const worker = createWorker();
 

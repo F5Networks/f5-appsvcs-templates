@@ -314,6 +314,15 @@ paths:
                 $ref: "#/components/schemas/Error"
         '500': *serverError
         default: *defaultResponse
+    delete:
+      tags:
+        - Template Management
+      summary: Delete all installed template sets
+      responses:
+        '200':
+          description: OK
+        '500': *serverError
+        default: *defaultResponse
   /templatesets/{setName}:
     parameters:
       - name: setName
