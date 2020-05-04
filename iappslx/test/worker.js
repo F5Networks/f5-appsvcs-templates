@@ -529,9 +529,27 @@ describe('template worker tests', function () {
     it('delete_all_apps', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                tenant: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {}
+                        }
+                    }
+                }
+            }))
+            .persist();
+        nock(host)
+            .persist()
+            .post(`${as3ep}?async=true`)
+            .reply(202, {});
         return worker.onDelete(op)
             .then(() => {
-                assert.strictEqual(op.status, 405);
+                assert.strictEqual(op.status, 202);
             });
     });
     it('delete_bad_end_point', function () {

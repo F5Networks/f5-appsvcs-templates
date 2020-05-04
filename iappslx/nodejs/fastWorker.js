@@ -722,27 +722,42 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         const uri = restOperation.getUri();
         const pathElements = uri.path.split('/');
-        const tenant = pathElements[4];
-        const app = pathElements[5];
 
-        if (!appid) {
-            return this.genRestResponse(restOperation, 405, 'DELETE is only supported for individual applications');
+        if (appid) {
+            const tenant = pathElements[4];
+            const app = pathElements[5];
+            return Promise.resolve()
+                .then(() => this.recordTransaction(
+                    reqid, 'requesting driver to delete an application',
+                    this.driver.deleteApplication(tenant, app)
+                ))
+                .then((result) => {
+                    restOperation.setHeaders('Content-Type', 'text/json');
+                    restOperation.setBody(result.body);
+                    restOperation.setStatusCode(result.status);
+                    this.completeRestOperation(restOperation);
+                })
+                .then(() => {
+                    this.generateTeemReportApplication('delete', '');
+                })
+                .catch(e => this.genRestResponse(restOperation, 404, e.stack));
         }
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'requesting driver to delete an application',
-                this.driver.deleteApplication(tenant, app)
+                reqid, 'deleting all managed applications',
+                this.driver.deleteApplications()
             ))
             .then((result) => {
                 restOperation.setHeaders('Content-Type', 'text/json');
-                restOperation.setBody(result);
+                restOperation.setBody(result.body);
+                restOperation.setStatusCode(result.status);
                 this.completeRestOperation(restOperation);
             })
             .then(() => {
                 this.generateTeemReportApplication('delete', '');
             })
-            .catch(e => this.genRestResponse(restOperation, 404, e.stack));
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
     deleteTemplateSets(restOperation, tsid) {

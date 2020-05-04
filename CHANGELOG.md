@@ -1,5 +1,6 @@
 # 1.1
 ## Added
+* Support DELETE on /applications endpoint (deletes all applications managed by FAST)
 
 ## Fixed
 
