@@ -83,21 +83,24 @@ entire feature set.
 
 3. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
 
-4. Create the following file named **params.yml**:
+4. Create the following file named **params.json**:
 
-    .. code-block:: yaml
+    .. code-block:: json
 
-      tenant_name: TestTenant
-      application_name: MyTestApp
-      virtual_address: 0.0.0.0
-      port: 80
-      serverAddresses:
-        - 10.0.0.1
-        - 10.0.0.2
+      {
+          "tenant_name": "TestTenant",
+          "application_name": "MyTestApp",
+          "virtual_address": "0.0.0.0",
+          "port": 80,
+          "serverAddresses": [
+              "10.0.0.1",
+              "10.0.0.2"
+          ]
+      }
 
 |
 
-5. Using this file, the following command will show an example render: ``fast render hello.mst params.yml``
+5. Using this file, the following command will show an example render: ``fast render hello.mst params.json``
 
 6. To add this to the system, the template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
 
