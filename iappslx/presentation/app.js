@@ -73,12 +73,8 @@ const newEditor = (tmplid, view) => {
 
     dispOutput(`Loading template: ${tmplid}`);
     getJSON(`templates/${tmplid}`)
-        .then((data) => {
-            if (data.code) {
-                return Promise.reject(new Error(`Error loading template "${tmplid}":\n${data.message}`));
-            }
-            return Template.fromJson(data);
-        })
+        .catch(e => Promise.reject(new Error(`Error loading template "${tmplid}":\n${e.message}`)))
+        .then(data => Template.fromJson(data))
         .then((tmpl) => {
             const schema = JSON.parse(JSON.stringify(tmpl.getParametersSchema())); // Deep copy schema before modifying
             dispOutput(`Creating editor with schema:\n${JSON.stringify(schema, null, 2)}`);

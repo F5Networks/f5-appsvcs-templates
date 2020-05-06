@@ -331,7 +331,8 @@ class FASTWorker {
                             prop.enum = items;
                         }
                         delete prop.enumFromBigip;
-                    });
+                    })
+                    .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`)));
             })))
             .then(() => schema);
     }
@@ -404,7 +405,12 @@ class FASTWorker {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);
                         });
-                }).catch(e => this.genRestResponse(restOperation, 404, e.stack));
+                }).catch((e) => {
+                    if (e.message.match(/Could not find template/)) {
+                        return this.genRestResponse(restOperation, 404, e.stack);
+                    }
+                    return this.genRestResponse(restOperation, 400, `Error: Failed to load template ${tmplid}\n${e.stack}`);
+                });
         }
 
         return Promise.resolve()
