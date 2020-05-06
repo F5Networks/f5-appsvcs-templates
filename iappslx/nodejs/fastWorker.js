@@ -324,7 +324,12 @@ class FASTWorker {
                                 `failed GET to ${endPoint}:\n${JSON.stringify(response, null, 2)}`
                             ));
                         }
-                        return Promise.resolve(response.body.items.map(x => x.fullPath));
+                        this.logger.info(JSON.stringify(response, null, 2));
+                        const items = response.body.items;
+                        if (items) {
+                            return Promise.resolve(items.map(x => x.fullPath));
+                        }
+                        return Promise.resolve([]);
                     })
                     .then((items) => {
                         if (items.length !== 0) {
