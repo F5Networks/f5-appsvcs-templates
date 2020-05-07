@@ -113,6 +113,15 @@ paths:
                 $ref: "#/components/schemas/Error"
         '500': *serverError
         default: *defaultResponse
+    delete:
+      tags:
+        - Application Management
+      summary: Delete all FAST managed applications
+      responses:
+        '200':
+          description: OK
+        '500': *serverError
+        default: *defaultResponse
   /applications/{tenantName}/{appName}:
     parameters:
       - name: appName
