@@ -1,6 +1,7 @@
 # 1.1
 ## Added
 * Support DELETE on /applications endpoint (deletes all applications managed by FAST)
+* Support DELETE on /templatesets endpoint (deletes all installed templates)
 
 ## Fixed
 
