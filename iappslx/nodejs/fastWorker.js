@@ -31,6 +31,12 @@ const scratchPath = `${configPath}/scratch`;
 const uploadPath = '/var/config/rest/downloads';
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
+const configDGPath = `/Common/${projectName}/config`;
+const configKey = 'config';
+const defaultConfig = {
+    deletedTemplateSets: []
+};
+
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
@@ -50,6 +56,7 @@ class FASTWorker {
         this.WORKER_URI_PATH = `shared/${endpointName}`;
         this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
         this.storage = new StorageDataGroup(dataGroupPath);
+        this.configStorage = new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
         this.teemDevice = new TeemDevice({
             name: projectName,
@@ -80,6 +87,49 @@ class FASTWorker {
         };
     }
 
+    getConfig(reqid) {
+        reqid = reqid || 0;
+        const defaults = Object.assign({}, defaultConfig);
+        return Promise.resolve()
+            .then(() => this.enterTransaction(reqid, 'gathering config data'))
+            .then(() => this.configStorage.getItem(configKey))
+            .then((config) => {
+                if (config) {
+                    return Promise.resolve(Object.assign({}, defaults, config));
+                }
+                return Promise.resolve()
+                    .then(() => {
+                        this.logger.info('FAST Worker: no config found, loading defaults');
+                    })
+                    .then(() => this.configStorage.setItem('foo', 'bar'))
+                    .then(() => this.configStorage.deleteItem('foo'))
+                    .then(() => this.configStorage.persist())
+                    .then(() => this.configStorage.setItem(configKey, defaults))
+                    .then(() => defaults);
+            })
+            .then((config) => {
+                this.exitTransaction(reqid, 'gathering config data');
+                return Promise.resolve(config);
+            })
+            .catch((e) => {
+                this.logger.severe(`FAST Worker: Failed to load config: ${e.stack}`);
+                return Promise.resolve(defaults);
+            });
+    }
+
+    saveConfig(config, reqid) {
+        reqid = reqid || 0;
+        return Promise.resolve()
+            .then(() => this.enterTransaction(reqid, 'saving config data'))
+            .then(() => this.configStorage.setItem(configKey, config))
+            .then(() => this.configStorage.persist())
+            .then(() => this.exitTransaction(reqid, 'saving config data'))
+            .catch((e) => {
+                this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
+            });
+    }
+
+
     /**
      * Worker Handlers
      */
@@ -94,11 +144,24 @@ class FASTWorker {
         return Promise.resolve()
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
-            .then(() => Promise.all([fsprovider.listSets(), this.templateProvider.listSets()]))
-            .then(([fsSets, knownSets]) => {
-                const sets = fsSets.filter(setName => !knownSets.includes(setName));
+            .then(() => Promise.all([
+                fsprovider.listSets(),
+                this.templateProvider.listSets(),
+                this.getConfig(0)
+            ]))
+            .then(([fsSets, knownSets, config]) => {
+                const deletedSets = config.deletedTemplateSets;
+                const ignoredSets = [];
+                const sets = [];
+                fsSets.forEach((setName) => {
+                    if (knownSets.includes(setName) || deletedSets.includes(setName)) {
+                        ignoredSets.push(setName);
+                    } else {
+                        sets.push(setName);
+                    }
+                });
                 this.logger.info(
-                    `FAST Worker: Loading template sets from disk: ${JSON.stringify(sets)} (skipping: ${JSON.stringify(knownSets)})`
+                    `FAST Worker: Loading template sets from disk: ${JSON.stringify(sets)} (skipping: ${JSON.stringify(ignoredSets)})`
                 );
                 if (sets.length === 0) {
                     // Nothing to do
@@ -779,6 +842,11 @@ class FASTWorker {
                     reqid, 'deleting a template set from the data store',
                     this.templateProvider.removeSet(tsid)
                 ))
+                .then(() => this.getConfig(reqid))
+                .then((config) => {
+                    config.deletedTemplateSets.push(tsid);
+                    return this.saveConfig(config, reqid);
+                })
                 .then(() => {
                     this.generateTeemReportTemplateSet('delete', tsid);
                 })
@@ -810,7 +878,16 @@ class FASTWorker {
                             this.templateProvider.removeSet(set)
                         ));
                 });
-                return promiseChain;
+                return promiseChain
+                    .then(() => this.recordTransaction(
+                        reqid, 'persisting the data store',
+                        this.storage.persist()
+                    ))
+                    .then(() => this.getConfig(reqid))
+                    .then((config) => {
+                        config.deletedTemplateSets = [...new Set(config.deletedTemplateSets.concat(setList))];
+                        return this.saveConfig(config, reqid);
+                    });
             })
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));

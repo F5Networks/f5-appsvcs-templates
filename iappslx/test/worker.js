@@ -110,6 +110,7 @@ function createWorker() {
     patchWorker(worker);
 
     worker.storage = testStorage;
+    worker.configStorage = new fast.dataStores.StorageMemory();
     worker.templateProvider.storage = testStorage;
     worker.teemDevice = new TeemDeviceMock();
 
