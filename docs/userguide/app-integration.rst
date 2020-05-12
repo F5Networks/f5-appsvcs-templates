@@ -99,7 +99,7 @@ For example, to load "templates sets" (a collection of template source files) fr
    const fast = require('@f5devcentral/f5-fast-core');
 
    const templatesPath = '/path/to/templatesdir';
-   const templateProvider = fast.FsTemplateProvider(templatesPath);
+   const templateProvider = new fast.FsTemplateProvider(templatesPath);
 
    templateProvider.fetch('templateSetName/templateName')
        .then((template) => {
