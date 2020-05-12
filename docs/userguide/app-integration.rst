@@ -53,7 +53,7 @@ Below is a basic example for loading a template without any additional type sche
 
    fast.Template.loadYaml(ymldata)
        .then((template) => {
-           console.log(template.getViewSchema());
+           console.log(template.getParametersSchema());
            console.log(template.render({message: "Hello world!"}));
        });
 
@@ -67,7 +67,7 @@ In addition to ``Template.loadYaml()``, a ``Template`` can be created from Musta
 
    fast.Template.loadMst(ymldata)
        .then((template) => {
-           console.log(template.getViewSchema());
+           console.log(template.getParametersSchema());
            console.log(template.render({message: "Hello world!"}));
        });
 
@@ -85,7 +85,7 @@ The ``FsSchemaProvider`` can be used to load schema from disk:
 
    fast.Template.loadMst(mstdata, schemaProvider)
        .then((template) => {
-           console.log(template.getViewSchema());
+           console.log(template.getParametersSchema());
            console.log(template.render({virtual_port: 443});
        });
 
@@ -103,7 +103,7 @@ For example, to load "templates sets" (a collection of template source files) fr
 
    templateProvider.fetch('templateSetName/templateName')
        .then((template) => {
-           console.log(template.getViewSchema());
+           console.log(template.getParametersSchema());
            console.log(template.render({
                var: "value",
                boolVar: false
