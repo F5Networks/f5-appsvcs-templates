@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
     <head>
@@ -6,74 +5,76 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
         <link rel="stylesheet" href="css/spectre.min.css">
+        <link rel="stylesheet" href="css/spectre-overrides.css">
         <link rel="stylesheet" href="css/all.min.css">
         <link rel="stylesheet" href="css/style.css">
 
         <title>F5 Application Services Templates</title>
     </head>
     <body>
-      <div class="header">
-        <div class="headerLogo"><img src="img/as3robot.png" height="55px"/></div>
-        <div class="headerTitle">F5 Application Services Templates</div>
-      </div>
-      <div class="contentWrapper">
-        <div id="navBar" class="navBar"></div>
-
-        <template id="page-apps">
-            <div id="applist" class="appList"></div>
-            <div>
-                <p>Output:</p>
-                <pre id="output"></pre>
-            </div>
-        </template>
-
-        <template id="page-create">
-            <p>Templates:</p>
-            <div id="tmpl-btns"></div>
-            <br>
-            <div>
-                <div id="form-div"></div>
-                <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
-                <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
-                <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
-                <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
-                <button type="button" class="btn btn-primary" id="form-btn" disabled>Submit</button>
-            </div>
-            <div>
-                <p>Output:</p>
-                <pre id="output"></pre>
-            </div>
-        </template>
-
-        <template id="page-templates">
-            <button type="button" class="btn" id="add-ts-btn">Add Set</button>
-            <input type="file" id="ts-file-input" style="display:none" accept=".zip">
-            <div id="template-list" class="appList">
-                <div class="appListRow">
-                    <div class="appListTitle">Templates</div>
-                    <div class="appListTitle">Applications</div>
-                    <div class="appListTitle">Actions</div>
+        <div id="header">
+            <div class="header-logo"><img src="img/as3robot.png" height="55px"/></div>
+            <div class="header-title">F5 Application Services Templates</div>
+        </div>
+        <div id="nav-bar">
+            <!-- <a class="btn btn-nav">Application List</a>
+            <a class="btn btn-nav">Deploy</a>
+            <a class="btn btn-nav">Templates</a>
+            <a class="btn btn-nav">Deploy Log</a>
+            <a class="btn btn-nav">API</a> -->
+        </div>
+        <div id="content-wrapper">
+            <template id="page-apps">
+                <div id="app-list"></div>
+                <div>
+                    <pre id="output">
+                    </pre>
                 </div>
-            </div>
-            <div>
-                <p>Output:</p>
-                <pre id="output"></pre>
-            </div>
-        </template>
+            </template>
 
-        <template id="page-tasks">
-          <div id="task-list" class="appList"></div>
-        </template>
+            <template id="page-create">
+                <p class="instruction-text">Choose a Template to Deploy:</p>
+                <div id="tmpl-btns"></div>
+                <div>
+                    <div id="form-div"></div>
+                    <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
+                    <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
+                    <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
+                    <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
+                    <button type="button" class="btn btn-primary" id="form-btn" disabled>Submit</button>
+                </div>
+                <div>
+                    <pre id="output"></pre>
+                </div>
+            </template>
 
-        <template id="page-api">
-            <iframe src="apidoc.html"></iframe>
-        </template>
+            <template id="page-templates">
+                <button type="button" class="btn" id="add-ts-btn">Add Template Set</button>
+                <input type="file" id="ts-file-input" style="display:none" accept=".zip">
+                <div id="template-list">
+                    <div id="th-tr-templates" class="th-row">
+                        <div class="td">Templates</div>
+                        <div class="td">Applications</div>
+                        <div class="td">Actions</div>
+                    </div>
+                </div>
+                <div>
+                    <pre id="output"></pre>
+                </div>
+            </template>
 
-        <div id="app" style="height:100%"></div>
+            <template id="page-tasks">
+                <div id="task-list"></div>
+            </template>
 
-      </div>
+            <template id="page-api">
+                <iframe src="apidoc.html"></iframe>
+            </template>
 
-      <script src="js/jsoneditor.min.js"></script>
-      <script src="bundle.js" charset="utf-8"></script>
+            <div id="app" style="height:100%"></div>
+        </div>
+
+        <script src="js/jsoneditor.min.js"></script>
+        <script src="bundle.js" charset="utf-8"></script>
     </body>
 </html>
