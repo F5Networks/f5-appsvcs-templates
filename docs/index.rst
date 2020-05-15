@@ -29,6 +29,7 @@ Previous buttons to explore the documentation.
    userguide/troubleshooting
    userguide/known-issues
    userguide/revision-history
+   userguide/api-ref
    
 
 
