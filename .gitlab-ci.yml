@@ -44,6 +44,7 @@ create_docs:
     - if [ "$CI_COMMIT_REF_NAME" = "docs-staging" ] || [ "$CI_COMMIT_REF_NAME" = "docs-latest" ]; then
     -   rm -rf docs/_templates
     - fi
+    - npm ci
     - make html
     - make test
   tags:

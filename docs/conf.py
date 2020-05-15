@@ -228,4 +228,4 @@ texinfo_documents = [
 
 
 # Generate API docs
-subprocess.call(['npm', 'run', 'buildapi'])
+subprocess.check_call(['npm', 'run', 'buildapi'])
