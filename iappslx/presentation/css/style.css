@@ -1,8 +1,6 @@
 body {
   background-color: #eae9e5;
-  padding: 21px;
-  margin: 0px;
-  border: 0px;
+  border-left: 1px solid #ffffff1a;
 }
 iframe {
   width: 100%;
@@ -10,80 +8,185 @@ iframe {
   overflow-y: hidden;
   overflow-x: hidden;
 }
-hr {
-  margin: 0px;
+p {
+  font-size: .85rem;
+  font-weight: 500;
 }
-.appList {
-  width: 67%;
+
+#header {
+  background: #deddd9;
+  height: 64px;
+  padding: 2px;
+  border-top: 1px ridge #deddd9;
+  border-bottom: 1px ridge #3f4448cc;
+  position: relative;
+  z-index: 5;
 }
-.appListRow {
-  padding: 1px 34px 1px 0px;
+.header-logo {
+  float: left;
+  margin: 0px 13px;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25)) drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.25));
+}
+.header-title {
+  color: #363737;
+  font-size: 1.75em;
+  margin-top: 4px;
+  filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4));
+}
+#nav-bar {
   display: flex;
+  max-width: 1150px;
+  padding: 2px 20px 2px 15px;
+  position: relative;
+  z-index: 3;
 }
-.appListTitle {
+#selected-nav {
+  flex: 1;
+  background-color: #eae9e5 !important;
+  font-size: .85rem !important;
+  text-align: center;
+  text-shadow: -0.5px -0.5px 1px #fff !important;
+  height: 34px;
+  padding: 2px 5px;
+  border-radius: 3px 3px 0px 0px;
+  border: 1px solid #777;
+  border-bottom: none;
+  position: relative;
+  z-index: 4;
+}
+
+.btn {
+  border-radius: 3px;
+}
+.btn-nav {
+  color: #404346;
+}
+.btn-icon {
+  margin-right: 7.5px;
+  padding: 5px;
+  border-radius: 20%;
+  cursor: pointer;
+  font-size: .8rem;
+  color: #556473;
+}
+.btn-icon:hover, .btn-icon:active {
+  background-color: rgba(48,55,66,.95);
+  position: relative;
+  top: 1.1px;
+  color: #eae9e5;
+}
+.btn-icon:active {
+  color: #f0f3ca;
+  border: 1px solid #f0f3ca;
+}
+.btn-template {
+  flex: 1;
+  margin: 5px 10px;
+  font-size: .8em;
+  height: auto;
+  position: relative;
+  top: -5px;
+}
+
+.tr {
+  display: flex;
+  color: #556473;
+  border: 1px solid #acacac;
+  border-top: none;
+}
+.td {
   flex: 2;
   padding: 5px 0px 2px 8px;
   font-size: .8em;
   font-weight: bold;
+  margin-left: 4px;
 }
-.appListEntry {
-  margin: 0px 13px 0px 13px;
-  flex: 1;
-  padding: 0px;
-  font-size: .8em;
-  height: auto;
-}
-.zebraRow {
-  background-color: #deddd9;
-}
-.navBar {
+.th-row {
   display: flex;
-  width: 67%;
-  margin-bottom: 21px;
+  color: #434e58;
+  background-color: #deddd9ba;
+  border: 1px solid #ababab;
+  border-left: 1px solid #89909d;
+  border-bottom: 1px solid #89909d;
+  padding-bottom: 2px;
+  font-size: .85rem;
 }
-.btn {
-  border-radius: 3px;
-  background-color: #deddd9;
+.th-row * {
+  margin-left: 0px;
 }
-.btn-nav {
-  height: 34px;
-  padding: 2px 5px 2px 5px;
-  flex: 1;
-  text-align: center;
-  border-color: #777;
-  border-radius: 3px 3px 0px 0px;
-  color: #777;
+.row-dark {
+  background-color: #e5e4e3a1;
 }
-a.btn-nav:visited {
-  color: #777;
+.row-light {
+  background-color: #ececeaa1;
 }
-.selected-nav {
-  height: 34px;
-  padding: 2px 5px 2px 5px;
-  flex: 1;
-  text-align: center;
-  background-color: #eae9e5;
-  border-color: #777;
-  border: solid;
-  border-bottom: none;
-  border-radius: 3px 3px 0px 0px;
-  border-width: 1px;
+.row-adjust {
+  position: relative;
+  top: -3px;
+  left: -1px;
 }
-.contentWrapper {
-  margin: 0px;
-  padding: 0px;
-  height: 600px;
-}
-.header {
-  height: 55px;
-  margin-bottom: 21px;
-}
-.headerLogo {
-  float: left;
-  margin-right: 13px;
+#th-tr-templates {
+  padding-bottom: 2.5px;
+  margin-top: 10px;
+  font-size: 1rem;
 }
 
-.headerTitle {
-  color: #333;
-  font-size: 2em;
+#content-wrapper {
+  background-color: #ecebe6a6;
+  height: 600px;
+  max-width: 1110px;
+  margin: 2px 18px;
+  padding: 5px 7.5px;
+}
+
+#app-list, #task-list {
+  margin-top: 10px;
+}
+#app-list>div div:nth-child(-n+2) { /* first 2 columns of th/td */
+  max-width: 12.5%;
+}
+#app-list>div div:nth-child(n+2) {  /* every th/td except first column */
+  text-align: center;
+  margin-left: inherit -1px;
+  padding-left: 0px;
+}
+#app-list>div:nth-child(n+2) div:first-child {  /* every td row -> first column */
+  padding-left: 20px;
+  margin-left: 0px;
+}
+
+#template-list>div div:nth-child(-n+1) {
+  min-width: 25%;
+}
+#template-list>div div:nth-child(n+2) {
+  text-align: center;
+}
+
+.instruction-text {
+  margin: 10px 0px 0px;
+  padding-bottom: 3px;
+  border-bottom: .9px solid #878686;
+}
+#tmpl-btns>div {
+  margin: 10px 2px;
+  border-bottom: .9px solid #878686;
+}
+
+#app {
+  display: none;
+  padding: 0px 5px;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-disabled {
+  opacity: .9;
+  pointer-events: none;
+}
+.nav-disabled {
+  pointer-events: none;
+}
+
+#output {
+  min-height: 25px;
 }

@@ -173,7 +173,7 @@ function router() {
     const routeInfo = routes[urlParts[0]];
 
     // render header menu
-    const navBar = document.getElementById('navBar');
+    const navBar = document.getElementById('nav-bar');
     const navBarDisplay = navBar.style.display;
     navBar.innerHTML = '';
 
@@ -186,7 +186,7 @@ function router() {
             d.href = `#${k}`;
         } else {
             d = document.createElement('div');
-            d.classList.add('selected-nav');
+            d.id = 'selected-nav';
         }
         d.innerText = navTitles[k];
         navBar.appendChild(d);
@@ -226,6 +226,28 @@ function router() {
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
+class UIBuilder {
+    buildIconBtn(iconClass, tooltipStr, hrefStr, onclick) {
+        const actSpan = document.createElement('span');
+        actSpan.classList.add('tooltip');
+        actSpan.classList.add('tooltip-right');
+        actSpan.setAttribute('data-tooltip', tooltipStr);
+        actSpan.classList.add('row-adjust');
+
+        const actBtn = document.createElement('a');
+        actBtn.classList.add('btn-icon');
+        actBtn.classList.add('fas');
+        actBtn.classList.add(iconClass);
+        if (hrefStr) actBtn.href = hrefStr;
+        if (onclick) actBtn.onclick = onclick;
+
+        actSpan.appendChild(actBtn);
+        return actSpan;
+    }
+}
+
+const UI = new UIBuilder();
+
 
 // tabbed navigation menu items
 addRouteToHeader('', 'Application List');
@@ -236,63 +258,52 @@ addRouteToHeader('api', 'API');
 
 // Define routes
 route('', 'apps', () => {
-    outputElem = document.getElementById('output');
-    const listElem = document.getElementById('applist');
+    const listElem = document.getElementById('app-list');
     let count = 0;
     let lastTenant = '';
     dispOutput('Fetching applications list');
     return getJSON('applications')
         .then((appsList) => {
-            listElem.innerHTML = `<div class="appListRow">
-              <div class="appListTitle">Tenant</div>
-              <div class="appListTitle">Application</div>
-              <div class="appListTitle">Template</div>
-              <div class="appListEntry"></div>
-              <div class="appListEntry"></div>
+            listElem.innerHTML = `<div id="app-list-header-row" class="th-row">
+              <div class="td">Tenant</div>
+              <div class="td">Application</div>
+              <div class="td">Template</div>
+              <div class="td">Actions</div>
             </div>`;
             appsList.forEach((app) => {
                 const appPair = [app.tenant, app.name];
                 const appPairStr = `${appPair.join('/')}`;
 
                 const row = document.createElement('div');
-                row.classList.add('appListRow');
+                row.id = 'app-list-row';
+                row.classList.add('tr');
                 count += 1;
-                if (count % 2) row.classList.add('zebraRow');
+                if (count % 2) row.classList.add('row-dark');
 
                 const appTenant = document.createElement('div');
                 if (appPair[0] !== lastTenant) {
-                    const divider = document.createElement('hr');
-                    if (count % 2) divider.classList.add('zebraRow');
-                    listElem.appendChild(divider);
                     appTenant.innerText = appPair[0];
                     lastTenant = appPair[0];
                 }
-                appTenant.classList.add('appListTitle');
+                appTenant.classList.add('td');
                 row.appendChild(appTenant);
 
                 const appName = document.createElement('div');
                 appName.innerText = appPair[1];
-                appName.classList.add('appListTitle');
+                appName.classList.add('td');
                 row.appendChild(appName);
 
                 const appTemplate = document.createElement('div');
                 appTemplate.innerText = app.template;
-                appTemplate.classList.add('appListTitle');
+                appTemplate.classList.add('td');
                 row.appendChild(appTemplate);
 
-                const modifyBtn = document.createElement('a');
-                modifyBtn.classList.add('btn');
-                modifyBtn.classList.add('btn-primary');
-                modifyBtn.innerText = 'Modify';
-                modifyBtn.href = `#modify/${appPairStr}`;
-                modifyBtn.classList.add('appListEntry');
-                row.appendChild(modifyBtn);
+                const actionsDiv = document.createElement('div');
+                actionsDiv.classList.add('td');
 
-                listElem.appendChild(row);
-                const deleteBtn = document.createElement('button');
-                deleteBtn.classList.add('btn');
-                deleteBtn.classList.add('btn-error');
-                deleteBtn.innerText = 'Delete';
+                actionsDiv.appendChild(UI.buildIconBtn('fa-edit', 'Modify Application', null, `#modify/${appPairStr}`));
+
+                const deleteBtn = UI.buildIconBtn('fa-trash', 'Delete Application');
                 deleteBtn.addEventListener('click', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     fetch(`${endPointUrl}/applications/${appPairStr}`, {
@@ -302,8 +313,10 @@ route('', 'apps', () => {
                             window.location.href = '#tasks';
                         });
                 });
-                deleteBtn.classList.add('appListEntry');
-                row.appendChild(deleteBtn);
+
+                actionsDiv.appendChild(deleteBtn);
+                row.appendChild(actionsDiv);
+                listElem.appendChild(row);
             });
 
             dispOutput('');
@@ -319,8 +332,7 @@ route('create', 'create', () => {
             setData.templates.map(x => x.name).forEach((item) => {
                 const btn = document.createElement('button');
                 btn.classList.add('btn');
-                btn.classList.add('btn-primary');
-                btn.classList.add('appListEntry');
+                btn.classList.add('btn-template');
                 btn.innerText = item;
                 btn.addEventListener('click', () => {
                     newEditor(item);
@@ -329,7 +341,6 @@ route('create', 'create', () => {
             });
         });
     };
-    outputElem = document.getElementById('output');
     dispOutput('Fetching templates');
     return getJSON('templatesets')
         .then((data) => {
@@ -339,7 +350,6 @@ route('create', 'create', () => {
         .catch(e => dispOutput(e.message));
 });
 route('modify', 'create', (appID) => {
-    outputElem = document.getElementById('output');
     dispOutput(`Fetching app data for ${appID}`);
     return getJSON(`applications/${appID}`)
         .then((appData) => {
@@ -348,42 +358,40 @@ route('modify', 'create', (appID) => {
         })
         .catch(e => dispOutput(e.message));
 });
-
 route('tasks', 'tasks', () => {
     const renderTaskList = () => getJSON('tasks')
         .then((data) => {
             const taskList = document.getElementById('task-list');
-            taskList.innerHTML = `<div class="appListRow">
-              <div class="appListTitle">Task ID</div>
-              <div class="appListTitle">Tenant</div>
-              <div class="appListTitle">Result</div>
+            taskList.innerHTML = `<div class="th-row">
+              <div class="td">Task ID</div>
+              <div class="td">Tenant</div>
+              <div class="td">Result</div>
             </div>`;
-            taskList.appendChild(document.createElement('hr'));
 
             let count = 0;
             data.forEach((item) => {
                 const rowDiv = document.createElement('div');
-                rowDiv.classList.add('appListRow');
+                rowDiv.id = 'app-list-row';
+                rowDiv.classList.add('tr');
                 count += 1;
-                if (count % 2) rowDiv.classList.add('zebraRow');
+                if (count % 2) rowDiv.classList.add('row-dark');
 
                 const idDiv = document.createElement('div');
-                idDiv.classList.add('appListTitle');
+                idDiv.classList.add('td');
                 idDiv.innerText = item.id;
                 rowDiv.appendChild(idDiv);
 
                 const tenantDiv = document.createElement('div');
-                tenantDiv.classList.add('appListTitle');
+                tenantDiv.classList.add('td');
                 tenantDiv.innerText = `${item.tenant}/${item.application}`;
                 rowDiv.appendChild(tenantDiv);
 
                 const statusDiv = document.createElement('div');
-                statusDiv.classList.add('appListTitle');
+                statusDiv.classList.add('td');
                 statusDiv.innerText = item.message;
                 rowDiv.appendChild(statusDiv);
 
                 taskList.appendChild(rowDiv);
-                taskList.appendChild(document.createElement('hr'));
             });
 
             const inProgressJob = (
@@ -396,11 +404,8 @@ route('tasks', 'tasks', () => {
 
     return renderTaskList();
 });
-
 route('api', 'api', () => Promise.resolve());
-
 route('templates', 'templates', () => {
-    outputElem = document.getElementById('output');
     dispOutput('...Loading Template List...');
     const templateDiv = document.getElementById('template-list');
 
@@ -454,25 +459,23 @@ route('templates', 'templates', () => {
                 return a;
             }, {});
 
-            let count = 0;
-            const createRow = (rowName, rowList, actionsList) => {
+            const createRow = (rowName, rowList, actionsList, isRowDark) => {
                 rowList = rowList || [];
                 actionsList = actionsList || [];
 
                 const row = document.createElement('div');
-                row.classList.add('appListRow');
-                count += 1;
-                if (count % 2) {
-                    row.classList.add('zebraRow');
-                }
+                row.classList.add('tr');
+
+                if (isRowDark) row.classList.add('row-dark');
+                else row.classList.add('row-light');
 
                 const name = document.createElement('div');
                 name.innerHTML = rowName;
-                name.classList.add('appListTitle');
+                name.classList.add('td');
                 row.appendChild(name);
 
                 const applist = document.createElement('div');
-                applist.classList.add('appListTitle');
+                applist.classList.add('td');
                 rowList.forEach((item) => {
                     const appDiv = document.createElement('div');
                     appDiv.innerText = item;
@@ -481,17 +484,14 @@ route('templates', 'templates', () => {
                 row.appendChild(applist);
 
                 const actions = document.createElement('div');
-                actions.classList.add('appListTitle');
+                actions.classList.add('td');
+
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
-                    const actBtn = document.createElement('a');
-                    actBtn.classList.add('btn');
-                    actBtn.innerText = actName;
-                    actBtn.onclick = actFn;
-                    actions.appendChild(actBtn);
+                    const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
+                    actions.appendChild(UI.buildIconBtn(iconClass, `${actName} Template`, null, actFn));
                 });
                 row.appendChild(actions);
 
-                templateDiv.appendChild(document.createElement('hr'));
                 templateDiv.appendChild(row);
             };
             Object.values(setMap).forEach((setData) => {
@@ -525,7 +525,7 @@ route('templates', 'templates', () => {
                     };
                 }
 
-                createRow(setName, (setData.supported) ? ['supported'] : [], setActions);
+                createRow(setName, (setData.supported) ? ['supported'] : [], setActions, true);
                 setMap[setName].templates.forEach((tmpl) => {
                     const templateName = tmpl.name;
                     const appList = appDict[templateName] || [];
