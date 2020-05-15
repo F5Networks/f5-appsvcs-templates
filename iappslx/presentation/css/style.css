@@ -186,3 +186,7 @@ p {
 .nav-disabled {
   pointer-events: none;
 }
+
+#output {
+  min-height: 50px;
+}
