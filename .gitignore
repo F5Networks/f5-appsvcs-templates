@@ -6,6 +6,7 @@ api-bundle.js*
 coverage
 dist
 docs/_build/
+docs/_static/apidocs.html
 node_modules
 rpmbuild
 test-output.txt
