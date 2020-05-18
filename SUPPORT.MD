@@ -6,17 +6,21 @@ Support will only be provided to customers who have an existing BIG-IP support c
 
 **FAST Software Lifecycle:**
 
-•	FAST releases are intended to be delivered on a 6-week basis
-
-•	Feature releases are supported for 3 months 
-
-•	"End of Support" = End of Software Development (EOSD) + End of Technical Support (EOTS)
+*	FAST releases are intended to be delivered on a 6-week basis 
+*	Feature releases are supported for 3 months 
+*	"End of Support" = End of Software Development (EOSD) + End of Technical Support (EOTS)
 
 Currently Supported Versions:
 
-| Software Version | Release Type | First Customer Ship | End of Support |
-| ---------------- | ------------ | ------------------- | -------------- |
-| 1.0              | Feature      | 30-Apr-2020         | 30-Jul-2020    |
+| Software Version | First Customer Ship | End of Support |
+| ---------------- | ------------------- | -------------- |
+| 1.0              | 30-Apr-2020         | 30-Jul-2020    |
 
 
 See the [Release notes](https://github.com/F5Networks/f5-appsvcs-templates/releases) and [FAST documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/) for new features and issues resolved for each release.
+
+To report an issue, or to submit a Request for Enhancement (RFE):  
+Navigate to the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > **Issues tab**, click **New Issue**.  
+Select the Issue type; Bug report or Feature request, click **Get started**.  
+Give the submission a title then fill out the template, attaching files if applicable.  
+When finished, click **Submit new issue**. 
