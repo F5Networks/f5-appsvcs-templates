@@ -6,9 +6,9 @@ Support will only be provided to customers who have an existing BIG-IP support c
 
 **FAST Software Lifecycle:**
 
-*	FAST releases are intended to be delivered on a 6-week basis 
-*	Feature releases are supported for 3 months 
-*	"End of Support" = End of Software Development (EOSD) + End of Technical Support (EOTS)
+* FAST releases are intended to be delivered on a 6-week basis 
+* FAST releases are supported for 3 months 
+* "End of Support" = End of Software Development (EOSD) + End of Technical Support (EOTS)
 
 Currently Supported Versions:
 
