@@ -45,7 +45,7 @@
     ]
   },
   "dependencies": {
-    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#dce0481",
+    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#cc5708d",
     "@f5devcentral/f5-teem": "^1.4.2",
     "core-js": "^3.6.5",
     "extract-zip": "^1.7.0",
