@@ -8,9 +8,13 @@ module.exports = {
             corejs: 3
         }]
     ],
+    plugins: [
+        '@babel/plugin-transform-runtime'
+    ],
     ignore: [
         // Add whitelisted modules to sped up builds
         '**/ajv/**',
+        '**/lodash/**',
         '**/mustache/**',
         '**/mkdirp/**',
         '**/core-js/**',
