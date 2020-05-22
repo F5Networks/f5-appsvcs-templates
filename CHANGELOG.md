@@ -2,11 +2,17 @@
 ## Added
 * Support DELETE on /applications endpoint (deletes all applications managed by FAST)
 * Support DELETE on /templatesets endpoint (deletes all installed templates)
+* Support combining templates via oneOf/allOf/anyOf
+* Support $ref in template definitions (http $refs are not supported)
 
 ## Fixed
+* Fix enumFromBigip error when endpoint does not contain "items"
 
 ## Changed
 * Request IDs in the REST worker log have been switch from uuid4 IDs to an incrementing counter
+* Deleting a base template set persists through a reboot
+* Improved error reporting when a template fails to load
+* GUI updated to better match the look and feel of the rest of the BIG-IP GUI
 
 ## Removed
 
