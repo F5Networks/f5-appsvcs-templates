@@ -488,7 +488,7 @@ route('templates', 'templates', () => {
 
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
                     const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    actions.appendChild(UI.buildIconBtn(iconClass, `${actName} Template`, null, actFn));
+                    actions.appendChild(UI.buildIconBtn(iconClass, `${actName} Template Set`, null, actFn));
                 });
                 row.appendChild(actions);
 
