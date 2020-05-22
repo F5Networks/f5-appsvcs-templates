@@ -30,7 +30,7 @@
     "mock-fs": "^4.12.0",
     "nock": "^12.0.3",
     "nyc": "^15.0.1",
-    "redoc-cli": "^0.9.7"
+    "redoc-cli": "^0.9.8"
   },
   "eslintConfig": {
     "extends": "@f5devcentral/eslint-config-f5-atg",
@@ -46,10 +46,10 @@
   },
   "dependencies": {
     "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#cc5708d",
-    "@f5devcentral/f5-teem": "^1.4.2",
+    "@f5devcentral/f5-teem": "^1.4.5",
     "core-js": "^3.6.5",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
-    "js-yaml": "^3.13.1"
+    "js-yaml": "^3.14.0"
   }
 }
