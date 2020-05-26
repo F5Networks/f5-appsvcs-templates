@@ -214,6 +214,7 @@ function router() {
     elem.appendChild(document.importNode(pageTmpl.content, true));
     elem.style.display = 'none';
     navBar.style.display = 'none';
+    outputElem = document.getElementById('output');
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
     pageFunc(urlParts.slice(1).join('/'))
