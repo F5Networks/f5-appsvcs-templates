@@ -10,12 +10,27 @@ const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const endPointUrl = '/mgmt/shared/fast';
 
-const getJSON = endPoint => fetch(`${endPointUrl}/${endPoint}`).then((data) => {
-    if (!data.ok) {
-        throw new Error(`Failed to get data from ${endPointUrl}/${endPoint}: ${data.status} ${data.statusText}`);
-    }
-    return data.json();
-});
+const safeFetch = (uri, opts) => {
+    opts = Object.assign({
+        // Add any defaults here
+    }, opts);
+
+    return fetch(uri, opts)
+        .then(response => Promise.all([
+            Promise.resolve(response),
+            response.json()
+        ]))
+        .then(([response, data]) => {
+            if (!response.ok) {
+                throw new Error(
+                    `Failed to get data from ${uri}: ${response.status} ${response.statusText}\n${JSON.stringify(data, null, 2)}`
+                );
+            }
+            return data;
+        });
+};
+const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
+
 
 let editor = null;
 
@@ -41,13 +56,7 @@ const multipartUpload = (file) => {
             },
             body: file.slice(start, end + 1, 'application/octet-stream')
         };
-        return fetch(`/mgmt/shared/file-transfer/uploads/${file.name}`, opts)
-            .then((response) => {
-                if (!response.ok) {
-                    return Promise.reject(new Error(`Failed to upload file: ${JSON.stringify(response)}`));
-                }
-                return Promise.resolve();
-            })
+        return safeFetch(`/mgmt/shared/file-transfer/uploads/${file.name}`, opts)
             .then(() => {
                 if (end === file.size - 1) {
                     return Promise.resolve();
@@ -55,7 +64,8 @@ const multipartUpload = (file) => {
                 const nextStart = start + CHUNK_SIZE;
                 const nextEnd = (end + CHUNK_SIZE > file.size - 1) ? file.size - 1 : end + CHUNK_SIZE;
                 return uploadPart(nextStart, nextEnd);
-            });
+            })
+            .catch(e => Promise.reject(new Error(`Failed to upload file: ${e.stack}`)));
     };
 
     if (CHUNK_SIZE < file.size) {
@@ -140,14 +150,14 @@ const newEditor = (tmplid, view) => {
                     })
                 };
                 dispOutput(JSON.stringify(data, null, 2));
-                fetch(`${endPointUrl}/applications`, data)
-                    .then(response => response.json())
+                safeFetch(`${endPointUrl}/applications`, data)
                     .then((result) => {
                         dispOutput(JSON.stringify(result, null, 2));
                     })
                     .then(() => {
                         window.location.href = '#tasks';
-                    });
+                    })
+                    .catch(e => dispOutput(`Failed to submit application:\n${e.stack}`));
             };
         })
         .catch(e => dispOutput(`Error loading editor:\n${e.message}`));
@@ -307,12 +317,13 @@ route('', 'apps', () => {
                 const deleteBtn = UI.buildIconBtn('fa-trash', 'Delete Application');
                 deleteBtn.addEventListener('click', () => {
                     dispOutput(`Deleting ${appPairStr}`);
-                    fetch(`${endPointUrl}/applications/${appPairStr}`, {
+                    safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
                         method: 'DELETE'
                     })
                         .then(() => {
                             window.location.href = '#tasks';
-                        });
+                        })
+                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
                 });
 
                 actionsDiv.appendChild(deleteBtn);
@@ -419,7 +430,7 @@ route('templates', 'templates', () => {
         dispOutput(`Uploading file: ${file.name}`);
         multipartUpload(file)
             .then(() => dispOutput(`Installing template set ${tsName}`))
-            .then(() => fetch('/mgmt/shared/fast/templatesets', {
+            .then(() => safeFetch('/mgmt/shared/fast/templatesets', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -428,15 +439,11 @@ route('templates', 'templates', () => {
                     name: file.name.slice(0, -4)
                 })
             }))
-            .then((response) => {
-                if (!response.ok) {
-                    return Promise.reject(new Error(`Failed to install ${tsName}: ${JSON.stringify(response)}`));
-                }
-                return Promise.resolve();
+            .then(() => {
+                dispOutput(`${tsName} installed successfully`);
+                window.location.reload();
             })
-            .then(() => dispOutput(`${tsName} installed successfully`))
-            .then(() => window.location.reload())
-            .catch(e => dispOutput(`Failed to install template set: ${e.stack}`));
+            .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`));
     };
 
     return Promise.all([
@@ -500,20 +507,24 @@ route('templates', 'templates', () => {
                 const setActions = {
                     Remove: () => {
                         dispOutput(`Deleting ${setName}`);
-                        return fetch(`${endPointUrl}/templatesets/${setName}`, {
+                        return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
                             method: 'DELETE'
                         })
-                            .then(() => window.location.reload());
+                            .then(() => {
+                                dispOutput(`${setName} deleted successfully`);
+                                window.location.reload();
+                            })
+                            .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
                     }
                 };
 
                 if (setData.updateAvailable) {
                     setActions.Update = () => {
                         dispOutput(`Updating ${setName}`);
-                        return fetch(`${endPointUrl}/templatesets/${setName}`, {
+                        return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
                             method: 'DELETE'
                         })
-                            .then(() => fetch(`${endPointUrl}/templatesets`, {
+                            .then(() => safeFetch(`${endPointUrl}/templatesets`, {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json'
@@ -522,7 +533,11 @@ route('templates', 'templates', () => {
                                     name: setName
                                 })
                             }))
-                            .then(() => window.location.reload());
+                            .then(() => {
+                                dispOutput(`${setName} installed successfully`);
+                                window.location.reload();
+                            })
+                            .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
                     };
                 }
 
