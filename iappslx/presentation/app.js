@@ -238,12 +238,28 @@ window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
 class UIBuilder {
+    buildIconSpan(iconClass, tooltipStr) {
+        const actSpan = document.createElement('span');
+        actSpan.classList.add('tooltip');
+        actSpan.classList.add('tooltip-right');
+        actSpan.setAttribute('data-tooltip', tooltipStr);
+        // actSpan.classList.add('row-adjust');
+
+        const actBtn = document.createElement('a');
+        actBtn.classList.add('icon');
+        actBtn.classList.add('fas');
+        actBtn.classList.add(iconClass);
+
+        actSpan.appendChild(actBtn);
+        return actSpan;
+    }
+
     buildIconBtn(iconClass, tooltipStr, hrefStr, onclick) {
         const actSpan = document.createElement('span');
         actSpan.classList.add('tooltip');
         actSpan.classList.add('tooltip-right');
         actSpan.setAttribute('data-tooltip', tooltipStr);
-        actSpan.classList.add('row-adjust');
+        // actSpan.classList.add('row-adjust');
 
         const actBtn = document.createElement('a');
         actBtn.classList.add('btn-icon');
@@ -467,28 +483,70 @@ route('templates', 'templates', () => {
                 return a;
             }, {});
 
-            const createRow = (rowName, rowList, actionsList, isRowDark) => {
+            const createRow = (rowName, rowList, actionsList, isGroupRow) => {
                 rowList = rowList || [];
                 actionsList = actionsList || [];
+                rowName = rowName.replace(/&nbsp;/g, ' ');
 
                 const row = document.createElement('div');
                 row.classList.add('tr');
+                row.id = rowName;
 
-                if (isRowDark) row.classList.add('row-dark');
+                if (isGroupRow) row.classList.add('row-dark');
                 else row.classList.add('row-light');
 
                 const name = document.createElement('div');
-                name.innerHTML = rowName;
+                name.innerHTML = `${rowName}&nbsp`;
                 name.classList.add('td');
+                if (isGroupRow) {
+                    const icon = rowList[0] === 'supported' ? 'fa-check-circle' : 'fa-times-circle';
+                    const iconText = rowList[0] === 'supported' ? 'F5 Supported' : 'Not supported by F5';
+                    name.appendChild(UI.buildIconSpan(icon, iconText));
+                    name.style.fontSize = '.8rem';
+                }
                 row.appendChild(name);
 
                 const applist = document.createElement('div');
                 applist.classList.add('td');
-                rowList.forEach((item) => {
-                    const appDiv = document.createElement('div');
-                    appDiv.innerText = item;
-                    applist.appendChild(appDiv);
-                });
+
+                if (rowList[0] !== 'supported') {
+                    if (rowList.length > 3) {
+                        const appDiv = document.createElement('div');
+                        appDiv.innerText = '*click to view*';
+                        appDiv.style.fontStyle = 'italic';
+
+                        row.classList.add('clickable');
+                        row.onclick = () => {
+                            const appListTd = document.getElementById(rowName).children[1];
+                            const toggled = appListTd.innerText !== '*click to view*';
+
+                            while (appListTd.firstChild) {
+                                appListTd.lastChild.remove();
+                            }
+
+                            if (!toggled) {
+                                rowList.forEach((item) => {
+                                    const appDiv2 = document.createElement('div');
+                                    appDiv2.innerText = item;
+                                    appDiv2.style.fontSize = '.6rem';
+                                    appListTd.style.fontStyle = 'normal';
+                                    appListTd.appendChild(appDiv2);
+                                });
+                            } else {
+                                appListTd.innerText = '*click to view*';
+                                appListTd.style.fontStyle = 'italic';
+                            }
+                        };
+                        applist.appendChild(appDiv);
+                    } else {
+                        const appDiv = document.createElement('div');
+                        rowList.forEach((item) => {
+                            appDiv.innerText = item;
+                        });
+                        applist.appendChild(appDiv);
+                    }
+                }
+
                 row.appendChild(applist);
 
                 const actions = document.createElement('div');
@@ -502,6 +560,7 @@ route('templates', 'templates', () => {
 
                 templateDiv.appendChild(row);
             };
+
             Object.values(setMap).forEach((setData) => {
                 const setName = setData.name;
                 const setActions = {

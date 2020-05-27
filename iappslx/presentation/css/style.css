@@ -1,3 +1,7 @@
+:root {
+  --base-black: #3a404b;
+  --btn-color: var(--btn-color);
+}
 body {
   background-color: #eae9e5;
   border-left: 1px solid #ffffff1a;
@@ -32,6 +36,7 @@ p {
   font-size: 1.75em;
   margin-top: 4px;
   filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4));
+  cursor: pointer;
 }
 #nav-bar {
   display: flex;
@@ -61,13 +66,24 @@ p {
 .btn-nav {
   color: #404346;
 }
-.btn-icon {
-  margin-right: 7.5px;
+.icon {
+  margin-right: 2px;
   padding: 5px;
   border-radius: 20%;
   cursor: pointer;
   font-size: .8rem;
-  color: #556473;
+  color: var(--btn-color);
+}
+.icon:hover, .icon:hover {
+  color: var(--base-black);
+}
+.btn-icon {
+  margin-right: 2px;
+  padding: 5px;
+  border-radius: 20%;
+  cursor: pointer;
+  font-size: .8rem;
+  color: var(--btn-color);
 }
 .btn-icon:hover, .btn-icon:active {
   background-color: rgba(48,55,66,.95);
@@ -90,13 +106,13 @@ p {
 
 .tr {
   display: flex;
-  color: #556473;
+  color: var(--btn-color);
   border: 1px solid #acacac;
   border-top: none;
 }
 .td {
   flex: 2;
-  padding: 5px 0px 2px 8px;
+  padding: 2.5px 0px 2.5px 8px;
   font-size: .8em;
   font-weight: bold;
   margin-left: 4px;
@@ -123,7 +139,6 @@ p {
 .row-adjust {
   position: relative;
   top: -3px;
-  left: -1px;
 }
 #th-tr-templates {
   padding-bottom: 2.5px;
@@ -189,4 +204,11 @@ p {
 
 #output {
   min-height: 25px;
+}
+
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  background-color: rgba(240, 243, 202, 0.1);
 }
