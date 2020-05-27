@@ -32,10 +32,9 @@ From the Templates tab, click the **Add Set** button.  Navigate to the location 
 Removing Template Sets
 ----------------------
 
-FAST allows for the removing of user added template sets.  From the Templates tab, under the Actions column, click the **Remove** button.
+FAST allows for the removing of both user added and RPM installed template sets.  From the Templates tab, under the Actions column, click the trash can icon to remove the Template Set.
 
-.. NOTE:: Removing a template installed with the RPM is not permanent and will be added back when the iControl LX plugin restarts. Removing a user added template is permanent.
-
+.. NOTE:: Use caution when Removing a template set as it is a permanent action.  FAST templates installed with the RPM can be reinstalled by re-importing the RPM. 
 
 
 |
