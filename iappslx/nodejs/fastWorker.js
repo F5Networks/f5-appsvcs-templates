@@ -33,10 +33,6 @@ const dataGroupPath = `/Common/${projectName}/dataStore`;
 
 const configDGPath = `/Common/${projectName}/config`;
 const configKey = 'config';
-const defaultConfig = {
-    deletedTemplateSets: []
-};
-
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
@@ -89,13 +85,15 @@ class FASTWorker {
 
     getConfig(reqid) {
         reqid = reqid || 0;
-        const defaults = Object.assign({}, defaultConfig);
+        const defaultConfig = {
+            deletedTemplateSets: []
+        };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
             .then(() => this.configStorage.getItem(configKey))
             .then((config) => {
                 if (config) {
-                    return Promise.resolve(Object.assign({}, defaults, config));
+                    return Promise.resolve(Object.assign({}, defaultConfig, config));
                 }
                 return Promise.resolve()
                     .then(() => {
@@ -104,8 +102,8 @@ class FASTWorker {
                     .then(() => this.configStorage.setItem('foo', 'bar'))
                     .then(() => this.configStorage.deleteItem('foo'))
                     .then(() => this.configStorage.persist())
-                    .then(() => this.configStorage.setItem(configKey, defaults))
-                    .then(() => defaults);
+                    .then(() => this.configStorage.setItem(configKey, defaultConfig))
+                    .then(() => defaultConfig);
             })
             .then((config) => {
                 this.exitTransaction(reqid, 'gathering config data');
@@ -113,7 +111,7 @@ class FASTWorker {
             })
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to load config: ${e.stack}`);
-                return Promise.resolve(defaults);
+                return Promise.resolve(defaultConfig);
             });
     }
 
