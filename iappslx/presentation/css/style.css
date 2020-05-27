@@ -1,6 +1,10 @@
 :root {
   --base-black: #3a404b;
+<<<<<<< HEAD
   --btn-color: #556473;
+=======
+  --btn-color: var(--btn-color);
+>>>>>>> Reorganized Deploy App Page
 }
 body {
   background-color: #eae9e5;
@@ -36,7 +40,11 @@ p {
   font-size: 1.75em;
   margin-top: 4px;
   filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4));
+<<<<<<< HEAD
   cursor: default;
+=======
+  cursor: pointer;
+>>>>>>> Reorganized Deploy App Page
 }
 #nav-bar {
   display: flex;
@@ -67,13 +75,20 @@ p {
   color: #404346;
 }
 .icon {
+<<<<<<< HEAD
+=======
+  margin-right: 2px;
+>>>>>>> Reorganized Deploy App Page
   padding: 5px;
   border-radius: 20%;
   cursor: pointer;
   font-size: .8rem;
   color: var(--btn-color);
+<<<<<<< HEAD
   top: -2px;
   left: -2px;
+=======
+>>>>>>> Reorganized Deploy App Page
 }
 .icon:hover, .icon:hover {
   color: var(--base-black);
