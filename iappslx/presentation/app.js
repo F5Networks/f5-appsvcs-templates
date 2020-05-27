@@ -245,7 +245,7 @@ class UIBuilder {
         actSpan.setAttribute('data-tooltip', tooltipStr);
 
         const actBtn = document.createElement('a');
-        const iconType = isBtn ? 'btn-icon': 'icon';
+        const iconType = isBtn ? 'btn-icon' : 'icon';
         actBtn.classList.add(iconType);
         actBtn.classList.add('fas');
         actBtn.classList.add(iconClass);
