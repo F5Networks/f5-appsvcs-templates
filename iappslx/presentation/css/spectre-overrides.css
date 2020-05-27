@@ -1,5 +1,8 @@
 .btn {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Minor Fixes / Code Optimization
   background: #556473;
   border-color: #545f6b;
   color: #fff;
@@ -63,6 +66,7 @@
 .tooltip::after {
   font-size: .66rem;
 }
+<<<<<<< HEAD
 =======
     background: #778797;
     border-color: #545f6b;
@@ -128,4 +132,6 @@
     font-size: .61rem;
   }
 >>>>>>> Reorganized Deploy App Page
+=======
+>>>>>>> Minor Fixes / Code Optimization
   
