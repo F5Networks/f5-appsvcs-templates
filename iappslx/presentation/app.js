@@ -238,31 +238,15 @@ window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
 class UIBuilder {
-    buildIconSpan(iconClass, tooltipStr) {
+    buildTooltippedIcon(isBtn, iconClass, tooltipStr, hrefStr, onclick) {
         const actSpan = document.createElement('span');
         actSpan.classList.add('tooltip');
         actSpan.classList.add('tooltip-right');
         actSpan.setAttribute('data-tooltip', tooltipStr);
-        // actSpan.classList.add('row-adjust');
 
         const actBtn = document.createElement('a');
-        actBtn.classList.add('icon');
-        actBtn.classList.add('fas');
-        actBtn.classList.add(iconClass);
-
-        actSpan.appendChild(actBtn);
-        return actSpan;
-    }
-
-    buildIconBtn(iconClass, tooltipStr, hrefStr, onclick) {
-        const actSpan = document.createElement('span');
-        actSpan.classList.add('tooltip');
-        actSpan.classList.add('tooltip-right');
-        actSpan.setAttribute('data-tooltip', tooltipStr);
-        // actSpan.classList.add('row-adjust');
-
-        const actBtn = document.createElement('a');
-        actBtn.classList.add('btn-icon');
+        const iconType = isBtn ? 'btn-icon': 'icon';
+        actBtn.classList.add(iconType);
         actBtn.classList.add('fas');
         actBtn.classList.add(iconClass);
         if (hrefStr) actBtn.href = hrefStr;
@@ -272,9 +256,7 @@ class UIBuilder {
         return actSpan;
     }
 }
-
 const UI = new UIBuilder();
-
 
 // tabbed navigation menu items
 addRouteToHeader('', 'Application List');
@@ -328,9 +310,9 @@ route('', 'apps', () => {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.classList.add('td');
 
-                actionsDiv.appendChild(UI.buildIconBtn('fa-edit', 'Modify Application', null, `#modify/${appPairStr}`));
+                actionsDiv.appendChild(UI.buildTooltippedIcon(true, 'fa-edit', 'Modify Application', null, `#modify/${appPairStr}`));
 
-                const deleteBtn = UI.buildIconBtn('fa-trash', 'Delete Application');
+                const deleteBtn = UI.buildTooltippedIcon(true, 'fa-trash', 'Delete Application');
                 deleteBtn.addEventListener('click', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
@@ -501,7 +483,13 @@ route('templates', 'templates', () => {
                 if (isGroupRow) {
                     const icon = rowList[0] === 'supported' ? 'fa-check-circle' : 'fa-times-circle';
                     const iconText = rowList[0] === 'supported' ? 'F5 Supported' : 'Not supported by F5';
-                    name.appendChild(UI.buildIconSpan(icon, iconText));
+                    const iconSpan = UI.buildTooltippedIcon(false, icon, iconText);
+                    iconSpan.style.top = '1px';
+                    iconSpan.style.left = '-4px';
+                    iconSpan.firstChild.style.position = 'relative';
+                    iconSpan.firstChild.style.left = '1px';
+                    iconSpan.firstChild.style.top = '-4px';
+                    name.appendChild(iconSpan);
                     name.style.fontSize = '.8rem';
                 }
                 row.appendChild(name);
