@@ -504,8 +504,8 @@ route('templates', 'templates', () => {
                 const applist = document.createElement('div');
                 applist.classList.add('td');
 
-                if (rowList[0] !== 'supported') {
-                    if (rowList.length > 3) {
+                if (!isGroupRow) {
+                    if (rowList.length > 2) {
                         const appDiv = document.createElement('div');
                         appDiv.innerText = '*click to view*';
                         appDiv.style.fontStyle = 'italic';
@@ -534,11 +534,11 @@ route('templates', 'templates', () => {
                         };
                         applist.appendChild(appDiv);
                     } else {
-                        const appDiv = document.createElement('div');
                         rowList.forEach((item) => {
+                            const appDiv = document.createElement('div');
                             appDiv.innerText = item;
+                            applist.appendChild(appDiv);
                         });
-                        applist.appendChild(appDiv);
                     }
                 }
 

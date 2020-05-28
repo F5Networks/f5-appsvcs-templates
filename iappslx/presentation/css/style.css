@@ -107,8 +107,15 @@ p {
   top: -5px;
 }
 #form-btn {
+  background-color: #5e825c;
   min-width: 75px;
 }
+#form-btn:hover {
+  background-color: #547752;
+}
+/* #form-btn:disabled {
+  background-color: #5e825c91;
+} */
 
 .tr {
   display: flex;
@@ -229,10 +236,10 @@ p {
 }
 
 button:disabled {
-  background-color: #778797a1;
-  border-color: #545f6b36;
+  background-color: #778797a1 !important;
+  border-color: #545f6b36 !important;
 }
 button:disabled:hover {
-  background-color: #778797a1;
-  border-color: #545f6b36;
+  background-color: #778797a1 !important;
+  border-color: #545f6b36 !important;
 }
