@@ -248,6 +248,7 @@ class UIBuilder {
         if (onclick) iconElem.onclick = onclick;
         return iconElem;
     }
+
     buildTooltippedElem(element, tooltipStr) {
         const span = document.createElement('span');
         span.classList.add('tooltip');
@@ -311,7 +312,7 @@ route('', 'apps', () => {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.classList.add('td');
 
-                let modifyIconBtn = UI.buildIcon('fa-edit', `#modify/${appPairStr}`, true);
+                const modifyIconBtn = UI.buildIcon('fa-edit', `#modify/${appPairStr}`, true);
                 actionsDiv.appendChild(UI.buildTooltippedElem(modifyIconBtn, 'Modify Application'));
 
                 const deleteBtn = UI.buildTooltippedElem(UI.buildIcon('fa-trash', null, true), 'Delete Application');
@@ -482,10 +483,10 @@ route('templates', 'templates', () => {
                 const name = document.createElement('div');
                 name.innerHTML = `${rowName}&nbsp`;
                 name.classList.add('td');
-                
+
                 if (isGroupRow) {
                     if (rowList[0] === 'supported') {
-                        const f5Icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        const f5Icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                         f5Icon.classList.add('f5-icon');
                         const f5Elem = UI.buildTooltippedElem(f5Icon, 'Template Set Supported by F5');
                         f5Elem.style.top = '1px';
@@ -494,7 +495,6 @@ route('templates', 'templates', () => {
                         f5Elem.firstChild.style.left = '1px';
                         f5Elem.firstChild.style.top = '-1px';
                         name.appendChild(f5Elem);
-                        
                     }
                     name.style.fontSize = '.8rem';
                     name.style.color = 'rgba(48, 55, 66, .85)';
