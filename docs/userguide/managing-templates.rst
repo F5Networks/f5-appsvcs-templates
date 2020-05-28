@@ -34,8 +34,13 @@ Removing Template Sets
 
 FAST allows for the removing of both user added and RPM installed template sets.  From the Templates tab, under the Actions column, click the trash can icon to remove the Template Set.
 
-.. NOTE:: Use caution when Removing a template set as it is a permanent action.  FAST templates installed with the RPM can be reinstalled by re-importing the RPM. 
+.. NOTE:: Use caution when Removing a template set as it is a permanent action.
 
+Reinstalling Base Template Sets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To reinstall a base Template Set (one that shipped with the RPM), use the :ref:`REST API for installing Template Sets<install_template>`.
+For the Template Set name use ``bigip-fast-templates`` or ``examples``.
 
 |
 
