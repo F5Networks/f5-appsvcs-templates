@@ -238,22 +238,23 @@ window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
 class UIBuilder {
-    buildTooltippedIcon(isBtn, iconClass, tooltipStr, hrefStr, onclick) {
-        const actSpan = document.createElement('span');
-        actSpan.classList.add('tooltip');
-        actSpan.classList.add('tooltip-right');
-        actSpan.setAttribute('data-tooltip', tooltipStr);
-
-        const actBtn = document.createElement('a');
-        const iconType = isBtn ? 'btn-icon' : 'icon';
-        actBtn.classList.add(iconType);
-        actBtn.classList.add('fas');
-        actBtn.classList.add(iconClass);
-        if (hrefStr) actBtn.href = hrefStr;
-        if (onclick) actBtn.onclick = onclick;
-
-        actSpan.appendChild(actBtn);
-        return actSpan;
+    buildIcon(iconClass, hrefStr, onclick) {
+        const iconElem = document.createElement('a');
+        const iconType = onclick ? 'btn-icon' : 'icon';
+        iconElem.classList.add(iconType);
+        iconElem.classList.add('fas');
+        iconElem.classList.add(iconClass);
+        if (hrefStr) iconElem.href = hrefStr;
+        if (onclick) iconElem.onclick = onclick;
+        return iconElem;
+    }
+    buildTooltippedElem(element, tooltipStr) {
+        const span = document.createElement('span');
+        span.classList.add('tooltip');
+        span.classList.add('tooltip-right');
+        span.setAttribute('data-tooltip', tooltipStr);
+        span.appendChild(element);
+        return span;
     }
 }
 const UI = new UIBuilder();
@@ -310,9 +311,10 @@ route('', 'apps', () => {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.classList.add('td');
 
-                actionsDiv.appendChild(UI.buildTooltippedIcon(true, 'fa-edit', 'Modify Application', null, `#modify/${appPairStr}`));
+                let modifyIconBtn = UI.buildIcon('fa-edit', `#modify/${appPairStr}`, true);
+                actionsDiv.appendChild(UI.buildTooltippedElem(modifyIconBtn, 'Modify Application'));
 
-                const deleteBtn = UI.buildTooltippedIcon(true, 'fa-trash', 'Delete Application');
+                const deleteBtn = UI.buildTooltippedElem(UI.buildIcon('fa-trash', null, true), 'Delete Application');
                 deleteBtn.addEventListener('click', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
@@ -480,17 +482,22 @@ route('templates', 'templates', () => {
                 const name = document.createElement('div');
                 name.innerHTML = `${rowName}&nbsp`;
                 name.classList.add('td');
+                
                 if (isGroupRow) {
-                    const icon = rowList[0] === 'supported' ? 'fa-check-circle' : 'fa-times-circle';
-                    const iconText = rowList[0] === 'supported' ? 'F5 Supported' : 'Not supported by F5';
-                    const iconSpan = UI.buildTooltippedIcon(false, icon, iconText);
-                    iconSpan.style.top = '1px';
-                    iconSpan.style.left = '-4px';
-                    iconSpan.firstChild.style.position = 'relative';
-                    iconSpan.firstChild.style.left = '1px';
-                    iconSpan.firstChild.style.top = '-4px';
-                    name.appendChild(iconSpan);
+                    if (rowList[0] === 'supported') {
+                        const f5Icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        f5Icon.classList.add('f5-icon');
+                        const f5Elem = UI.buildTooltippedElem(f5Icon, 'Template Set Supported by F5');
+                        f5Elem.style.top = '1px';
+                        f5Elem.style.left = '-1px';
+                        f5Elem.firstChild.style.position = 'relative';
+                        f5Elem.firstChild.style.left = '1px';
+                        f5Elem.firstChild.style.top = '-1px';
+                        name.appendChild(f5Elem);
+                        
+                    }
                     name.style.fontSize = '.8rem';
+                    name.style.color = 'rgba(48, 55, 66, .85)';
                 }
                 row.appendChild(name);
 
@@ -542,7 +549,8 @@ route('templates', 'templates', () => {
 
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
                     const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    actions.appendChild(UI.buildIconBtn(iconClass, `${actName} Template Set`, null, actFn));
+                    const iconElem = UI.buildIcon(iconClass, null, actFn);
+                    actions.appendChild(UI.buildTooltippedElem(iconElem, `${actName} Template`));
                 });
                 row.appendChild(actions);
 

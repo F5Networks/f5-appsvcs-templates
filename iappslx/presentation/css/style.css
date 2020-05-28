@@ -213,3 +213,12 @@ p {
 .clickable:hover {
   background-color: rgba(240, 243, 202, 0.1);
 }
+
+.f5-icon {
+  display: inline-block;
+  background-image: url('../img/f5_logo.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 17px;
+  height: 17px;
+}
