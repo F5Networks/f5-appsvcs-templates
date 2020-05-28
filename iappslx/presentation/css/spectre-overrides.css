@@ -3,10 +3,6 @@
   --btn-color: #556473;
 }
 .btn {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> Minor Fixes / Code Optimization
   background: #556473;
   border-color: #545f6b;
   color: #fff;
@@ -70,72 +66,3 @@
 .tooltip::after {
   font-size: .66rem;
 }
-<<<<<<< HEAD
-=======
-    background: #778797;
-    border-color: #545f6b;
-    color: #fff;
-    padding: 0px 4px;
-  }
-  .btn:active, .btn:focus, .btn:hover {
-    background: rgba(48,55,66,.95);
-    border-color: #545f6b;
-    color: #eae9e5;
-  }
-  .btn:active, .btn:focus {
-    color: #f0f3ca;
-    border: 1px solid #f0f3ca;
-  }
-  .btn:focus {
-    box-shadow: 0 0 0 0.1rem #f0f3ca41;
-  }
-  .btn.btn-primary {
-    background: #778797;
-    border-color: #545f6b;
-    color: #fff;
-  }
-  .btn.btn-primary:active, .btn.btn-primary:focus, .btn.btn-primary:hover {
-    background: rgba(48,55,66,.95);
-    border-color: #545f6b;
-    color: #eae9e5;
-  }
-  .btn.btn-primary:active, .btn.btn-primary:focus {
-    color: #f0f3ca;
-    border: 1px solid #f0f3ca;
-  }
-  .btn:focus {
-    box-shadow: 0 0 0 0.1rem #f0f3ca41;
-  }
-  .btn.btn-nav {
-    background-color: #deddd9;
-    color: #3b4457;
-    height: 34px;
-    padding: 2px 5px;
-    flex: 1;
-    text-align: center;
-    border-color: #777;
-    border-radius: 3px 3px 0px 0px;
-    border-top: none;
-    margin: 0px -.4px;
-  }
-  .btn.btn-nav:hover {
-    background-color: #ccced1;
-  }
-  .btn.btn-nav:active, .btn.btn-nav:focus {
-    background-color: #a2aab3;
-  }
-  .btn.btn-nav:focus {
-    border: 1px inset #f0f3ca54;
-  }
-    
-  .tooltip {
-    font-family: -apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
-    font-weight: normal;
-  }
-  .tooltip::after {
-    font-size: .61rem;
-  }
->>>>>>> Reorganized Deploy App Page
-=======
->>>>>>> Minor Fixes / Code Optimization
-  

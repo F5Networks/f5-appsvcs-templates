@@ -60,6 +60,7 @@ p {
   z-index: 4;
 }
 
+
 .btn {
   border-radius: 3px;
 }
@@ -104,6 +105,9 @@ p {
   height: auto;
   position: relative;
   top: -5px;
+}
+#form-btn {
+  min-width: 75px;
 }
 
 .tr {
@@ -225,5 +229,10 @@ p {
 }
 
 button:disabled {
-  background-color: #778797;
+  background-color: #778797a1;
+  border-color: #545f6b36;
+}
+button:disabled:hover {
+  background-color: #778797a1;
+  border-color: #545f6b36;
 }
