@@ -13,6 +13,7 @@
 * Deleting a base template set persists through a reboot
 * Improved error reporting when a template fails to load
 * GUI updated to better match the look and feel of the rest of the BIG-IP GUI
+* Empty template sets no longer pass validation
 
 ## Removed
 

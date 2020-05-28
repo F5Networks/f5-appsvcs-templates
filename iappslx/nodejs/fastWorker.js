@@ -709,6 +709,12 @@ class FASTWorker {
     _validateTemplateSet(tspath) {
         const tmplProvider = new FsTemplateProvider(tspath);
         return tmplProvider.list()
+            .then((templateList) => {
+                if (templateList.length === 0) {
+                    return Promise.reject(new Error('template set contains no templates'));
+                }
+                return Promise.resolve(templateList);
+            })
             .then(templateList => Promise.all(templateList.map(tmpl => tmplProvider.fetch(tmpl))));
     }
 
@@ -752,6 +758,7 @@ class FASTWorker {
                 reqid, 'validate template set',
                 this._validateTemplateSet(scratchPath)
             ))
+            .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}`)))
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
@@ -762,7 +769,12 @@ class FASTWorker {
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => this.genRestResponse(restOperation, 200, ''))
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack))
+            .catch((e) => {
+                if (e.message.match(/failed validation/)) {
+                    return this.genRestResponse(restOperation, 400, e.message);
+                }
+                return this.genRestResponse(restOperation, 500, e.stack);
+            })
             .finally(() => fs.removeSync(scratch));
     }
 
