@@ -248,6 +248,7 @@ class UIBuilder {
         if (onclick) iconElem.onclick = onclick;
         return iconElem;
     }
+
     buildTooltippedElem(element, tooltipStr) {
         const span = document.createElement('span');
         span.classList.add('tooltip');
