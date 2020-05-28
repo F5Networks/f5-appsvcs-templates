@@ -14,6 +14,8 @@
 * Improved error reporting when a template fails to load
 * GUI updated to better match the look and feel of the rest of the BIG-IP GUI
 * Empty template sets no longer pass validation
+* Under Templates, moved 'supported' away from middle column into a tooltipped f5 logo
+* Under Templates, more than two apps will now be expandable
 
 ## Removed
 

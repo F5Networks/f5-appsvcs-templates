@@ -238,27 +238,27 @@ window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
 class UIBuilder {
-    buildIconBtn(iconClass, tooltipStr, hrefStr, onclick) {
-        const actSpan = document.createElement('span');
-        actSpan.classList.add('tooltip');
-        actSpan.classList.add('tooltip-right');
-        actSpan.setAttribute('data-tooltip', tooltipStr);
-        actSpan.classList.add('row-adjust');
+    buildIcon(iconClass, hrefStr, onclick) {
+        const iconElem = document.createElement('a');
+        const iconType = onclick ? 'btn-icon' : 'icon';
+        iconElem.classList.add(iconType);
+        iconElem.classList.add('fas');
+        iconElem.classList.add(iconClass);
+        if (hrefStr) iconElem.href = hrefStr;
+        if (onclick) iconElem.onclick = onclick;
+        return iconElem;
+    }
 
-        const actBtn = document.createElement('a');
-        actBtn.classList.add('btn-icon');
-        actBtn.classList.add('fas');
-        actBtn.classList.add(iconClass);
-        if (hrefStr) actBtn.href = hrefStr;
-        if (onclick) actBtn.onclick = onclick;
-
-        actSpan.appendChild(actBtn);
-        return actSpan;
+    buildTooltippedElem(element, tooltipStr) {
+        const span = document.createElement('span');
+        span.classList.add('tooltip');
+        span.classList.add('tooltip-right');
+        span.setAttribute('data-tooltip', tooltipStr);
+        span.appendChild(element);
+        return span;
     }
 }
-
 const UI = new UIBuilder();
-
 
 // tabbed navigation menu items
 addRouteToHeader('', 'Application List');
@@ -312,9 +312,10 @@ route('', 'apps', () => {
                 const actionsDiv = document.createElement('div');
                 actionsDiv.classList.add('td');
 
-                actionsDiv.appendChild(UI.buildIconBtn('fa-edit', 'Modify Application', null, `#modify/${appPairStr}`));
+                const modifyIconBtn = UI.buildIcon('fa-edit', `#modify/${appPairStr}`, true);
+                actionsDiv.appendChild(UI.buildTooltippedElem(modifyIconBtn, 'Modify Application'));
 
-                const deleteBtn = UI.buildIconBtn('fa-trash', 'Delete Application');
+                const deleteBtn = UI.buildTooltippedElem(UI.buildIcon('fa-trash', null, true), 'Delete Application');
                 deleteBtn.addEventListener('click', () => {
                     dispOutput(`Deleting ${appPairStr}`);
                     safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
@@ -467,28 +468,80 @@ route('templates', 'templates', () => {
                 return a;
             }, {});
 
-            const createRow = (rowName, rowList, actionsList, isRowDark) => {
+            const createRow = (rowName, rowList, actionsList, isGroupRow) => {
                 rowList = rowList || [];
                 actionsList = actionsList || [];
+                rowName = rowName.replace(/&nbsp;/g, ' ');
 
                 const row = document.createElement('div');
                 row.classList.add('tr');
+                row.id = rowName;
 
-                if (isRowDark) row.classList.add('row-dark');
+                if (isGroupRow) row.classList.add('row-dark');
                 else row.classList.add('row-light');
 
                 const name = document.createElement('div');
-                name.innerHTML = rowName;
+                name.innerHTML = `${rowName}&nbsp`;
                 name.classList.add('td');
+
+                if (isGroupRow) {
+                    if (rowList[0] === 'supported') {
+                        const f5Icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        f5Icon.classList.add('f5-icon');
+                        const f5Elem = UI.buildTooltippedElem(f5Icon, 'Template Set Supported by F5');
+                        f5Elem.style.top = '1px';
+                        f5Elem.style.left = '-1px';
+                        f5Elem.firstChild.style.position = 'relative';
+                        f5Elem.firstChild.style.left = '1px';
+                        f5Elem.firstChild.style.top = '-1px';
+                        name.appendChild(f5Elem);
+                    }
+                    name.style.fontSize = '.8rem';
+                    name.style.color = 'rgba(48, 55, 66, .85)';
+                }
                 row.appendChild(name);
 
                 const applist = document.createElement('div');
                 applist.classList.add('td');
-                rowList.forEach((item) => {
-                    const appDiv = document.createElement('div');
-                    appDiv.innerText = item;
-                    applist.appendChild(appDiv);
-                });
+
+                if (!isGroupRow) {
+                    if (rowList.length > 2) {
+                        const appDiv = document.createElement('div');
+                        appDiv.innerText = '*click to view*';
+                        appDiv.style.fontStyle = 'italic';
+
+                        row.classList.add('clickable');
+                        row.onclick = () => {
+                            const appListTd = document.getElementById(rowName).children[1];
+                            const toggled = appListTd.innerText !== '*click to view*';
+
+                            while (appListTd.firstChild) {
+                                appListTd.lastChild.remove();
+                            }
+
+                            if (!toggled) {
+                                rowList.forEach((item) => {
+                                    const appDiv2 = document.createElement('div');
+                                    appDiv2.innerText = item;
+                                    appDiv2.style.fontSize = '.6rem';
+                                    appListTd.style.fontStyle = 'normal';
+                                    appListTd.appendChild(appDiv2);
+                                });
+                            } else {
+                                appListTd.innerText = '*click to view*';
+                                appListTd.style.fontStyle = 'italic';
+                            }
+                        };
+                        applist.appendChild(appDiv);
+                    } else {
+                        rowList.forEach((item) => {
+                            const appDiv = document.createElement('div');
+                            appDiv.innerText = item;
+                            applist.appendChild(appDiv);
+                        });
+                    }
+                }
+
                 row.appendChild(applist);
 
                 const actions = document.createElement('div');
@@ -496,12 +549,14 @@ route('templates', 'templates', () => {
 
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
                     const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    actions.appendChild(UI.buildIconBtn(iconClass, `${actName} Template Set`, null, actFn));
+                    const iconElem = UI.buildIcon(iconClass, null, actFn);
+                    actions.appendChild(UI.buildTooltippedElem(iconElem, `${actName} Template Set`));
                 });
                 row.appendChild(actions);
 
                 templateDiv.appendChild(row);
             };
+
             Object.values(setMap).forEach((setData) => {
                 const setName = setData.name;
                 const setActions = {
