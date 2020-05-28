@@ -550,7 +550,7 @@ route('templates', 'templates', () => {
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
                     const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
                     const iconElem = UI.buildIcon(iconClass, null, actFn);
-                    actions.appendChild(UI.buildTooltippedElem(iconElem, `${actName} Template`));
+                    actions.appendChild(UI.buildTooltippedElem(iconElem, `${actName} Template Set`));
                 });
                 row.appendChild(actions);
 

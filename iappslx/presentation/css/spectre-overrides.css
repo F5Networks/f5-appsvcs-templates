@@ -1,3 +1,7 @@
+:root {
+  --base-black: #3a404b;
+  --btn-color: #556473;
+}
 .btn {
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -21,7 +25,7 @@
   box-shadow: 0 0 0 0.1rem #f0f3ca41;
 }
 .btn.btn-primary {
-  background: #778797;
+  background: var(--btn-color);
   border-color: #545f6b;
   color: #fff;
 }

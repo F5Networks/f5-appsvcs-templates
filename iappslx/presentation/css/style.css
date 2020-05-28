@@ -223,3 +223,7 @@ p {
   width: 17px;
   height: 17px;
 }
+
+button:disabled {
+  background-color: #778797;
+}
