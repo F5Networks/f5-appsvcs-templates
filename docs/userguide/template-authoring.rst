@@ -124,6 +124,7 @@ entire feature set.
       
       {"remainingByteCount":0,"usedChunks":{"0":1299},"totalByteCount":1299,"localFilePath":"/var/config/rest/downloads/example.zip","temporaryFilePath":"/var/config/rest/downloads/tmp/example.zip","generation":0,"lastUpdateMicros":1582756171238125}
 
+   .. _install_template:
 
 9. Install the newly uploaded template set using the following syntax:
 

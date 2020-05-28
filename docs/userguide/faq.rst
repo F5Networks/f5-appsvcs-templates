@@ -69,10 +69,11 @@ When authoring a template, be cautious when entering sensitive data into your te
 
 **I want to remove all saved templates at once, how do I do this?**
 
-FAST does not a mechanism for this, as part of the stable API. The following tmsh command can be used to globally remove saved templates, but is subject to change: |br|
-``tmsh delete ltm data-group internal /Common/f5-appsvcs-templates/datastore`` |br|
-The daemon for FAST will need to be restarted using the following command ``bigstart restart restnoded`` |br|
-See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for more information on restarting BIG-IP daemons.
+A ``DELETE`` to the ``/templatesets`` endpoint will remove all installed Template Sets (including the ones shipped with the RPM):
+
+   .. code-block:: shell
+
+      curl -sku admin:Pass1w0rd -X DELETE https://192.0.2.87/mgmt/shared/fast/templatesets
 
 Saved templates can be removed individually using the BIG-IP GUI.
 
