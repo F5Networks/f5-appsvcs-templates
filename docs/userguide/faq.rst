@@ -49,7 +49,7 @@ FAST is initially targeted to the BIG-IP.
 Yes, beginning with v1.0 FAST is supported with the following requirements:
 
 * BIG-IP TMOS v13.1 or later
-* AS3 v3.16 or later must be installed see `Downloading and Installing AS3 <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html/>`_
+* AS3 v3.16 or later must be installed see `Downloading and Installing AS3 <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html>`_
 
 |
 
