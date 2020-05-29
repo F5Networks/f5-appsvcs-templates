@@ -80,6 +80,7 @@ pages:
             - public
     only:
         - develop
+        - doc-wip
 
 clouddocs:
   image: ${CONTAINTHEDOCS_IMAGE}
