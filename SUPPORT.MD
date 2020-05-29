@@ -15,6 +15,8 @@ Currently Supported Versions:
 | Software Version | First Customer Ship | End of Support |
 | ---------------- | ------------------- | -------------- |
 | 1.0              | 30-Apr-2020         | 30-Jul-2020    |
+| ---------------- | ------------------- | -------------- |
+| 1.1              | 02-Jun-2020         | 02-Sep-2020    |
 
 
 See the [Release notes](https://github.com/F5Networks/f5-appsvcs-templates/releases) and [FAST documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/) for new features and issues resolved for each release.
