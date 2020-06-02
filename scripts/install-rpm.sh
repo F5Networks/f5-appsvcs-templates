@@ -1,20 +1,19 @@
 #!/bin/bash
-
 set -e
 
-if [ -z "$1" ]; then
+TARGET="${1:-$BIGIP_TARGET}"
+CREDS="${2:-$BIGIP_CREDS}"
+TARGET_RPM="$3"
+
+if [ -z "$TARGET" ]; then
     echo "Target machine is required for installation."
     exit 0
 fi
 
-if [ -z "$2" ]; then
+if [ -z "$CREDS" ]; then
     echo "Credentials [username:password] for target machine are required for installation."
     exit 0
 fi
-
-TARGET="$1"
-CREDS="$2"
-TARGET_RPM="$3"
 
 if [ -z "$TARGET_RPM" ]; then
     TARGET_RPM=$(ls -t ../dist/*.rpm 2>/dev/null | head -1)
