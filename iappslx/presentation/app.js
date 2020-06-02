@@ -8,7 +8,11 @@ const yaml = require('js-yaml');
 
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
+const UiBuilder = require('./js/ui-builder.js');
+
 const endPointUrl = '/mgmt/shared/fast';
+
+const UI = new UiBuilder();
 
 const safeFetch = (uri, opts) => {
     opts = Object.assign({
@@ -203,19 +207,10 @@ function router() {
     const navBarDisplay = navBar.style.display;
     navBar.innerHTML = '';
 
-    Object.keys(navTitles).forEach((k) => {
-        let d;
-        if (k !== urlParts[0]) {
-            d = document.createElement('a');
-            d.classList.add('btn-nav');
-            d.classList.add('btn');
-            d.href = `#${k}`;
-        } else {
-            d = document.createElement('div');
-            d.id = 'selected-nav';
-        }
-        d.innerText = navTitles[k];
-        navBar.appendChild(d);
+    Object.keys(navTitles).forEach((matchingUrl) => {
+        const navElem = (matchingUrl !== urlParts[0]) ? UI.buildClickable('a', ['btn-nav', 'btn'], `#${matchingUrl}`) : UI.buildDiv('', 'selected-nav');
+        navElem.innerText = navTitles[matchingUrl];
+        navBar.appendChild(navElem);
     });
 
     // render app
@@ -253,29 +248,6 @@ function router() {
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
-class UIBuilder {
-    buildIcon(iconClass, hrefStr, onclick) {
-        const iconElem = document.createElement('a');
-        const iconType = onclick ? 'btn-icon' : 'icon';
-        iconElem.classList.add(iconType);
-        iconElem.classList.add('fas');
-        iconElem.classList.add(iconClass);
-        if (hrefStr) iconElem.href = hrefStr;
-        if (onclick) iconElem.onclick = onclick;
-        return iconElem;
-    }
-
-    buildTooltippedElem(element, tooltipStr) {
-        const span = document.createElement('span');
-        span.classList.add('tooltip');
-        span.classList.add('tooltip-right');
-        span.setAttribute('data-tooltip', tooltipStr);
-        span.appendChild(element);
-        return span;
-    }
-}
-const UI = new UIBuilder();
-
 // tabbed navigation menu items
 addRouteToHeader('', 'Application List');
 addRouteToHeader('create', 'Deploy');
@@ -285,67 +257,47 @@ addRouteToHeader('api', 'API');
 
 // Define routes
 route('', 'apps', () => {
-    const listElem = document.getElementById('app-list');
-    let count = 0;
+    const appListDiv = document.getElementById('app-list');
     let lastTenant = '';
     dispOutput('Fetching applications list');
     return getJSON('applications')
         .then((appsList) => {
-            listElem.innerHTML = `<div id="app-list-header-row" class="th-row">
-              <div class="td">Tenant</div>
-              <div class="td">Application</div>
-              <div class="td">Template</div>
-              <div class="td">Actions</div>
-            </div>`;
+            appListDiv.appendChild(UI.buildRow('app-list-header-row', ['th-row'], ['Tenant', 'Application', 'Template', 'Actions']));
             appsList.forEach((app) => {
                 const appPair = [app.tenant, app.name];
                 const appPairStr = `${appPair.join('/')}`;
 
-                const row = document.createElement('div');
-                row.id = 'app-list-row';
-                row.classList.add('tr');
-                count += 1;
-                if (count % 2) row.classList.add('row-dark');
-
-                const appTenant = document.createElement('div');
+                let appTenant = '';
                 if (appPair[0] !== lastTenant) {
-                    appTenant.innerText = appPair[0];
+                    appTenant = appPair[0];
                     lastTenant = appPair[0];
                 }
-                appTenant.classList.add('td');
-                row.appendChild(appTenant);
+                const appName = appPair[1];
+                const appTemplate = app.template;
 
-                const appName = document.createElement('div');
-                appName.innerText = appPair[1];
-                appName.classList.add('td');
-                row.appendChild(appName);
+                const modifyIconBtn = UI.buildClickable('icon:fa-edit', '', `#modify/${appPairStr}`);
 
-                const appTemplate = document.createElement('div');
-                appTemplate.innerText = app.template;
-                appTemplate.classList.add('td');
-                row.appendChild(appTemplate);
+                const deleteBtn = UI.buildClickable('icon:fa-trash', '', '', () => {
+                    const theApp = document.getElementById('app');
 
-                const actionsDiv = document.createElement('div');
-                actionsDiv.classList.add('td');
-
-                const modifyIconBtn = UI.buildIcon('fa-edit', `#modify/${appPairStr}`, true);
-                actionsDiv.appendChild(UI.buildTooltippedElem(modifyIconBtn, 'Modify Application'));
-
-                const deleteBtn = UI.buildTooltippedElem(UI.buildIcon('fa-trash', null, true), 'Delete Application');
-                deleteBtn.addEventListener('click', () => {
-                    dispOutput(`Deleting ${appPairStr}`);
-                    safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
-                        method: 'DELETE'
-                    })
-                        .then(() => {
-                            window.location.href = '#tasks';
+                    const modal = UI.buildModal(() => {
+                        dispOutput(`Deleting ${appPairStr}`);
+                        safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
+                            method: 'DELETE'
                         })
-                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
+                            .then(() => {
+                                window.location.href = '#tasks';
+                            })
+                            .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
+                    }, `Application ${appPairStr} will be permanently deleted!`);
+                    theApp.appendChild(modal);
                 });
+                const modifyBtnTooltipped = UI.buildTooltippedElem(modifyIconBtn, 'Modify Application');
+                const deleteBtnTooltipped = UI.buildTooltippedElem(deleteBtn, 'Delete Application');
 
-                actionsDiv.appendChild(deleteBtn);
-                row.appendChild(actionsDiv);
-                listElem.appendChild(row);
+                const actionsDiv = UI.buildDiv(['td'], '', [modifyBtnTooltipped, deleteBtnTooltipped]);
+
+                appListDiv.appendChild(UI.buildRow('app-list-row', ['tr'], [appTenant, appName, appTemplate, actionsDiv]));
             });
 
             dispOutput('');
@@ -356,16 +308,12 @@ route('create', 'create', () => {
     const addTmplBtns = (sets) => {
         const elem = document.getElementById('tmpl-btns');
         sets.forEach((setData) => {
-            const row = document.createElement('div');
+            const row = UI.buildDiv();
             elem.appendChild(row);
             setData.templates.map(x => x.name).forEach((item) => {
-                const btn = document.createElement('button');
-                btn.classList.add('btn');
-                btn.classList.add('btn-template');
-                btn.innerText = item;
-                btn.addEventListener('click', () => {
+                const btn = UI.buildClickable('button', ['btn', 'btn-template'], '', () => {
                     newEditor(item);
-                });
+                }, item);
                 row.appendChild(btn);
             });
         });
@@ -391,36 +339,10 @@ route('tasks', 'tasks', () => {
     const renderTaskList = () => getJSON('tasks')
         .then((data) => {
             const taskList = document.getElementById('task-list');
-            taskList.innerHTML = `<div class="th-row">
-              <div class="td">Task ID</div>
-              <div class="td">Tenant</div>
-              <div class="td">Result</div>
-            </div>`;
+            taskList.appendChild(UI.buildRow('', ['th-row'], ['Task ID', 'Tenant', 'Result']));
 
-            let count = 0;
             data.forEach((item) => {
-                const rowDiv = document.createElement('div');
-                rowDiv.id = 'app-list-row';
-                rowDiv.classList.add('tr');
-                count += 1;
-                if (count % 2) rowDiv.classList.add('row-dark');
-
-                const idDiv = document.createElement('div');
-                idDiv.classList.add('td');
-                idDiv.innerText = item.id;
-                rowDiv.appendChild(idDiv);
-
-                const tenantDiv = document.createElement('div');
-                tenantDiv.classList.add('td');
-                tenantDiv.innerText = `${item.tenant}/${item.application}`;
-                rowDiv.appendChild(tenantDiv);
-
-                const statusDiv = document.createElement('div');
-                statusDiv.classList.add('td');
-                statusDiv.innerText = item.message;
-                rowDiv.appendChild(statusDiv);
-
-                taskList.appendChild(rowDiv);
+                taskList.appendChild(UI.buildRow('app-list-row', ['tr'], [item.id, `${item.tenant}/${item.application}`, item.message]));
             });
 
             const inProgressJob = (
@@ -489,16 +411,13 @@ route('templates', 'templates', () => {
                 actionsList = actionsList || [];
                 rowName = rowName.replace(/&nbsp;/g, ' ');
 
-                const row = document.createElement('div');
-                row.classList.add('tr');
-                row.id = rowName;
+                const row = UI.buildDiv(['tr'], rowName);
 
                 if (isGroupRow) row.classList.add('row-dark');
                 else row.classList.add('row-light');
 
-                const name = document.createElement('div');
+                const name = UI.buildDiv(['td']);
                 name.innerHTML = `${rowName}&nbsp`;
-                name.classList.add('td');
 
                 if (isGroupRow) {
                     if (rowList[0] === 'supported') {
@@ -517,8 +436,7 @@ route('templates', 'templates', () => {
                 }
                 row.appendChild(name);
 
-                const applist = document.createElement('div');
-                applist.classList.add('td');
+                const applist = UI.buildDiv(['td']);
 
                 if (!isGroupRow) {
                     if (rowList.length > 2) {
@@ -560,13 +478,12 @@ route('templates', 'templates', () => {
 
                 row.appendChild(applist);
 
-                const actions = document.createElement('div');
-                actions.classList.add('td');
+                const actions = UI.buildDiv(['td']);
 
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
                     const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    const iconElem = UI.buildIcon(iconClass, null, actFn);
-                    actions.appendChild(UI.buildTooltippedElem(iconElem, `${actName} Template Set`));
+                    const iconBtn = UI.buildClickable(`icon:${iconClass}`, '', '', actFn);
+                    actions.appendChild(UI.buildTooltippedElem(iconBtn, `${actName} Template Set`));
                 });
                 row.appendChild(actions);
 
@@ -577,38 +494,44 @@ route('templates', 'templates', () => {
                 const setName = setData.name;
                 const setActions = {
                     Remove: () => {
-                        dispOutput(`Deleting ${setName}`);
-                        return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                            method: 'DELETE'
-                        })
-                            .then(() => {
-                                dispOutput(`${setName} deleted successfully`);
-                                window.location.reload();
+                        const app = document.getElementById('app');
+                        app.appendChild(UI.buildModal(() => {
+                            dispOutput(`Deleting ${setName}`);
+                            return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
+                                method: 'DELETE'
                             })
-                            .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
+                                .then(() => {
+                                    dispOutput(`${setName} deleted successfully`);
+                                    window.location.reload();
+                                })
+                                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
+                        }, 'Template Set is about to be removed!'));
                     }
                 };
 
                 if (setData.updateAvailable) {
                     setActions.Update = () => {
-                        dispOutput(`Updating ${setName}`);
-                        return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                            method: 'DELETE'
-                        })
-                            .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    name: setName
-                                })
-                            }))
-                            .then(() => {
-                                dispOutput(`${setName} installed successfully`);
-                                window.location.reload();
+                        const app = document.getElementById('app');
+                        app.appendChild(UI.buildModal(() => {
+                            dispOutput(`Updating ${setName}`);
+                            return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
+                                method: 'DELETE'
                             })
-                            .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
+                                .then(() => safeFetch(`${endPointUrl}/templatesets`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        name: setName
+                                    })
+                                }))
+                                .then(() => {
+                                    dispOutput(`${setName} installed successfully`);
+                                    window.location.reload();
+                                })
+                                .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
+                        }, 'Template Set is about to be updated!'));
                     };
                 }
 
