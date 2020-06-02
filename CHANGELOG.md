@@ -1,3 +1,11 @@
+# 1.2
+## Added
+
+## Fixed
+
+## Changed
+* Reduce latency on the /templatesets endpoint
+
 # 1.1
 ## Added
 * Support DELETE on /applications endpoint (deletes all applications managed by FAST)
