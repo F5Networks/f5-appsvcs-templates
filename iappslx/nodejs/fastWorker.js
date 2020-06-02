@@ -54,6 +54,7 @@ class FASTWorker {
         this.storage = new StorageDataGroup(dataGroupPath);
         this.configStorage = new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
+        this.fsTemplateProvider = new FsTemplateProvider(templatesPath);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version
@@ -136,14 +137,13 @@ class FASTWorker {
 
         // Find any template sets on disk (e.g., from the RPM) and add them to
         // the data store. Do not overwrite template sets already in the data store.
-        const fsprovider = new FsTemplateProvider(templatesPath);
         let saveState = true;
         this.logger.fine('FAST Worker: Begin startup');
         return Promise.resolve()
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
             .then(() => Promise.all([
-                fsprovider.listSets(),
+                this.fsTemplateProvider.listSets(),
                 this.templateProvider.listSets(),
                 this.getConfig(0)
             ]))
@@ -314,11 +314,10 @@ class FASTWorker {
     }
 
     gatherTemplateSet(tsid) {
-        const fsprovider = new FsTemplateProvider(templatesPath);
         return Promise.all([
             this.templateProvider.getSetData(tsid),
-            fsprovider.hasSet(tsid)
-                .then(result => (result ? fsprovider.getSetData(tsid) : Promise.resolve(undefined)))
+            this.fsTemplateProvider.hasSet(tsid)
+                .then(result => (result ? this.fsTemplateProvider.getSetData(tsid) : Promise.resolve(undefined)))
         ])
             .then(([tsData, fsTsData]) => {
                 tsData.updateAvailable = (
@@ -579,7 +578,10 @@ class FASTWorker {
                 reqid, 'gathering a list of template sets',
                 this.templateProvider.listSets()
             ))
-            .then(setList => Promise.all(setList.map(x => this.gatherTemplateSet(x))))
+            .then(setList => this.recordTransaction(
+                reqid, 'gathering data for each template set',
+                Promise.all(setList.map(x => this.gatherTemplateSet(x)))
+            ))
             .then((setList) => {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation);
