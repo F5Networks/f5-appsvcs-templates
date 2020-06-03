@@ -7,6 +7,12 @@
         "pattern": "^\\x2f[^\\x00-\\x19\\x22#'*<>?\\x5b-\\x5d\\x7b-\\x7d\\x7f]+$",
         "maxLength": 255
     },
+    "bigip_name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "pattern": "^[A-Za-z][0-9A-Za-z_.-]*$"
+    },
     "ipv4": {
       "type": "string",
       "format": "ipv4",
