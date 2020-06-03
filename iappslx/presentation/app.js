@@ -272,7 +272,7 @@ route('', 'apps', () => {
                                 window.location.href = '#tasks';
                             })
                             .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
-                    }, `Application ${appPairStr} will be permanently deleted!`);
+                    }, `Application '${appPairStr}' will be permanently deleted!`);
                     theApp.appendChild(modal);
                 });
                 const modifyBtnTooltipped = UI.buildTooltippedElem(modifyIconBtn, 'Modify Application');
@@ -410,11 +410,7 @@ route('templates', 'templates', () => {
                         const f5Icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                         f5Icon.classList.add('f5-icon');
                         const f5Elem = UI.buildTooltippedElem(f5Icon, 'Template Set Supported by F5');
-                        f5Elem.style.top = '1px';
-                        f5Elem.style.left = '-1px';
-                        f5Elem.firstChild.style.position = 'relative';
-                        f5Elem.firstChild.style.left = '1px';
-                        f5Elem.firstChild.style.top = '-1px';
+                        f5Elem.classList.add('tooltipped-f5-icon');
                         name.appendChild(f5Elem);
                     }
                     name.style.fontSize = '.8rem';
@@ -491,7 +487,7 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
-                        }, 'Template Set is about to be removed!'));
+                        }, `Template Set '${setName}' is about to be removed!`));
                     }
                 };
 
@@ -517,7 +513,7 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
-                        }, 'Template Set is about to be updated!'));
+                        }, `Template Set '${setName}' is about to be updated!`));
                     };
                 }
 
