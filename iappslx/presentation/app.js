@@ -339,9 +339,14 @@ route('tasks', 'tasks', () => {
     const renderTaskList = () => getJSON('tasks')
         .then((data) => {
             const taskList = document.getElementById('task-list');
+            while (taskList.firstChild) {
+                taskList.lastChild.remove();
+            }
             taskList.appendChild(UI.buildRow('', ['th-row'], ['Task ID', 'Tenant', 'Result']));
 
+            console.log('data', data);
             data.forEach((item) => {
+                console.log('in data.forEach. item: ', item);
                 taskList.appendChild(UI.buildRow('app-list-row', ['tr'], [item.id, `${item.tenant}/${item.application}`, item.message]));
             });
 
