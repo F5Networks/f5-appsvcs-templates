@@ -66,7 +66,7 @@ module.exports = class UiBuilder {
         const modalId = 'modal-div';
         const modal = this.buildDiv(['modal', 'active'], modalId);
 
-        modal.appendChild(this.buildClickable('a', ['modal-overlay', 'faded-active-border'], '', () => { this.destroyItself(modalId) }));
+        modal.appendChild(this.buildClickable('a', ['modal-overlay', 'faded-active-border'], '', () => { this.destroyElem(modal) }));
         const modalContainer = this.buildDiv(['modal-container'])
         modal.appendChild(modalContainer);
         
@@ -76,7 +76,7 @@ module.exports = class UiBuilder {
         const modalBody = this.buildDiv(['modal-body']);
         modalBody.insertAdjacentHTML('beforeend', msg);
 
-        const closeBtn = this.buildClickable('icon:fa-times', ['modal-exit-icon', 'float-right', 'faded-active-border'], '', () => { this.destroyItself(modalId) } );
+        const closeBtn = this.buildClickable('icon:fa-times', ['modal-exit-icon', 'float-right', 'faded-active-border'], '', () => { this.destroyElem(modal) } );
         modalHeader.appendChild(closeBtn);
 
         const modalTitle = this.buildDiv(['modal-title', 'h4'])
@@ -86,10 +86,10 @@ module.exports = class UiBuilder {
 
         const modalFooter = this.buildDiv(['modal-footer']);
         modalFooter.appendChild(this.buildClickable('button', ['btn', 'btn-cancel', 'faded-active-border'], '', () => {
-            this.destroyItself(modalId);
+            this.destroyElem(modal);
         }, 'CANCEL' ));
         modalFooter.appendChild(this.buildClickable('button', ['btn', 'btn-continue','faded-active-border'], '', () => {
-            this.destroyItself(modalId);
+            this.destroyElem(modal);
             okFunction();
         }, 'CONTINUE'));
 
@@ -99,10 +99,16 @@ module.exports = class UiBuilder {
         return modal;
     }
 
-    destroyItself(elemId) {
-        const elem = document.getElementById(elemId);
-        console.log('elemId', elemId);
-        console.log('elem: ', elem);
+    buildLoader() {
+        const div = this.buildDiv(['p-centered'], 'loader');
+        const loading = div.appendChild(this.buildDiv(['loading', 'loading-lg']));
+        return div;
+    }
+
+    destroyElem(elem, elemId) {
+        if (!elem) {
+            elem = document.getElementById(elemId);
+        }
         while (elem.firstChild) {
             elem.lastChild.remove();
         }

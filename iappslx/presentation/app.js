@@ -9,6 +9,7 @@ const yaml = require('js-yaml');
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiBuilder = require('./js/ui-builder.js');
+const NavigationBar = require('./components/navigation-bar.component');
 
 const endPointUrl = '/mgmt/shared/fast';
 
@@ -49,6 +50,7 @@ const safeFetch = (uri, opts) => {
 };
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
+let navBar;
 
 let editor = null;
 
@@ -184,16 +186,9 @@ const newEditor = (tmplid, view) => {
 };
 
 // Setup basic routing
-
 const routes = {};
 function route(path, pageName, pageFunc) {
     routes[path] = { pageName, pageFunc };
-}
-
-const navTitles = {};
-function addRouteToHeader(topRoute, title) {
-    navTitles[topRoute] = title;
-    return title;
 }
 
 function router() {
@@ -202,29 +197,24 @@ function router() {
     const urlParts = url.split('/');
     const routeInfo = routes[urlParts[0]];
 
-    // render header menu
-    const navBar = document.getElementById('nav-bar');
-    const navBarDisplay = navBar.style.display;
-    navBar.innerHTML = '';
-
-    Object.keys(navTitles).forEach((matchingUrl) => {
-        const navElem = (matchingUrl !== urlParts[0]) ? UI.buildClickable('a', ['btn-nav', 'btn'], `#${matchingUrl}`) : UI.buildDiv('', 'selected-nav');
-        navElem.innerText = navTitles[matchingUrl];
-        navBar.appendChild(navElem);
-    });
+    if (!navBar) navBar = new NavigationBar(urlParts[0]);
+    else navBar.selectNavBtn(urlParts[0]);
 
     // render app
-    const elem = document.getElementById('app');
+    const app = document.getElementById('app');
 
     // Remove old content
-    while (elem.firstChild) {
-        elem.firstChild.remove();
+    while (app.firstChild) {
+        app.firstChild.remove();
     }
+
+    const loader = UI.buildLoader();
+    app.insertAdjacentElement('beforebegin', loader);
 
     // Error on unknown route
     if (!routeInfo) {
         const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${Object.keys(routes).join(',')})`;
-        elem.innerText = msg;
+        app.innerText = msg;
         console.error(msg);
         return;
     }
@@ -232,28 +222,21 @@ function router() {
     // Load new page
     const pageId = `#page-${routeInfo.pageName}`;
     const pageTmpl = document.querySelector(pageId);
-    elem.appendChild(document.importNode(pageTmpl.content, true));
-    elem.style.display = 'none';
-    navBar.style.display = 'none';
+    app.appendChild(document.importNode(pageTmpl.content, true));
+    app.style.display = 'none';
     outputElem = document.getElementById('output');
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
     pageFunc(urlParts.slice(1).join('/'))
         .finally(() => {
-            elem.style.display = 'block';
-            navBar.style.display = navBarDisplay;
+            navBar.renderComplete();
+            UI.destroyElem(loader);
+            app.style.display = 'block';
         });
 }
 
 window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
-
-// tabbed navigation menu items
-addRouteToHeader('', 'Application List');
-addRouteToHeader('create', 'Deploy');
-addRouteToHeader('templates', 'Templates');
-addRouteToHeader('tasks', 'Deploy Log');
-addRouteToHeader('api', 'API');
 
 // Define routes
 route('', 'apps', () => {

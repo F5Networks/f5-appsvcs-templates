@@ -4,8 +4,8 @@
   --green: #5e825c;
   --green-hover: #668863;
   --green-with-opacity: rgb(94, 130, 92, .9);
-  --red: #b35555;
-  --red-with-opacity: rgba(175, 79, 79, 0.9);
+  --red: #b35555e3;
+  --red-with-opacity: rgba(175, 79, 79, 0.849);
   --dark-row-color: #e5e4e380;
   --light-row-color: #ececeaa1;
   --normal-btn-width: 100px;
@@ -45,6 +45,7 @@ p {
   margin-top: 4px;
   filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4));
   cursor: default;
+  min-width: 515px;
 }
 #nav-bar {
   display: flex;
@@ -66,6 +67,7 @@ p {
   border-bottom: none;
   position: relative;
   z-index: 4;
+  pointer-events: none;
 }
 
 button:disabled {
@@ -275,7 +277,7 @@ button:disabled:hover {
   font-size: .9rem;
 }
 .modal-container {
-  background-color: rgb(58, 64, 75, .99);
+  background-color: rgb(58, 64, 75, .98);
   position: relative;
   left: -85px;
   top: -160px;
@@ -312,4 +314,16 @@ button:disabled:hover {
 
 #app-list .tr:nth-child(even), #task-list .tr:nth-child(even) {
   background-color: var(--dark-row-color);
+}
+
+#loader {
+  position: relative;
+  top: 1.5rem;
+  left: -1.5rem;
+  height: 3rem;
+  width: 3rem;
+}
+.loading.loading-lg::after {
+  height: 3rem;
+  width: 3rem;
 }
