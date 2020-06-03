@@ -344,9 +344,7 @@ route('tasks', 'tasks', () => {
             }
             taskList.appendChild(UI.buildRow('', ['th-row'], ['Task ID', 'Tenant', 'Result']));
 
-            console.log('data', data);
             data.forEach((item) => {
-                console.log('in data.forEach. item: ', item);
                 taskList.appendChild(UI.buildRow('app-list-row', ['tr'], [item.id, `${item.tenant}/${item.application}`, item.message]));
             });
 
