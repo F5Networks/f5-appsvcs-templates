@@ -7,7 +7,8 @@
   "main": "nodejs/templateWorker.js",
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
-    "lint": "eslint nodejs test presentation/app.js",
+    "testinteg": "mocha --recursive \"./test-integ/*.js\"",
+    "lint": "eslint nodejs test test-integ presentation/app.js",
     "buildgui": "../scripts/build-presentation-layer.sh",
     "buildrpm": "../scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
