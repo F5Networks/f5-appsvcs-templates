@@ -487,7 +487,7 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
-                        }, `Template Set '${setName}' is about to be removed!`));
+                        }, `Template Set '${setName}' will be removed!`));
                     }
                 };
 
@@ -513,7 +513,7 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
-                        }, `Template Set '${setName}' is about to be updated!`));
+                        }, `Template Set '${setName}' will be updated!`));
                     };
                 }
 
