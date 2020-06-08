@@ -51,7 +51,9 @@ let editor = null;
 let outputElem;
 
 const dispOutput = (output) => {
-    console.log(output);
+    if (output.length > 0) {
+        console.log(output);
+    }
     if (outputElem) {
         outputElem.innerText = output;
     }
