@@ -660,7 +660,7 @@ class FASTWorker {
                             return Promise.reject(this.genRestResponse(
                                 restOperation,
                                 400,
-                                `failed to render template: ${x.name}\n${e.stack}`
+                                `failed to render template: ${x.name}\n${e.message}`
                             ));
                         })
                         .then((decl) => {
@@ -681,13 +681,13 @@ class FASTWorker {
                 this.driver.createApplications(appsData)
             ))
             .catch((e) => {
-                if (restOperation >= 400) {
+                if (restOperation.status >= 400) {
                     return Promise.reject();
                 }
                 return Promise.reject(this.genRestResponse(
                     restOperation,
                     400,
-                    `error generating AS3 declaration\n${e.stack}`
+                    `error generating AS3 declaration\n${e.message}`
                 ));
             })
             .then((response) => {

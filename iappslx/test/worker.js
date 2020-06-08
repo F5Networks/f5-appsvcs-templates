@@ -81,7 +81,7 @@ const patchWorker = (worker) => {
             return this[`_${fn}`](op)
                 .then(() => {
                     if (!this.completedRestOp) {
-                        throw Error(`failed to call completeRestOperation() in ${fn}()`);
+                        throw new Error(`failed to call completeRestOperation() in ${fn}()`);
                     }
                 });
         };
@@ -461,6 +461,22 @@ describe('template worker tests', function () {
         return worker.onPost(op)
             .then(() => {
                 assert.equal(op.status, 404);
+            });
+    });
+    it('post_apps_bad_params', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {
+                virtual_port: 'foobar'
+            }
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /Parameters failed validation/);
             });
     });
     it('post_apps', function () {

@@ -18,13 +18,27 @@ const safeFetch = (uri, opts) => {
     return fetch(uri, opts)
         .then(response => Promise.all([
             Promise.resolve(response),
-            response.json()
+            response.text()
         ]))
-        .then(([response, data]) => {
+        .then(([response, textData]) => {
+            let data = textData;
+            let isJson = false;
+            try {
+                data = JSON.parse(textData);
+                isJson = true;
+            } catch (err) {
+                console.log(`Failed to parse JSON data: ${textData}`);
+            }
             if (!response.ok) {
-                throw new Error(
-                    `Failed to get data from ${uri}: ${response.status} ${response.statusText}\n${JSON.stringify(data, null, 2)}`
-                );
+                let msg = data;
+                if (data.message) {
+                    msg = data.message;
+                } else if (isJson) {
+                    msg = JSON.stringify(data, null, 2);
+                }
+                return Promise.reject(new Error(
+                    `Failed to get data from ${uri}: ${response.status} ${response.statusText}\n${msg}`
+                ));
             }
             return data;
         });
@@ -157,7 +171,7 @@ const newEditor = (tmplid, view) => {
                     .then(() => {
                         window.location.href = '#tasks';
                     })
-                    .catch(e => dispOutput(`Failed to submit application:\n${e.stack}`));
+                    .catch(e => dispOutput(`Failed to submit application:\n${e.message}`));
             };
         })
         .catch(e => dispOutput(`Error loading editor:\n${e.message}`));
