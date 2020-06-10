@@ -332,7 +332,7 @@ describe('template worker tests', function () {
     it('get_tasks', function () {
         const worker = createWorker();
         const op = new RestOp('tasks');
-        worker.driver._task_ids.unshift('foo1');
+        worker.driver._task_ids.foo1 = `${AS3DriverConstantsKey}-update-tenant-app-0-0-0-0-0`;
         nock(host)
             .get(as3TaskEp)
             .reply(200, {
@@ -352,20 +352,21 @@ describe('template worker tests', function () {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, [{
-                    application: '',
+                    application: 'app',
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
                     name: '',
                     parameters: {},
-                    tenant: ''
+                    tenant: 'tenant',
+                    operation: 'update'
                 }]);
             });
     });
     it('get_tasks_item', function () {
         const worker = createWorker();
         const op = new RestOp('tasks/foo1');
-        worker.driver._task_ids.unshift('foo1');
+        worker.driver._task_ids.foo1 = `${AS3DriverConstantsKey}-update-tenant-app-0-0-0-0-0`;
         nock(host)
             .get(as3TaskEp)
             .reply(200, {
@@ -385,13 +386,14 @@ describe('template worker tests', function () {
                 assert.notEqual(op.status, 404);
                 assert.notEqual(op.status, 500);
                 assert.deepEqual(op.body, {
-                    application: '',
+                    application: 'app',
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
                     name: '',
                     parameters: {},
-                    tenant: ''
+                    tenant: 'tenant',
+                    operation: 'update'
                 });
             });
     });
