@@ -1,5 +1,7 @@
 # 1.2
 ## Added
+* Added confirmation dialogs to dangerous operations
+* Added spinner loader to indicate when page is loading
 
 ## Fixed
 
