@@ -6,7 +6,7 @@
 
 const util = require('./util');
 
-const template = 'bigip-fast-templates/http.yaml';
+const template = 'templates/bigip-fast-templates/http.yaml';
 
 const view = {
     tenant_name: 't1',

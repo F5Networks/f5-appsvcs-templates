@@ -2,7 +2,7 @@
 set -eux
 
 # Generate API docs
-npx redoc-cli bundle -o presentation/apidoc.html ../docs/openapi.yml
+npx redoc-cli bundle -o iappslx/presentation/apidoc.html docs/openapi.yml
 
 # Bundle Node modules
-npx browserify presentation/app.js -o presentation/bundle.js
+npx browserify iappslx/presentation/app.js -o iappslx/presentation/bundle.js

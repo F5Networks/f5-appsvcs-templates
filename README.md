@@ -45,6 +45,58 @@ In other words, run `npm` commands for a given subproject in that subproject's d
 
 4. Click **F5 Application Services Templates** to start using FAST.
 
+## Development
+
+`npm` commands should be run in the iappslx subdirectory, not at the top-level.
+* To check for lint errors run `npm run lint`
+* To run unit tests use `npm test`
+
+Both of these are run as part of the CI pipeline for this repo.
+
+### Building
+
+`rpmbuild` is required to build the RPM.
+All other dependencies are handled by NPM (make sure to do an `npm install` before trying to build).
+
+To build everything (recommended), run:
+
+```bash
+npm run build
+```
+
+To build just the GUI layer, run:
+
+```bash
+npm run buildgui
+```
+
+To build just the RPM package, run:
+
+```bash
+npm run buildrpm
+```
+
+The built RPM package and associated sha256 hash will be placed in the `dist` directory.
+The package can be installed on a BIG-IP using the usual mechanisms for installing iApp LX packages.
+There is also an `install-rpm` script provided in `../scripts` that installs the latest RPM found in `dist` to a target BIG-IP via the REST API.
+
+### Logging
+
+All log messages should contain the worker name (FAST Worker) for easier filtering.
+
+The following logging levels are used (from low priority to high):
+
+* fine - lower priority informational messages
+* info - higher priority informational messages
+* error - recoverable error (e.g., bad requests)
+* severe - unrecoverable error
+
+A `finest` is also available, but already gets spammed with a lot of socket information, which makes it a common log level to disable.
+
+All requests and responses are logged at a `fine` log level by default.
+Any response that contains an error status code (>=400) will default to an `error`.
+
+
 
 
 ## License

@@ -1,14 +1,14 @@
 #!/bin/bash
 set -eu
 
-MAINDIR=$(pwd)
+MAINDIR=$(pwd)/iappslx
 
-VERSION=$(../scripts/getversion.sh)
+VERSION=$(./scripts/getversion.sh)
 RELEASE=1
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
 OUTPUT_DIR=${MAINDIR}/../dist
 
-rm -rf rpmbuild
+rm -rf "$MAINDIR/rpmbuild"
 
 rpmbuild -bb \
     --define "main ${MAINDIR}" \
@@ -16,9 +16,9 @@ rpmbuild -bb \
     --define "_name ${PKG_NAME}" \
     --define "_version ${VERSION}" \
     --define "_release ${RELEASE}" \
-    project.spec
+    iappslx/project.spec
 
-cd rpmbuild/RPMS/noarch
+cd "$MAINDIR/rpmbuild/RPMS/noarch"
 rpmFile=$(ls -t *.rpm 2>/dev/null | head -1)
 mkdir -p ${OUTPUT_DIR}
 cp ${rpmFile} ${OUTPUT_DIR}

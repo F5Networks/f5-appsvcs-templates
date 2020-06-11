@@ -7,8 +7,8 @@
 const mockfs = require('mock-fs');
 const path = require('path');
 
-process.AFL_TW_ROOT = path.join(process.cwd(), '../templates');
-process.AFL_TW_TS = path.join(process.cwd(), '../templates');
+process.AFL_TW_ROOT = path.join(process.cwd(), './templates');
+process.AFL_TW_TS = path.join(process.cwd(), './templates');
 
 const fs = require('fs');
 const assert = require('assert').strict;
@@ -18,7 +18,7 @@ const fast = require('@f5devcentral/f5-fast-core');
 
 const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
 
-const FASTWorker = require('../nodejs/fastWorker.js');
+const FASTWorker = require('../iappslx/nodejs/fastWorker.js');
 
 class RestOp {
     constructor(uri) {
@@ -601,7 +601,7 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
         const infoOp = new RestOp('info');
-        const tsPath = path.join(process.cwd(), '..', 'templates');
+        const tsPath = path.join(process.cwd(), 'templates');
 
         op.setBody({
             name: 'testset'
