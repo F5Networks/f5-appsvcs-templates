@@ -8,9 +8,10 @@
   "scripts": {
     "test": "mocha --recursive \"./test/*.js\"",
     "testinteg": "mocha --recursive \"./test-integ/*.js\"",
-    "lint": "eslint nodejs test test-integ presentation/app.js",
-    "buildgui": "../scripts/build-presentation-layer.sh",
-    "buildrpm": "../scripts/rpmbuild.sh",
+    "testtemplates": "mocha --recursive \"./templates/test/*.js\"",
+    "lint": "eslint iappslx/nodejs test test-integ iappslx/presentation/app.js templates/test",
+    "buildgui": "./scripts/build-presentation-layer.sh",
+    "buildrpm": "./scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
     "coverage": "nyc npm test"
   },
@@ -43,7 +44,7 @@
   "nyc": {
     "all": true,
     "include": [
-      "nodejs/**/*.js"
+      "iappslx/nodejs/**/*.js"
     ]
   },
   "dependencies": {

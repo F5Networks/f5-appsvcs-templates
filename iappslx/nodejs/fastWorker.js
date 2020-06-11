@@ -19,7 +19,14 @@ const httpUtils = fast.httpUtils;
 const AS3Driver = fast.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 
-const pkg = require('../package.json');
+let pkg = null;
+try {
+    // First try the development environment
+    pkg = require('../../package.json'); // eslint-disable-line global-require
+} catch (e) {
+    // Then try production location
+    pkg = require('../package.json'); // eslint-disable-line global-require,import/no-unresolved
+}
 
 const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';

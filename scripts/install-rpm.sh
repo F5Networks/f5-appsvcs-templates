@@ -16,7 +16,7 @@ if [ -z "$CREDS" ]; then
 fi
 
 if [ -z "$TARGET_RPM" ]; then
-    TARGET_RPM=$(ls -t ../dist/*.rpm 2>/dev/null | head -1)
+    TARGET_RPM=$(ls -t ./dist/*.rpm 2>/dev/null | head -1)
 fi
 
 if [ -z "$TARGET_RPM" ]; then
