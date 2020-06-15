@@ -1,0 +1,8 @@
+1) Adjust devconfig.json to reflect your big-ip credentials
+
+2) npm run build
+
+2) In ts-test-scripts, run: npm run {script-name} {arg1} {arg2} ...
+
+Currently available scripts:
+    npm run deploy-apps {amount:number} {tenantTarget?:string = 'foo'}

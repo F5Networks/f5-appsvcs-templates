@@ -1,4 +1,6 @@
-module.exports = class NavigationBar {
+var { Loader } = require('./elements');
+
+class NavigationBar {
     constructor(route) {
         this.navBar = document.getElementById('nav-bar');
         this.titles = [];
@@ -52,5 +54,46 @@ module.exports = class NavigationBar {
         Array.from(this.navBar.children).forEach(child => {
             child.classList.add('nav-disabled');
         });
+    }
+}
+
+module.exports = class UiWorker {
+    constructor(appId) {
+        this.appId = appId;
+        this.app = document.getElementById('app');
+        this.curRoute = null;
+        this.navBar = null;
+    }
+
+    startMoveToRoute(route) {
+        this.curRoute = route;
+        if (!this.navBar) this.navBar = new NavigationBar(this.curRoute);
+        else this.navBar.selectNavBtn(this.curRoute);
+
+        if(!this.app) {
+            this.app = document.getElementById('app');
+        }
+
+        this.app.scrollIntoView({ behavior: 'smooth' });
+
+        UiWorker.destroyChildren(this.app);
+
+        this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
+    }
+
+    completeMoveToRoute() {
+        if(this.curRoute === 'api')  this.app.classList.add('height100perc');
+        else  this.app.classList.remove('height100perc');
+        this.navBar.enable();
+        this.loader.destroyItself();
+    }
+
+    static destroyChildren(elem) {
+        if(elem) {
+            while (elem.firstChild) {
+                elem.lastChild.remove();
+            }
+        }
+        return elem;
     }
 }
