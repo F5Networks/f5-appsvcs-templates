@@ -458,11 +458,24 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: 'foobar'
+            name: 'foobar/does_not_exist'
         });
         return worker.onPost(op)
             .then(() => {
                 assert.equal(op.status, 404);
+                assert.match(op.body.message, /Could not find template set/);
+            });
+    });
+    it('post_apps_bad_tmplid_leading_slash', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+            name: '/examples/simple_udp_defaults'
+        });
+        return worker.onPost(op)
+            .then(() => {
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /expected name to be of the form/);
             });
     });
     it('post_apps_bad_params', function () {

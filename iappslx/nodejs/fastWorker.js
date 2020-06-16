@@ -645,17 +645,31 @@ class FASTWorker {
                         .then(() => {
                             this.generateTeemReportApplication('modify', x.name);
                         })
+                        .then(() => {
+                            const [setName, templateName] = x.name.split('/');
+                            if (!setName || !templateName) {
+                                return Promise.reject(this.genRestResponse(
+                                    restOperation,
+                                    400,
+                                    `expected name to be of the form "setName/templateName", but got ${x.name}`
+                                ));
+                            }
+                            return Promise.resolve();
+                        })
                         .then(() => this.recordTransaction(
                             reqid, `loading template (${x.name})`,
                             this.templateProvider.fetch(x.name)
                         ))
-                        .catch(e => Promise.reject(
-                            this.genRestResponse(
+                        .catch((e) => {
+                            if (restOperation.status >= 400) {
+                                return Promise.reject();
+                            }
+                            return Promise.reject(this.genRestResponse(
                                 restOperation,
                                 404,
                                 `unable to load template: ${x.name}\n${e.stack}`
-                            )
-                        ))
+                            ));
+                        })
                         .then(tmpl => this.recordTransaction(
                             reqid, `rendering template (${x.name})`,
                             Promise.resolve(yaml.safeLoad(tmpl.render(x.parameters)))
