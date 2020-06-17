@@ -6,6 +6,7 @@
 
 const mockfs = require('mock-fs');
 const path = require('path');
+const url = require('url');
 
 process.AFL_TW_ROOT = path.join(process.cwd(), './templates');
 process.AFL_TW_TS = path.join(process.cwd(), './templates');
@@ -46,9 +47,17 @@ class RestOp {
     }
 
     getUri() {
-        return {
-            path: `/a/b/${this.uri}`
-        };
+        const uri = url.parse(`/a/b/${this.uri}`);
+        if (uri.query) {
+            uri.query = uri.query
+                .split('&')
+                .reduce((acc, curr) => {
+                    const [key, value] = curr.split('=');
+                    acc[key] = value;
+                    return acc;
+                }, {});
+        }
+        return uri;
     }
 
     getMethod() {
