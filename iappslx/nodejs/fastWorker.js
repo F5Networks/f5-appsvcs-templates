@@ -453,8 +453,8 @@ class FASTWorker {
             message = JSON.stringify(message, null, 2);
         }
         message = message
-            .replace('<', '&lt;')
-            .replace('>', '&gt;');
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
