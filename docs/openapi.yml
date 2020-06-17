@@ -518,7 +518,12 @@ components:
               hash:
                 type: string
                 description: sha256 of the template source text
-
+        updateAvailable:
+          type: boolean
+          description: template set has a different version available on disk
+        enabled:
+          type: boolean
+          description: template set is installed and ready to use
     Error:
       type: object
       required:

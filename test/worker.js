@@ -46,6 +46,10 @@ class RestOp {
         return this.body;
     }
 
+    setUri(uri) {
+        this.uri = uri;
+    }
+
     getUri() {
         const uri = url.parse(`/a/b/${this.uri}`);
         if (uri.query) {
@@ -56,6 +60,8 @@ class RestOp {
                     acc[key] = value;
                     return acc;
                 }, {});
+        } else {
+            uri.query = {};
         }
         return uri;
     }
@@ -121,6 +127,10 @@ function createWorker() {
     worker.storage = testStorage;
     worker.configStorage = new fast.dataStores.StorageMemory();
     worker.templateProvider.storage = testStorage;
+    worker.fsTemplateProvider = new fast.FsTemplateProvider(process.AFL_TW_TS, [
+        'examples',
+        'bigip-fast-templates'
+    ]);
     worker.teemDevice = new TeemDeviceMock();
 
     worker.hookCompleteRestOp();
@@ -147,6 +157,7 @@ describe('template worker tests', function () {
 
     afterEach(function () {
         nock.cleanAll();
+        mockfs.restore();
     });
 
     it('info', function () {
@@ -171,12 +182,14 @@ describe('template worker tests', function () {
                     x => x.name === 'examples'
                 )[0];
                 assert(exampleTS.supported, `${exampleTS.name} has an unsupported hash: ${exampleTS.hash}`);
+                assert(exampleTS.enabled, `${exampleTS.name} should be marked as enabled`);
                 // assert(!exampleTS.updateAvailable, `${exampleTS.name} should not have an update available`);
 
                 const bigipTS = info.installedTemplates.filter(
                     x => x.name === 'bigip-fast-templates'
                 )[0];
                 assert(bigipTS.supported, `${bigipTS.name} has an unsupported hash: ${bigipTS.hash}`);
+                assert(bigipTS.enabled, `${bigipTS.name} should be marked as enabled`);
                 // assert(!bigipTS.updateAvailable, `${bigipTS.name} should not have an update available`);
             });
     });
@@ -616,8 +629,7 @@ describe('template worker tests', function () {
                 op.setBody({});
                 return worker.onPost(op);
             })
-            .then(() => assert.equal(op.status, 400))
-            .finally(() => mockfs.restore());
+            .then(() => assert.equal(op.status, 400));
     });
     it('post_templateset', function () {
         const worker = createWorker();
@@ -654,8 +666,54 @@ describe('template worker tests', function () {
 
                 const tsNames = infoOp.body.installedTemplates.map(x => x.name);
                 assert(tsNames.includes('testset'));
+            });
+    });
+    it('post_templateset_deleted', function () {
+        const worker = createWorker();
+        const op = new RestOp('templatesets');
+        const getTsOp = new RestOp('templatesets?showDisabled=true');
+
+        op.setBody({
+            name: 'examples'
+        });
+        worker.storage.deleteItem('examples');
+
+        const objFromSets = setList => setList.reduce((acc, curr) => {
+            acc[curr.name] = curr;
+            return acc;
+        }, {});
+
+        return worker.onGet(getTsOp)
+            .then(() => {
+                assert.equal(getTsOp.status, 200);
+                console.log(JSON.stringify(getTsOp.body, null, 2));
+
+                const sets = objFromSets(getTsOp.body);
+                assert.equal(sets.examples.enabled, false);
             })
-            .finally(() => mockfs.restore());
+            .then(() => worker.onPost(op))
+            .then(() => {
+                assert.equal(op.status, 200);
+            })
+            .then(() => worker.onGet(getTsOp))
+            .then(() => {
+                assert.equal(getTsOp.status, 200);
+                console.log(JSON.stringify(getTsOp.body, null, 2));
+
+                const sets = objFromSets(getTsOp.body);
+                assert(!sets.examples, 'examples should no longer be in the disabled list');
+            })
+            .then(() => {
+                getTsOp.setUri('templatesets');
+                return worker.onGet(getTsOp);
+            })
+            .then(() => {
+                assert.equal(getTsOp.status, 200);
+                console.log(JSON.stringify(getTsOp.body, null, 2));
+
+                const sets = objFromSets(getTsOp.body);
+                assert.equal(sets.examples.enabled, true);
+            });
     });
     it('delete_templateset', function () {
         const worker = createWorker();

@@ -323,11 +323,23 @@ class FASTWorker {
 
     gatherTemplateSet(tsid) {
         return Promise.all([
-            this.templateProvider.getSetData(tsid),
+            this.templateProvider.hasSet(tsid)
+                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined))),
             this.fsTemplateProvider.hasSet(tsid)
                 .then(result => (result ? this.fsTemplateProvider.getSetData(tsid) : Promise.resolve(undefined)))
         ])
             .then(([tsData, fsTsData]) => {
+                if (!tsData && !fsTsData) {
+                    return Promise.reject(new Error(`Template set ${tsid} does not exist`));
+                }
+
+                if (!tsData) {
+                    fsTsData.enabled = false;
+                    fsTsData.updateAvailable = false;
+                    return fsTsData;
+                }
+
+                tsData.enabled = true;
                 tsData.updateAvailable = (
                     fs.existsSync(`${templatesPath}/${tsid}`)
                     && fsTsData && fsTsData.hash !== tsData.hash
@@ -562,6 +574,8 @@ class FASTWorker {
     }
 
     getTemplateSets(restOperation, tsid) {
+        const queryParams = restOperation.getUri().query;
+        const showDisabled = queryParams.showDisabled || false;
         const reqid = restOperation.requestId;
         if (tsid) {
             return Promise.resolve()
@@ -574,7 +588,7 @@ class FASTWorker {
                     this.completeRestOperation(restOperation);
                 })
                 .catch((e) => {
-                    if (e.message.match(/No templates found/)) {
+                    if (e.message.match(/No templates found/) || e.message.match(/does not exist/)) {
                         return this.genRestResponse(restOperation, 404, e.message);
                     }
                     return this.genRestResponse(restOperation, 500, e.stack);
@@ -584,12 +598,13 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'gathering a list of template sets',
-                this.templateProvider.listSets()
+                (showDisabled) ? this.fsTemplateProvider.listSets() : this.templateProvider.listSets()
             ))
             .then(setList => this.recordTransaction(
                 reqid, 'gathering data for each template set',
                 Promise.all(setList.map(x => this.gatherTemplateSet(x)))
             ))
+            .then(setList => ((showDisabled) ? setList.filter(x => !x.enabled) : setList))
             .then((setList) => {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation);
