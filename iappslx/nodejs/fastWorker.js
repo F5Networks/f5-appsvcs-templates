@@ -449,6 +449,12 @@ class FASTWorker {
     }
 
     genRestResponse(restOperation, code, message) {
+        if (typeof message !== 'string') {
+            message = JSON.stringify(message, null, 2);
+        }
+        message = message
+            .replace('<', '&lt;')
+            .replace('>', '&gt;');
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
