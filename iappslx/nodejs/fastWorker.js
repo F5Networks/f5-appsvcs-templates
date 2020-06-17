@@ -285,7 +285,7 @@ class FASTWorker {
 
     generateTeemReportError(restOp) {
         const uri = restOp.getUri();
-        const pathElements = uri.path.split('/');
+        const pathElements = uri.pathname.split('/');
         let endpoint = pathElements.slice(0, 4).join('/');
         if (pathElements[4]) {
             endpoint = `${endpoint}/item`;
@@ -416,14 +416,14 @@ class FASTWorker {
     recordRestRequest(restOp) {
         this.requestTimes[restOp.requestId] = new Date();
         this.logger.fine(
-            `FAST Worker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().path}`
+            `FAST Worker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().pathname}`
         );
     }
 
     recordRestResponse(restOp) {
         const minOp = {
             method: restOp.getMethod(),
-            path: restOp.getUri().path,
+            path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
         const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
@@ -463,7 +463,7 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         if (tmplid) {
             const uri = restOperation.getUri();
-            const pathElements = uri.path.split('/');
+            const pathElements = uri.pathname.split('/');
             tmplid = pathElements.slice(4, 6).join('/');
 
             return Promise.resolve()
@@ -502,7 +502,7 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         if (appid) {
             const uri = restOperation.getUri();
-            const pathElements = uri.path.split('/');
+            const pathElements = uri.pathname.split('/');
             const tenant = pathElements[4];
             const app = pathElements[5];
             return Promise.resolve()
@@ -599,10 +599,9 @@ class FASTWorker {
 
     onGet(restOperation) {
         const uri = restOperation.getUri();
-        const pathElements = uri.path.split('/');
+        const pathElements = uri.pathname.split('/');
         const collection = pathElements[3];
         const itemid = pathElements[4];
-
         restOperation.requestId = this.generateRequestId();
 
         this.recordRestRequest(restOperation);
@@ -620,7 +619,7 @@ class FASTWorker {
             case 'templatesets':
                 return this.getTemplateSets(restOperation, itemid);
             default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
+                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
         } catch (e) {
             return this.genRestResponse(restOperation, 500, e.statck);
@@ -805,7 +804,7 @@ class FASTWorker {
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
-        const pathElements = uri.path.split('/');
+        const pathElements = uri.pathname.split('/');
         const collection = pathElements[3];
 
         restOperation.requestId = this.generateRequestId();
@@ -819,7 +818,7 @@ class FASTWorker {
             case 'templatesets':
                 return this.postTemplateSets(restOperation, body);
             default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
+                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
         } catch (e) {
             return this.genRestResponse(restOperation, 500, e.message);
@@ -829,7 +828,7 @@ class FASTWorker {
     deleteApplications(restOperation, appid) {
         const reqid = restOperation.requestId;
         const uri = restOperation.getUri();
-        const pathElements = uri.path.split('/');
+        const pathElements = uri.pathname.split('/');
 
         if (appid) {
             const tenant = pathElements[4];
@@ -929,7 +928,7 @@ class FASTWorker {
 
     onDelete(restOperation) {
         const uri = restOperation.getUri();
-        const pathElements = uri.path.split('/');
+        const pathElements = uri.pathname.split('/');
         const collection = pathElements[3];
         const itemid = pathElements[4];
 
@@ -944,7 +943,7 @@ class FASTWorker {
             case 'templatesets':
                 return this.deleteTemplateSets(restOperation, itemid);
             default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.path}`);
+                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
         } catch (e) {
             return this.genRestResponse(restOperation, 500, e.stack);
