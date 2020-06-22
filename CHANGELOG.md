@@ -1,12 +1,18 @@
 # 1.2
 ## Added
-* Added confirmation dialogs to dangerous operations
-* Added spinner loader to indicate when page is loading
+* Add confirmation dialogs to dangerous operations
+* Add spinner loader to indicate when page is loading
+* Improve error output when a template fails to render in the GUI
+* Improve error output for bad "name" parameters on POST to /applications
+* Add showDisabled query parameter to GET on /templatesets for showing disabled template sets
 
 ## Fixed
+* Stop printing empty strings to the console
+* Work-around iControl replacing error messages with "HTML Tag-like Content in Request URL/Body"
 
 ## Changed
 * Reduce latency on the /templatesets endpoint
+* Restrict allowed characters for tenant and application names on bigip-fast-templates
 
 # 1.1
 ## Added
