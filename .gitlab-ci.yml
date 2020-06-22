@@ -44,7 +44,7 @@ create_docs:
   allow_failure: true
   script:
     - cd docs
-    - pip install -r requirements.txt
+    - pip3 install -r requirements.txt
     - if [ "$CI_COMMIT_REF_NAME" = "docs-staging" ] || [ "$CI_COMMIT_REF_NAME" = "docs-latest" ]; then
     -   rm -rf docs/_templates
     - fi
