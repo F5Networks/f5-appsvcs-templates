@@ -449,12 +449,17 @@ class FASTWorker {
     }
 
     genRestResponse(restOperation, code, message) {
+        let doParse = false;
         if (typeof message !== 'string') {
             message = JSON.stringify(message, null, 2);
+            doParse = true;
         }
         message = message
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
+        if (doParse) {
+            message = JSON.parse(message);
+        }
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
