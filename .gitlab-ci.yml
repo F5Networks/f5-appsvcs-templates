@@ -1,12 +1,12 @@
 image: node:13-buster
 
 stages:
-    - test
+    - test_build
     - build
     - publish
 
 coverage:
-    stage: test
+    stage: test_build
     tags:
         - docker-executor
     script:
@@ -20,7 +20,7 @@ coverage:
             - coverage
 
 build:
-    stage: test
+    stage: test_build
     script:
         - apt-get update && apt-get install -y rpm git
         - cd iappslx && npm ci && npm run build
@@ -31,7 +31,7 @@ build:
             - dist/*
 
 audit_packages:
-    stage: test
+    stage: test_build
     allow_failure: true
     tags:
         - docker-executor
@@ -40,7 +40,7 @@ audit_packages:
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
-  stage: build
+  stage: test_build
   allow_failure: true
   script:
     - cd docs
