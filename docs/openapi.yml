@@ -14,7 +14,7 @@ x-errors:
             $ref: "#/components/schemas/Error"
 info:
   version: 1.1.0
-  title: F5 Application Services API
+  title: F5 Application Services Templates API
   license:
     name: Apache 2.0
   description: |
@@ -104,7 +104,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Task"
+                array:
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: task ID, can be used to query task state
+                      name:
+                        description: name of the new application
+                        type: string
+                      parameters:
+                        description: parameters used to create the new application
+                        type: object
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
@@ -146,6 +158,10 @@ paths:
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
         '404':
           description: Application or Tenant was not found
           content:
