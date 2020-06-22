@@ -11,6 +11,7 @@
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
     "testtemplates": "mocha --recursive \"./test/templates/*.js\"",
+    "testall": "npm run testunit && npm run testtemplates",
     "coverage": "nyc npm test",
     "buildgui": "./scripts/build-presentation-layer.sh",
     "buildrpm": "./scripts/rpmbuild.sh",
