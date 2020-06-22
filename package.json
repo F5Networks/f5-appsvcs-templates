@@ -6,14 +6,15 @@
   "description": "",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "test": "mocha --recursive \"./test/*.js\"",
-    "testinteg": "mocha --recursive \"./test-integ/*.js\"",
-    "testtemplates": "mocha --recursive \"./templates/test/*.js\"",
-    "lint": "eslint iappslx/nodejs test test-integ iappslx/presentation/app.js templates/test",
+    "lint": "eslint iappslx/nodejs iappslx/presentation/app.js test",
+    "test": "npm run testunit",
+    "testunit": "mocha --recursive \"./test/unit/*.js\"",
+    "testinteg": "mocha --recursive \"./test/integ/*.js\"",
+    "testtemplates": "mocha --recursive \"./test/templates/*.js\"",
+    "coverage": "nyc npm test",
     "buildgui": "./scripts/build-presentation-layer.sh",
     "buildrpm": "./scripts/rpmbuild.sh",
-    "build": "npm run buildgui && npm run buildrpm",
-    "coverage": "nyc npm test"
+    "build": "npm run buildgui && npm run buildrpm"
   },
   "keywords": [
     "as3",

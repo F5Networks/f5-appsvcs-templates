@@ -19,7 +19,7 @@ const fast = require('@f5devcentral/f5-fast-core');
 
 const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
 
-const FASTWorker = require('../iappslx/nodejs/fastWorker.js');
+const FASTWorker = require('../../iappslx/nodejs/fastWorker.js');
 
 class RestOp {
     constructor(uri) {
@@ -642,7 +642,7 @@ describe('template worker tests', function () {
         });
         mockfs({
             '/var/config/rest/downloads': {
-                'testset.zip': fs.readFileSync('./test/testset.zip')
+                'testset.zip': fs.readFileSync('./test/unit/testset.zip')
             },
             [tsPath]: {}
         });

@@ -119,6 +119,7 @@ describe('Applications', function () {
     it('Deploy bigip-fast-templates/http', () => deployApplication('bigip-fast-templates/http', {
         tenant_name: 'tenant',
         app_name: 'HTTP_App',
+        virtual_address: '10.0.0.1',
         pool_members: [
             '10.0.0.1'
         ]
