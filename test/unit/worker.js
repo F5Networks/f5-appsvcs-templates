@@ -104,6 +104,7 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onGet');
     ensureCompletedOp('onPost');
     ensureCompletedOp('onDelete');
+    ensureCompletedOp('onPatch');
 };
 
 let testStorage = null;
@@ -604,6 +605,64 @@ describe('template worker tests', function () {
         return worker.onDelete(op)
             .then(() => {
                 assert.strictEqual(op.status, 202);
+            });
+    });
+    it('patch_all_apps', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications');
+        return worker.onPatch(op)
+            .then(() => {
+                assert.strictEqual(op.status, 400);
+            });
+    });
+    it('patch_app', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications/tenant/app');
+        op.setBody({
+            parameters: {
+                virtual_port: 5556
+            }
+        });
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                tenant: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'examples/simple_udp_defaults',
+                                view: {
+                                    tenant_name: 'tenant',
+                                    application_name: 'app',
+                                    virtual_address: '192.0.2.1',
+                                    virtual_port: 5555,
+                                    server_addresses: ['192.0.2.2'],
+                                    service_port: 5555
+                                }
+                            }
+                        }
+                    }
+                }
+            }));
+        nock('http://localhost:8100')
+            .persist()
+            .post(`/mgmt/${worker.WORKER_URI_PATH}/applications`)
+            .reply(202, {});
+
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 202);
+            });
+    });
+    it('patch_bad_end_point', function () {
+        const worker = createWorker();
+        const op = new RestOp('bad');
+        return worker.onPatch(op)
+            .then(() => {
+                assert.equal(op.status, 404);
             });
     });
     it('delete_bad_end_point', function () {

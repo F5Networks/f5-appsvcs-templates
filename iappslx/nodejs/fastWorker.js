@@ -975,6 +975,60 @@ class FASTWorker {
             return this.genRestResponse(restOperation, 500, e.stack);
         }
     }
+
+    patchApplications(restOperation, appid, data) {
+        if (!appid) {
+            return Promise.resolve()
+                .then(() => this.genRestResponse(
+                    restOperation, 400, 'PATCH is not supported on this endpoint'
+                ));
+        }
+
+        const reqid = restOperation.requestId;
+        const uri = restOperation.getUri();
+        const pathElements = uri.pathname.split('/');
+        const tenant = pathElements[4];
+        const app = pathElements[5];
+        const newParameters = data.parameters;
+
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'Fetching application data from AS3',
+                this.driver.getApplication(tenant, app)
+            ))
+            .then(appData => this.recordTransaction(
+                reqid, 'Re-deploying application',
+                httpUtils.makePost(`/mgmt/${this.WORKER_URI_PATH}/applications`, {
+                    name: appData.template,
+                    parameters: Object.assign({}, appData.view, newParameters)
+                })
+            ))
+            .then(resp => this.genRestResponse(restOperation, resp.status, resp.body))
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
+    onPatch(restOperation) {
+        const body = restOperation.getBody();
+        const uri = restOperation.getUri();
+        const pathElements = uri.pathname.split('/');
+        const collection = pathElements[3];
+        const itemid = pathElements[4];
+
+        restOperation.requestId = this.generateRequestId();
+
+        this.recordRestRequest(restOperation);
+
+        try {
+            switch (collection) {
+            case 'applications':
+                return this.patchApplications(restOperation, itemid, body);
+            default:
+                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+            }
+        } catch (e) {
+            return this.genRestResponse(restOperation, 500, e.stack);
+        }
+    }
 }
 
 module.exports = FASTWorker;
