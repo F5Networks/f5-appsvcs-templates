@@ -12,4 +12,5 @@ if [ "$num_commits_from_tag" -ne 0 ]; then
     version="$version.dev$num_commits_from_tag"
 fi
 
+version=$(echo "$version" | sed 's/-rc./rc/')
 echo ${version}
