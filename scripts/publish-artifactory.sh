@@ -13,7 +13,7 @@ upload_file () {
 
 package_file="${1:-package.json}"
 product_name=$(jq -r .name "$package_file")
-product_version=$(jq -r .version "$package_file")
+product_version=$(jq -r .version "$package_file" | cut -d - -f 1)
 
 repo_url="https://$ARTIFACTORY_URL/artifactory/f5-automation-toolchain-generic/$product_name/$product_version"
 curl_flags="--insecure --fail -H X-JFrog-Art-Api:$ARTIFACTORY_API_KEY"
