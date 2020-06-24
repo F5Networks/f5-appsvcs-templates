@@ -22,4 +22,3 @@ cd "$MAINDIR/rpmbuild/RPMS/noarch"
 rpmFile=$(ls -t *.rpm 2>/dev/null | head -1)
 mkdir -p ${OUTPUT_DIR}
 cp ${rpmFile} ${OUTPUT_DIR}
-sha256sum "${rpmFile}" > "${OUTPUT_DIR}/${rpmFile}.sha256"

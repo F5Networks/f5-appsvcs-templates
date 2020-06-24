@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-set -eux
-
-upload_file () {
-    echo uploading "$1"
-    # upload file
-    curl $curl_flags -T "dist/$1" "$repo_url/$1"
-    # artifactory calculates and compares the checksums but strips the filename
-    curl $curl_flags -T "dist/$1.sha256" "$repo_url/$1.sha256"
-    # sha file with hash and file name preserved
-    curl $curl_flags -T "dist/$1.sha256" "$repo_url/$1.sha256.txt"
-}
+set -eu
 
 package_file="${1:-package.json}"
 product_name=$(jq -r .name "$package_file")
@@ -26,5 +16,19 @@ popd
 # upload each file
 for f in $files
 do
-    upload_file $f
+    echo uploading "$f"
+
+    # upload file
+    curl $curl_flags -T "dist/$f" "$repo_url/$f"
+
+    # calculate and upload checksums
+    for chksm in sha256 sha1 md5; do
+        "${chksm}sum" "dist/$f" > "dist/$f.$chksm"
+        curl $curl_flags -T "dist/$f.$chksm" "$repo_url/$f.$chksm"
+        if [ "$chksm" = "sha256" ]; then
+            # sha file with hash and file name preserved
+            curl $curl_flags -T "dist/$f.sha256" "$repo_url/$f.sha256.txt"
+        rm "dist/$f.$chksm"
+        fi
+    done
 done
