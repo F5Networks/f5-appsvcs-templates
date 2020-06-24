@@ -15,7 +15,8 @@
     "coverage": "nyc npm test",
     "buildgui": "./scripts/build-presentation-layer.sh",
     "buildrpm": "./scripts/rpmbuild.sh",
-    "build": "npm run buildgui && npm run buildrpm"
+    "build": "npm run buildgui && npm run buildrpm",
+    "version": "./scripts/fix-version.sh"
   },
   "keywords": [
     "as3",
