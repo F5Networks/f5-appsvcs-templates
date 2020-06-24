@@ -170,6 +170,54 @@ paths:
                 $ref: "#/components/schemas/Error"
         '500': *serverError
         default: *defaultResponse
+    patch:
+      summary: Update application parameters
+      description: |
+        Update an existing, deployed FAST application with the supplied parameters.
+        Existing parameter values from the deployed application will be used as defaults for any missing parameter values.
+      tags:
+        - Application Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parameters:
+                  description: parameters used to update the application
+                  type: object
+              required:
+                - parameters
+      responses:
+        '202':
+          description: |
+            Template Job Submitted Successfully, check the provided task id to get the status of
+            the deployment
+          content:
+            application/json:
+              schema:
+                array:
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: task ID, can be used to query task state
+                      name:
+                        description: name of the updated application
+                        type: string
+                      parameters:
+                        description: parameters used to update the application
+                        type: object
+        '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500': *serverError
+        default: *defaultResponse
     delete:
       tags:
         - Application Management
