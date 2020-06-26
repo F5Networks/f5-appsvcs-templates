@@ -6,6 +6,7 @@
 * Improve error output for bad "name" parameters on POST to /applications
 * Add showDisabled query parameter to GET on /templatesets for showing disabled template sets
 * Support PATCH on /applications/{tenant}/{app} endpoint for partial modifications of existing applications
+* Add template set hash (setHash) to application data
 
 ## Fixed
 * Stop printing empty strings to the console

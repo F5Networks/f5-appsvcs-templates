@@ -666,12 +666,13 @@ class FASTWorker {
                 const appsData = [];
                 let promiseChain = Promise.resolve();
                 data.forEach((x) => {
+                    const tsData = {};
+                    const [setName, templateName] = x.name.split('/');
                     promiseChain = promiseChain
                         .then(() => {
                             this.generateTeemReportApplication('modify', x.name);
                         })
                         .then(() => {
-                            const [setName, templateName] = x.name.split('/');
                             if (!setName || !templateName) {
                                 return Promise.reject(this.genRestResponse(
                                     restOperation,
@@ -681,6 +682,11 @@ class FASTWorker {
                             }
                             return Promise.resolve();
                         })
+                        .then(() => this.recordTransaction(
+                            reqid, `fetching template set data for ${setName}`,
+                            this.templateProvider.getSetData(setName)
+                        ))
+                        .then(setData => Object.assign(tsData, setData))
                         .then(() => this.recordTransaction(
                             reqid, `loading template (${x.name})`,
                             this.templateProvider.fetch(x.name)
@@ -714,6 +720,7 @@ class FASTWorker {
                                 appDef: decl,
                                 metaData: {
                                     template: x.name,
+                                    setHash: tsData.hash,
                                     view: x.parameters,
                                     lastModified
                                 }

@@ -483,6 +483,8 @@ components:
           description: the tenant the application belongs to
         name:
           description: the name of the application
+        setHash:
+          description: the hash of the template set used to deploy this application
     ApplicationList:
       type: array
       items:

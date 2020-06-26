@@ -486,7 +486,7 @@ describe('template worker tests', function () {
         return worker.onPost(op)
             .then(() => {
                 assert.equal(op.status, 404);
-                assert.match(op.body.message, /Could not find template set/);
+                assert.match(op.body.message, /No templates found/);
             });
     });
     it('post_apps_bad_tmplid_leading_slash', function () {
