@@ -5,6 +5,7 @@
 * Improve error output when a template fails to render in the GUI
 * Improve error output for bad "name" parameters on POST to /applications
 * Add showDisabled query parameter to GET on /templatesets for showing disabled template sets
+* Support PATCH on /applications/{tenant}/{app} endpoint for partial modifications of existing applications
 
 ## Fixed
 * Stop printing empty strings to the console
