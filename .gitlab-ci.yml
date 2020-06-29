@@ -77,7 +77,7 @@ pages:
        - mkdir -p ${PUBLIC_DIR}
        - mkdir -p ${PUBLIC_DOCS}
        - cp docs/index.html ${PUBLIC_DIR}/index.html
-       - cp -R docs/_build/html/* ${PUBLIC_DOCS}
+       - test -e docs/ && cp -R docs/_build/html/* ${PUBLIC_DOCS}
        - cp -R coverage/* ${COVERAGE_DOCS}
     artifacts:
         paths:
