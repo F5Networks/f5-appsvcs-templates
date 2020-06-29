@@ -28,7 +28,7 @@ fi
 echo "Using RPM: ${TARGET_RPM}";
 
 RPM_NAME=$(basename $TARGET_RPM)
-CURL_FLAGS="--silent --show-error --write-out \n --insecure -u $CREDS"
+CURL_FLAGS="--silent --show-error --write-out \n --insecure -u $CREDS --max-time 10"
 
 poll_task () {
     STATUS="STARTED"
