@@ -28,7 +28,7 @@ fi
 echo "Using RPM: ${TARGET_RPM}";
 
 RPM_NAME=$(basename $TARGET_RPM)
-CURL_FLAGS="--silent --write-out \n --insecure -u $CREDS"
+CURL_FLAGS="--silent --show-error --write-out \n --insecure -u $CREDS"
 
 poll_task () {
     STATUS="STARTED"
@@ -87,7 +87,7 @@ TASK=$(curl ${CURL_FLAGS} "https://$TARGET/mgmt/shared/iapp/package-management-t
 poll_task $(echo $TASK | jq -r .id)
 
 echo "Waiting for fast/info endpoint to be available"
-until curl ${CURL_FLAGS} -o /dev/null --write-out "" --fail --silent \
+until curl ${CURL_FLAGS} -o /dev/null --write-out "" --fail 2> /dev/null \
     "https://$TARGET/mgmt/shared/fast/info"; do
     sleep 1
 done
