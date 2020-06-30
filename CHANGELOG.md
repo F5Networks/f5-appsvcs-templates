@@ -7,8 +7,8 @@
 * Add showDisabled query parameter to GET on /templatesets for showing disabled template sets
 * Support PATCH on /applications/{tenant}/{app} endpoint for partial modifications of existing applications
 * Add template set hash (setHash) to application data
-* Accordian to the deploy page
-* Improve status reporting for tasks on the Deploy Log
+* Add accordion to the template sets on the deploy page
+* Add additional status reporting for tasks in the Deploy Log
 
 ## Fixed
 * Stop printing empty strings to the console
