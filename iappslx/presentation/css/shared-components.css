@@ -1,0 +1,209 @@
+/*********************************
+    HEADER
+**********************************/
+#header {
+  background: #deddd9;
+  height: 64px;
+  padding: 2px;
+  border-top: 1px ridge #deddd9;
+  border-bottom: 1px ridge #3f4448cc;
+  position: relative;
+  z-index: 5;
+  }
+.header-logo {
+    float: left;
+    margin: 0px 13px;
+    filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25)) drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.25));
+}
+.header-title {
+  color: #363737;
+  font-size: 1.75em;
+  margin-top: 4px;
+  filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4));
+  cursor: default;
+  min-width: 515px;
+}
+
+/*********************************
+    NAVBAR
+**********************************/
+#nav-bar {
+  display: flex;
+  min-width: 1050px;
+  max-width: 1150px;
+  padding: 2px 20px 2px 15px;
+  position: relative;
+  z-index: 3;
+}
+#selected-nav {
+  flex: 1;
+  background-color: #eae9e5 !important;
+  font-size: .85rem !important;
+  text-align: center;
+  text-shadow: -0.5px -0.5px 1px #fff !important;
+  height: 34px;
+  padding: 2px 5px;
+  border-radius: 3px 3px 0px 0px;
+  border: 1px solid #777;
+  border-bottom: none;
+  position: relative;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.nav-disabled {
+  pointer-events: none;
+}
+
+.btn-nav {
+  color: #404346;
+}
+
+/*********************************
+    POPOVER
+**********************************/
+.popover-header {
+  padding: .33rem .75rem .25rem .75rem;
+  margin-bottom: 0;
+  font-size: 1rem;
+  color: inherit;
+  background-color: var(--popup-background-color);
+  border-bottom: .5px ridge #ebebeb9c;
+  border-top-left-radius: calc(.3rem - 1px);
+  border-bottom-left-radius: calc(.3rem - 1px);
+  color: white;
+  font-size: .8rem;
+  z-index: 3;
+  font-weight: normal;
+  text-align: left;
+}
+  
+.popover-body {
+  background-color: var(--popup-background-color);
+  padding: .3rem .75rem;
+  font-size: .62rem;
+  color: white;
+  z-index: 3;
+  font-weight: normal;
+  text-align: left;
+  border-top-left-radius: calc(.3rem - 1px);
+  border-bottom-right-radius: calc(.3rem - 1px);
+  border-bottom-left-radius: calc(.3rem - 1px);
+}
+  
+.popover-arrow-right {
+  position: relative;
+  left: 296px;
+}
+  
+.popover-arrow-right:after 
+{
+  content: "";
+  border-style: solid;
+  border-width: 10px 10px 0;
+  border-color: var(--popup-background-color) transparent;
+  display: block;
+  width: 0;
+  z-index: 0;
+  transform: rotate(270deg);
+  z-index: 2;
+}
+
+.popover-danger:first-child {
+  /* background-color: var(--danger-color) !important; */
+  background-color: #824646 !important;
+}
+
+.arrow-danger:after {
+  border-color: #442222f0 transparent;
+}
+
+/*********************************
+    SNACKBAR
+**********************************/
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  margin-left: -125px;
+  background-color: var(--popup-background-color);
+  color: #fff;
+  text-align: center;
+  border-radius: 2px;
+  padding: 5px 15px 7.5px 10px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+  font-size: .75rem;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2s;
+  animation: fadein 0.5s, fadeout 0.5s 2s;
+}
+
+.snackbar-positive .icon {
+  font-size: 1rem;
+  color: #95c092;
+  margin-right: 10px;
+}
+
+/*********************************
+    LOADER
+**********************************/
+#loader {
+  position: relative;
+  top: 1.5rem;
+  left: -1.5rem;
+  height: 3rem;
+  width: 3rem;
+}
+.loading.loading-lg::after {
+  height: 3rem;
+  width: 3rem;
+}
+
+/*********************************
+    MODAL
+**********************************/
+.modal-header, .modal-footer {
+  padding: .6rem .7rem !important;
+}
+.modal-title {
+  color: #f6d2d2;
+}
+.modal-title-text-div {
+  font-size: .9rem;
+}
+.modal-container {
+  background-color: var(--popup-background-color);
+  position: relative;
+  left: -85px;
+  top: -160px;
+  cursor: default;
+  padding: 0 .25rem !important;
+  max-width: 600px !important;
+}
+.modal-body {
+  color:#fde9e9;
+  padding: 0rem !important;
+  margin-left: 2rem !important;
+}
+.modal-exit-icon {
+  color: #f5dddc;
+  font-size: 1rem;
+}
+.modal-exit-icon:hover {
+  color: var(--red);
+}
+.exclamation-icon {
+  color: rgba(185, 85, 85, 0.9);
+  font-size: 1.45rem;
+  margin-right: 8px;
+  position: relative;
+  top: 2px;
+}
+.exclamation-icon:hover {
+  color: rgba(185, 85, 85, 0.9);
+}

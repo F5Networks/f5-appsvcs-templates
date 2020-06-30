@@ -8,12 +8,12 @@ const yaml = require('js-yaml');
 
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
-const UiBuilder = require('./js/ui-builder.js');
-const NavigationBar = require('./components/navigation-bar.component');
+const UiWorker = require('./js/ui-worker.js');
+const {
+    Div, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
+} = require('./js/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
-
-const UI = new UiBuilder();
 
 const safeFetch = (uri, opts) => {
     opts = Object.assign({
@@ -50,11 +50,11 @@ const safeFetch = (uri, opts) => {
 };
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
-let navBar;
-
 let editor = null;
 
 let outputElem;
+
+let UI;
 
 const dispOutput = (output) => {
     if (output.length > 0) {
@@ -95,7 +95,6 @@ const multipartUpload = (file) => {
     }
     return uploadPart(0, file.size - 1);
 };
-
 
 const newEditor = (tmplid, view) => {
     const formElement = document.getElementById('form-div');
@@ -197,19 +196,9 @@ function router() {
     const urlParts = url.split('/');
     const routeInfo = routes[urlParts[0]];
 
-    if (!navBar) navBar = new NavigationBar(urlParts[0]);
-    else navBar.selectNavBtn(urlParts[0]);
-
-    // render app
     const app = document.getElementById('app');
-
-    // Remove old content
-    while (app.firstChild) {
-        app.firstChild.remove();
-    }
-
-    const loader = UI.buildLoader();
-    app.insertAdjacentElement('beforebegin', loader);
+    if (!UI) UI = new UiWorker(app);
+    UI.startMoveToRoute(urlParts[0]);
 
     // Error on unknown route
     if (!routeInfo) {
@@ -223,14 +212,14 @@ function router() {
     const pageId = `#page-${routeInfo.pageName}`;
     const pageTmpl = document.querySelector(pageId);
     app.appendChild(document.importNode(pageTmpl.content, true));
-    app.style.display = 'none';
+    app.style.opacity = '.3';
     outputElem = document.getElementById('output');
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
     pageFunc(urlParts.slice(1).join('/'))
         .finally(() => {
-            navBar.renderComplete();
-            UI.destroyElem(loader);
+            UI.completeMoveToRoute();
+            app.style.opacity = '1';
             app.style.display = 'block';
         });
 }
@@ -242,10 +231,10 @@ window.addEventListener('load', router);
 route('', 'apps', () => {
     const appListDiv = document.getElementById('app-list');
     let lastTenant = '';
-    dispOutput('Fetching applications list');
     return getJSON('applications')
         .then((appsList) => {
-            appListDiv.appendChild(UI.buildRow('app-list-header-row', ['th-row'], ['Tenant', 'Application', 'Template', 'Actions']));
+            new Row('th-row').setColumns([new Td('tenant-app-th'), 'Template', 'Actions']).appendToParent(appListDiv);
+            new Row().setAttr('height', '1px').appendToParent(appListDiv);
             appsList.forEach((app) => {
                 const appPair = [app.tenant, app.name];
                 const appPairStr = `${appPair.join('/')}`;
@@ -258,31 +247,28 @@ route('', 'apps', () => {
                 const appName = appPair[1];
                 const appTemplate = app.template;
 
-                const modifyIconBtn = UI.buildClickable('icon:fa-edit', '', `#modify/${appPairStr}`);
-
-                const deleteBtn = UI.buildClickable('icon:fa-trash', '', '', () => {
-                    const theApp = document.getElementById('app');
-
-                    const modal = UI.buildModal(() => {
-                        dispOutput(`Deleting ${appPairStr}`);
-                        safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
-                            method: 'DELETE'
-                        })
-                            .then(() => {
-                                window.location.href = '#tasks';
-                            })
-                            .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
-                    }, `Application '${appPairStr}' will be permanently deleted!`);
-                    theApp.appendChild(modal);
-                });
-                const modifyBtnTooltipped = UI.buildTooltippedElem(modifyIconBtn, 'Modify Application');
-                const deleteBtnTooltipped = UI.buildTooltippedElem(deleteBtn, 'Delete Application');
-
-                const actionsDiv = UI.buildDiv(['td'], '', [modifyBtnTooltipped, deleteBtnTooltipped]);
-
-                appListDiv.appendChild(UI.buildRow('app-list-row', ['tr'], [appTenant, appName, appTemplate, actionsDiv]));
+                new Row().appendToParent(appListDiv)
+                    .setColumn(new Td('tenant-app-td', [appTenant, appName]))
+                    .setColumn(appTemplate)
+                    .setColumn(new Div('td').setChildren([
+                        new Clickable('icon:fa-edit').setHref(`#modify/${appPairStr}`).setToolstrip('Modify Application'),
+                        new Clickable('icon:fa-trash').setOnClick(() => {
+                            new Modal().setTitle('Warning')
+                                .setMessage(`Application '${appPairStr}' will be permanently deleted!`)
+                                .setOkFunction(() => {
+                                    dispOutput(`Deleting ${appPairStr}`);
+                                    safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
+                                        method: 'DELETE'
+                                    })
+                                        .then(() => {
+                                            window.location.href = '#tasks';
+                                        })
+                                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
+                                })
+                                .appendToParent(document.getElementById('app'));
+                        }).setToolstrip('Delete Application')
+                    ]));
             });
-
             dispOutput('');
         })
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
@@ -291,20 +277,21 @@ route('create', 'create', () => {
     const addTmplBtns = (sets) => {
         const elem = document.getElementById('tmpl-btns');
         sets.forEach((setData) => {
-            const row = UI.buildDiv();
-            elem.appendChild(row);
+            const templateSet = new Expandable(setData.name, ['template-set-title', 'clickable']).appendToParent(elem);
             setData.templates.map(x => x.name).forEach((item) => {
-                const btn = UI.buildClickable('button', ['btn', 'btn-template'], '', () => {
-                    newEditor(item);
-                }, item);
-                row.appendChild(btn);
+                templateSet.addExpandable(
+                    new Clickable('button').setClassList(['btn', 'btn-template'])
+                        .setInnerText(item).setOnClick(() => { newEditor(item); })
+                );
             });
+            templateSet.completeSetup();
         });
     };
-    dispOutput('Fetching templates');
     return getJSON('templatesets')
         .then((data) => {
             addTmplBtns(data);
+            const deployText = document.getElementById('available-text');
+            deployText.classList.remove('display-none');
             dispOutput('');
         })
         .catch(e => dispOutput(e.message));
@@ -313,6 +300,8 @@ route('modify', 'create', (appID) => {
     dispOutput(`Fetching app data for ${appID}`);
     return getJSON(`applications/${appID}`)
         .then((appData) => {
+            const availableText = document.getElementById('available-text');
+            availableText.classList.add('display-none');
             const appDef = appData.constants.fast;
             newEditor(appDef.template, appDef.view);
         })
@@ -320,30 +309,58 @@ route('modify', 'create', (appID) => {
 });
 route('tasks', 'tasks', () => {
     const renderTaskList = () => getJSON('tasks')
-        .then((data) => {
+        .then((tasks) => {
             const taskList = document.getElementById('task-list');
-            while (taskList.firstChild) {
-                taskList.lastChild.remove();
-            }
-            taskList.appendChild(UI.buildRow('', ['th-row'], ['Task ID', 'Tenant', 'Result']));
+            UiWorker.destroyChildren(taskList);
 
-            data.forEach((item) => {
-                taskList.appendChild(UI.buildRow('app-list-row', ['tr'], [item.id, `${item.tenant}/${item.application}`, item.message]));
+            new Row('th-row').appendToParent(taskList)
+                .setColumns(['Task ID', new Td('tenant-app-th'), 'Operation', 'Result']);
+
+            new Row().setAttr('height', '1px').appendToParent(taskList);
+
+            tasks.forEach((task) => {
+                new Row(task.id).setClassList('tr').appendToParent(taskList)
+                    .setColumn(
+                        new Clickable().setInnerText(task.id).setHref(`/mgmt/shared/fast/tasks/${task.id}`)
+                            .setToolstrip('go to task')
+                            .setClassList(['td', 'clickable-darker'])
+                    )
+                    .setColumn(new Td('tenant-app-td', [task.tenant, task.application]))
+                    .setColumn(task.operation)
+                    .setColumn(() => {
+                        if (task.message === 'in progress') {
+                            return new Div('td').setChildren(new Loader().setSize('sm').start().html());
+                        }
+                        if (task.message === 'success') {
+                            return new Div('td').setChildren('success').setClassList('success-color');
+                        }
+                        if (task.message.includes('Error:') || task.message.includes('declaration failed')) {
+                            let title = 'declaration failed';
+                            let message = task.message.substring(18, task.message.length);
+                            if (task.message.includes('Error:')) { title = 'Error'; message = task.message.split(':')[1]; }
+                            const questionIcon = new Icon('fa-question-circle').setClassList(['cursor-default', 'danger-color']).html();
+                            const questionPopover = new Popover(questionIcon).setDirection('left').setStyle('danger')
+                                .setData(title, message);
+
+                            return new Div('td').setChildren([title, questionPopover]).setClassList('danger-color');
+                        }
+                        return task.message;
+                    });
             });
 
             const inProgressJob = (
-                data.filter(x => x.message === 'in progress').length !== 0
+                tasks.filter(x => x.message === 'in progress').length !== 0
             );
             if (inProgressJob) {
                 setTimeout(renderTaskList, 5000);
             }
         });
 
+
     return renderTaskList();
 });
 route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {
-    dispOutput('...Loading Template List...');
     const templateDiv = document.getElementById('template-list');
 
     document.getElementById('add-ts-btn').onclick = () => {
@@ -397,79 +414,72 @@ route('templates', 'templates', () => {
                 actionsList = actionsList || [];
                 rowName = rowName.replace(/&nbsp;/g, ' ');
 
-                const row = UI.buildDiv(['tr'], rowName);
+                const row = new Row().setId(rowName).appendToParent(templateDiv);
 
-                if (isGroupRow) row.classList.add('row-dark');
-                else row.classList.add('row-light');
+                if (isGroupRow) row.setClassList('row-dark');
+                else row.setClassList('row-light');
 
-                const name = UI.buildDiv(['td']);
-                name.innerHTML = `${rowName}&nbsp`;
+                const name = new Div('td').setChildren(`${rowName}&nbsp`);
 
                 if (isGroupRow) {
                     if (rowList[0] === 'supported') {
-                        const f5Icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                        f5Icon.classList.add('f5-icon');
-                        const f5Elem = UI.buildTooltippedElem(f5Icon, 'Template Set Supported by F5');
-                        f5Elem.classList.add('tooltipped-f5-icon');
-                        name.appendChild(f5Elem);
+                        new Svg('f5-icon').setToolstrip('Template Set Supported by F5')
+                            .setClassList('tooltipped-f5-icon').appendToParent(name);
                     }
-                    name.style.fontSize = '.8rem';
-                    name.style.color = 'rgba(48, 55, 66, .85)';
+                    name.setClassList('td-template-set');
+                } else {
+                    name.setClassList('td-template');
                 }
-                row.appendChild(name);
+                row.setColumn(name);
 
-                const applist = UI.buildDiv(['td']);
+                const applist = new Div('td');
 
                 if (!isGroupRow) {
                     if (rowList.length > 2) {
-                        const appDiv = document.createElement('div');
-                        appDiv.innerText = '*click to view*';
-                        appDiv.style.fontStyle = 'italic';
+                        const appDiv = new Div('italic').setInnerText('*click to view*');
 
-                        row.classList.add('clickable');
-                        row.onclick = () => {
+                        row.setClassList('clickable');
+                        row.elem.onclick = () => {
                             const appListTd = document.getElementById(rowName).children[1];
                             const toggled = appListTd.innerText !== '*click to view*';
 
-                            while (appListTd.firstChild) {
-                                appListTd.lastChild.remove();
-                            }
+                            UiWorker.destroyChildren(appListTd);
 
                             if (!toggled) {
                                 rowList.forEach((item) => {
-                                    const appDiv2 = document.createElement('div');
-                                    appDiv2.innerText = item;
-                                    appDiv2.style.fontSize = '.6rem';
-                                    appListTd.style.fontStyle = 'normal';
-                                    appListTd.appendChild(appDiv2);
+                                    const tenantApp = item.split(' ');
+                                    const appDiv2 = new Div('fontsize-6rem').setChildren([
+                                        tenantApp[0],
+                                        new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
+                                        tenantApp[1]
+                                    ]);
+                                    appListTd.classList.remove('italic');
+                                    appListTd.appendChild(appDiv2.html());
                                 });
                             } else {
                                 appListTd.innerText = '*click to view*';
-                                appListTd.style.fontStyle = 'italic';
+                                appListTd.classList.add('italic');
                             }
                         };
-                        applist.appendChild(appDiv);
+                        applist.safeAppend(appDiv.html());
                     } else {
                         rowList.forEach((item) => {
                             const appDiv = document.createElement('div');
                             appDiv.innerText = item;
-                            applist.appendChild(appDiv);
+                            applist.safeAppend(appDiv);
                         });
                     }
                 }
 
-                row.appendChild(applist);
+                row.setColumn(applist);
 
-                const actions = UI.buildDiv(['td']);
+                const actions = new Div('td');
 
                 Object.entries(actionsList).forEach(([actName, actFn]) => {
                     const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    const iconBtn = UI.buildClickable(`icon:${iconClass}`, '', '', actFn);
-                    actions.appendChild(UI.buildTooltippedElem(iconBtn, `${actName} Template Set`));
+                    actions.safeAppend(new Clickable(`icon:${iconClass}`).setOnClick(actFn).setToolstrip(`${actName} Template Set`));
                 });
-                row.appendChild(actions);
-
-                templateDiv.appendChild(row);
+                row.setColumn(actions);
             };
 
             Object.values(setMap).forEach((setData) => {
@@ -477,7 +487,7 @@ route('templates', 'templates', () => {
                 const setActions = {
                     Remove: () => {
                         const app = document.getElementById('app');
-                        app.appendChild(UI.buildModal(() => {
+                        new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be removed!`).setOkFunction(() => {
                             dispOutput(`Deleting ${setName}`);
                             return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
                                 method: 'DELETE'
@@ -487,14 +497,16 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
-                        }, `Template Set '${setName}' will be removed!`));
+                        })
+                            .appendToParent(app);
                     }
                 };
 
                 if (setData.updateAvailable) {
                     setActions.Update = () => {
                         const app = document.getElementById('app');
-                        app.appendChild(UI.buildModal(() => {
+
+                        new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be updated!`).setOkFunction(() => {
                             dispOutput(`Updating ${setName}`);
                             return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
                                 method: 'DELETE'
@@ -513,7 +525,8 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
-                        }, `Template Set '${setName}' will be updated!`));
+                        })
+                            .appendToParent(app);
                     };
                 }
 

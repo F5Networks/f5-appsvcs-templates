@@ -1,0 +1,24 @@
+{
+  "name": "ts-scripts",
+  "version": "1.0.0",
+  "description": "Helpful automation for FAST for testing purposes",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "rimraf dist && npm install && tsc",
+    "start": "echo 'Npm run start should not be used. Run specific script instead'",
+    "deploy-apps": "node dist/app.js --script=deployApps",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stanislav Kozubenko",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "typescript": "^3.9.5"
+  },
+  "dependencies": {
+    "@akanass/rx-http-request": "^3.3.0",
+    "express": "^4.17.1",
+    "minimist": "^1.2.5",
+    "rimraf": "^3.0.2"
+  }
+}

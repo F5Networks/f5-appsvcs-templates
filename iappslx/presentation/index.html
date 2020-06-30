@@ -4,10 +4,11 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-        <link rel="stylesheet" href="css/spectre.min.css">
-        <link rel="stylesheet" href="css/spectre-overrides.css">
         <link rel="stylesheet" href="css/all.min.css">
+        <link rel="stylesheet" href="css/animations.css">
+        <link rel="stylesheet" href="css/spectre.min.css">
         <link rel="stylesheet" href="css/style.css">
+        <link rel="stylesheet" href="css/shared-components.css">
 
         <title>F5 Application Services Templates</title>
     </head>
@@ -25,7 +26,7 @@
         </div>
         <div id="content-wrapper">
             <template id="page-apps">
-                <div id="app-list"></div>
+                <div id="app-list" class="styled-list"></div>
                 <div>
                     <pre id="output">
                     </pre>
@@ -33,29 +34,16 @@
             </template>
 
             <template id="page-create">
-                <p class="instruction-text">Choose a Template to Deploy:</p>
+                <p id="available-text">Available Templates: </p>
                 <div id="tmpl-btns"></div>
                 <div>
                     <div id="form-div"></div>
-                    <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
-                    <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
-                    <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
-                    <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
-                    <button type="button" class="btn" id="form-btn" disabled>SUBMIT</button>
-                </div>
-                <div>
-                    <pre id="output"></pre>
-                </div>
-            </template>
-
-            <template id="page-templates">
-                <button type="button" class="btn" id="add-ts-btn">Add Template Set</button>
-                <input type="file" id="ts-file-input" style="display:none" accept=".zip">
-                <div id="template-list">
-                    <div id="th-tr-templates" class="th-row">
-                        <div class="td">Templates</div>
-                        <div class="td">Applications</div>
-                        <div class="td">Actions</div>
+                    <div id="deploy-buttons">
+                        <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
+                        <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
+                        <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
+                        <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
+                        <button type="button" class="btn" id="form-btn" disabled>SUBMIT</button>
                     </div>
                 </div>
                 <div>
@@ -63,15 +51,35 @@
                 </div>
             </template>
 
+            <template id="page-templates">
+                <div class="button-row">
+                    <button type="button" class="btn" id="add-ts-btn">Add Template Set</button>
+                    <input type="file" id="ts-file-input" style="display:none" accept=".zip">
+                </div>
+                <div id="template-list">
+                    <div class="th-row">
+                        <div class="td">Templates</div>
+                        <div class="td">Applications</div>
+                        <div class="td">Actions</div>
+                    </div>
+                    <div class="tr" height="1px"></div>
+                </div>
+                <div>
+                    <pre id="output"></pre>
+                </div>
+            </template>
+
             <template id="page-tasks">
-                <div id="task-list"></div>
+                <div id="task-list" class="styled-list"></div>
             </template>
 
             <template id="page-api">
                 <iframe src="apidoc.html"></iframe>
             </template>
 
-            <div id="app" style="height:100%"></div>
+            <div id="app"></div>
+            <div id="snackbar"></div>
+            <div id="copy-div" style="display: none;"></div>
         </div>
 
         <script src="js/jsoneditor.min.js"></script>

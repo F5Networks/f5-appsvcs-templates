@@ -7,10 +7,13 @@
 * Add showDisabled query parameter to GET on /templatesets for showing disabled template sets
 * Support PATCH on /applications/{tenant}/{app} endpoint for partial modifications of existing applications
 * Add template set hash (setHash) to application data
+* Add accordion to the template sets on the deploy page
+* Add additional status reporting for tasks in the Deploy Log
 
 ## Fixed
 * Stop printing empty strings to the console
 * Work-around iControl replacing error messages with "HTML Tag-like Content in Request URL/Body"
+* Fix broken alignment across all tables
 
 ## Changed
 * Reduce latency on the /templatesets endpoint
