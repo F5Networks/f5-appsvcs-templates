@@ -70,6 +70,10 @@ function doPost(path, payload) {
     return doRequest({ path, method: 'POST' }, payload);
 }
 
+function doDelete(path) {
+    return doRequest({ path, method: 'DELETE' });
+}
+
 function promiseDelay(timems) {
     return new Promise((resolve) => {
         setTimeout(() => resolve(), timems);
@@ -114,6 +118,23 @@ function deployApplication(templateName, parameters) {
 
 describe('Applications', function () {
     this.timeout(120000);
+    it('Delete all applications', () => Promise.resolve()
+        .then(() => doDelete('/mgmt/shared/fast/applications'))
+        .then((response) => {
+            const taskid = response.body.id;
+            if (!taskid) {
+                console.log(response.body);
+                assert(false, 'failed to get a taskid');
+            }
+            return waitForCompletedTask(taskid);
+        })
+        .then((task) => {
+            if (task.code !== 200) {
+                console.log(task);
+            }
+            assert.strictEqual(task.code, 200);
+        }));
+
     it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
 
     it('Deploy bigip-fast-templates/http', () => deployApplication('bigip-fast-templates/http', {
