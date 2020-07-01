@@ -9,10 +9,10 @@ using loaded templates.
 FAST Menu Tabs
 --------------
 
-When using FAST, the Applications List tab is selected. If you have never used FAST before
+When launching FAST, the Applications List tab is selected. If you have never used FAST before
 the application list will likely be empty. See the :ref:`deploytab` tab on deploying a new application.
 
-You see the following tabs in the FAST interface:
+The tabs in the FAST interface:
 
 .. .. image:: fast-menu.png
 ..  :width: 300
@@ -23,20 +23,20 @@ You see the following tabs in the FAST interface:
 |
 
 .. list-table::
-      :widths: 25 250
+      :widths: 40 250
       :header-rows: 1
 
       * - Tab
         - Summary
 
       * - :ref:`applisttab`
-        - This is a list of AS3 applications currently deployed to the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with (if deployed using a FAST Template). Applications can be modified or deleted from this page.
+        - A list of AS3 applications currently deployed onto the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with, if deployed using a FAST Template. Applications can be modified or deleted from this page.
 
       * - :ref:`deploytab`
         - This is where you create a new application. Use this tab to choose a template and provide parameters to submit a new application to AS3.
 
       * - :ref:`templatetab`
-        - This table has a list of installed templates, with any applications using them.
+        - This is a list of installed templates, along with any applications using them.
 
       * - :ref:`deploylogtab`
         - The deploy log is a summary of AS3's async task results.
@@ -60,7 +60,7 @@ Each application is identified by its Tenant and Application name. It also shows
 
 
 
-On this tab, there are two buttons for each application: **Modify** and **Delete**.
+On this tab, there are two Action buttons for each application: **Modify Application** and **Delete Application**.
 
 .. .. image:: modify-application.png
 ..   :width: 300
@@ -68,7 +68,7 @@ On this tab, there are two buttons for each application: **Modify** and **Delete
 
 
 
-* Clicking **Modify** loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Submit** to redeploy the application.
+* Clicking **Modify Application** loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Submit** to redeploy the application.
 
 .. .. image:: delete-result.png
 ..   :width: 300
@@ -76,7 +76,7 @@ On this tab, there are two buttons for each application: **Modify** and **Delete
 
 
 
-* Clicking **Delete** deletes the application from the BIG-IP. 
+* Clicking **Delete Application** deletes the application from the BIG-IP. 
 
 .. WARNING:: Once you delete an application, there is no easy way to recall an application's deployment parameters
 
@@ -91,30 +91,33 @@ The Deploy tab is where you create new AS3 applications using a FAST template.
 ..   :width: 300
 ..   :alt: The deploy view
 
-At the top of the Deploy pane, there are buttons for each installed template. 
+At the top of the Deploy pane, there is a button for each installed template. 
 
-To open a template, click one of the template buttons. The template loads into the interface, with required fields marked by a red asterisk. 
+To open a template, click the template button. The template loads into the interface, with required fields marked by a red asterisk. 
 
 At the bottom of the template, you see the following options for what to do once the template is complete.
 
 .. list-table::
-      :widths: 25 250
+      :widths: 55 240
       :header-rows: 1
 
       * - Action
         - Summary
 
+      * - View Template
+        - Displays the original template text.
+
+      * - View Schema 
+        - View the JSON schema of the template.
+
+      * - View Inputs
+        - View a list of inputs by field.
+
+      * - View Rendered
+        - View a sample of the rendered output of the template.
+
       * - Submit
-        - Submit this application to AS3 for deployment.
-
-      * - Render
-        - See a sample of the rendered output of this template.
-
-      * - Schema
-        - View the JSON schema of this template parameters.
-
-      * - Template
-        - Display the original template text.
+        - Submits the application to AS3 for deployment.
 
 Filling out the form with the requested values, and clicking **Submit** will submit
 the declaration for deployment. 
@@ -142,27 +145,20 @@ Templates
   :alt: The application list
 
 
-The Templates tab shows a list of installed template packages, the templates in each,
+The Templates tab shows a list of installed template sets, the templates in each set,
 and which applications are deployed using them.
 
-FAST comes pre-installed with base template sets satisfying common use cases.
-Included are templates to deploy virtual servers for basic HTTP and HTTPS applications, as well as simple TCP and UDP applications.
+FAST comes pre-installed with base template sets satisfying common use cases, which are identified by the F5 logo.
+Included are templates to deploy virtual servers for basic HTTP and HTTPS applications, as well as simple TCP and UDP applications. 
 
-New Templates
-^^^^^^^^^^^^^
+New Templates and Template Sets
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FAST can be extended beyond the included templates, new custom templates can be
-installed for any AS3 use case. Template
-sets are packaged into a single file that can be loaded into the system via
-the REST API.
+A template is a parameterized AS3 declaration while a template set is a grouping of templates.
 
-.. .. image:: template-list.png
-  :width: 300
-  :alt: The application list
-
-
-Template sets may be provided by F5, sourced from the community, or custom written. 
-Template sets can be added or removed via the user interface by clicking either the **Add Set** or **Remove** buttons. 
+FAST can be extended beyond the included templates. New templates can be self-authored and installed for any AS3 use case. 
+Template sets are templates packaged into a single .zip file that can be loaded into the system via the REST API. They may be provided by F5, sourced from the community, or custom written. 
+Template sets can be added or removed via the user interface by clicking either the **Add Template Set** or **Remove Template Set** buttons. 
 
 For information on authoring template sets and understanding the template set format, see :ref:`authoring`.
 
