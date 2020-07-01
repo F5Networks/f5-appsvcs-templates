@@ -18,6 +18,7 @@
 ## Changed
 * Reduce latency on the /templatesets endpoint
 * Restrict allowed characters for tenant and application names on bigip-fast-templates
+* Stop allowing the deletion of in-use template sets
 
 # 1.1
 ## Added

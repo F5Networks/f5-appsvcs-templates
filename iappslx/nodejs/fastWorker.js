@@ -905,6 +905,21 @@ class FASTWorker {
         if (tsid) {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
+                    reqid, 'gathering a list of applications from the driver',
+                    this.driver.listApplications()
+                ))
+                .then((appsList) => {
+                    const usedBy = appsList
+                        .filter(x => x.template.split('/')[0] === tsid)
+                        .map(x => `${x.tenant}/${x.name}`);
+                    if (usedBy.length > 0) {
+                        return Promise.reject(
+                            new Error(`Cannot delete template set ${tsid}, it is being used by:\n${JSON.stringify(usedBy)}`)
+                        );
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => this.recordTransaction(
                     reqid, 'deleting a template set from the data store',
                     this.templateProvider.removeSet(tsid)
                 ))
@@ -925,6 +940,9 @@ class FASTWorker {
                 .catch((e) => {
                     if (e.message.match(/failed to find template set/)) {
                         return this.genRestResponse(restOperation, 404, e.message);
+                    }
+                    if (e.message.match(/being used by/)) {
+                        return this.genRestResponse(restOperation, 400, e.message);
                     }
                     return this.genRestResponse(restOperation, 500, e.stack);
                 });

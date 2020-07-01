@@ -779,6 +779,10 @@ describe('template worker tests', function () {
         const templateSet = 'bigip-fast-templates';
         const op = new RestOp(`templatesets/${templateSet}`);
 
+        nock(host)
+            .get(as3ep)
+            .reply(200, as3stub);
+
         return worker.templateProvider.hasSet(templateSet)
             .then(result => assert(result))
             .then(() => worker.onDelete(op))
@@ -790,14 +794,55 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets/does_not_exist');
 
+        nock(host)
+            .get(as3ep)
+            .reply(200, as3stub);
+
         return worker.onDelete(op)
             .then(() => {
                 assert.equal(op.status, 404);
             });
     });
+    it('delete_templateset_inuse', function () {
+        const worker = createWorker();
+        const templateSet = 'examples';
+        const op = new RestOp(`templatesets/${templateSet}`);
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                tenant: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'examples/simple_udp_defaults'
+                            }
+                        }
+                    },
+                    app2: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'foo/bar'
+                            }
+                        }
+                    }
+                }
+            }));
+        return worker.onDelete(op)
+            .then(() => {
+                assert.strictEqual(op.status, 400);
+                assert.match(op.body.message, /it is being used by:\n\["tenant\/app"\]/);
+            });
+    });
     it('delete_all_templatesets', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
+
+        nock(host)
+            .get(as3ep)
+            .reply(200, as3stub);
 
         return worker.onDelete(op)
             .then(() => assert.equal(op.status, 200))
