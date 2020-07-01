@@ -87,7 +87,7 @@ const multipartUpload = (file) => {
                 const nextEnd = (end + CHUNK_SIZE > file.size - 1) ? file.size - 1 : end + CHUNK_SIZE;
                 return uploadPart(nextStart, nextEnd);
             })
-            .catch(e => Promise.reject(new Error(`Failed to upload file: ${e.stack}`)));
+            .catch(e => Promise.reject(new Error(`Failed to upload file: ${e.message}`)));
     };
 
     if (CHUNK_SIZE < file.size) {
@@ -263,7 +263,7 @@ route('', 'apps', () => {
                                         .then(() => {
                                             window.location.href = '#tasks';
                                         })
-                                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
+                                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.message}`));
                                 })
                                 .appendToParent(document.getElementById('app'));
                         }).setToolstrip('Delete Application')
@@ -496,7 +496,7 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} deleted successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
+                                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
                         })
                             .appendToParent(app);
                     }
@@ -524,7 +524,7 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} installed successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
+                                .catch(e => dispOutput(`Failed to install ${setName}:\n${e.message}`));
                         })
                             .appendToParent(app);
                     };
