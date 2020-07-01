@@ -508,9 +508,7 @@ route('templates', 'templates', () => {
 
                         new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be updated!`).setOkFunction(() => {
                             dispOutput(`Updating ${setName}`);
-                            return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                                method: 'DELETE'
-                            })
+                            return Promise.resolve()
                                 .then(() => safeFetch(`${endPointUrl}/templatesets`, {
                                     method: 'POST',
                                     headers: {
