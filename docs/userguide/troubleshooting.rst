@@ -34,7 +34,8 @@ View the template set hashes using cURL:
 Uninstalling FAST
 -----------------
 
-F5 Applications Services Templates entry remains in the GUI after uninstalling the package from Package Management LX. |br|  
+F5 Applications Services Templates entry remains in the GUI after uninstalling the package from Package Management LX.
+
 To uninstall, and remove, the F5 Applications Services Templates from the GUI the following steps must be completed:
 
  1. **iApps> Package Management LX** select f5-appsvcs-templates, click **Uninstall**
@@ -54,7 +55,8 @@ FAST logs to **/var/log/restnoded/restnoded.log** using f5-logger from the frame
 |
 
 Example log entry where the UUID in the square brackets is a unique to each request received by the REST worker. 
-You can trace the request through the response sent. |br|
+You can trace the request through the response sent.
+
 A request ID of 0 is startup:
 ::
 
@@ -90,8 +92,4 @@ A request ID of 0 is startup:
 
 
 For audit logs in **/var/log/audit**, no matter your BIG-IP user account name, audit logs show all messages from **admin** and not the specific user name.
-
-.. |br| raw:: html
-
-    <br />
 

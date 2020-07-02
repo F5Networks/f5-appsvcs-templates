@@ -26,7 +26,7 @@ Adding New Template Sets
 ------------------------
 
 FAST allows for the addition of pre-configured template sets in .zip file format. 
-From the Templates tab, click the **Add Set** button.  Navigate to the location of the template set .zip file, click **Open**.  The added templates will display in the template list.
+From the Templates tab, click the **Add Template Set** button.  Navigate to the location of the template set .zip file, click **Open**.  The added templates will display in the template list.
 
 
 Removing Template Sets
@@ -43,7 +43,3 @@ To reinstall a base Template Set (one that shipped with the RPM), use the :ref:`
 For the Template Set name use ``bigip-fast-templates`` or ``examples``.
 
 |
-
-.. |br| raw:: html
-
-   <br />
