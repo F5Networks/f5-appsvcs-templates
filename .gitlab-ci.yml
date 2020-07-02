@@ -36,7 +36,7 @@ audit_packages:
     tags:
         - docker-executor
     script:
-        - npm ci && npm audit
+        - npm ci && npm audit --production
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
