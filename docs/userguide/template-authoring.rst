@@ -4,9 +4,9 @@ Creating New Templates
 ======================
 
 Templates are AS3 declarations that have been parameterized.
-This page has a short tutorial to help template authors get started creating template sets, and a more detailed explanation of the templates and their syntax.
+This page has a short tutorial to help template authors get started creating template sets, with a more detailed explanation of the templates and their syntax.
 
-We recommend template authors read the overview of the FAST Engine to fully understand how templates are processed in the system.
+We recommend template authors read the :ref:`overview` to fully understand how templates are processed in the system.
 
 In order to use the FAST CLI, which provides template validation and previewing, Node Package Manager (npm) must be installed.
 FAST CLI is a community-supported authoring tool that template authors may use.
@@ -144,8 +144,8 @@ Template Specification
 Templates abide by the following rules:
 
 * Templates are text files with sections marked off called variables
-* Variables will be marked for replacement at render time.
-* Variables are surrounded with double curly braces, `{{` and `}}`.
+* Variables will be marked for replacement at render time
+* Variables are surrounded with double curly braces, `{{` and `}}`
 * Variables can specify a type: `name`::`type`
 * Primitive Types
 
@@ -196,7 +196,7 @@ The following is an example of a simple FAST template that will render an AS3 de
 In the example template, we have some variables: tenant_name, application_name, virtual_address, port, and server_addreses. Some have annotations, like `port::integer`.
 The `integer` annotation signifies the value of `port` must be an integer.
 
-Variables may be used in multiple places, if a variable is annotated somewhere in the file, an unannotated version of that variable will respect the annotation.
+Variables may be used in multiple places. If a variable is annotated somewhere in the file, an unannotated version of that variable will respect the annotation.
 
 From the variables, a schema is generated.
 This schema describes the parameters that must be provided to render the template.
@@ -290,7 +290,7 @@ Schemas listed in the `definitions` will be made available to templates using th
 * **schema_name** is the name of the JSON schema file, excluding the extension
 * **type** is the property name of the definition being referenced
 
-for example:
+For example:
 
 .. code-block:: none
 
@@ -329,9 +329,9 @@ Objects are not yet supported.
 
 Up-front validation using the schema will help to prevent failed deployments by notifying the user prior to deployment when a value has an invalid format.
 Therefore, when designing a template, the appropriate schema definition should be used for each variable.
-For example, if the virtual IP address is a variable, use schema to validate the input is an IPv4 or IPv6 address.
+For example, if the virtual IP address is a variable, use schema to validate if the input is an IPv4 or IPv6 address.
 
-For more information on writing schema, see https://json-schema.org/.
+| For more information on writing schema, see https://json-schema.org/.
 
 .. IMPORTANT::
 
