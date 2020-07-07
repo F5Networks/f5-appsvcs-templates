@@ -3,11 +3,13 @@
   --base-color: #556473;
   --popup-background-color: rgb(58, 64, 75, .98);
   --success-color: #026202;
-  --green: #5e825c;
+  --green-base: #5e825c;
+  --green: rgb(94, 130, 92, .9);
   --green-hover: #668863;
-  --green-with-opacity: rgb(94, 130, 92, .9);
-  --red: #b35555e3;
-  --red-with-opacity: rgba(175, 79, 79, 0.849);
+  --red-base: rgba(126, 35, 35, 0.849);
+  --red-base-hover: rgba(145, 40, 40, 0.849);
+  --red: rgba(175, 79, 79, 0.849);
+  --red-hover: rgba(189, 84, 84, 0.849);
   --danger-color: #824646;
   --dark-row-color: #e5e4e380;
   --light-row-color: #ececeaa1;
@@ -78,31 +80,12 @@ button:disabled:hover {
   position: relative;
   top: -5px;
 }
-#form-btn {
-  background-color: var(--green);
+#btn-form-submit {
+  background-color: var(--green-base);
   min-width: 75px;
 }
-#form-btn:hover {
+#btn-form-submit:hover {
   background-color: var(--green-hover);
-}
-.btn-cancel {
-  background-color: var(--red-with-opacity);
-  width: var(--normal-btn-width);
-  margin: 0px 5px;
-  color: #f3e6e6;
-}
-.btn-cancel:hover, .btn-cancel:active, .btn-cancel:focus {
-  background-color: var(--red);
-  color: white;
-}
-.btn-continue {
-  background-color: var(--green-with-opacity);
-  width: var(--normal-btn-width);
-  color: #e9f6e9;
-}
-.btn-continue:hover, .btn-continue:active, .btn-continue:focus {
-  background-color: var(--green-hover);
-  color: white;
 }
 
 .tr {
@@ -157,6 +140,15 @@ button:disabled:hover {
 #app-list .col2 { text-align: center; }
 #app-list .col3 { text-align: center; }
 
+.button-row-deploy {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.button-row-deploy .btn {
+  height: 32px;
+}
+
 #tmpl-btns .template-set-title {
   margin-bottom: 10px;
   font-weight: 600;
@@ -176,26 +168,14 @@ button:disabled:hover {
   font-weight: 600;
   text-align: center;
 }
-#tmpl-btns button { margin-left: 20px; }
+/* #tmpl-btns button { margin-left: 20px; } */
 #deploy-buttons {
   text-align: right;
 }
 
-#template-list .th-row {
-  padding-bottom: 2.5px;
-  margin-top: 10px;
-  font-size: 1rem;
-}
-#template-list .th-row:first-child {
-  padding-left: 1px;
-}
+#template-list .th-row { font-size: 1rem; }
 
-#template-list>div div:nth-child(-n+1) {
-  min-width: 25%;
-}
-#template-list>div div:nth-child(n+2) {
-  text-align: center;
-}
+#template-list .col2, #template-list .col3 { text-align: center; }
 
 #template-list .td-template-set {
   font-size: .8rem;
@@ -331,8 +311,4 @@ button:disabled:hover {
   display: inline-block;
   width: 120px;
   text-align: left;
-}
-
-.button-row {
-  
 }

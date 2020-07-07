@@ -43,7 +43,7 @@
                         <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
                         <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
                         <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
-                        <button type="button" class="btn" id="form-btn" disabled>SUBMIT</button>
+                        <button type="button" class="btn" id="btn-form-submit" disabled>SUBMIT</button>
                     </div>
                 </div>
                 <div>
@@ -52,15 +52,16 @@
             </template>
 
             <template id="page-templates">
-                <div class="button-row">
-                    <button type="button" class="btn" id="add-ts-btn">Add Template Set</button>
-                    <input type="file" id="ts-file-input" style="display:none" accept=".zip">
+                <div class="button-row-deploy">
+                    <button type="button" id="btn-add-ts" class="btn btn-green">Add Template Set</button>
+                    <input type="file" id="input-ts-file" style="display:none" accept=".zip">
+                    <button type="button" id="btn-delete-all-ts" class="btn btn-red">Delete All</button>
                 </div>
                 <div id="template-list">
                     <div class="th-row">
-                        <div class="td">Templates</div>
-                        <div class="td">Applications</div>
-                        <div class="td">Actions</div>
+                        <div class="td col1">Templates</div>
+                        <div class="td col2">Applications</div>
+                        <div class="td col3">Actions</div>
                     </div>
                     <div class="tr" height="1px"></div>
                 </div>

@@ -139,11 +139,11 @@ const newEditor = (tmplid, view) => {
                 document.getElementById('view-schema-btn').disabled = false;
                 document.getElementById('view-view-btn').disabled = false;
                 document.getElementById('view-render-btn').disabled = false;
-                document.getElementById('form-btn').disabled = false;
+                document.getElementById('btn-form-submit').disabled = false;
             });
 
             editor.on('change', () => {
-                document.getElementById('form-btn').disabled = editor.validation_results.length !== 0;
+                document.getElementById('btn-form-submit').disabled = editor.validation_results.length !== 0;
             });
 
             // Hook up buttons
@@ -159,7 +159,7 @@ const newEditor = (tmplid, view) => {
             document.getElementById('view-render-btn').onclick = () => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
             };
-            document.getElementById('form-btn').onclick = () => {
+            document.getElementById('btn-form-submit').onclick = () => {
                 const data = {
                     method: 'POST',
                     headers: {
@@ -361,13 +361,11 @@ route('tasks', 'tasks', () => {
 });
 route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {
-    const templateDiv = document.getElementById('template-list');
-
-    document.getElementById('add-ts-btn').onclick = () => {
-        document.getElementById('ts-file-input').click();
+    document.getElementById('btn-add-ts').onclick = () => {
+        document.getElementById('input-ts-file').click();
     };
-    document.getElementById('ts-file-input').onchange = () => {
-        const file = document.getElementById('ts-file-input').files[0];
+    document.getElementById('input-ts-file').onchange = () => {
+        const file = document.getElementById('input-ts-file').files[0];
         const tsName = file.name.slice(0, -4);
         dispOutput(`Uploading file: ${file.name}`);
         multipartUpload(file)
@@ -387,7 +385,11 @@ route('templates', 'templates', () => {
             })
             .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`));
     };
+    document.getElementById('btn-delete-all-ts').onclick = () => {
 
+    }
+    
+    const templateDiv = document.getElementById('template-list');
     return Promise.all([
         getJSON('applications'),
         getJSON('templatesets')
@@ -523,8 +525,7 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to install ${setName}:\n${e.message}`));
-                        })
-                            .appendToParent(app);
+                        }).appendToParent(app);
                     };
                 }
 

@@ -8,7 +8,7 @@
     background: #556473;
     border-color: #545f6b;
     color: #fff;
-    padding: 0px 4px;
+    padding: 0px 6px;
 }
 .btn:active, .btn:focus, .btn:hover {
     background: rgba(48,55,66,.95);
