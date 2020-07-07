@@ -28,51 +28,117 @@ For more information on a given command use the ``--help`` flag combined with a 
 | Use the following command to validate your template ``fast validate <filename>``
 | Use one of the following commands to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` or  ``fast packageTemplateSet <templateSetPath>``
 | Upload and install your zip file using steps 8 and 9 from the example below
+|
+| For VSCode users, installing the F5 Automated Toolchain Extension helps with managing templates/declarations.
+| 1. Download and install the `VSCode Microsoft extension <https://marketplace.visualstudio.com/items?itemName=DumpySquare.vscode-f5-fast>`_
+| 2. Once installed, add a device:
+* Under the vscode extension settings, press F1, type f5, select "F5: Settings", click add item button, or
+* Add device from the F5 HOSTS view. Click F5: Add HOST button in top right of the extension view for "F5 HOSTS" 
+* See the `Device Mgmt <https://marketplace.visualstudio.com/items?itemName=DumpySquare.vscode-f5-fast>`_ section for more information.
 
 
 Hello World example
 -------------------
 
-In this section, we create a simple Hello World template and upload it to FAST.
+Choose an example AS3 declaration that fits your use case.  See `Example declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/examples.html>`_ for AS3 examples.
+
+For our example we are creating a simple Hello World template with the following objects and uploading it to FAST.
+
+* Partition (tenant) named ``Sample_01``.
+* Virtual server (HTTP) named ``service``.
+* Pool named ``web_pool`` with 2 members monitored by the default *HTTP* health monitor.
+
 Later sections go into detail about the template specification and its entire feature set.
 
-#. Start by creating a file named **hello.mst** and copy the following parameterized AS3 declaration into it:
+|
+
+#. Start by creating a file named **hello.mst** and copy the following AS3 declaration into it:
 
    .. code-block:: none
 
       {
-        "class": "ADC",
-        "schemaVersion": "3.11.0",
-        "{{tenant_name}}": {
-          "class": "Tenant",
-          "{{application_name}}": {
-            "class": "Application",
-            "template": "http",
-            "serviceMain": {
-              "class": "Service_HTTP",
-              "virtualAddresses": ["{{virtual_address}}"],
-              "pool": "web_pool_{{port}}"
+        "class": "AS3",
+        "action": "deploy",
+        "persist": true,
+        "declaration": {
+          "class": "ADC",
+          "schemaVersion": "3.0.0",
+          "id": "urn:uuid:33045210-3ab8-4636-9b2a-c98d22ab915d",
+          "label": "Sample 1",
+          "remark": "Simple HTTP application with RR pool",
+          "Sample_01": {
+             "class": "Tenant",
+            "A1": {
+              "class": "Application",
+              "service": {
+                 "class": "Service_HTTP",
+                "virtualAddresses": [
+                  "10.0.1.10"
+                ],
+                "pool": "web_pool"
             },
-            "web_pool_{{port}}": {
-              "class": "Pool",
-              "monitors": [
-                "http"
-              ],
-              "members": [
-                {
-                  "servicePort": {{port::integer}},
-                  "serverAddresses": {{server_addresses::array}}
+            "web_pool": {
+               "class": "Pool",
+               "monitors": [
+                  "http"
+               ],
+               "members": [{
+                  "servicePort": 80,
+                  "serverAddresses": [
+                     "192.0.1.10",
+                     "192.0.1.11"
+                       ]
+                    }]
+                  }
                 }
-              ]
-            }
+             }
           }
-        }
       }
 
    This is a basic template that creates an HTTP Virtual IP allowing you to specify the Virtual IP, a list of server addresses, and a port to use for both the front and back end.
    The tenant name and application name are also specified by the user.
 
 #. Save the file.
+#. The parameterized declaration.
+
+   .. code-block:: none
+
+      {
+        "class": "AS3",
+        "action": "deploy",
+        "persist": true,
+        "declaration": {
+          "class": "ADC",
+          "schemaVersion": "3.0.0",
+          "id": "urn:uuid:33045210-3ab8-4636-9b2a-c98d22ab915d",
+          "label": "Sample 1",
+          "remark": "Simple HTTP application with RR pool",
+          "{{tenant_name}}": {
+              "class": "Tenant",
+            "{{application_name}}": {
+              "class": "Application",
+              "service": {
+                  "class": "Service_HTTP",
+                "virtualAddresses": [
+                  "{{virtual_address}}"
+                ],
+                "pool": "web_pool"
+          },
+          "web_pool": {
+             "class": "Pool",
+             "monitors": [
+                "http"
+             ],
+             "members": [{
+                "servicePort": 80,
+                "serverAddresses": {{server_addresses::array}}
+                  }]
+                }
+              }
+            }
+          }
+      }
+
 #. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
 #. Create the following file named **params.json**:
 
@@ -82,8 +148,7 @@ Later sections go into detail about the template specification and its entire fe
         "tenant_name": "TestTenant",
         "application_name": "MyTestApp",
         "virtual_address": "0.0.0.0",
-        "port": 80,
-        "serverAddresses": [
+        "server_addresses": [
           "10.0.0.1",
           "10.0.0.2"
         ]
