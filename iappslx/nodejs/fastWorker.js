@@ -12,11 +12,13 @@ const extract = require('extract-zip');
 const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
+const drivers = require('../lib/drivers');
+
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const httpUtils = fast.httpUtils;
-const AS3Driver = fast.AS3Driver;
+const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 
 let pkg = null;
