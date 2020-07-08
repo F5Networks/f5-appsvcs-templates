@@ -52,9 +52,9 @@ Later sections go into detail about the template specification and its entire fe
 
 |
 
-#. Start by creating a file named **hello.mst** and copy the following AS3 declaration into it:
+#. Create a file named **hello.mst,** then copy the following AS3 declaration into it:
 
-   .. code-block:: none
+   .. code-block:: json
 
       {
         "class": "AS3",
