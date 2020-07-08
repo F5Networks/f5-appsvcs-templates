@@ -4,6 +4,7 @@
 ## Fixed
 
 ## Changed
+* Use AS3's optimistic locking to detect synchronization issues between FAST and AS3
 
 # 1.2.0
 ## Added

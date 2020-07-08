@@ -308,6 +308,7 @@ describe('template worker tests', function () {
         const op = new RestOp('applications');
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -333,6 +334,7 @@ describe('template worker tests', function () {
         const op = new RestOp('applications');
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(204, '');
         return worker.onGet(op)
             .then(() => {
@@ -345,6 +347,7 @@ describe('template worker tests', function () {
         const op = new RestOp('applications/foobar');
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -582,6 +585,7 @@ describe('template worker tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
         nock(host)
             .persist()
@@ -598,6 +602,7 @@ describe('template worker tests', function () {
         const op = new RestOp('applications/foobar');
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -616,6 +621,7 @@ describe('template worker tests', function () {
         const op = new RestOp('applications/tenant/app');
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -641,6 +647,7 @@ describe('template worker tests', function () {
         const op = new RestOp('applications');
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -680,6 +687,7 @@ describe('template worker tests', function () {
         });
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -846,6 +854,7 @@ describe('template worker tests', function () {
 
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
 
         return worker.templateProvider.hasSet(templateSet)
@@ -861,6 +870,7 @@ describe('template worker tests', function () {
 
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
 
         return worker.onDelete(op)
@@ -874,6 +884,7 @@ describe('template worker tests', function () {
         const op = new RestOp(`templatesets/${templateSet}`);
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
@@ -907,6 +918,7 @@ describe('template worker tests', function () {
 
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
 
         return worker.onDelete(op)

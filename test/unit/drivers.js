@@ -66,6 +66,7 @@ describe('AS3 Driver tests', function () {
         const driver = new AS3Driver();
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
 
         return assert.becomes(driver._getDecl(), as3stub);
@@ -74,6 +75,7 @@ describe('AS3 Driver tests', function () {
         const driver = new AS3Driver();
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(204, '');
 
         return assert.becomes(driver._getDecl(), as3stub);
@@ -83,6 +85,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
         return assert.becomes(driver.listApplicationNames(), []);
     });
@@ -91,6 +94,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplicationNames(), [['tenantName', 'appName']]);
@@ -100,6 +104,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplications(), [appMetadata]);
@@ -109,6 +114,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3WithApp);
         return assert.becomes(driver.getApplication('tenantName', 'appName'), appMetadata);
     });
@@ -118,6 +124,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
 
         nock(host)
@@ -151,6 +158,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3stub);
 
         nock(host)
@@ -177,6 +185,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3WithApp);
 
         nock(host)
@@ -192,6 +201,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(200, as3WithApp);
 
         nock(host)
@@ -241,6 +251,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .persist()
             .get(as3ep)
+            .query(true)
             .reply(404, as3WithApp);
 
         return assert.isRejected(driver.getApplication('badTenent', 'appName'), /no tenant found/)
@@ -250,6 +261,7 @@ describe('AS3 Driver tests', function () {
         const driver = new AS3Driver();
         nock(host)
             .get(as3ep)
+            .query(true)
             .reply(404, Object.assign({}, as3stub, appDef));
 
         return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);

@@ -74,7 +74,8 @@ class AS3Driver {
             return Promise.resolve(JSON.parse(JSON.stringify(this._declCache)));
         }
         const opts = Object.assign({}, this._declareOpts, {
-            method: 'GET'
+            method: 'GET',
+            path: `${this._declareOpts.path}?showHash=true`
         });
         return httpUtils.makeRequest(opts)
             .then(res => res.body.declaration || res.body)
@@ -144,9 +145,8 @@ class AS3Driver {
 
 
     createApplication(appDef, metaData) {
-        return Promise.all([this._getDecl(), this._prepareAppDef(appDef, metaData)])
-            .then(([decl, processedAppDef]) => this._stitchDecl(decl, processedAppDef))
-            .then(decl => this._postDecl(decl));
+        return Promise.resolve()
+            .then(() => this.createApplications([{ appDef, metaData }]));
     }
 
     createApplications(appsData) {
