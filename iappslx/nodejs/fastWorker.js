@@ -83,6 +83,7 @@ class FASTWorker {
 
         this.requestTimes = {};
         this.requestCounter = 1;
+        this.provisionData = null;
     }
 
     hookCompleteRestOp() {
@@ -378,6 +379,96 @@ class FASTWorker {
             .then(() => info);
     }
 
+    gatherProvisionData(requestId) {
+        if (this.provisionData !== null) {
+            return Promise.resolve(this.provisionData);
+        }
+
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                requestId, 'Fetching module provision information',
+                httpUtils.makeGet('/mgmt/tm/sys/provision')
+            ))
+            .then((response) => {
+                if (response.status !== 200) {
+                    return Promise.reject(new Error(
+                        `failed to get module provision information:\n${JSON.stringify(response, null, 2)}`
+                    ));
+                }
+                this.provisionData = response.body;
+                return Promise.resolve(response.body);
+            });
+    }
+
+    checkDependencies(tmpl, requestId) {
+        return Promise.resolve()
+            .then(() => this.gatherProvisionData(requestId))
+            .then(provisionData => provisionData.items.filter(x => x.level !== 'none').map(x => x.name))
+            .then((provisionedModules) => {
+                const deps = tmpl.bigipDependencies || [];
+                const missingModules = deps.filter(x => !provisionedModules.includes(x));
+                if (missingModules.length > 0) {
+                    return Promise.reject(new Error(
+                        `could not load template (${tmpl.title}) due to missing modules: ${missingModules}`
+                    ));
+                }
+
+                let promiseChain = Promise.resolve();
+                tmpl._allOf.forEach((subtmpl) => {
+                    promiseChain = promiseChain
+                        .then(() => this.checkDependencies(subtmpl, requestId));
+                });
+                const validOneOf = [];
+                let errstr = '';
+                tmpl._oneOf.forEach((subtmpl) => {
+                    promiseChain = promiseChain
+                        .then(() => this.checkDependencies(subtmpl, requestId))
+                        .then(() => {
+                            validOneOf.push(subtmpl);
+                        })
+                        .catch((e) => {
+                            if (!e.message.match(/due to missing modules/)) {
+                                return Promise.reject(e);
+                            }
+                            errstr = `\n${errstr}`;
+                            return Promise.resolve();
+                        });
+                });
+                promiseChain = promiseChain
+                    .then(() => {
+                        if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
+                            return Promise.reject(new Error(
+                                `could not load template since no oneOf had valid dependencies:${errstr}`
+                            ));
+                        }
+                        tmpl._oneOf = validOneOf;
+                        return Promise.resolve();
+                    });
+                const validAnyOf = [];
+                tmpl._anyOf.forEach((subtmpl) => {
+                    promiseChain = promiseChain
+                        .then(() => this.checkDependencies(subtmpl, requestId))
+                        .then(() => {
+                            validAnyOf.push(subtmpl);
+                        })
+                        .catch((e) => {
+                            if (!e.message.match(/due to missing modules/)) {
+                                return Promise.reject(e);
+                            }
+                            return Promise.resolve();
+                        });
+                });
+                promiseChain = promiseChain
+                    .then(() => {
+                        tmpl._anyOf = validAnyOf;
+                    });
+                return promiseChain;
+            })
+            .then(() => {
+                this.provisionData = null;
+            });
+    }
+
     hydrateSchema(schema, requestId) {
         const enumFromBigipProps = Object.entries(schema.properties)
             .reduce((acc, curr) => {
@@ -498,7 +589,9 @@ class FASTWorker {
                 ))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
-                    return this.hydrateSchema(tmpl._parametersSchema, reqid)
+                    return Promise.resolve()
+                        .then(() => this.checkDependencies(tmpl, reqid))
+                        .then(() => this.hydrateSchema(tmpl._parametersSchema, reqid))
                         .then(() => {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);

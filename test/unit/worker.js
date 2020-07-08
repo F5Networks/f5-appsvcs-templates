@@ -153,6 +153,37 @@ describe('template worker tests', function () {
             'bigip-fast-templates',
             'examples'
         ];
+        nock('http://localhost:8100')
+            .persist()
+            .get('/mgmt/tm/sys/provision')
+            .reply(200, {
+                kind: 'tm:sys:provision:provisioncollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/sys/provision?ver=15.0.1.1',
+                items: [
+                    {
+                        kind: 'tm:sys:provision:provisionstate',
+                        name: 'afm',
+                        fullPath: 'afm',
+                        generation: 1,
+                        selfLink: 'https://localhost/mgmt/tm/sys/provision/afm?ver=15.0.1.1',
+                        cpuRatio: 0,
+                        diskRatio: 0,
+                        level: 'none',
+                        memoryRatio: 0
+                    },
+                    {
+                        kind: 'tm:sys:provision:provisionstate',
+                        name: 'asm',
+                        fullPath: 'asm',
+                        generation: 1,
+                        selfLink: 'https://localhost/mgmt/tm/sys/provision/asm?ver=15.0.1.1',
+                        cpuRatio: 0,
+                        diskRatio: 0,
+                        level: 'nominal',
+                        memoryRatio: 0
+                    }
+                ]
+            });
         return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 
@@ -919,6 +950,95 @@ describe('template worker tests', function () {
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
                 ]);
+            });
+    });
+    it('bigipDependencies', function () {
+        const worker = createWorker();
+
+        const checkTmplDeps = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkTmplDeps(`
+                title: root simple pass
+                bigipDependencies:
+                    - asm
+                template: |
+                    Some text
+            `))
+            .catch(e => assert(false, e.message))
+            .then(() => checkTmplDeps(`
+                title: root simple fail
+                bigipDependencies:
+                    - cgnat
+                template: |
+                    Some text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /missing modules: cgnat/))
+            .then(() => checkTmplDeps(`
+                title: root anyOf
+                anyOf:
+                    - {}
+                    - title: asm
+                      bigipDependencies: [asm]
+                      template: foo
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                template: |
+                    Some text
+            `))
+            .then((tmpl) => {
+                assert.strictEqual(tmpl._anyOf.length, 2);
+                assert.strictEqual(tmpl._anyOf[1].title, 'asm');
+            })
+            .then(() => checkTmplDeps(`
+                title: root allOf
+                allOf:
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                template: |
+                    Some text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /missing modules: cgnat/))
+            .then(() => checkTmplDeps(`
+                title: root oneOf fail
+                oneOf:
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                template: |
+                    Some text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /no oneOf had valid/))
+            .then(() => checkTmplDeps(`
+                title: root oneOf pass
+                oneOf:
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                    - title: asm
+                      bigipDependencies: [asm]
+                      template: foo
+                template: |
+                    Some text
+            `))
+            .then((tmpl) => {
+                assert.strictEqual(tmpl._oneOf.length, 1);
+                assert.strictEqual(tmpl._oneOf[0].title, 'asm');
             });
     });
 });
