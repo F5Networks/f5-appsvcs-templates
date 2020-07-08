@@ -49,7 +49,8 @@
   "nyc": {
     "all": true,
     "include": [
-      "iappslx/nodejs/**/*.js"
+      "iappslx/nodejs/**/*.js",
+      "iappslx/lib/**/*.js"
     ]
   },
   "dependencies": {
