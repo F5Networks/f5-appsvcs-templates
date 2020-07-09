@@ -175,26 +175,40 @@ class AS3Driver {
     }
 
     deleteApplication(tenant, app) {
-        return this._getDecl()
-            .then(decl => this._validateTenantApp(decl, tenant, app))
-            .then((decl) => {
-                delete decl[tenant][app];
-                decl.id = this._createUuid(tenant, app, 'delete');
-                return Promise.resolve(decl);
-            })
-            .then(decl => this._postDecl(decl));
+        return Promise.resolve()
+            .then(() => this.deleteApplications([[tenant, app]]));
     }
 
-    deleteApplications() {
-        return Promise.all([
-            this._getDecl(),
-            this.listApplicationNames()
-        ])
-            .then(([decl, appNames]) => {
+    deleteApplications(appNames) {
+        const doDeleteAll = !appNames || appNames.length === 0;
+        return Promise.resolve()
+            .then(() => this._getDecl())
+            .then((decl) => {
+                if (!doDeleteAll) {
+                    return Promise.resolve()
+                        .then(() => Promise.all(
+                            appNames.map(
+                                ([tenant, app]) => this._validateTenantApp(decl, tenant, app)
+                            )
+                        ))
+                        .then(() => decl);
+                }
+                return Promise.resolve()
+                    .then(() => this.listApplicationNames())
+                    .then((apps) => {
+                        appNames = apps;
+                    })
+                    .then(() => decl);
+            })
+            .then((decl) => {
                 appNames.forEach(([tenant, app]) => {
                     delete decl[tenant][app];
                 });
-                decl.id = this._createUuid('', '', 'delete-all');
+                if (appNames.length === 1) {
+                    decl.id = this._createUuid(appNames[0][0], appNames[0][1], 'delete');
+                } else {
+                    decl.id = this._createUuid('', '', (doDeleteAll) ? 'delete-all' : 'delete');
+                }
                 return Promise.resolve(decl);
             })
             .then(decl => this._postDecl(decl));
