@@ -938,6 +938,40 @@ describe('template worker tests', function () {
             .then(() => worker.templateProvider.listSets())
             .then(setNames => assert.strictEqual(setNames.length, 0));
     });
+    it('get_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+
+                const config = op.getBody();
+                console.log(JSON.stringify(config, null, 2));
+                assert.ok(config.deletedTemplateSets);
+            });
+    });
+    it('delete_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+
+        return worker.getConfig(0)
+            .then((config) => {
+                config.foo = 'bar';
+            })
+            .then(() => worker.onGet(op))
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.ok(op.body.foo);
+            })
+            .then(() => worker.onDelete(op))
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.strictEqual(op.body.foo, undefined);
+            });
+    });
     it('on_start', function () {
         const worker = createWorker();
 

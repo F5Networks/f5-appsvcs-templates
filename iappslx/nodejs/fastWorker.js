@@ -896,6 +896,17 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    getSettings(restOperation) {
+        const reqid = restOperation.requestId;
+        return Promise.resolve()
+            .then(() => this.getConfig(reqid))
+            .then((config) => {
+                restOperation.setBody(config);
+                this.completeRestOperation(restOperation);
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -917,6 +928,8 @@ class FASTWorker {
                 return this.getTasks(restOperation, itemid);
             case 'templatesets':
                 return this.getTemplateSets(restOperation, itemid);
+            case 'settings':
+                return this.getSettings(restOperation);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
@@ -1288,6 +1301,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    deleteSettings(restOperation) {
+        return Promise.resolve()
+            .then(() => this.configStorage.deleteItem(configKey))
+            .then(() => this.genRestResponse(restOperation, 200, 'success'))
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
     onDelete(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -1304,6 +1324,8 @@ class FASTWorker {
                 return this.deleteApplications(restOperation, itemid);
             case 'templatesets':
                 return this.deleteTemplateSets(restOperation, itemid);
+            case 'settings':
+                return this.deleteSettings(restOperation);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
