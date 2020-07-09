@@ -767,6 +767,11 @@ describe('template worker tests', function () {
             name: 'examples'
         });
         worker.storage.deleteItem('examples');
+        worker.configStorage.data = {
+            config: {
+                deletedTemplateSets: ['examples']
+            }
+        };
 
         const objFromSets = setList => setList.reduce((acc, curr) => {
             acc[curr.name] = curr;
@@ -803,6 +808,11 @@ describe('template worker tests', function () {
 
                 const sets = objFromSets(getTsOp.body);
                 assert.equal(sets.examples.enabled, true);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                console.log(JSON.stringify(config, null, 2));
+                assert.deepStrictEqual(config.deletedTemplateSets, []);
             });
     });
     it('delete_templateset', function () {

@@ -919,6 +919,14 @@ class FASTWorker {
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
+            .then(() => this.getConfig(reqid))
+            .then((config) => {
+                if (config.deletedTemplateSets.includes(tsid)) {
+                    config.deletedTemplateSets = config.deletedTemplateSets.filter(x => x !== tsid);
+                    return this.saveConfig(config, reqid);
+                }
+                return Promise.resolve();
+            })
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
                 if (e.message.match(/failed validation/)) {
