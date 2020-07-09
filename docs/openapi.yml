@@ -635,3 +635,6 @@ components:
           description: list of TemplateSets
           items:
             $ref: "#/components/schemas/TemplateSet"
+        config:
+          type: object
+          description: current config for the FAST iApps LX

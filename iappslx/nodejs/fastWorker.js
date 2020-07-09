@@ -458,6 +458,10 @@ class FASTWorker {
                 info.installedTemplates = tmplSets;
             })
             .then(() => this.exitTransaction(requestId, 'gathering template set data'))
+            .then(() => this.getConfig(requestId))
+            .then((config) => {
+                info.config = config;
+            })
             .then(() => info);
     }
 

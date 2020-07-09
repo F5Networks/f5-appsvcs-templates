@@ -204,7 +204,7 @@ describe('template worker tests', function () {
         }
     });
 
-    it('info', function () {
+    it('get_info', function () {
         const worker = createWorker();
         const op = new RestOp('info');
         nock('http://localhost:8100')
@@ -235,9 +235,13 @@ describe('template worker tests', function () {
                 assert(bigipTS.supported, `${bigipTS.name} has an unsupported hash: ${bigipTS.hash}`);
                 assert(bigipTS.enabled, `${bigipTS.name} should be marked as enabled`);
                 // assert(!bigipTS.updateAvailable, `${bigipTS.name} should not have an update available`);
+
+                const config = info.config;
+                assert.ok(config);
+                assert.ok(config.deletedTemplateSets);
             });
     });
-    it('info_without_as3', function () {
+    it('get_info_without_as3', function () {
         const worker = createWorker();
         const op = new RestOp('info');
         nock('http://localhost:8100')
