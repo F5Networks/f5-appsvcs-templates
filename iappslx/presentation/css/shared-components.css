@@ -38,7 +38,7 @@
 #selected-nav {
   flex: 1;
   background-color: #eae9e5 !important;
-  font-size: .85rem !important;
+  font-size: .90rem !important;
   text-align: center;
   text-shadow: -0.5px -0.5px 1px #fff !important;
   height: 34px;
@@ -208,13 +208,13 @@
   color: rgba(185, 85, 85, 0.9);
 }
 .btn-cancel {
-  background-color: var(--red-with-opacity);
+  background-color: var(--red);
   width: var(--normal-btn-width);
   margin: 0px 5px;
   color: #f3e6e6;
 }
 .btn-cancel:hover, .btn-cancel:active, .btn-cancel:focus {
-  background-color: var(--red);
+  background-color: var(--red-hover);
   color: white;
 }
 .btn-continue {

@@ -10,7 +10,7 @@ const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./js/ui-worker.js');
 const {
-    Div, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
+    Div, Span, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
 } = require('./js/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
@@ -411,84 +411,12 @@ route('templates', 'templates', () => {
                 return a;
             }, {});
 
-            const createRow = (rowName, rowList, actionsList, isGroupRow) => {
-                rowList = rowList || [];
-                actionsList = actionsList || [];
-                rowName = rowName.replace(/&nbsp;/g, ' ');
-
-                const row = new Row().setId(rowName).appendToParent(templateDiv);
-
-                if (isGroupRow) row.setClassList('row-dark');
-                else row.setClassList('row-light');
-
-                const name = new Div('td').setChildren(`${rowName}&nbsp`);
-
-                if (isGroupRow) {
-                    if (rowList[0] === 'supported') {
-                        new Svg('f5-icon').setToolstrip('Template Set Supported by F5')
-                            .setClassList('tooltipped-f5-icon').appendToParent(name);
-                    }
-                    name.setClassList('td-template-set');
-                } else {
-                    name.setClassList('td-template');
-                }
-                row.setColumn(name);
-
-                const applist = new Div('td');
-
-                if (!isGroupRow) {
-                    if (rowList.length > 2) {
-                        const appDiv = new Div('italic').setInnerText('*click to view*');
-
-                        row.setClassList('clickable');
-                        row.elem.onclick = () => {
-                            const appListTd = document.getElementById(rowName).children[1];
-                            const toggled = appListTd.innerText !== '*click to view*';
-
-                            UiWorker.destroyChildren(appListTd);
-
-                            if (!toggled) {
-                                rowList.forEach((item) => {
-                                    const tenantApp = item.split(' ');
-                                    const appDiv2 = new Div('fontsize-6rem').setChildren([
-                                        tenantApp[0],
-                                        new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
-                                        tenantApp[1]
-                                    ]);
-                                    appListTd.classList.remove('italic');
-                                    appListTd.appendChild(appDiv2.html());
-                                });
-                            } else {
-                                appListTd.innerText = '*click to view*';
-                                appListTd.classList.add('italic');
-                            }
-                        };
-                        applist.safeAppend(appDiv.html());
-                    } else {
-                        rowList.forEach((item) => {
-                            const appDiv = document.createElement('div');
-                            appDiv.innerText = item;
-                            applist.safeAppend(appDiv);
-                        });
-                    }
-                }
-
-                row.setColumn(applist);
-
-                const actions = new Div('td');
-
-                Object.entries(actionsList).forEach(([actName, actFn]) => {
-                    const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    actions.safeAppend(new Clickable(`icon:${iconClass}`).setOnClick(actFn).setToolstrip(`${actName} Template Set`));
-                });
-                row.setColumn(actions);
-            };
+            console.log('setMap:', setMap);
 
             Object.values(setMap).forEach((setData) => {
                 const setName = setData.name;
                 const setActions = {
-                    Remove: () => {
-                        const app = document.getElementById('app');
+                    Remove: (e) => {
                         new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be removed!`).setOkFunction(() => {
                             dispOutput(`Deleting ${setName}`);
                             return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
@@ -499,15 +427,14 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
-                        })
-                            .appendToParent(app);
+                        }).appendToParent(document.getElementById('app'));
+
+                        e.stopPropagation();
                     }
                 };
 
                 if (setData.updateAvailable) {
-                    setActions.Update = () => {
-                        const app = document.getElementById('app');
-
+                    setActions.Update = (e) => {
                         new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be updated!`).setOkFunction(() => {
                             dispOutput(`Updating ${setName}`);
                             return Promise.resolve()
@@ -525,15 +452,81 @@ route('templates', 'templates', () => {
                                     window.location.reload();
                                 })
                                 .catch(e => dispOutput(`Failed to install ${setName}:\n${e.message}`));
-                        }).appendToParent(app);
+                        }).appendToParent(document.getElementById('app'));
+
+                        e.stopPropagation();
                     };
                 }
 
-                createRow(setName, (setData.supported) ? ['supported'] : [], setActions, true);
+                console.log('setData: ', setData);
+
+                const templateSetRow = new Row('tr row-dark clickable').setId(setName).appendToParent(templateDiv).setColumns([
+                    () => { 
+                        const tempSetName = new Div('td td-template-set').setChildren([
+                            new Icon('fa-angle-down').html(),
+                            `${setName}&nbsp`,
+                        ]);
+                        const traitsDiv = new Span('traits');
+                        if(setData.supported) { 
+                            new Svg('f5-icon').setToolstrip('Template Set Supported by F5')
+                            .setClassList('tooltipped-f5-icon').appendToParent(traitsDiv);
+                        }
+                        if(setData.enabled) {
+                            new Icon('fa-check-circle').setToolstrip('Template Set is Enabled')
+                            .setClassList('tooltipped-f5-icon').appendToParent(traitsDiv);
+                        }
+                        traitsDiv.appendToParent(tempSetName);
+                        return tempSetName;
+                    },
+                    new Td(),
+                    () => {
+                        const actions = new Td();
+                        Object.entries(setActions).forEach(([actName, actFn]) => {
+                            const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
+                            actions.safeAppend(new Clickable(`icon:${iconClass}`).setOnClick(actFn).setToolstrip(`${actName} Template Set`));
+                        });
+                        return actions;
+                    }
+                ]);
+
+                const tempSetChild = `${setName}-child`;
+                templateSetRow.makeExpandable(tempSetChild);
+
                 setMap[setName].templates.forEach((tmpl) => {
                     const templateName = tmpl.name;
-                    const appList = appDict[templateName] || [];
-                    createRow(`&nbsp;&nbsp;&nbsp;&nbsp;/${templateName}`, appList.map(app => `${app.tenant} ${app.name}`));
+                    const appList = appDict[tmpl.name] || [];
+                    const templateRow = new Row('tr row-light').setClassList(tempSetChild).appendToParent(templateDiv);
+                    templateRow.setColumns([
+                        templateName,
+                        () => {
+                            const appsTd = new Td();
+                            const applications = appList.map(app => `${app.tenant} ${app.name}`);
+
+                            if (applications.length > 2) {
+                                templateRow.setClassList('clickable');
+                                appsTd.setClassList('italic').setInnerText('*click to view*');
+                                templateRow.onclick = () => {
+                                    if (appsTd.innerText === '*click to view*') {   // !toggled
+                                        applications.forEach((item) => {
+                                            const tenantApp = item.split(' ');
+                                            new Div('fontsize-6rem').setChildren([
+                                                tenantApp[0],
+                                                new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
+                                                tenantApp[1]
+                                            ]).removeClass('italic').appendToParent(appsTd);
+                                        });
+                                    } else {
+                                        appsTd.innerText = '*click to view*';
+                                        appsTd.classList.add('italic');
+                                    }
+                                }
+                            }
+                            else { }
+                        },
+                        new Td(),
+                        new Td(),
+                        new Td()
+                    ]);
                 });
             });
         })

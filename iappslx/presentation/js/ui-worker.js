@@ -79,11 +79,15 @@ module.exports = class UiWorker {
         UiWorker.destroyChildren(this.app);
 
         this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
+
+        setTimeout(() => {
+            if(this.loader.elem) this.loader.destroyItself();
+        }, 4000);
     }
 
     completeMoveToRoute() {
-        if(this.curRoute === 'api')  this.app.classList.add('height100perc');
-        else  this.app.classList.remove('height100perc');
+        if(this.curRoute === 'api')  this.app.classList.add('height-100perc');
+        else  this.app.classList.remove('height-100perc');
         this.navBar.enable();
         this.loader.destroyItself();
     }
