@@ -252,5 +252,7 @@
 /*********************************
     TOOLTIP
 **********************************/
-.tooltip-red:first-child:hover { color: var(--red-dark); }
+.tooltip-red .icon:hover { color: var(--red-dark); }
 .tooltip-red::after { background-color: var(--red-dark); }
+.tooltip-red .icon::after { background-color: var(--red-dark); }
+/* .tooltip-red .icon:first-child::after { background-color: var(--red-dark); } */

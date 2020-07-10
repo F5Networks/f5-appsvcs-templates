@@ -498,7 +498,7 @@ class Modal extends Elem {
     }
 
     setTitle(title) {
-        if(title !== 'Warning' || title != 'Enabling Template Set') {   // Title determines type of Modal. Only 'Warning' modal currently supported
+        if(title !== 'Warning' && title !== 'Enabling Template Set') {   // Title determines type of Modal. Only 'Warning' modal currently supported
             console.error('Unsupported Modal');
             return;
         }
