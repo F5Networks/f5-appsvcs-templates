@@ -386,7 +386,17 @@ route('templates', 'templates', () => {
             .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`));
     };
     document.getElementById('btn-delete-all-ts').onclick = () => {
-
+        new Modal().setTitle('Warning').setMessage(`All Template Sets will be removed!`).setOkFunction(() => {
+            dispOutput(`Deleting All Template Sets`);
+            return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
+                method: 'DELETE'
+            })
+                .then(() => {
+                    dispOutput(`${setName} deleted successfully`);
+                    window.location.reload();
+                })
+                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
+        }).appendToParent(document.getElementById('app'));
     }
     
     const templateDiv = document.getElementById('template-list');
@@ -458,7 +468,11 @@ route('templates', 'templates', () => {
                     };
                 }
 
-                console.log('setData: ', setData);
+                if(setName === 'examples') {    //test
+                    console.log('setData:', setData);
+                    setData.enabled = false;
+                    console.log('setName examples just disabled for test. setData:', setData);
+                }
 
                 const templateSetRow = new Row('tr row-dark clickable').setId(setName).appendToParent(templateDiv).setColumns([
                     () => { 
@@ -473,6 +487,10 @@ route('templates', 'templates', () => {
                         }
                         if(setData.enabled) {
                             new Icon('fa-check-circle').setToolstrip('Template Set is Enabled')
+                            .setClassList('tooltipped-f5-icon').appendToParent(traitsDiv);
+                        }
+                        else {  // can a template set be removable if it's disabled?
+                            new Icon('fa-times-circle').setClassList('red-base-forecolor').setToolstrip('Template Set is Enabled')
                             .setClassList('tooltipped-f5-icon').appendToParent(traitsDiv);
                         }
                         traitsDiv.appendToParent(tempSetName);
@@ -492,41 +510,58 @@ route('templates', 'templates', () => {
                 const tempSetChild = `${setName}-child`;
                 templateSetRow.makeExpandable(tempSetChild);
 
+                if(!setData.enabled) { templateSetRow.setClassList('row-dark-red red-hover'); }
+
                 setMap[setName].templates.forEach((tmpl) => {
                     const templateName = tmpl.name;
                     const appList = appDict[tmpl.name] || [];
+
                     const templateRow = new Row('tr row-light').setClassList(tempSetChild).appendToParent(templateDiv);
                     templateRow.setColumns([
                         templateName,
                         () => {
-                            const appsTd = new Td();
-                            const applications = appList.map(app => `${app.tenant} ${app.name}`);
+                            const applications = () => {
+                                const applications = appList.map(app => `${app.tenant} ${app.name}`);
+                                const div = new Div();
+                                applications.forEach((item) => {
+                                    const tenantApp = item.split(' ');
+                                    new Div('fontsize-6rem').setChildren([
+                                        tenantApp[0],
+                                        new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
+                                        tenantApp[1]
+                                    ]).appendToParent(div);
+                                });
+                                return div;
+                            }
 
-                            if (applications.length > 2) {
-                                templateRow.setClassList('clickable');
+                            const appsTd = new Td().appendToParent(templateRow);
+                            if (appList.length < 3) {
+                                appsTd.safeAppend(applications());
+                            }
+                            else {
+                                console.log('applications: ', applications);
                                 appsTd.setClassList('italic').setInnerText('*click to view*');
-                                templateRow.onclick = () => {
-                                    if (appsTd.innerText === '*click to view*') {   // !toggled
-                                        applications.forEach((item) => {
-                                            const tenantApp = item.split(' ');
-                                            new Div('fontsize-6rem').setChildren([
-                                                tenantApp[0],
-                                                new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
-                                                tenantApp[1]
-                                            ]).removeClass('italic').appendToParent(appsTd);
-                                        });
+                                console.log('templateRow:', templateRow);
+                                templateRow.setClassList('clickable');
+                                templateRow.elem.onclick = () => {
+                                    if (appsTd.elem.innerText === '*click to view*') {
+                                        UiWorker.destroyChildren(appsTd);
+                                        appsTd.elem.innerText = '';
+                                        appsTd.elem.classList.remove('italic');
+                                        appsTd.safeAppend(applications());
                                     } else {
-                                        appsTd.innerText = '*click to view*';
-                                        appsTd.classList.add('italic');
+                                        UiWorker.destroyChildren(appsTd.elem);
+                                        appsTd.elem.innerText = '*click to view*';
+                                        appsTd.elem.classList.add('italic');
                                     }
                                 }
                             }
-                            else { }
+                            return appsTd;
                         },
-                        new Td(),
-                        new Td(),
                         new Td()
                     ]);
+
+                    if(!setData.enabled) { templateRow.setClassList('row-light-red'); }
                 });
             });
         })

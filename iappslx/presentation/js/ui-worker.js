@@ -1,4 +1,4 @@
-var { Loader } = require('./elements');
+var { Loader, Elem } = require('./elements');
 
 class NavigationBar {
     constructor(route) {
@@ -94,6 +94,8 @@ module.exports = class UiWorker {
 
     static destroyChildren(elem) {
         if(elem) {
+            if(elem instanceof Elem)
+                elem = elem.elem;
             while (elem.firstChild) {
                 elem.lastChild.remove();
             }

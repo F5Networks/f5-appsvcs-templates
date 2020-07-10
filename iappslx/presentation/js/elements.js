@@ -381,8 +381,6 @@ class Row extends Elem {
                 }
                 this.elem.classList.add('expanded');
                 const angle = this.elem.getElementsByClassName('fa-angle-right');
-                console.log('this.elem', this.elem);
-                console.log('expanding. angle: ', angle);
                 if(angle[0]) {
                     angle[0].classList.add('fa-angle-down');
                     angle[0].classList.remove('fa-angle-right');
@@ -395,8 +393,6 @@ class Row extends Elem {
                 }
                 this.elem.classList.remove('expanded');
                 const angle = this.elem.getElementsByClassName('fa-angle-down');
-                console.log('this.elem', this.elem);
-                console.log('collapsing. angle: ', angle);
                 if(angle[0]) {
                     angle[0].classList.add('fa-angle-right');
                     angle[0].classList.remove('fa-angle-down');

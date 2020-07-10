@@ -116,6 +116,8 @@ button:disabled:hover {
 .row-dark {
   background-color: var(--dark-row-color);
 }
+.row-dark-red { background-color: #e7dbdd40; }
+.row-light-red { background-color: #e7dbdd40; }
 .row-light {
   background-color: var(--light-row-color);
 }
@@ -232,7 +234,8 @@ button:disabled:hover {
 .display-none { display: none; }
 .inline-flex { display: inline-flex; }
 
-.title-color { color: var(--title-forecolor);}
+.red-base-forecolor { color: var(--red-base); }
+.title-color { color: var(--title-forecolor); }
 .danger-color { color: var(--danger-color); }
 .success-color { color: var(--success-color); }
 .white { color: white; }
@@ -248,6 +251,7 @@ button:disabled:hover {
 .clickable:hover { background-color: rgba(240, 243, 202, 0.1); }
 .clickable-darker { cursor: pointer; }
 .clickable-darker:hover { background-color: rgba(240, 243, 202, 0.25); }
+.red-hover:hover { background-color: rgba(243, 202, 211, 0.1); }
 .no-hover:hover { background-color: inherit; }
 
 .cursor-default { cursor: default; }
