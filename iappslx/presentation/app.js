@@ -391,11 +391,11 @@ route('templates', 'templates', () => {
             return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
                 method: 'DELETE'
             })
-                .then(() => {
-                    dispOutput(`${setName} deleted successfully`);
-                    window.location.reload();
-                })
-                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
+            .then(() => {
+                dispOutput(`${setName} deleted successfully`);
+                window.location.reload();
+            })
+            .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
         }).appendToParent(document.getElementById('app'));
     }
     
@@ -432,11 +432,11 @@ route('templates', 'templates', () => {
                             return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
                                 method: 'DELETE'
                             })
-                                .then(() => {
-                                    dispOutput(`${setName} deleted successfully`);
-                                    window.location.reload();
-                                })
-                                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
+                            .then(() => {
+                                dispOutput(`${setName} deleted successfully`);
+                                window.location.reload();
+                            })
+                            .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
                         }).appendToParent(document.getElementById('app'));
 
                         e.stopPropagation();
