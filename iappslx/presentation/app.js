@@ -411,7 +411,6 @@ route('templates', 'templates', () => {
     }
 
     const curFilter = UiWorker.getStore(templatesFilterKey);
-    console.log('curFilter: ', curFilter);
     if (document.getElementById(curFilter).innerText.toLowerCase() !== templatesFilterElem.innerText.toLowerCase()) {
         selected.classList.remove('selected');
         document.getElementById(curFilter).classList.add('selected');
@@ -419,7 +418,6 @@ route('templates', 'templates', () => {
 
     UiWorker.iterateHtmlCollection(menu, (item) => {
         item.onclick = () => {
-            console.log('clicked. templatesFilterKey stored: ', item.id);
             UiWorker.store(templatesFilterKey, item.id);
             window.location.reload();
         };
@@ -434,12 +432,8 @@ route('templates', 'templates', () => {
         getJSON('templatesets?showDisabled=true')
     ])
         .then(([applications, templatesets, disabledTemplateSets]) => {
-            console.log('applications', applications);
-            console.log('templatesets', templatesets);
-            console.log('disabledTemplateSets', disabledTemplateSets);
             const filter = document.getElementById('templates-filter').getElementsByClassName('selected')[0].id.toLowerCase();
             const allTemplates = templatesets.concat(disabledTemplateSets);
-            console.log('allTemplates:', allTemplates);
             const setMap = allTemplates.reduce((acc, curr) => {
                 if (filter === 'all') acc[curr.name] = curr;
                 if (filter === 'f5' && curr.supported) acc[curr.name] = curr;
@@ -447,8 +441,6 @@ route('templates', 'templates', () => {
                 if (filter === 'disabled' && !curr.enabled) acc[curr.name] = curr;
                 return acc;
             }, {});
-
-            console.log('setMap:', setMap);
 
             // build dictionary of app lists, keyed by template
             const appDict = applications.reduce((a, c) => {
@@ -483,9 +475,7 @@ route('templates', 'templates', () => {
                 };
 
                 if (!setData.enabled) {
-                    console.log('!setData.enabled. Building Install function');
                     setActions.Install = (e) => {
-                        console.log('e:', e);
                         new Modal().setTitle('Enabling Template Set').setMessage(`Template Set '${setName}' will be enabled.`).setOkFunction(() => {
                             dispOutput(`Enabling ${setName}`);
                             return Promise.resolve()
