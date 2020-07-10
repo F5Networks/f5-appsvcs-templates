@@ -761,6 +761,24 @@ class FASTWorker {
                 const appsData = [];
                 let promiseChain = Promise.resolve();
                 data.forEach((x) => {
+                    if (!x.name) {
+                        promiseChain = promiseChain
+                            .then(() => Promise.reject(this.genRestResponse(
+                                restOperation,
+                                400,
+                                'name property is missing'
+                            )));
+                        return;
+                    }
+                    if (!x.parameters) {
+                        promiseChain = promiseChain
+                            .then(() => Promise.reject(this.genRestResponse(
+                                restOperation,
+                                400,
+                                'parameters property is missing'
+                            )));
+                        return;
+                    }
                     const tsData = {};
                     const [setName, templateName] = x.name.split('/');
                     promiseChain = promiseChain

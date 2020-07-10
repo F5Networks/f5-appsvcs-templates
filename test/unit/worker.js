@@ -512,7 +512,8 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: 'foobar/does_not_exist'
+            name: 'foobar/does_not_exist',
+            parameters: {}
         });
         return worker.onPost(op)
             .then(() => {
@@ -524,7 +525,8 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: '/examples/simple_udp_defaults'
+            name: '/examples/simple_udp_defaults',
+            parameters: {}
         });
         return worker.onPost(op)
             .then(() => {
@@ -546,6 +548,28 @@ describe('template worker tests', function () {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.status, 400);
                 assert.match(op.body.message, /Parameters failed validation/);
+            });
+    });
+    it('post_apps_bad_properties', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+        });
+
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /name property is missing/);
+            })
+            .then(() => op.setBody({
+                name: 'examples/simple_udp_defaults'
+            }))
+            .then(() => worker.onPost(op))
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /parameters property is missing/);
             });
     });
     it('post_apps', function () {
