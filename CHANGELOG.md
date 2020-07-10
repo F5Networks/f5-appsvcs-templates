@@ -1,4 +1,4 @@
-# 1.2
+# 1.2.0
 ## Added
 * Add confirmation dialogs to dangerous operations
 * Add spinner loader to indicate when page is loading
@@ -21,7 +21,7 @@
 * Restrict allowed characters for tenant and application names on bigip-fast-templates
 * Stop allowing the deletion of in-use template sets
 
-# 1.1
+# 1.1.0
 ## Added
 * Support DELETE on /applications endpoint (deletes all applications managed by FAST)
 * Support DELETE on /templatesets endpoint (deletes all installed templates)
@@ -42,7 +42,7 @@
 
 ## Removed
 
-# 1.0
+# 1.0.0
 ## Added
 * POST to /applications can now take an array of applications
 * Better support for external schema references when using the FAST CLI
@@ -66,7 +66,7 @@
 
 ## Removed
 
-# 0.3
+# 0.3.0
 ## Core
 * Fix parsing issues when there are multiple dependencies
 * Expand task to include error messages, application name, and tenant name
@@ -104,12 +104,12 @@
 * bigip-fast-templates/http: Use shareNodes for pool members
 * bigip-fast-templates/tcp added
 
-# 0.2
+# 0.2.0
 ## Core
 * Various fixes for parsing nested sections and partials
 * Allow coercion of sections into strings
 * Add defaults for primitive types (default to empty/falsey values)
 * Allow getting variable title and descriptions from the template definitions list
  
-# 0.1
+# 0.1.0
 Initial Release
