@@ -92,6 +92,36 @@ module.exports = class UiWorker {
         this.loader.destroyItself();
     }
 
+    static selectChildren(menu, selectionFunc) {
+        for(let i = 0; i < menu.children.length; i++) {
+            console.log('menu.children[i]', menu.children[i]);
+            if (selectionFunc(menu.children[i].id)) {
+                menu.children[i].classList.add('selected');
+                return;
+            }
+        }
+        console.error('reached selectChildren without finding child. children: ', menu);
+    }
+
+    static iterateHtmlCollection(collection, func) {
+        console.log('iterateHtmlCollection, children: ', collection);
+        for(let i = 0; i < collection.children.length; i++) {
+            func(collection.children[i]);
+        }
+    }
+
+    static store(key, value, local = true) {
+        if(local) {
+            localStorage.setItem(key, value);
+        }
+    }
+
+    static getStore(key, local = true) {
+        if(local) {
+            return localStorage.getItem(key);
+        }
+    }
+
     static destroyChildren(elem) {
         if(elem) {
             if(elem instanceof Elem)
