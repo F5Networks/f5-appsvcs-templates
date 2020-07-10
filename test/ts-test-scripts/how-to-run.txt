@@ -6,3 +6,6 @@
 
 Currently available scripts:
     npm run deploy-apps {amount:number} {tenantTarget?:string = 'foo'}
+
+Note: there is currently a bug where if you leave dist / node_modules under ts-test-scripts, the top-level Node scripts will fail.
+Delete these folders once you're done.

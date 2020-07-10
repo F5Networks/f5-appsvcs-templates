@@ -1,11 +1,14 @@
 :root {
+  --grey: #414c56bd;
   --base-black: #3a404b;
   --base-color: #222a31eb;
+  --red-dark: #442222f0;
   --title-forecolor: rgba(48, 55, 66, 0.95);
   --popup-background-color: rgb(58, 64, 75, .98);
   --success-color: #026202;
   --green-base: #5e825c;
   --green: rgb(94, 130, 92, .9);
+  --green-light: #d6ebd8;
   --green-hover: #668863;
   --red-base: rgba(126, 35, 35, 0.849);
   --red-base-hover: rgba(145, 40, 40, 0.849);
@@ -116,7 +119,7 @@ button:disabled:hover {
 .row-dark {
   background-color: var(--dark-row-color);
 }
-.row-dark-red { background-color: #e7dbdd40; }
+.row-dark-red { background-color: rgba(243, 202, 211, 0.1); }
 .row-light-red { background-color: #e7dbdd40; }
 .row-light {
   background-color: var(--light-row-color);
@@ -222,9 +225,7 @@ button:disabled:hover {
   height: 16px;
 }
 
-.faded-active-border:active {
-  border: 1px solid #f0f3ca59;
-}
+.faded-active-border:active { border: 1px solid #f0f3ca59; }
 
 #app-list .tr:nth-child(even), #task-list .tr:nth-child(even) { background-color: var(--dark-row-color); }
 
@@ -238,6 +239,8 @@ button:disabled:hover {
 .title-color { color: var(--title-forecolor); }
 .danger-color { color: var(--danger-color); }
 .success-color { color: var(--success-color); }
+.grey-forecolor { color: var(--grey); }
+.light-green-forecolor { color: var(--green-light); }
 .white { color: white; }
 .fontsize-5rem { font-size: .5rem }
 .fontsize-6rem { font-size: .6rem }
@@ -251,7 +254,7 @@ button:disabled:hover {
 .clickable:hover { background-color: rgba(240, 243, 202, 0.1); }
 .clickable-darker { cursor: pointer; }
 .clickable-darker:hover { background-color: rgba(240, 243, 202, 0.25); }
-.red-hover:hover { background-color: rgba(243, 202, 211, 0.1); }
+.red-hover:hover { background-color: rgba(243, 202, 211, 0.15); }
 .no-hover:hover { background-color: inherit; }
 
 .cursor-default { cursor: default; }

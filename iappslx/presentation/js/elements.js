@@ -117,6 +117,8 @@ class Elem {
         children = this.sanitizeList(children);
         if (children) {
             for (let i = 0; i < children.length; i += 1) {
+                if(children[i] instanceof Function)
+                    children[i] = children[i]();
                 this.safeAppend(children[i]);
             }
         }
@@ -374,28 +376,27 @@ class Row extends Elem {
 
     makeExpandable(childrenClassName) {
         this.elem.onclick = () => {
-            if(!this.elem.classList.contains('expanded')) {
-                const children = document.getElementsByClassName(childrenClassName);
+            const children = document.getElementsByClassName(childrenClassName);
+            if(this.elem.classList.contains('expanded')) {
                 for(let i = 0; i < children.length; i++) {
                     children[i].classList.add('display-none');
-                }
-                this.elem.classList.add('expanded');
-                const angle = this.elem.getElementsByClassName('fa-angle-right');
-                if(angle[0]) {
-                    angle[0].classList.add('fa-angle-down');
-                    angle[0].classList.remove('fa-angle-right');
-                }
-            }
-            else {
-                const children = document.getElementsByClassName(childrenClassName);
-                for(let i = 0; i < children.length; i++) {
-                    children[i].classList.remove('display-none');
                 }
                 this.elem.classList.remove('expanded');
                 const angle = this.elem.getElementsByClassName('fa-angle-down');
                 if(angle[0]) {
                     angle[0].classList.add('fa-angle-right');
                     angle[0].classList.remove('fa-angle-down');
+                }
+            }
+            else {
+                for(let i = 0; i < children.length; i++) {
+                    children[i].classList.remove('display-none');
+                }
+                this.elem.classList.add('expanded');
+                const angle = this.elem.getElementsByClassName('fa-angle-right');
+                if(angle[0]) {
+                    angle[0].classList.add('fa-angle-down');
+                    angle[0].classList.remove('fa-angle-right');
                 }
             }
         }
@@ -497,19 +498,30 @@ class Modal extends Elem {
     }
 
     setTitle(title) {
-        if(title !== 'Warning') {   // Title determines type of Modal. Only 'Warning' modal currently supported
+        if(title !== 'Warning' && title !== 'Enabling Template Set') {   // Title determines type of Modal. Only 'Warning' modal currently supported
             console.error('Unsupported Modal');
             return;
         }
         this.title = title;
+        
         new Div('modal-header').setChildren([
             new Clickable('icon:fa-times').setClassList(['modal-exit-icon', 'float-right', 'faded-active-border']).setOnClick(() => {
                 this.destroyItself()
             }),
-            new Div(['modal-title', 'h4']).setChildren([
-                new Icon('fa-exclamation-triangle').setClassList('exclamation-icon'),
-                'Warning'
-            ])
+            () => {
+                if(title === 'Warning') {
+                    return new Div(['modal-title', 'h4']).setChildren([
+                        new Icon('fa-exclamation-triangle').setClassList('exclamation-icon'),
+                        `${title}`
+                    ])
+                }
+                if(title === 'Enabling Template Set') {
+                    return new Div(['modal-title', 'h4']).setChildren([
+                        new Icon('fa-info-circle').setClassList('info-icon'),
+                        `${title}`
+                    ])
+                }
+            }
         ]).appendToParent(this.elem.children[0]);
         return this;
     }

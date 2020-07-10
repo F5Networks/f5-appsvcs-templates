@@ -115,7 +115,7 @@
 }
 
 .arrow-danger:after {
-  border-color: #442222f0 transparent;
+  border-color: var(--red-dark) transparent;
 }
 
 /*********************************
@@ -207,6 +207,14 @@
 .exclamation-icon:hover {
   color: rgba(185, 85, 85, 0.9);
 }
+.info-icon {
+  color: rgba(128, 176, 126, 1);
+  font-size: 1.5rem;
+  margin-right: 8px;
+  position: relative;
+  top: 2px;
+}
+.info-icon:hover { color: rgba(125, 174, 123, 1); }
 .btn-cancel {
   background-color: var(--red);
   width: var(--normal-btn-width);
@@ -240,3 +248,11 @@
   background-color: var(--red-base-hover);
   color: white;
 }
+
+/*********************************
+    TOOLTIP
+**********************************/
+.tooltip-red .icon:hover { color: var(--red-dark); }
+.tooltip-red::after { background-color: var(--red-dark); }
+.tooltip-red .icon::after { background-color: var(--red-dark); }
+/* .tooltip-red .icon:first-child::after { background-color: var(--red-dark); } */
