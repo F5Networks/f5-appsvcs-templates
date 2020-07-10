@@ -406,24 +406,27 @@ route('templates', 'templates', () => {
     const menu = templatesFilterElem.getElementsByClassName('menu')[0];
     const selected = templatesFilterElem.getElementsByClassName('selected')[0];
     if (!UiWorker.getStore(templatesFilterKey)) {
-        UiWorker.store(templatesFilterKey, filterElem.innerText);
-        console.log('templatesFilter empty in store. Pulled from  stored:', filterElem.innerText);
+        UiWorker.store(templatesFilterKey, selected.id);
+        console.log('templatesFilter empty in store. Pulled from  stored:', selected.id);
     }
 
     const curFilter = UiWorker.getStore(templatesFilterKey);
-    if (!curFilter.toLowerCase().includes(selected.id.toLowerCase())) {
+    console.log('curFilter: ', curFilter);
+    if (document.getElementById(curFilter).innerText.toLowerCase() !== templatesFilterElem.innerText.toLowerCase()) {
         selected.classList.remove('selected');
-        UiWorker.selectChildren(menu, menuItemId => curFilter.toLowerCase().includes(menuItemId.toLowerCase()));
+        document.getElementById(curFilter).classList.add('selected');
+        // UiWorker.selectChildren(menu, curFilter);
     }
 
     UiWorker.iterateHtmlCollection(menu, (item) => {
         item.onclick = () => {
+            console.log('clicked. templatesFilterKey stored: ', item.id);
             UiWorker.store(templatesFilterKey, item.id);
             window.location.reload();
         };
     });
 
-    filterElem.innerText = document.getElementById(UiWorker.getStore(templatesFilterKey)).innerText;
+    filterElem.innerText = document.getElementById(curFilter).innerText;
 
     const templateDiv = document.getElementById('template-list');
     return Promise.all([
@@ -464,7 +467,7 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} deleted successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.message}`));
+                                .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`));
                         })
                             .appendToParent(document.getElementById('app'));
 
@@ -498,7 +501,7 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} enabled successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to enable ${setName}:\n${e.message}`));
+                                .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`));
                         })
                             .appendToParent(document.getElementById('app'));
 
@@ -524,7 +527,7 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} installed successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to install ${setName}:\n${e.message}`));
+                                .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`));
                         })
                             .appendToParent(document.getElementById('app'));
 
@@ -601,10 +604,10 @@ route('templates', 'templates', () => {
                     templateRow.setColumns([
                         templateName,
                         () => {
-                            const applications = () => {
-                                const applications = appList.map(app => `${app.tenant} ${app.name}`);
+                            const applicationsDiv = () => {
+                                const applicationsMapped = appList.map(app => `${app.tenant} ${app.name}`);
                                 const div = new Div();
-                                applications.forEach((item) => {
+                                applicationsMapped.forEach((item) => {
                                     const tenantApp = item.split(' ');
                                     new Div('fontsize-6rem').setChildren([
                                         tenantApp[0],
@@ -617,7 +620,7 @@ route('templates', 'templates', () => {
 
                             const appsTd = new Td().appendToParent(templateRow);
                             if (appList.length < 3) {
-                                appsTd.safeAppend(applications());
+                                appsTd.safeAppend(applicationsDiv());
                             } else {
                                 appsTd.setClassList('italic').setInnerText('*click to view*');
                                 templateRow.setClassList('clickable');
@@ -626,7 +629,7 @@ route('templates', 'templates', () => {
                                         UiWorker.destroyChildren(appsTd);
                                         appsTd.elem.innerText = '';
                                         appsTd.elem.classList.remove('italic');
-                                        appsTd.safeAppend(applications());
+                                        appsTd.safeAppend(applicationsDiv());
                                     } else {
                                         UiWorker.destroyChildren(appsTd.elem);
                                         appsTd.elem.innerText = '*click to view*';

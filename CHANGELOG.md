@@ -10,6 +10,8 @@
 * Add template set hash (setHash) to application data
 * Add accordion to the template sets on the deploy page
 * Add additional status reporting for tasks in the Deploy Log
+* Add filter to Templates Page
+* Add delete all button to Templates Page
 
 ## Fixed
 * Stop printing empty strings to the console

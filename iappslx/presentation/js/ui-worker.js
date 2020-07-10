@@ -92,10 +92,12 @@ module.exports = class UiWorker {
         this.loader.destroyItself();
     }
 
-    static selectChildren(menu, selectionFunc) {
+    static selectChildren(menu, id) {
         for(let i = 0; i < menu.children.length; i++) {
+            console.log('menu:', menu);
+            console.log('id:', id);
             console.log('menu.children[i]', menu.children[i]);
-            if (selectionFunc(menu.children[i].id)) {
+            if (menu.children[i].id === id) {
                 menu.children[i].classList.add('selected');
                 return;
             }
