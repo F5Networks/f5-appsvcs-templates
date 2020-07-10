@@ -4,7 +4,14 @@ FAST Overview
 =============
 
 This section has a summary of FAST's user interface and how to manage applications
-using loaded templates.
+using loaded templates as well as a short Overview video.
+
+|video|
+
+.. |video| raw:: html
+ 
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/sAP30rwIubs" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
 
 FAST Menu Tabs
 --------------
