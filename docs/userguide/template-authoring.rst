@@ -42,17 +42,20 @@ Hello World example
 
 Choose an example AS3 declaration that fits your use case.  See `Example declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/examples.html>`_ for AS3 examples.
 
-For our example we are creating a simple Hello World template with the following objects and uploading it to FAST.
+For our example we are creating a simple Hello World template using `Example 1: Simple HTTP application <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/examples.html>`_ then uploading it to FAST.
 
-* Partition (tenant) named ``Sample_01``.
-* Virtual server (HTTP) named ``service``.
-* Pool named ``web_pool`` with 2 members monitored by the default *HTTP* health monitor.
+| This basic declaration creates an HTTP Virtual IP with the following parameters:
+
+* Partition (tenant) named ``Sample_01``
+* Application named ``A1``
+* Virtual server (HTTP) named ``service``, with a VIP at ``10.0.1.10``
+* Pool named ``web_pool`` with 2 members monitored by the default *HTTP* health monitor
+* Node IP addresses listed as ``serverAddresses``, ``192.0.1.10`` and ``192.0.1.11``
 
 Later sections go into detail about the template specification and its entire feature set.
 
-|
 
-#. Create a file named **hello.mst,** then copy the following AS3 declaration into it:
+1. Create a file named **hello.mst,** then copy the following AS3 declaration into it:
 
    .. code-block:: json
 
@@ -95,13 +98,20 @@ Later sections go into detail about the template specification and its entire fe
           }
       }
 
-   This is a basic template that creates an HTTP Virtual IP allowing you to specify the Virtual IP, a list of server addresses, and a port to use for both the front and back end.
-   The tenant name and application name are also specified by the user.
+   
 
-#. Save the file.
-#. The parameterized declaration.
+2. Save the file.
 
-   .. code-block:: none
+3. Parameterization is changing static, hard coded sections to variables that are filled in at deploy time. 
+
+For this example, the following items are changed:
+
+|   Change "Sample_01" to {{tenant_name}} - this will be the AS3 tenant
+|   Change "A1" to {{application_name}} - this will be the name of the application
+|	  Change the virtualAddresses ip address from "10.0.0.1" to "{{virtual_address}} - this will be the user entered ip address for the virtual address
+|   Change the web_pool server_addresses from "10.x.x.x", "10.y.y.y" to {{server_addresses::array}}
+
+.. code-block:: none
 
       {
         "class": "AS3",
@@ -138,9 +148,10 @@ Later sections go into detail about the template specification and its entire fe
             }
           }
       }
+Once the declaration is parameterized to fit your needs, it is the template you use to deploy your BIG-IP(s).  
 
-#. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
-#. Create the following file named **params.json**:
+4. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
+5. Create the following file named **params.json**:
 
    .. code-block:: json
 
