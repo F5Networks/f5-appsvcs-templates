@@ -281,7 +281,7 @@ route('create', 'create', () => {
             setData.templates.map(x => x.name).forEach((item) => {
                 templateSet.addExpandable(
                     new Clickable('button').setClassList(['btn', 'btn-template'])
-                        .setInnerText(item).setOnClick(() => { newEditor(item); })
+                        .setInnerText(item).setOnClick((e) => { newEditor(item); e.stopPropagation(); })
                 );
             });
             templateSet.completeSetup();
@@ -415,7 +415,6 @@ route('templates', 'templates', () => {
     if (document.getElementById(curFilter).innerText.toLowerCase() !== templatesFilterElem.innerText.toLowerCase()) {
         selected.classList.remove('selected');
         document.getElementById(curFilter).classList.add('selected');
-        // UiWorker.selectChildren(menu, curFilter);
     }
 
     UiWorker.iterateHtmlCollection(menu, (item) => {
@@ -431,17 +430,25 @@ route('templates', 'templates', () => {
     const templateDiv = document.getElementById('template-list');
     return Promise.all([
         getJSON('applications'),
-        getJSON('templatesets')
+        getJSON('templatesets'),
+        getJSON('templatesets?showDisabled=true')
     ])
-        .then(([applications, templatesets]) => {
+        .then(([applications, templatesets, disabledTemplateSets]) => {
+            console.log('applications', applications);
+            console.log('templatesets', templatesets);
+            console.log('disabledTemplateSets', disabledTemplateSets);
             const filter = document.getElementById('templates-filter').getElementsByClassName('selected')[0].id.toLowerCase();
-            const setMap = templatesets.reduce((acc, curr) => {
+            const allTemplates = templatesets.concat(disabledTemplateSets);
+            console.log('allTemplates:', allTemplates);
+            const setMap = allTemplates.reduce((acc, curr) => {
                 if (filter === 'all') acc[curr.name] = curr;
                 if (filter === 'f5' && curr.supported) acc[curr.name] = curr;
                 if (filter === 'enabled' && curr.enabled) acc[curr.name] = curr;
                 if (filter === 'disabled' && !curr.enabled) acc[curr.name] = curr;
                 return acc;
             }, {});
+
+            console.log('setMap:', setMap);
 
             // build dictionary of app lists, keyed by template
             const appDict = applications.reduce((a, c) => {
@@ -474,12 +481,6 @@ route('templates', 'templates', () => {
                         e.stopPropagation();
                     }
                 };
-
-                if (setName === 'examples') { // test
-                    console.log('setData:', setData);
-                    setData.enabled = false;
-                    console.log('setName examples just disabled for test. setData:', setData);
-                }
 
                 if (!setData.enabled) {
                     console.log('!setData.enabled. Building Install function');
@@ -562,23 +563,8 @@ route('templates', 'templates', () => {
                     () => {
                         const actions = new Td();
 
-                        console.log('setData.enabled: ', setData.enabled);
-
                         if (!setData.enabled) {
-                            console.log('building install clickable');
-                            console.log('setActions: ', setActions);
                             const installBtn = new Clickable('icon:fa-download').setOnClick(setActions.Install).setToolstrip('Install Template Set');
-
-                            // setTimeout(() => {
-                            //     if (document.body.contains(installBtn.elem))
-                            //         installBtn.setOnClick(setActions.Install);
-                            //     else
-                            //         setTimeout(() => {
-                            //             if (document.body.contains(installBtn))
-                            //                 installBtn.setOnClick(setActions.Install);
-                            //         }, 2500);
-                            // }, 1250);
-                            // installBtn.setToolstrip('Install Template Set');
                             actions.safeAppend(installBtn);
                             return actions;
                         }
