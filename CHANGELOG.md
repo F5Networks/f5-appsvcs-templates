@@ -11,7 +11,7 @@
 * Add accordion to the template sets on the deploy page
 * Add additional status reporting for tasks in the Deploy Log
 * Add filter to Templates Page
-* Add disabled templatesets to table on Templates Page
+* Add disabled templatesets to the Templates Page
 * Add install button to templatesets
 
 ## Fixed

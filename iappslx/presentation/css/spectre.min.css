@@ -60,3 +60,5 @@
 
 .menu { background-color: rgba(48, 55, 66, 0.96); }
 .menu .menu-item>a:focus, .menu .menu-item>a:hover { color: #323a42; }
+
+a { color: #3a404b }
