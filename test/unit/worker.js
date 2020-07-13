@@ -17,7 +17,7 @@ const nock = require('nock');
 
 const fast = require('@f5devcentral/f5-fast-core');
 
-const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
+const AS3DriverConstantsKey = require('../../iappslx/lib/drivers').AS3DriverConstantsKey;
 
 const FASTWorker = require('../../iappslx/nodejs/fastWorker.js');
 
