@@ -38,7 +38,7 @@
 #selected-nav {
   flex: 1;
   background-color: #eae9e5 !important;
-  font-size: .85rem !important;
+  font-size: .90rem !important;
   text-align: center;
   text-shadow: -0.5px -0.5px 1px #fff !important;
   height: 34px;
@@ -115,7 +115,7 @@
 }
 
 .arrow-danger:after {
-  border-color: #442222f0 transparent;
+  border-color: var(--red-dark) transparent;
 }
 
 /*********************************
@@ -207,3 +207,52 @@
 .exclamation-icon:hover {
   color: rgba(185, 85, 85, 0.9);
 }
+.info-icon {
+  color: rgba(128, 176, 126, 1);
+  font-size: 1.5rem;
+  margin-right: 8px;
+  position: relative;
+  top: 2px;
+}
+.info-icon:hover { color: rgba(125, 174, 123, 1); }
+.btn-cancel {
+  background-color: var(--red);
+  width: var(--normal-btn-width);
+  margin: 0px 5px;
+  color: #f3e6e6;
+}
+.btn-cancel:hover, .btn-cancel:active, .btn-cancel:focus {
+  background-color: var(--red-hover);
+  color: white;
+}
+.btn-continue {
+  background-color: var(--green-base);
+  width: var(--normal-btn-width);
+  color: #e9f6e9;
+}
+.btn-continue:hover, .btn-continue:active, .btn-continue:focus {
+  background-color: var(--green-hover);
+  color: white;
+}
+.btn-green {
+  background-color: var(--green-base);
+}
+.btn-green:hover, .btn-green:active, .btn-green:focus {
+  background-color: var(--green-hover);
+  color: white;
+}
+.btn-red {
+  background-color: var(--red-base);
+}
+.btn-red:hover, .btn-red:active, .btn-red:focus {
+  background-color: var(--red-base-hover);
+  color: white;
+}
+
+/*********************************
+    TOOLTIP
+**********************************/
+.tooltip-red .icon:hover { color: var(--red-dark); }
+.tooltip-red::after { background-color: var(--red-dark); }
+.tooltip-red .icon::after { background-color: var(--red-dark); }
+/* .tooltip-red .icon:first-child::after { background-color: var(--red-dark); } */

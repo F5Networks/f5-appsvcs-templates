@@ -89,6 +89,7 @@ class Elem {
                 this.elem.lastChild.remove();
             }
             this.elem.parentElement.removeChild(this.elem);
+            this.elem = null;
         }
     }
 
@@ -108,10 +109,16 @@ class Elem {
         return this;
     }
 
+    removeClass(className) {
+        this.elem.classList.remove(className);
+    }
+
     setChildren(children) {     // Can be either a string or element Elem, or list
         children = this.sanitizeList(children);
         if (children) {
             for (let i = 0; i < children.length; i += 1) {
+                if(children[i] instanceof Function)
+                    children[i] = children[i]();
                 this.safeAppend(children[i]);
             }
         }
@@ -219,7 +226,7 @@ class Span extends Elem {
 class Clickable extends Elem {  // btnType === 'a' || 'button' || 'icon:{icon-type}'
     constructor(btnType = 'a', classList = null) {
         if(btnType === 'a' || btnType === 'button')
-            super(btnType);
+            super(btnType, null, classList);
         else if (btnType.split(':').length === 2) {
             super('a');
             this.elem = new Icon(btnType.split(':')[1], true).setClassList(classList).html();
@@ -288,9 +295,9 @@ class SnackBar extends Elem {
 }
 
 class Icon extends Elem {
-    constructor(iconClassId, isClickable) {
+    constructor(iconClassIdentifier, isClickable) {
         super('a');
-        this.elem.className += `fas ${iconClassId}`;
+        this.elem.className += `fas ${iconClassIdentifier}`;
         this.elem.className += !isClickable ? ' icon' : ' btn-icon';
     }
 }
@@ -367,17 +374,30 @@ class Row extends Elem {
         this.columns = 0;
     }
 
-    makeExpandable(children) {
+    makeExpandable(childrenClassName) {
         this.elem.onclick = () => {
-            if(!elem.classList.contains('expanded')) {
+            const children = document.getElementsByClassName(childrenClassName);
+            if(this.elem.classList.contains('expanded')) {
                 for(let i = 0; i < children.length; i++) {
-                    this.safeAppend(children[i]);
+                    children[i].classList.add('display-none');
                 }
-                this.setClassList.add('expanded');
+                this.elem.classList.remove('expanded');
+                const angle = this.elem.getElementsByClassName('fa-angle-down');
+                if(angle[0]) {
+                    angle[0].classList.add('fa-angle-right');
+                    angle[0].classList.remove('fa-angle-down');
+                }
             }
             else {
-                this.destroyChildren();
-                this.setClassList.remove('expanded');
+                for(let i = 0; i < children.length; i++) {
+                    children[i].classList.remove('display-none');
+                }
+                this.elem.classList.add('expanded');
+                const angle = this.elem.getElementsByClassName('fa-angle-right');
+                if(angle[0]) {
+                    angle[0].classList.add('fa-angle-down');
+                    angle[0].classList.remove('fa-angle-right');
+                }
             }
         }
     }
@@ -396,7 +416,7 @@ class Row extends Elem {
         columnList = this.sanitizeList(columnList);
         const length = columnList.length;
         for (let i = 0; i < length; i += 1) {
-            const col = columnList[i];
+            let col = columnList[i];
             if(col instanceof Function)
                 col = col();
             if(typeof(col) === 'string')
@@ -411,7 +431,10 @@ class Row extends Elem {
 class Td extends Elem {
     constructor(template, data) {
         super('div');
-        if(template === 'tenant-app-th' || template === 'tenant-app-td') {
+        if (!template) {
+            this.elem.classList.add('td');
+        }
+        else if(template === 'tenant-app-th' || template === 'tenant-app-td') {
             let tenant = 'Tenant';
             let application = 'Application';
             if(template === 'tenant-app-td') {
@@ -461,7 +484,7 @@ class Modal extends Elem {
     constructor() {
         super('div', null, ['modal', 'active']);
         this.elem.appendChild(new Div('modal-container').html());
-        this.elem.appendChild(new Clickable('a', ['modal-overlay', 'faded-active-border']).setOnClick(() => { this.destroyItself(); }).html());
+        this.elem.appendChild(new Clickable('a', 'modal-overlay faded-active-border').setOnClick(() => { this.destroyItself(); }).html());
         this.title = null;
         this.message = null;
         this.okFunction = null;
@@ -475,19 +498,30 @@ class Modal extends Elem {
     }
 
     setTitle(title) {
-        if(title !== 'Warning') {   // Title determines type of Modal. Only 'Warning' modal currently supported
+        if(title !== 'Warning' && title !== 'Enabling Template Set') {   // Title determines type of Modal. Only 'Warning' modal currently supported
             console.error('Unsupported Modal');
             return;
         }
         this.title = title;
+        
         new Div('modal-header').setChildren([
             new Clickable('icon:fa-times').setClassList(['modal-exit-icon', 'float-right', 'faded-active-border']).setOnClick(() => {
                 this.destroyItself()
             }),
-            new Div(['modal-title', 'h4']).setChildren([
-                new Icon('fa-exclamation-triangle').setClassList('exclamation-icon'),
-                'Warning'
-            ])
+            () => {
+                if(title === 'Warning') {
+                    return new Div(['modal-title', 'h4']).setChildren([
+                        new Icon('fa-exclamation-triangle').setClassList('exclamation-icon'),
+                        `${title}`
+                    ])
+                }
+                if(title === 'Enabling Template Set') {
+                    return new Div(['modal-title', 'h4']).setChildren([
+                        new Icon('fa-info-circle').setClassList('info-icon'),
+                        `${title}`
+                    ])
+                }
+            }
         ]).appendToParent(this.elem.children[0]);
         return this;
     }
@@ -527,6 +561,7 @@ class Divider extends Elem {
 module.exports = {
     Elem : Elem,
     Div : Div,
+    Span : Span,
     Clickable : Clickable,
     Copyable : Copyable,
     Icon : Icon,

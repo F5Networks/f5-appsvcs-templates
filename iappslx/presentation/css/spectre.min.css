@@ -2,13 +2,13 @@
 
 :root {
     --base-black: #3a404b;
-    --btn-color: #556473;
+    --btn-color: #404750;
 }
 .btn {
     background: #556473;
     border-color: #545f6b;
     color: #fff;
-    padding: 0px 4px;
+    padding: 0px 6px;
 }
 .btn:active, .btn:focus, .btn:hover {
     background: rgba(48,55,66,.95);
@@ -19,9 +19,8 @@
     color: #f0f3ca;
     border: 1px solid #f0f3ca;
 }
-.btn:focus {
-    box-shadow: 0 0 0 0.1rem #f0f3ca41;
-}
+.btn:active *, .btn:focus * { color: #f0f3ca; }
+.btn:focus { box-shadow: 0 0 0 0.1rem #f0f3ca41; }
 .btn.btn-primary {
     background: var(--btn-color);
     border-color: #545f6b;
@@ -36,9 +35,7 @@
     color: #f0f3ca;
     border: 1px solid #f0f3ca;
 }
-.btn:focus {
-    box-shadow: 0 0 0 0.1rem #f0f3ca41;
-}
+.btn:focus { box-shadow: 0 0 0 0.1rem #f0f3ca41; }
 .btn.btn-nav {
     background-color: #deddd985;  /* #deddd9; */
     color: #3b4457;
@@ -51,20 +48,17 @@
     border-top: none;
     margin: 0px -.4px;
 }
-.btn.btn-nav:hover {
-    background-color: #c9cfd899; /* #ccced1; */
-}
-.btn.btn-nav:active, .btn.btn-nav:focus {
-    background-color: #a2aab3;
-}
-.btn.btn-nav:focus {
-    border: 1px inset #f0f3ca54;
-}
+.btn.btn-nav:hover { background-color: #c9cfd899; }
+.btn.btn-nav:active, .btn.btn-nav:focus { background-color: #a2aab3; }
+.btn.btn-nav:focus { border: 1px inset #f0f3ca54; }
 
 .tooltip {
     font-family: -apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
     font-weight: normal;
 }
-.tooltip::after {
-    font-size: .75rem;
-}
+.tooltip::after { font-size: .75rem; }
+
+.menu { background-color: rgba(48, 55, 66, 0.96); }
+.menu .menu-item>a:focus, .menu .menu-item>a:hover { color: #323a42; }
+
+a { color: #3a404b }

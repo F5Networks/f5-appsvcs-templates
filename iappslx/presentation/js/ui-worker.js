@@ -1,4 +1,4 @@
-var { Loader } = require('./elements');
+var { Loader, Elem } = require('./elements');
 
 class NavigationBar {
     constructor(route) {
@@ -79,17 +79,55 @@ module.exports = class UiWorker {
         UiWorker.destroyChildren(this.app);
 
         this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
+
+        setTimeout(() => {
+            if(this.loader.elem) this.loader.destroyItself();
+        }, 4000);
     }
 
     completeMoveToRoute() {
-        if(this.curRoute === 'api')  this.app.classList.add('height100perc');
-        else  this.app.classList.remove('height100perc');
+        if(this.curRoute === 'api')  this.app.classList.add('height-100perc');
+        else  this.app.classList.remove('height-100perc');
         this.navBar.enable();
         this.loader.destroyItself();
     }
 
+    static selectChildren(menu, id) {
+        for(let i = 0; i < menu.children.length; i++) {
+            console.log('menu:', menu);
+            console.log('id:', id);
+            console.log('menu.children[i]', menu.children[i]);
+            if (menu.children[i].id === id) {
+                menu.children[i].classList.add('selected');
+                return;
+            }
+        }
+        console.error('reached selectChildren without finding child. children: ', menu);
+    }
+
+    static iterateHtmlCollection(collection, func) {
+        console.log('iterateHtmlCollection, children: ', collection);
+        for(let i = 0; i < collection.children.length; i++) {
+            func(collection.children[i]);
+        }
+    }
+
+    static store(key, value, local = true) {
+        if(local) {
+            localStorage.setItem(key, value);
+        }
+    }
+
+    static getStore(key, local = true) {
+        if(local) {
+            return localStorage.getItem(key);
+        }
+    }
+
     static destroyChildren(elem) {
         if(elem) {
+            if(elem instanceof Elem)
+                elem = elem.elem;
             while (elem.firstChild) {
                 elem.lastChild.remove();
             }
