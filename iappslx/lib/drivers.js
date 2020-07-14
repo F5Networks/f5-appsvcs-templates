@@ -43,7 +43,7 @@ class AS3Driver {
 
     _createUuid(tenantName, appName, operation) {
         operation = operation || 'unknown';
-        return this._static_id || `${AS3DriverConstantsKey}-${operation}-${tenantName}-${appName}-${uuid4()}`;
+        return this._static_id || `${AS3DriverConstantsKey}%${operation}%${tenantName}%${appName}%${uuid4()}`;
     }
 
     _stitchDecl(declaration, appDef) {
@@ -240,8 +240,9 @@ class AS3Driver {
             }
             const declid = item.declaration.id || this._task_ids[item.id];
             if (declid) {
-                const idParts = declid.split('-');
-                if (idParts.length < 9) {
+                const splitChar = (declid.search(/%/) !== -1) ? '%' : '-';
+                const idParts = declid.split(splitChar);
+                if (splitChar === '-' && idParts.length < 9) {
                     [tenant, application] = idParts.slice(1, 3);
                 } else {
                     [operation, tenant, application] = idParts.slice(1, 4);

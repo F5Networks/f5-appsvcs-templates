@@ -266,7 +266,7 @@ describe('AS3 Driver tests', function () {
     });
     it('get_tasks', function () {
         const driver = new AS3Driver();
-        driver._task_ids.foo1 = `${AS3DriverConstantsKey}-delete-tenantName-appName-0-0-0-0-0`;
+        driver._task_ids.foo1 = `${AS3DriverConstantsKey}%delete%tenantName%appName%0-0-0-0-0`;
         nock(host)
             .get(as3TaskEp)
             .reply(200, {
@@ -292,7 +292,7 @@ describe('AS3 Driver tests', function () {
                             tenant: 'tenantName'
                         }],
                         declaration: Object.assign({}, as3WithApp, {
-                            id: `${AS3DriverConstantsKey}-update-tenantName-appName-0-0-0-0-0`
+                            id: `${AS3DriverConstantsKey}%update%tenantName%appName%0-0-0-0-0`
                         })
                     },
                     {
