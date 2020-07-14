@@ -194,7 +194,7 @@ class AS3Driver {
                 appNames.forEach(([tenant, app]) => {
                     delete decl[tenant][app];
                 });
-                decl.id = this._createUuid('', '', 'delete');
+                decl.id = this._createUuid('', '', 'delete-all');
                 return Promise.resolve(decl);
             })
             .then(decl => this._postDecl(decl));
@@ -251,15 +251,12 @@ class AS3Driver {
                     const appDef = this._appFromDecl(item.declaration, tenant, application);
                     name = appDef.template;
                     parameters = appDef.view;
-                }
-
-                if (Object.keys(item.declaration).length > 0) {
                     results = item.results.filter(r => r.tenant === tenant);
                 }
             }
-            const changes = results.filter(r => r.message).map(r => r.message);
-            const responses = results.filter(r => r.response).map(r => r.response);
-            const errors = results.filter(r => r.error).map(r => r.error);
+            const changes = [...new Set(results.filter(r => r.message).map(r => r.message))];
+            const responses = [...new Set(results.filter(r => r.response).map(r => r.response))];
+            const errors = [...new Set(results.filter(r => r.error).map(r => r.error))];
             return {
                 id: item.id,
                 code: item.results[0].code,
