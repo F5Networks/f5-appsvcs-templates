@@ -28,10 +28,9 @@ Previous buttons to explore the documentation.
    :includehidden:
    :glob:
 
-   userguide/quick-start
-   userguide/index
-   userguide/faq
+   userguide/getting-started
    userguide/using-app-templates
+   userguide/faq
    userguide/template-authoring
    userguide/managing-templates
    userguide/app-integration
