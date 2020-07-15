@@ -36,7 +36,6 @@ Previous buttons to explore the documentation.
    userguide/managing-templates
    userguide/app-integration
    userguide/troubleshooting
-   userguide/known-issues
    userguide/revision-history
    userguide/api-ref
    
