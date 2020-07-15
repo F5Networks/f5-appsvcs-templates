@@ -77,3 +77,10 @@ To completely uninstall, and remove, the "F5 Applications Services Templates" en
 #. **iApps> Application Services> Applications LX** select F5 Applications Services Templates, click **Delete** then **Yes** to confirm deletion
 
 The result should be a Status of *There are no applications listed*.
+
+Known Issues
+------------
+
+All known issues are now on GitHub as Issues for better tracking and visibility.
+
+See issues with a label of **Known Issue** at https://github.com/F5Networks/f5-appsvcs-templates/issues
