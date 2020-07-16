@@ -1,7 +1,7 @@
 .. _overview:
 
-FAST Overview
-=============
+GUI Overview
+============
 
 This section has a summary of FAST's user interface and how to manage applications
 using loaded templates as well as a short Overview video.
