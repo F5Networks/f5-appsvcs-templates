@@ -25,9 +25,9 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.10.4",
-    "@babel/core": "^7.10.4",
-    "@babel/plugin-transform-runtime": "^7.10.4",
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.10.5",
+    "@babel/plugin-transform-runtime": "^7.10.5",
     "@babel/preset-env": "^7.10.4",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "browserify": "^16.5.1",
@@ -54,7 +54,7 @@
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.10.4",
+    "@babel/runtime": "^7.10.5",
     "@f5devcentral/f5-fast-core": "^0.6.0",
     "@f5devcentral/f5-teem": "^1.4.6",
     "core-js": "^3.6.5",
