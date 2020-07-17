@@ -98,7 +98,7 @@ clouddocs:
     - create_docs
   script:
     - apk add --update --no-cache jq
-    - scripts/publish-clouddocs.sh iappslx/package.json
+    - scripts/publish-clouddocs.sh
 
 artifactory:
     stage: publish
