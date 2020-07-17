@@ -104,19 +104,19 @@ paths:
           content:
             application/json:
               schema:
-                array:
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: task ID, can be used to query task state
-                      name:
-                        description: name of the new application
-                        type: string
-                      parameters:
-                        description: parameters used to create the new application
-                        type: object
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: task ID, can be used to query task state
+                    name:
+                      description: name of the new application
+                      type: string
+                    parameters:
+                      description: parameters used to create the new application
+                      type: object
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
@@ -197,19 +197,19 @@ paths:
           content:
             application/json:
               schema:
-                array:
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: task ID, can be used to query task state
-                      name:
-                        description: name of the updated application
-                        type: string
-                      parameters:
-                        description: parameters used to update the application
-                        type: object
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: task ID, can be used to query task state
+                    name:
+                      description: name of the updated application
+                      type: string
+                    parameters:
+                      description: parameters used to update the application
+                      type: object
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
@@ -332,10 +332,11 @@ paths:
         '200':
           description: A list of installed template sets
           content:
-            application/jason:
-              type: array
-              items:
-                $ref: "#/components/schemas/TemplateSet"
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateSet"
         '500': *serverError
         default: *defaultResponse
     post:
@@ -438,6 +439,7 @@ paths:
        - FAST Extension
       responses:
         '200':
+          description: Information about the extension was gathered successfully
           content:
             application/json:
               schema:

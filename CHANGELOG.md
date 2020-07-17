@@ -1,14 +1,18 @@
-# 1.2
+# 1.2.0
 ## Added
 * Add confirmation dialogs to dangerous operations
 * Add spinner loader to indicate when page is loading
 * Improve error output when a template fails to render in the GUI
-* Improve error output for bad "name" parameters on POST to /applications
+* Improve error output for bad "name" property on POST to /applications
+* Improve error output for missing "name" or "parameters" property on POST to /applications
 * Add showDisabled query parameter to GET on /templatesets for showing disabled template sets
 * Support PATCH on /applications/{tenant}/{app} endpoint for partial modifications of existing applications
 * Add template set hash (setHash) to application data
 * Add accordion to the template sets on the deploy page
 * Add additional status reporting for tasks in the Deploy Log
+* Add filter to Templates Page
+* Add disabled templatesets to the Templates Page
+* Add install button to templatesets
 
 ## Fixed
 * Stop printing empty strings to the console
@@ -18,8 +22,9 @@
 ## Changed
 * Reduce latency on the /templatesets endpoint
 * Restrict allowed characters for tenant and application names on bigip-fast-templates
+* Stop allowing the deletion of in-use template sets
 
-# 1.1
+# 1.1.0
 ## Added
 * Support DELETE on /applications endpoint (deletes all applications managed by FAST)
 * Support DELETE on /templatesets endpoint (deletes all installed templates)
@@ -40,7 +45,7 @@
 
 ## Removed
 
-# 1.0
+# 1.0.0
 ## Added
 * POST to /applications can now take an array of applications
 * Better support for external schema references when using the FAST CLI
@@ -64,7 +69,7 @@
 
 ## Removed
 
-# 0.3
+# 0.3.0
 ## Core
 * Fix parsing issues when there are multiple dependencies
 * Expand task to include error messages, application name, and tenant name
@@ -102,12 +107,12 @@
 * bigip-fast-templates/http: Use shareNodes for pool members
 * bigip-fast-templates/tcp added
 
-# 0.2
+# 0.2.0
 ## Core
 * Various fixes for parsing nested sections and partials
 * Allow coercion of sections into strings
 * Add defaults for primitive types (default to empty/falsey values)
 * Allow getting variable title and descriptions from the template definitions list
  
-# 0.1
+# 0.1.0
 Initial Release

@@ -71,3 +71,10 @@ A ``DELETE`` to the ``/templatesets`` endpoint will remove all installed Templat
       curl -sku admin:Pass1w0rd -X DELETE https://192.0.2.87/mgmt/shared/fast/templatesets
 
 Saved templates can be removed individually using the BIG-IP GUI.
+
+Where can I find a list of known issues with FAST?
+--------------------------------------------------
+
+All known issues are now on GitHub as Issues for better tracking and visibility.
+
+See issues with a label of **Known Issue** at https://github.com/F5Networks/f5-appsvcs-templates/issues

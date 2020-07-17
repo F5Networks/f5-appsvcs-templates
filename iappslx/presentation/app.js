@@ -10,7 +10,7 @@ const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./js/ui-worker.js');
 const {
-    Div, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
+    Div, Span, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
 } = require('./js/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
@@ -87,7 +87,7 @@ const multipartUpload = (file) => {
                 const nextEnd = (end + CHUNK_SIZE > file.size - 1) ? file.size - 1 : end + CHUNK_SIZE;
                 return uploadPart(nextStart, nextEnd);
             })
-            .catch(e => Promise.reject(new Error(`Failed to upload file: ${e.stack}`)));
+            .catch(e => Promise.reject(new Error(`Failed to upload file: ${e.message}`)));
     };
 
     if (CHUNK_SIZE < file.size) {
@@ -139,11 +139,11 @@ const newEditor = (tmplid, view) => {
                 document.getElementById('view-schema-btn').disabled = false;
                 document.getElementById('view-view-btn').disabled = false;
                 document.getElementById('view-render-btn').disabled = false;
-                document.getElementById('form-btn').disabled = false;
+                document.getElementById('btn-form-submit').disabled = false;
             });
 
             editor.on('change', () => {
-                document.getElementById('form-btn').disabled = editor.validation_results.length !== 0;
+                document.getElementById('btn-form-submit').disabled = editor.validation_results.length !== 0;
             });
 
             // Hook up buttons
@@ -159,7 +159,7 @@ const newEditor = (tmplid, view) => {
             document.getElementById('view-render-btn').onclick = () => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
             };
-            document.getElementById('form-btn').onclick = () => {
+            document.getElementById('btn-form-submit').onclick = () => {
                 const data = {
                     method: 'POST',
                     headers: {
@@ -263,7 +263,7 @@ route('', 'apps', () => {
                                         .then(() => {
                                             window.location.href = '#tasks';
                                         })
-                                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.stack}`));
+                                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.message}`));
                                 })
                                 .appendToParent(document.getElementById('app'));
                         }).setToolstrip('Delete Application')
@@ -281,7 +281,7 @@ route('create', 'create', () => {
             setData.templates.map(x => x.name).forEach((item) => {
                 templateSet.addExpandable(
                     new Clickable('button').setClassList(['btn', 'btn-template'])
-                        .setInnerText(item).setOnClick(() => { newEditor(item); })
+                        .setInnerText(item).setOnClick((e) => { newEditor(item); e.stopPropagation(); })
                 );
             });
             templateSet.completeSetup();
@@ -361,13 +361,11 @@ route('tasks', 'tasks', () => {
 });
 route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {
-    const templateDiv = document.getElementById('template-list');
-
-    document.getElementById('add-ts-btn').onclick = () => {
-        document.getElementById('ts-file-input').click();
+    document.getElementById('btn-add-ts').onclick = () => {
+        document.getElementById('input-ts-file').click();
     };
-    document.getElementById('ts-file-input').onchange = () => {
-        const file = document.getElementById('ts-file-input').files[0];
+    document.getElementById('input-ts-file').onchange = () => {
+        const file = document.getElementById('input-ts-file').files[0];
         const tsName = file.name.slice(0, -4);
         dispOutput(`Uploading file: ${file.name}`);
         multipartUpload(file)
@@ -387,14 +385,60 @@ route('templates', 'templates', () => {
             })
             .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`));
     };
+    document.getElementById('btn-delete-all-ts').onclick = () => {
+        new Modal().setTitle('Warning').setMessage('All Template Sets will be removed!').setOkFunction(() => {
+            dispOutput('Deleting All Template Sets');
+            return safeFetch(`${endPointUrl}/templatesets`, {
+                method: 'DELETE'
+            })
+                .then(() => {
+                    dispOutput('All Template Sets deleted successfully');
+                    window.location.reload();
+                })
+                .catch(e => dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`));
+        })
+            .appendToParent(document.getElementById('app'));
+    };
 
+    const templatesFilterKey = 'templates-filter';
+    const templatesFilterElem = document.getElementById('templates-filter');
+    const filterElem = document.getElementById('filter');
+    const menu = templatesFilterElem.getElementsByClassName('menu')[0];
+    const selected = templatesFilterElem.getElementsByClassName('selected')[0];
+    if (!UiWorker.getStore(templatesFilterKey)) {
+        UiWorker.store(templatesFilterKey, selected.id);
+        console.log('templatesFilter empty in store. Pulled from  stored:', selected.id);
+    }
+
+    const curFilter = UiWorker.getStore(templatesFilterKey);
+    if (document.getElementById(curFilter).innerText.toLowerCase() !== templatesFilterElem.innerText.toLowerCase()) {
+        selected.classList.remove('selected');
+        document.getElementById(curFilter).classList.add('selected');
+    }
+
+    UiWorker.iterateHtmlCollection(menu, (item) => {
+        item.onclick = () => {
+            UiWorker.store(templatesFilterKey, item.id);
+            window.location.reload();
+        };
+    });
+
+    filterElem.innerText = document.getElementById(curFilter).innerText;
+
+    const templateDiv = document.getElementById('template-list');
     return Promise.all([
         getJSON('applications'),
-        getJSON('templatesets')
+        getJSON('templatesets'),
+        getJSON('templatesets?showDisabled=true')
     ])
-        .then(([applications, templatesets]) => {
-            const setMap = templatesets.reduce((acc, curr) => {
-                acc[curr.name] = curr;
+        .then(([applications, templatesets, disabledTemplateSets]) => {
+            const filter = document.getElementById('templates-filter').getElementsByClassName('selected')[0].id.toLowerCase();
+            const allTemplates = templatesets.concat(disabledTemplateSets);
+            const setMap = allTemplates.reduce((acc, curr) => {
+                if (filter === 'all') acc[curr.name] = curr;
+                if (filter === 'f5' && curr.supported) acc[curr.name] = curr;
+                if (filter === 'enabled' && curr.enabled) acc[curr.name] = curr;
+                if (filter === 'disabled' && !curr.enabled) acc[curr.name] = curr;
                 return acc;
             }, {});
 
@@ -409,84 +453,10 @@ route('templates', 'templates', () => {
                 return a;
             }, {});
 
-            const createRow = (rowName, rowList, actionsList, isGroupRow) => {
-                rowList = rowList || [];
-                actionsList = actionsList || [];
-                rowName = rowName.replace(/&nbsp;/g, ' ');
-
-                const row = new Row().setId(rowName).appendToParent(templateDiv);
-
-                if (isGroupRow) row.setClassList('row-dark');
-                else row.setClassList('row-light');
-
-                const name = new Div('td').setChildren(`${rowName}&nbsp`);
-
-                if (isGroupRow) {
-                    if (rowList[0] === 'supported') {
-                        new Svg('f5-icon').setToolstrip('Template Set Supported by F5')
-                            .setClassList('tooltipped-f5-icon').appendToParent(name);
-                    }
-                    name.setClassList('td-template-set');
-                } else {
-                    name.setClassList('td-template');
-                }
-                row.setColumn(name);
-
-                const applist = new Div('td');
-
-                if (!isGroupRow) {
-                    if (rowList.length > 2) {
-                        const appDiv = new Div('italic').setInnerText('*click to view*');
-
-                        row.setClassList('clickable');
-                        row.elem.onclick = () => {
-                            const appListTd = document.getElementById(rowName).children[1];
-                            const toggled = appListTd.innerText !== '*click to view*';
-
-                            UiWorker.destroyChildren(appListTd);
-
-                            if (!toggled) {
-                                rowList.forEach((item) => {
-                                    const tenantApp = item.split(' ');
-                                    const appDiv2 = new Div('fontsize-6rem').setChildren([
-                                        tenantApp[0],
-                                        new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
-                                        tenantApp[1]
-                                    ]);
-                                    appListTd.classList.remove('italic');
-                                    appListTd.appendChild(appDiv2.html());
-                                });
-                            } else {
-                                appListTd.innerText = '*click to view*';
-                                appListTd.classList.add('italic');
-                            }
-                        };
-                        applist.safeAppend(appDiv.html());
-                    } else {
-                        rowList.forEach((item) => {
-                            const appDiv = document.createElement('div');
-                            appDiv.innerText = item;
-                            applist.safeAppend(appDiv);
-                        });
-                    }
-                }
-
-                row.setColumn(applist);
-
-                const actions = new Div('td');
-
-                Object.entries(actionsList).forEach(([actName, actFn]) => {
-                    const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                    actions.safeAppend(new Clickable(`icon:${iconClass}`).setOnClick(actFn).setToolstrip(`${actName} Template Set`));
-                });
-                row.setColumn(actions);
-            };
-
             Object.values(setMap).forEach((setData) => {
                 const setName = setData.name;
                 const setActions = {
-                    Remove: () => {
-                        const app = document.getElementById('app');
+                    Remove: (e) => {
                         new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be removed!`).setOkFunction(() => {
                             dispOutput(`Deleting ${setName}`);
                             return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
@@ -496,21 +466,45 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} deleted successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to delete ${setName}:\n${e.stack}`));
+                                .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`));
                         })
-                            .appendToParent(app);
+                            .appendToParent(document.getElementById('app'));
+
+                        e.stopPropagation();
                     }
                 };
 
-                if (setData.updateAvailable) {
-                    setActions.Update = () => {
-                        const app = document.getElementById('app');
+                if (!setData.enabled) {
+                    setActions.Install = (e) => {
+                        new Modal().setTitle('Enabling Template Set').setMessage(`Template Set '${setName}' will be enabled.`).setOkFunction(() => {
+                            dispOutput(`Enabling ${setName}`);
+                            return Promise.resolve()
+                                .then(() => safeFetch(`${endPointUrl}/templatesets`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        name: setName
+                                    })
+                                }))
+                                .then(() => {
+                                    dispOutput(`${setName} enabled successfully`);
+                                    window.location.reload();
+                                })
+                                .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`));
+                        })
+                            .appendToParent(document.getElementById('app'));
 
+                        e.stopPropagation();
+                    };
+                }
+
+                if (setData.updateAvailable) {
+                    setActions.Update = (e) => {
                         new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be updated!`).setOkFunction(() => {
                             dispOutput(`Updating ${setName}`);
-                            return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                                method: 'DELETE'
-                            })
+                            return Promise.resolve()
                                 .then(() => safeFetch(`${endPointUrl}/templatesets`, {
                                     method: 'POST',
                                     headers: {
@@ -524,17 +518,111 @@ route('templates', 'templates', () => {
                                     dispOutput(`${setName} installed successfully`);
                                     window.location.reload();
                                 })
-                                .catch(e => dispOutput(`Failed to install ${setName}:\n${e.stack}`));
+                                .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`));
                         })
-                            .appendToParent(app);
+                            .appendToParent(document.getElementById('app'));
+
+                        e.stopPropagation();
                     };
                 }
 
-                createRow(setName, (setData.supported) ? ['supported'] : [], setActions, true);
+                if (!setData.enabled && setData.updateAvailable) { console.error('enabled === false && updateAvailable is illegal. Critical Error'); }
+
+                const templateSetRow = new Row('tr row-dark clickable').setId(setName).appendToParent(templateDiv).setColumns([
+                    () => {
+                        const tempSetName = new Div('td td-template-set').setChildren([
+                            new Icon('fa-angle-right').html(),
+                            `${setName}&nbsp`
+                        ]);
+                        const traitsDiv = new Span('traits');
+                        if (setData.supported) {
+                            new Svg('f5-icon').setToolstrip('Template Set Supported by F5')
+                                .setClassList('tooltipped-f5-icon').appendToParent(traitsDiv);
+                        }
+                        if (setData.enabled) {
+                            new Icon('fa-check-circle').setToolstrip('Template Set is Enabled').appendToParent(traitsDiv);
+                        } else { // can a template set be removable if it's disabled?
+                            new Icon('fa-times-circle').setClassList('red-base-forecolor').setToolstrip('Template Set is Disabled!')
+                                .setClassList('tooltip-red')
+                                .appendToParent(traitsDiv);
+                        }
+                        traitsDiv.appendToParent(tempSetName);
+                        return tempSetName;
+                    },
+                    new Td(),
+                    () => {
+                        const actions = new Td();
+
+                        if (!setData.enabled) {
+                            const installBtn = new Clickable('icon:fa-download').setOnClick(setActions.Install).setToolstrip('Install Template Set');
+                            actions.safeAppend(installBtn);
+                            return actions;
+                        }
+
+                        Object.entries(setActions).forEach(([actName, actFn]) => {
+                            const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
+                            actions.safeAppend(new Clickable(`icon:${iconClass}`).setOnClick(actFn).setToolstrip(`${actName} Template Set`));
+                        });
+                        return actions;
+                    }
+                ]);
+
+                const tempSetChild = `${setName}-child`;
+                templateSetRow.makeExpandable(tempSetChild);
+
+                if (!setData.enabled) { templateSetRow.setClassList('row-dark-red red-hover'); }
+
                 setMap[setName].templates.forEach((tmpl) => {
                     const templateName = tmpl.name;
-                    const appList = appDict[templateName] || [];
-                    createRow(`&nbsp;&nbsp;&nbsp;&nbsp;/${templateName}`, appList.map(app => `${app.tenant} ${app.name}`));
+                    const appList = appDict[tmpl.name] || [];
+
+                    const templateRow = new Row('tr row-light').setClassList(tempSetChild).appendToParent(templateDiv);
+                    templateRow.setColumns([
+                        templateName,
+                        () => {
+                            const applicationsDiv = () => {
+                                const applicationsMapped = appList.map(app => `${app.tenant} ${app.name}`);
+                                const div = new Div();
+                                applicationsMapped.forEach((item) => {
+                                    const tenantApp = item.split(' ');
+                                    new Div('fontsize-6rem').setChildren([
+                                        tenantApp[0],
+                                        new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
+                                        tenantApp[1]
+                                    ]).appendToParent(div);
+                                });
+                                return div;
+                            };
+
+                            const appsTd = new Td().appendToParent(templateRow);
+                            if (appList.length < 3) {
+                                appsTd.safeAppend(applicationsDiv());
+                            } else {
+                                appsTd.setClassList('italic').setInnerText('*click to view*');
+                                templateRow.setClassList('clickable');
+                                templateRow.elem.onclick = () => {
+                                    if (appsTd.elem.innerText === '*click to view*') {
+                                        UiWorker.destroyChildren(appsTd);
+                                        appsTd.elem.innerText = '';
+                                        appsTd.elem.classList.remove('italic');
+                                        appsTd.safeAppend(applicationsDiv());
+                                    } else {
+                                        UiWorker.destroyChildren(appsTd.elem);
+                                        appsTd.elem.innerText = '*click to view*';
+                                        appsTd.elem.classList.add('italic');
+                                    }
+                                };
+                            }
+                            return appsTd;
+                        },
+                        new Td()
+                    ]);
+
+                    if (!templateSetRow.elem.classList.contains('expanded')) { templateRow.elem.classList.add('display-none'); }
+
+                    if (!setData.enabled) {
+                        templateRow.setClassList('row-light-red grey-forecolor');
+                    }
                 });
             });
         })

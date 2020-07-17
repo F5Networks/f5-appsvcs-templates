@@ -1,12 +1,12 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.2.0-rc.1",
+  "version": "1.2.0-rc.3",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint iappslx/nodejs iappslx/presentation/app.js test",
+    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
@@ -25,12 +25,14 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.10.3",
-    "@babel/core": "^7.10.3",
-    "@babel/plugin-transform-runtime": "^7.10.3",
-    "@babel/preset-env": "^7.10.3",
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/plugin-transform-runtime": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "browserify": "^16.5.1",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "eslint": "^6.8.0",
     "mocha": "^8.0.1",
     "mock-fs": "^4.12.0",
@@ -47,16 +49,18 @@
   "nyc": {
     "all": true,
     "include": [
-      "iappslx/nodejs/**/*.js"
+      "iappslx/nodejs/**/*.js",
+      "iappslx/lib/**/*.js"
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.10.3",
-    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#480c282",
+    "@babel/runtime": "^7.10.4",
+    "@f5devcentral/f5-fast-core": "^0.6.0",
     "@f5devcentral/f5-teem": "^1.4.6",
     "core-js": "^3.6.5",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
-    "js-yaml": "^3.14.0"
+    "js-yaml": "^3.14.0",
+    "uuid": "^7.0.3"
   }
 }

@@ -17,7 +17,7 @@ const nock = require('nock');
 
 const fast = require('@f5devcentral/f5-fast-core');
 
-const AS3DriverConstantsKey = fast.AS3DriverConstantsKey;
+const AS3DriverConstantsKey = require('../../iappslx/lib/drivers').AS3DriverConstantsKey;
 
 const FASTWorker = require('../../iappslx/nodejs/fastWorker.js');
 
@@ -153,6 +153,37 @@ describe('template worker tests', function () {
             'bigip-fast-templates',
             'examples'
         ];
+        nock('http://localhost:8100')
+            .persist()
+            .get('/mgmt/tm/sys/provision')
+            .reply(200, {
+                kind: 'tm:sys:provision:provisioncollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/sys/provision?ver=15.0.1.1',
+                items: [
+                    {
+                        kind: 'tm:sys:provision:provisionstate',
+                        name: 'afm',
+                        fullPath: 'afm',
+                        generation: 1,
+                        selfLink: 'https://localhost/mgmt/tm/sys/provision/afm?ver=15.0.1.1',
+                        cpuRatio: 0,
+                        diskRatio: 0,
+                        level: 'none',
+                        memoryRatio: 0
+                    },
+                    {
+                        kind: 'tm:sys:provision:provisionstate',
+                        name: 'asm',
+                        fullPath: 'asm',
+                        generation: 1,
+                        selfLink: 'https://localhost/mgmt/tm/sys/provision/asm?ver=15.0.1.1',
+                        cpuRatio: 0,
+                        diskRatio: 0,
+                        level: 'nominal',
+                        memoryRatio: 0
+                    }
+                ]
+            });
         return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 
@@ -481,7 +512,8 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: 'foobar/does_not_exist'
+            name: 'foobar/does_not_exist',
+            parameters: {}
         });
         return worker.onPost(op)
             .then(() => {
@@ -493,7 +525,8 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
         op.setBody({
-            name: '/examples/simple_udp_defaults'
+            name: '/examples/simple_udp_defaults',
+            parameters: {}
         });
         return worker.onPost(op)
             .then(() => {
@@ -515,6 +548,28 @@ describe('template worker tests', function () {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.status, 400);
                 assert.match(op.body.message, /Parameters failed validation/);
+            });
+    });
+    it('post_apps_bad_properties', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+        });
+
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /name property is missing/);
+            })
+            .then(() => op.setBody({
+                name: 'examples/simple_udp_defaults'
+            }))
+            .then(() => worker.onPost(op))
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /parameters property is missing/);
             });
     });
     it('post_apps', function () {
@@ -736,6 +791,11 @@ describe('template worker tests', function () {
             name: 'examples'
         });
         worker.storage.deleteItem('examples');
+        worker.configStorage.data = {
+            config: {
+                deletedTemplateSets: ['examples']
+            }
+        };
 
         const objFromSets = setList => setList.reduce((acc, curr) => {
             acc[curr.name] = curr;
@@ -772,12 +832,21 @@ describe('template worker tests', function () {
 
                 const sets = objFromSets(getTsOp.body);
                 assert.equal(sets.examples.enabled, true);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                console.log(JSON.stringify(config, null, 2));
+                assert.deepStrictEqual(config.deletedTemplateSets, []);
             });
     });
     it('delete_templateset', function () {
         const worker = createWorker();
         const templateSet = 'bigip-fast-templates';
         const op = new RestOp(`templatesets/${templateSet}`);
+
+        nock(host)
+            .get(as3ep)
+            .reply(200, as3stub);
 
         return worker.templateProvider.hasSet(templateSet)
             .then(result => assert(result))
@@ -790,14 +859,55 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets/does_not_exist');
 
+        nock(host)
+            .get(as3ep)
+            .reply(200, as3stub);
+
         return worker.onDelete(op)
             .then(() => {
                 assert.equal(op.status, 404);
             });
     });
+    it('delete_templateset_inuse', function () {
+        const worker = createWorker();
+        const templateSet = 'examples';
+        const op = new RestOp(`templatesets/${templateSet}`);
+        nock(host)
+            .get(as3ep)
+            .reply(200, Object.assign({}, as3stub, {
+                tenant: {
+                    class: 'Tenant',
+                    app: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'examples/simple_udp_defaults'
+                            }
+                        }
+                    },
+                    app2: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'foo/bar'
+                            }
+                        }
+                    }
+                }
+            }));
+        return worker.onDelete(op)
+            .then(() => {
+                assert.strictEqual(op.status, 400);
+                assert.match(op.body.message, /it is being used by:\n\["tenant\/app"\]/);
+            });
+    });
     it('delete_all_templatesets', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
+
+        nock(host)
+            .get(as3ep)
+            .reply(200, as3stub);
 
         return worker.onDelete(op)
             .then(() => assert.equal(op.status, 200))
@@ -874,6 +984,95 @@ describe('template worker tests', function () {
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
                 ]);
+            });
+    });
+    it('bigipDependencies', function () {
+        const worker = createWorker();
+
+        const checkTmplDeps = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkTmplDeps(`
+                title: root simple pass
+                bigipDependencies:
+                    - asm
+                template: |
+                    Some text
+            `))
+            .catch(e => assert(false, e.message))
+            .then(() => checkTmplDeps(`
+                title: root simple fail
+                bigipDependencies:
+                    - cgnat
+                template: |
+                    Some text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /missing modules: cgnat/))
+            .then(() => checkTmplDeps(`
+                title: root anyOf
+                anyOf:
+                    - {}
+                    - title: asm
+                      bigipDependencies: [asm]
+                      template: foo
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                template: |
+                    Some text
+            `))
+            .then((tmpl) => {
+                assert.strictEqual(tmpl._anyOf.length, 2);
+                assert.strictEqual(tmpl._anyOf[1].title, 'asm');
+            })
+            .then(() => checkTmplDeps(`
+                title: root allOf
+                allOf:
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                template: |
+                    Some text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /missing modules: cgnat/))
+            .then(() => checkTmplDeps(`
+                title: root oneOf fail
+                oneOf:
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                template: |
+                    Some text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /no oneOf had valid/))
+            .then(() => checkTmplDeps(`
+                title: root oneOf pass
+                oneOf:
+                    - title: cgnat
+                      bigipDependencies: [cgnat]
+                      template: bar
+                    - title: asm
+                      bigipDependencies: [asm]
+                      template: foo
+                template: |
+                    Some text
+            `))
+            .then((tmpl) => {
+                assert.strictEqual(tmpl._oneOf.length, 1);
+                assert.strictEqual(tmpl._oneOf[0].title, 'asm');
             });
     });
 });

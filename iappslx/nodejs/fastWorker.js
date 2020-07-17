@@ -12,11 +12,13 @@ const extract = require('extract-zip');
 const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
+const drivers = require('../lib/drivers');
+
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const httpUtils = fast.httpUtils;
-const AS3Driver = fast.AS3Driver;
+const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 
 let pkg = null;
@@ -81,6 +83,7 @@ class FASTWorker {
 
         this.requestTimes = {};
         this.requestCounter = 1;
+        this.provisionData = null;
     }
 
     hookCompleteRestOp() {
@@ -376,6 +379,96 @@ class FASTWorker {
             .then(() => info);
     }
 
+    gatherProvisionData(requestId) {
+        if (this.provisionData !== null) {
+            return Promise.resolve(this.provisionData);
+        }
+
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                requestId, 'Fetching module provision information',
+                httpUtils.makeGet('/mgmt/tm/sys/provision')
+            ))
+            .then((response) => {
+                if (response.status !== 200) {
+                    return Promise.reject(new Error(
+                        `failed to get module provision information:\n${JSON.stringify(response, null, 2)}`
+                    ));
+                }
+                this.provisionData = response.body;
+                return Promise.resolve(response.body);
+            });
+    }
+
+    checkDependencies(tmpl, requestId) {
+        return Promise.resolve()
+            .then(() => this.gatherProvisionData(requestId))
+            .then(provisionData => provisionData.items.filter(x => x.level !== 'none').map(x => x.name))
+            .then((provisionedModules) => {
+                const deps = tmpl.bigipDependencies || [];
+                const missingModules = deps.filter(x => !provisionedModules.includes(x));
+                if (missingModules.length > 0) {
+                    return Promise.reject(new Error(
+                        `could not load template (${tmpl.title}) due to missing modules: ${missingModules}`
+                    ));
+                }
+
+                let promiseChain = Promise.resolve();
+                tmpl._allOf.forEach((subtmpl) => {
+                    promiseChain = promiseChain
+                        .then(() => this.checkDependencies(subtmpl, requestId));
+                });
+                const validOneOf = [];
+                let errstr = '';
+                tmpl._oneOf.forEach((subtmpl) => {
+                    promiseChain = promiseChain
+                        .then(() => this.checkDependencies(subtmpl, requestId))
+                        .then(() => {
+                            validOneOf.push(subtmpl);
+                        })
+                        .catch((e) => {
+                            if (!e.message.match(/due to missing modules/)) {
+                                return Promise.reject(e);
+                            }
+                            errstr = `\n${errstr}`;
+                            return Promise.resolve();
+                        });
+                });
+                promiseChain = promiseChain
+                    .then(() => {
+                        if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
+                            return Promise.reject(new Error(
+                                `could not load template since no oneOf had valid dependencies:${errstr}`
+                            ));
+                        }
+                        tmpl._oneOf = validOneOf;
+                        return Promise.resolve();
+                    });
+                const validAnyOf = [];
+                tmpl._anyOf.forEach((subtmpl) => {
+                    promiseChain = promiseChain
+                        .then(() => this.checkDependencies(subtmpl, requestId))
+                        .then(() => {
+                            validAnyOf.push(subtmpl);
+                        })
+                        .catch((e) => {
+                            if (!e.message.match(/due to missing modules/)) {
+                                return Promise.reject(e);
+                            }
+                            return Promise.resolve();
+                        });
+                });
+                promiseChain = promiseChain
+                    .then(() => {
+                        tmpl._anyOf = validAnyOf;
+                    });
+                return promiseChain;
+            })
+            .then(() => {
+                this.provisionData = null;
+            });
+    }
+
     hydrateSchema(schema, requestId) {
         const enumFromBigipProps = Object.entries(schema.properties)
             .reduce((acc, curr) => {
@@ -496,7 +589,9 @@ class FASTWorker {
                 ))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
-                    return this.hydrateSchema(tmpl._parametersSchema, reqid)
+                    return Promise.resolve()
+                        .then(() => this.checkDependencies(tmpl, reqid))
+                        .then(() => this.hydrateSchema(tmpl._parametersSchema, reqid))
                         .then(() => {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);
@@ -666,6 +761,24 @@ class FASTWorker {
                 const appsData = [];
                 let promiseChain = Promise.resolve();
                 data.forEach((x) => {
+                    if (!x.name) {
+                        promiseChain = promiseChain
+                            .then(() => Promise.reject(this.genRestResponse(
+                                restOperation,
+                                400,
+                                'name property is missing'
+                            )));
+                        return;
+                    }
+                    if (!x.parameters) {
+                        promiseChain = promiseChain
+                            .then(() => Promise.reject(this.genRestResponse(
+                                restOperation,
+                                400,
+                                'parameters property is missing'
+                            )));
+                        return;
+                    }
                     const tsData = {};
                     const [setName, templateName] = x.name.split('/');
                     promiseChain = promiseChain
@@ -824,6 +937,14 @@ class FASTWorker {
             .then(() => this.storage.persist())
             .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
+            .then(() => this.getConfig(reqid))
+            .then((config) => {
+                if (config.deletedTemplateSets.includes(tsid)) {
+                    config.deletedTemplateSets = config.deletedTemplateSets.filter(x => x !== tsid);
+                    return this.saveConfig(config, reqid);
+                }
+                return Promise.resolve();
+            })
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
                 if (e.message.match(/failed validation/)) {
@@ -905,6 +1026,21 @@ class FASTWorker {
         if (tsid) {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
+                    reqid, 'gathering a list of applications from the driver',
+                    this.driver.listApplications()
+                ))
+                .then((appsList) => {
+                    const usedBy = appsList
+                        .filter(x => x.template.split('/')[0] === tsid)
+                        .map(x => `${x.tenant}/${x.name}`);
+                    if (usedBy.length > 0) {
+                        return Promise.reject(
+                            new Error(`Cannot delete template set ${tsid}, it is being used by:\n${JSON.stringify(usedBy)}`)
+                        );
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => this.recordTransaction(
                     reqid, 'deleting a template set from the data store',
                     this.templateProvider.removeSet(tsid)
                 ))
@@ -925,6 +1061,9 @@ class FASTWorker {
                 .catch((e) => {
                     if (e.message.match(/failed to find template set/)) {
                         return this.genRestResponse(restOperation, 404, e.message);
+                    }
+                    if (e.message.match(/being used by/)) {
+                        return this.genRestResponse(restOperation, 400, e.message);
                     }
                     return this.genRestResponse(restOperation, 500, e.stack);
                 });
