@@ -28,6 +28,7 @@ Previous buttons to explore the documentation.
    :includehidden:
    :glob:
 
+   userguide/install-uninstall
    userguide/getting-started
    userguide/using-app-templates
    userguide/faq
