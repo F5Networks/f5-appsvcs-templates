@@ -1,3 +1,10 @@
+# 1.3.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.2.0
 ## Added
 * Add confirmation dialogs to dangerous operations
