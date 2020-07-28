@@ -63,21 +63,6 @@ Audit Logs
 Audit logs can be found at ``/var/log/audit``.
 No matter your BIG-IP user account name, audit logs show all messages from ``admin`` and not the specific user name.
 
-.. _uninstallingtab:
-
-Uninstalling FAST
------------------
-
-The "F5 Applications Services Templates" entry remains in the GUI after uninstalling the package from Package Management LX.
-
-To completely uninstall, and remove, the "F5 Applications Services Templates" entry from the GUI, perform the following steps:
-
-#. **iApps> Package Management LX** select f5-appsvcs-templates, click **Uninstall**
-#. **iApps> Application Services> Applications LX** select F5 Applications Services Templates, click **Undeploy**
-#. **iApps> Application Services> Applications LX** select F5 Applications Services Templates, click **Delete** then **Yes** to confirm deletion
-
-The result should be a Status of *There are no applications listed*.
-
 Known Issues
 ------------
 

@@ -20,15 +20,7 @@ New templates can be created to satisfy specific needs of any infrastructure.
 Installation
 ------------
 
-Requirements:
-
-* BIG-IP v13.1 or later.
-* AS3 v3.16 or later must be installed (see |installas3|)
-
-#. Download the FAST extension RPM `from GitHub <https://github.com/F5networks/f5-appsvcs-templates>`_ to a location accessible from the BIG-IP.
-#. From the BIG-IP management GUI, install the extension by navigating to **iApps > Package Management LX**.
-   Click **Import** and then select the RPM you downloaded.
-   Once the package is imported, **f5-appsvcs-templates** will appear in the list of installed extensions.
+See :ref:`Install / Uninstall<install>` for installation instructions.
 
    .. NOTE::
 
@@ -58,7 +50,7 @@ Usage Quick Start
 Next Steps
 ----------
 
-Continue with :ref:`Fast Overview<overview>` for information on using the interface, or use the left navigation to go to a specific page.
+Continue with :ref:`GUI Overview<overview>` for information on using the interface, or use the left navigation to go to a specific page.
 
 .. |installas3| raw:: html
 
