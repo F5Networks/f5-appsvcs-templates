@@ -50,7 +50,7 @@ info:
     These endpoints are related to management of the FAST Extension itself,
     for getting debug information or software version information.
 servers:
- - url: /mgmt/shared/fast
+ - url: http://localhost:8100/mgmt/shared/fast
 tags:
  - name: Application Management
  - name: Task Tracking
