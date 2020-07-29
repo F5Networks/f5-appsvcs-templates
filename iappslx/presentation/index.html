@@ -13,6 +13,7 @@
         <title>F5 Application Services Templates</title>
     </head>
     <body>
+        <!-- Static Content -->
         <div id="header">
             <div class="header-logo"><img src="img/as3robot.png" height="55px"/></div>
             <div class="header-title">F5 Application Services Templates</div>
@@ -25,76 +26,78 @@
             <a class="btn btn-nav" href="#api">API</a>
         </div>
         <div id="content-wrapper">
-            <template id="page-apps">
-                <div id="app-list" class="styled-list"></div>
-                <div>
-                    <pre id="output">
-                    </pre>
-                </div>
-            </template>
-
-            <template id="page-create">
-                <p id="available-text">Available Templates: </p>
-                <div id="tmpl-btns"></div>
-                <div>
-                    <div id="form-div"></div>
-                    <div class="text-right">
-                        <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
-                        <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
-                        <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
-                        <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
-                        <button type="button" class="btn" id="btn-form-submit" disabled>SUBMIT</button>
-                    </div>
-                </div>
-                <div>
-                    <pre id="output"></pre>
-                </div>
-            </template>
-
-            <template id="page-templates">
-                <div class="button-row-deploy">
-                    <button type="button" id="btn-delete-all-ts" class="btn btn-red" style="display: none;">Delete All</button>
-                    <button type="button" id="btn-add-ts" class="btn btn-green">Add Template Set</button>
-                    <input type="file" id="input-ts-file" style="display:none" accept=".zip">
-                    <div id="templates-filter" class="dropdown dropdown-left">
-                        <a class="btn btn-primary dropdown-toggle inline-flex" tabindex="0">
-                            <p id="filterTag">Filter:</p> <p id="filter">All Template Sets</p>
-                            <i class="fas fa-angle-down white"></i>
-                        </a>
-                        <ul class="menu text-left">
-                            <li id="enabled" class="menu-item clickable selected"><a>Enabled</a></li>
-                            <li id="f5" class="menu-item clickable"><a>F5 Supported</a></li>
-                            <li id="disabled" class="menu-item clickable"><a>Disabled</a></li>
-                            <li id="all" class="menu-item clickable"><a>All Template Sets</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div id="template-list">
-                    <div class="th-row">
-                        <div class="td col1">TEMPLATES</div>
-                        <div class="td col2">APPLICATIONS</div>
-                        <div class="td col3">ACTIONS</div>
-                    </div>
-                    <div class="tr" height="1px"></div>
-                </div>
-                <div>
-                    <pre id="output"></pre>
-                </div>
-            </template>
-
-            <template id="page-tasks">
-                <div id="task-list" class="styled-list"></div>
-            </template>
-
-            <template id="page-api">
-                <iframe src="apidoc.html"></iframe>
-            </template>
-
             <div id="app"></div>
             <div id="snackbar"></div>
             <div id="copy-div" style="display: none;"></div>
         </div>
 
+        <!-- Page Templates -->
+        <template id="page-apps">
+            <div id="app-list" class="styled-list"></div>
+            <div>
+                <pre id="output">
+                </pre>
+            </div>
+        </template>
+
+        <template id="page-create">
+            <p id="available-text">Available Templates: </p>
+            <div id="tmpl-btns"></div>
+            <div>
+                <div id="form-div"></div>
+                <div class="text-right">
+                    <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
+                    <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
+                    <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
+                    <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
+                    <button type="button" class="btn" id="btn-form-submit" disabled>SUBMIT</button>
+                </div>
+            </div>
+            <div>
+                <pre id="output"></pre>
+            </div>
+        </template>
+
+        <template id="page-templates">
+            <div class="button-row-deploy">
+                <button type="button" id="btn-delete-all-ts" class="btn btn-red" style="display: none;">Delete All</button>
+                <button type="button" id="btn-add-ts" class="btn btn-green">Add Template Set</button>
+                <input type="file" id="input-ts-file" style="display:none" accept=".zip">
+                <div id="templates-filter" class="dropdown dropdown-left">
+                    <a class="btn btn-primary dropdown-toggle inline-flex" tabindex="0">
+                        <p id="filterTag">Filter:</p> <p id="filter">All Template Sets</p>
+                        <i class="fas fa-angle-down white"></i>
+                    </a>
+                    <ul class="menu text-left">
+                        <li id="enabled" class="menu-item clickable selected"><a>Enabled</a></li>
+                        <li id="f5" class="menu-item clickable"><a>F5 Supported</a></li>
+                        <li id="disabled" class="menu-item clickable"><a>Disabled</a></li>
+                        <li id="all" class="menu-item clickable"><a>All Template Sets</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="template-list">
+                <div class="th-row">
+                    <div class="td col1">TEMPLATES</div>
+                    <div class="td col2">APPLICATIONS</div>
+                    <div class="td col3">ACTIONS</div>
+                </div>
+                <div class="tr" height="1px"></div>
+            </div>
+            <div>
+                <pre id="output"></pre>
+            </div>
+        </template>
+
+        <template id="page-tasks">
+            <div id="task-list" class="styled-list"></div>
+        </template>
+
+        <template id="page-api">
+            <iframe src="apidoc.html"></iframe>
+        </template>
+
+        <!-- Scripts -->
         <script src="js/jsoneditor.min.js"></script>
         <script src="bundle.js" charset="utf-8"></script>
     </body>
