@@ -117,16 +117,12 @@ module.exports = class UiWorker {
         }
     }
 
-    static store(key, value, local = true) {
-        if (local) {
-            localStorage.setItem(key, value);
-        }
+    static store(key, value) {
+        localStorage.setItem(key, value);
     }
 
-    static getStore(key, local = true) {
-        if (local) {
-            return localStorage.getItem(key);
-        }
+    static getStore(key) {
+        return localStorage.getItem(key);
     }
 
     static destroyChildren(elem) {
