@@ -1,4 +1,9 @@
-var { Loader, Elem } = require('./elements');
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+'use strict';
+
+const { Loader, Elem } = require('./elements');
 
 class NavigationBar {
     constructor(route) {
@@ -6,8 +11,8 @@ class NavigationBar {
         this.titles = [];
         this.routes = [];
 
-        let arr = Array.from(this.navBar.children);
-        for(let i = 0; i < arr.length; i += 1) {
+        const arr = Array.from(this.navBar.children);
+        for (let i = 0; i < arr.length; i += 1) {
             this.titles.push(arr[i].innerHTML);
             this.routes.push(arr[i].href.split('#')[1]);
         }
@@ -29,9 +34,9 @@ class NavigationBar {
         const selectedNavBtn = document.getElementById('selected-nav');
         if (selectedNavBtn) selectedNavBtn.removeAttribute('id');
 
-        let arr = Array.from(this.navBar.children);
-        for(let i = 0; i < arr.length; i += 1) {
-            if(arr[i].innerText === newTitle) {
+        const arr = Array.from(this.navBar.children);
+        for (let i = 0; i < arr.length; i += 1) {
+            if (arr[i].innerText === newTitle) {
                 arr[i].id = 'selected-nav';
                 arr[i].innerText = newTitle;
                 this.disable();
@@ -39,19 +44,19 @@ class NavigationBar {
                 this.renderComplete = () => {
                     this.enable();
                     this.renderComplete = null;
-                }
+                };
             }
         }
     }
 
     enable() {
-        Array.from(this.navBar.children).forEach(child => {
+        Array.from(this.navBar.children).forEach((child) => {
             child.classList.remove('nav-disabled');
         });
     }
 
     disable() {
-        Array.from(this.navBar.children).forEach(child => {
+        Array.from(this.navBar.children).forEach((child) => {
             child.classList.add('nav-disabled');
         });
     }
@@ -70,7 +75,7 @@ module.exports = class UiWorker {
         if (!this.navBar) this.navBar = new NavigationBar(this.curRoute);
         else this.navBar.selectNavBtn(this.curRoute);
 
-        if(!this.app) {
+        if (!this.app) {
             this.app = document.getElementById('app');
         }
 
@@ -81,19 +86,19 @@ module.exports = class UiWorker {
         this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
 
         setTimeout(() => {
-            if(this.loader.elem) this.loader.destroyItself();
+            if (this.loader.elem) this.loader.destroyItself();
         }, 4000);
     }
 
     completeMoveToRoute() {
-        if(this.curRoute === 'api')  this.app.classList.add('height-100perc');
-        else  this.app.classList.remove('height-100perc');
+        if (this.curRoute === 'api') this.app.classList.add('height-100perc');
+        else this.app.classList.remove('height-100perc');
         this.navBar.enable();
         this.loader.destroyItself();
     }
 
     static selectChildren(menu, id) {
-        for(let i = 0; i < menu.children.length; i++) {
+        for (let i = 0; i < menu.children.length; i++) {
             console.log('menu:', menu);
             console.log('id:', id);
             console.log('menu.children[i]', menu.children[i]);
@@ -107,31 +112,30 @@ module.exports = class UiWorker {
 
     static iterateHtmlCollection(collection, func) {
         console.log('iterateHtmlCollection, children: ', collection);
-        for(let i = 0; i < collection.children.length; i++) {
+        for (let i = 0; i < collection.children.length; i++) {
             func(collection.children[i]);
         }
     }
 
     static store(key, value, local = true) {
-        if(local) {
+        if (local) {
             localStorage.setItem(key, value);
         }
     }
 
     static getStore(key, local = true) {
-        if(local) {
+        if (local) {
             return localStorage.getItem(key);
         }
     }
 
     static destroyChildren(elem) {
-        if(elem) {
-            if(elem instanceof Elem)
-                elem = elem.elem;
+        if (elem) {
+            if (elem instanceof Elem) elem = elem.elem;
             while (elem.firstChild) {
                 elem.lastChild.remove();
             }
         }
         return elem;
     }
-}
+};

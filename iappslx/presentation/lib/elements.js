@@ -1,8 +1,13 @@
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+'use strict';
+
 class Elem {
     constructor(elemType = 'div', id = null, classList = null) {
         this.elem = document.createElement(elemType);
-        if(this.id) this.elem.id = id;
-        if(classList) this.setClassList(classList);
+        if (this.id) this.elem.id = id;
+        if (classList) this.setClassList(classList);
     }
 
     html() {
@@ -11,23 +16,24 @@ class Elem {
 
     onRender(func) {
         let elem = this.elem;
-        if(elem instanceof Elem) elem = elem.html();
-        let observer = new MutationObserver(function(mutations) {
+        if (elem instanceof Elem) elem = elem.html();
+        const observer = new MutationObserver(() => {
             if (document.contains(elem)) {
                 func();
                 observer.disconnect();
             }
         });
-        observer.observe(document, { attributes: false, childList: true, characterData: false, subtree:true });
+        observer.observe(document, {
+            attributes: false, childList: true, characterData: false, subtree: true
+        });
         return this;
     }
 
     addEventListener(setupFunc, alternateElem = null) {
         let element = alternateElem || this.elem;
-        if(element instanceof Elem)
-            element = element.html();
-        if(document.getElementById('app').contains(element)) setupFunc();
-        else  this.onRender(setupFunc);
+        if (element instanceof Elem) element = element.html();
+        if (document.getElementById('app').contains(element)) setupFunc();
+        else this.onRender(setupFunc);
 
         return this;
     }
@@ -35,12 +41,11 @@ class Elem {
     setToolstrip(text, direction = 'right') {
         const parent = (this.elem.parentElement) ? this.elem.parentElement : null;
         const toolstrip = new Span(['tooltip', `tooltip-${direction}`]);
-        if(parent) {
+        if (parent) {
             parent.replaceChild(toolstrip, this.elem);
             toolstrip.appendChild(this.elem);
             this.elem = toolstrip.html();
-        }
-        else {
+        } else {
             // const clone = this.elem.cloneNode(true);
             const span = new Span(['tooltip', `tooltip-${direction}`]).setChildren(this.elem).html();
             this.elem = span; // new Span(['tooltip', `tooltip-${direction}`]).setChildren(clone).html();
@@ -50,32 +55,30 @@ class Elem {
         return this;
     }
 
-    safeAppend(element, position = 'beforeend', classList = null) {  // can append either Elem, string, or Html Element
-        if(!element)   return this;
-        if(element instanceof Elem) {
+    safeAppend(element, position = 'beforeend', classList = null) { // can append either Elem, string, or Html Element
+        if (!element) return this;
+        if (element instanceof Elem) {
             element = element.html();
         }
-        if(typeof(element) === 'string')  this.elem.insertAdjacentHTML(position, element);
-        else   this.elem.insertAdjacentElement(position, element);
-        if(classList) {
+        if (typeof (element) === 'string') this.elem.insertAdjacentHTML(position, element);
+        else this.elem.insertAdjacentElement(position, element);
+        if (classList) {
             classList = this.sanitizeList(classList);
-            for(let i = 0; i < classList.length; i++) {
+            for (let i = 0; i < classList.length; i++) {
                 element.classList.add(classList[i]);
             }
-                
         }
         return this;
     }
 
     appendToParent(parent, position = 'beforeend') {
-        if(parent instanceof Elem)
-            parent = parent.html();
+        if (parent instanceof Elem) parent = parent.html();
         parent.insertAdjacentElement(position, this.elem);
         return this;
     }
 
     destroyChildren() {
-        if(this.elem) {
+        if (this.elem) {
             while (this.elem.firstChild) {
                 this.elem.lastChild.remove();
             }
@@ -84,7 +87,7 @@ class Elem {
     }
 
     destroyItself() {
-        if(this.elem) {
+        if (this.elem) {
             while (this.elem.firstChild) {
                 this.elem.lastChild.remove();
             }
@@ -99,9 +102,9 @@ class Elem {
     }
 
     setClassList(classList, overwrite = false) {
-        if(!classList) return this;
-            classList = this.sanitizeList(classList);
-        if(overwrite)   this.elem.className = '';
+        if (!classList) return this;
+        classList = this.sanitizeList(classList);
+        if (overwrite) this.elem.className = '';
         for (let i = 0; i < classList.length; i += 1) {
             this.elem.className += ` ${classList[i]}`;
         }
@@ -113,12 +116,11 @@ class Elem {
         this.elem.classList.remove(className);
     }
 
-    setChildren(children) {     // Can be either a string or element Elem, or list
+    setChildren(children) { // Can be either a string or element Elem, or list
         children = this.sanitizeList(children);
         if (children) {
             for (let i = 0; i < children.length; i += 1) {
-                if(children[i] instanceof Function)
-                    children[i] = children[i]();
+                if (children[i] instanceof Function) children[i] = children[i]();
                 this.safeAppend(children[i]);
             }
         }
@@ -135,8 +137,8 @@ class Elem {
         return this;
     }
 
-    sanitizeList(list) {     // To overload params to accept both single and list values
-        if(list && !Array.isArray(list)) return [list];
+    sanitizeList(list) { // To overload params to accept both single and list values
+        if (list && !Array.isArray(list)) return [list];
         return list;
     }
 }
@@ -148,27 +150,25 @@ class Popover extends Elem {
         this.direction = null;
         this.style = 'normal';
         this.wrappedElem = elem;
-        this.wrappedElem.style.marginLeft = '-2px;'
+        this.wrappedElem.style.marginLeft = '-2px;';
     }
 
     html() {
-        if(!this.direction) {
+        if (!this.direction) {
             console.error('PopoverElem build wrong');
         }
         return this.elem;
     }
 
     setStyle(style) {
-        if(style !== 'normal' && style !== 'danger')
-            console.error(`Only 'normal' and 'danger' supported for Popover. style = `, style);
+        if (style !== 'normal' && style !== 'danger') console.error('Only \'normal\' and \'danger\' supported for Popover. style = ', style);
 
         this.style = style;
         return this;
     }
 
-    setDirection(direction) {   // Only left currently works
-        if(direction !== 'right' && direction !== 'bottom' && direction !== 'left')
-            console.error('Popover direction must be either right/bottom/left. direction = ', direction);
+    setDirection(direction) { // Only left currently works
+        if (direction !== 'right' && direction !== 'bottom' && direction !== 'left') console.error('Popover direction must be either right/bottom/left. direction = ', direction);
         this.direction = direction;
         this.setClassList(`popover-${direction}`);
         return this;
@@ -181,28 +181,28 @@ class Popover extends Elem {
             new Div('popover-arrow-right').html()
         ]).appendToParent(this.elem);
 
-        if(this.style === 'danger') {
+        if (this.style === 'danger') {
             const container = popoverContainer.html();
             container.children[0].style.backgroundColor = '#2b1111e6';
             container.children[1].style.backgroundColor = '#442222f0';
             container.children[2].classList.add('arrow-danger');
         }
 
-        if(this.wrappedElem instanceof Elem)  this.wrappedElem.appendToParent(this.elem, 'afterbegin');
-        else  this.elem.insertAdjacentElement('afterbegin', this.wrappedElem);
+        if (this.wrappedElem instanceof Elem) this.wrappedElem.appendToParent(this.elem, 'afterbegin');
+        else this.elem.insertAdjacentElement('afterbegin', this.wrappedElem);
 
         this.addEventListener(() => {
             const popoverContainerElem = popoverContainer.html();
             const arrowReposition = (entries) => {
-                Array.from(entries).forEach((entry) => {    //entry.target = popover-container
-                    let rect = entry.contentRect;
+                Array.from(entries).forEach((entry) => { // entry.target = popover-container
+                    const rect = entry.contentRect;
 
                     const arrow = entry.target.children[2];
                     const neededHeightMove = (rect.height / 2) - 4; // (arrow.style.height / 2) always returns zero. Needs fixing?
-    
+
                     arrow.style.top = `-${neededHeightMove}px`;
-                })
-            }
+                });
+            };
             const arrowObserver = new ResizeObserver(arrowReposition);
             arrowObserver.observe(popoverContainerElem);
         }, popoverContainer.html());
@@ -223,16 +223,13 @@ class Span extends Elem {
     }
 }
 
-class Clickable extends Elem {  // btnType === 'a' || 'button' || 'icon:{icon-type}'
+class Clickable extends Elem { // btnType === 'a' || 'button' || 'icon:{icon-type}'
     constructor(btnType = 'a', classList = null) {
-        if(btnType === 'a' || btnType === 'button')
-            super(btnType, null, classList);
+        if (btnType === 'a' || btnType === 'button') super(btnType, null, classList);
         else if (btnType.split(':').length === 2) {
             super('a');
             this.elem = new Icon(btnType.split(':')[1], true).setClassList(classList).html();
-        }
-        else
-            console.error('Clickable contructor has illegal param btnType: ', btnType);
+        } else console.error('Clickable contructor has illegal param btnType: ', btnType);
     }
 
     setHref(href) {
@@ -252,20 +249,20 @@ class Copyable extends Elem {
         this.text = text;
         this.uiWorker = UiWorker;
         this.elem = null;
-        this.elem = new Clickable().setInnerText(text).addEventListener(() => { 
+        this.elem = new Clickable().setInnerText(text).addEventListener(() => {
             this.elem.onclick = () => {
-                var input = document.createElement('textarea');
+                const input = document.createElement('textarea');
                 input.innerHTML = this.text;
                 document.body.appendChild(input);
                 input.select();
-                var success = document.execCommand('copy');
+                const success = document.execCommand('copy');
                 document.body.removeChild(input);
 
                 document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
-    
-                if(success)  new SnackBar('TaskId Successfully Copied').setIcon('fa-clipboard-check').setClassList('snackbar-positive').show();
-                else  new SnackBar('Failed to Copy TaskId').setIcon('fa-clipboard-check').setClassList('snackbar-positive').show();
-            }
+
+                if (success) new SnackBar('TaskId Successfully Copied').setIcon('fa-clipboard-check').setClassList('snackbar-positive').show();
+                else new SnackBar('Failed to Copy TaskId').setIcon('fa-clipboard-check').setClassList('snackbar-positive').show();
+            };
         }).html();
     }
 }
@@ -314,7 +311,7 @@ class Svg extends Elem {
         super('div');
         classList = this.sanitizeList(classList);
         this.elem = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        for(let i = 0; i < classList.length; i++) {
+        for (let i = 0; i < classList.length; i++) {
             this.elem.classList.add(classList[i]);
         }
     }
@@ -330,40 +327,38 @@ class Expandable extends Elem {
         this.setChildren(this.title);
         this.childList = [];
     }
-    
+
     addExpandable(elem) {
-        if(elem instanceof Elem)
-            elem = elem.html();
+        if (elem instanceof Elem) elem = elem.html();
         this.childList.push(elem);
         return this;
     }
 
     completeSetup() {
         this.elem.onclick = () => {
-            if(this.elem.classList.contains('expanded')) {
+            if (this.elem.classList.contains('expanded')) {
                 this.destroyChildren();
                 this.setChildren(new Div().setClassList(this.titleClass).setChildren([this.angle, this.titleStr]));
                 this.elem.classList.remove('expanded');
                 this.angle.classList.remove('fa-angle-down');
                 this.angle.classList.add('fa-angle-right');
-            }
-            else {
+            } else {
                 this.angle.classList.remove('fa-angle-right');
                 this.angle.classList.add('fa-angle-down');
                 this.elem.classList.add('expanded');
                 this.destroyChildren();
                 const contentHolder = new Div('expandable-holder');
-                this.setChildren(new Div().setClassList(this.titleClass).setChildren([ 
+                this.setChildren(new Div().setClassList(this.titleClass).setChildren([
                     this.angle,
                     new Divider(this.titleStr).setClassList('divider-after').html(),
                     contentHolder
                 ]).html());
 
-                for(let i = 0; i < this.childList.length; i++) {
+                for (let i = 0; i < this.childList.length; i++) {
                     contentHolder.safeAppend(this.childList[i]);
                 }
             }
-        }
+        };
         return this;
     }
 }
@@ -377,38 +372,34 @@ class Row extends Elem {
     makeExpandable(childrenClassName) {
         this.elem.onclick = () => {
             const children = document.getElementsByClassName(childrenClassName);
-            if(this.elem.classList.contains('expanded')) {
-                for(let i = 0; i < children.length; i++) {
+            if (this.elem.classList.contains('expanded')) {
+                for (let i = 0; i < children.length; i++) {
                     children[i].classList.add('display-none');
                 }
                 this.elem.classList.remove('expanded');
                 const angle = this.elem.getElementsByClassName('fa-angle-down');
-                if(angle[0]) {
+                if (angle[0]) {
                     angle[0].classList.add('fa-angle-right');
                     angle[0].classList.remove('fa-angle-down');
                 }
-            }
-            else {
-                for(let i = 0; i < children.length; i++) {
+            } else {
+                for (let i = 0; i < children.length; i++) {
                     children[i].classList.remove('display-none');
                 }
                 this.elem.classList.add('expanded');
                 const angle = this.elem.getElementsByClassName('fa-angle-right');
-                if(angle[0]) {
+                if (angle[0]) {
                     angle[0].classList.add('fa-angle-down');
                     angle[0].classList.remove('fa-angle-right');
                 }
             }
-        }
+        };
     }
 
     setColumn(col) {
-        if(col instanceof Function)
-            col = col();
-        if(typeof(col) === 'string')
-            this.safeAppend(new Div('td').setClassList(`col${++this.columns}`).setChildren(col));
-        else
-            this.safeAppend(col, 'beforeend', `col${++this.columns}`);
+        if (col instanceof Function) col = col();
+        if (typeof (col) === 'string') this.safeAppend(new Div('td').setClassList(`col${++this.columns}`).setChildren(col));
+        else this.safeAppend(col, 'beforeend', `col${++this.columns}`);
         return this;
     }
 
@@ -417,12 +408,9 @@ class Row extends Elem {
         const length = columnList.length;
         for (let i = 0; i < length; i += 1) {
             let col = columnList[i];
-            if(col instanceof Function)
-                col = col();
-            if(typeof(col) === 'string')
-                this.safeAppend(new Div('td').setClassList(`col${++this.columns}`).setChildren(col));
-            else
-                this.safeAppend(col, 'beforeend', `col${++this.columns}`);
+            if (col instanceof Function) col = col();
+            if (typeof (col) === 'string') this.safeAppend(new Div('td').setClassList(`col${++this.columns}`).setChildren(col));
+            else this.safeAppend(col, 'beforeend', `col${++this.columns}`);
         }
         return this;
     }
@@ -433,11 +421,10 @@ class Td extends Elem {
         super('div');
         if (!template) {
             this.elem.classList.add('td');
-        }
-        else if(template === 'tenant-app-th' || template === 'tenant-app-td') {
+        } else if (template === 'tenant-app-th' || template === 'tenant-app-td') {
             let tenant = 'Tenant';
             let application = 'Application';
-            if(template === 'tenant-app-td') {
+            if (template === 'tenant-app-td') {
                 console.log('data: ', data);
                 tenant = data[0];
                 application = data[1];
@@ -449,9 +436,7 @@ class Td extends Elem {
                 new Icon('fa-angle-double-right').setClassList(template).html(),
                 applicationSpan.html()
             ]).html();
-        }
-        else
-            console.error('Td template is unsupported. template = ', template);
+        } else console.error('Td template is unsupported. template = ', template);
     }
 }
 
@@ -461,16 +446,14 @@ class Loader extends Elem {
         this.size = 'lg';
     }
 
-    setSize(size) {     // 'sm', 'small', 'lg', 'large' 
+    setSize(size) { // 'sm', 'small', 'lg', 'large'
         this.size = size;
         return this;
-    } 
+    }
 
     start() {
-        if(this.size === 'sm' || this.size === 'small')
-            this.setClassList(['loading', 'loading-sm']);
-        else
-            this.setClassList(['loading', 'loading-lg']);
+        if (this.size === 'sm' || this.size === 'small') this.setClassList(['loading', 'loading-sm']);
+        else this.setClassList(['loading', 'loading-lg']);
         return this;
     }
 
@@ -491,35 +474,35 @@ class Modal extends Elem {
     }
 
     html() {
-        if(!this.title || !this.message || !this.okFunction) {
+        if (!this.title || !this.message || !this.okFunction) {
             console.error('Modal not constructed properly. Modal, this.elem: ', this.elem);
         }
         return this.elem;
     }
 
     setTitle(title) {
-        if(title !== 'Warning' && title !== 'Enabling Template Set') {   // Title determines type of Modal. Only 'Warning' modal currently supported
+        if (title !== 'Warning' && title !== 'Enabling Template Set') { // Title determines type of Modal. Only 'Warning' modal currently supported
             console.error('Unsupported Modal');
             return;
         }
         this.title = title;
-        
+
         new Div('modal-header').setChildren([
             new Clickable('icon:fa-times').setClassList(['modal-exit-icon', 'float-right', 'faded-active-border']).setOnClick(() => {
-                this.destroyItself()
+                this.destroyItself();
             }),
             () => {
-                if(title === 'Warning') {
+                if (title === 'Warning') {
                     return new Div(['modal-title', 'h4']).setChildren([
                         new Icon('fa-exclamation-triangle').setClassList('exclamation-icon'),
                         `${title}`
-                    ])
+                    ]);
                 }
-                if(title === 'Enabling Template Set') {
+                if (title === 'Enabling Template Set') {
                     return new Div(['modal-title', 'h4']).setChildren([
                         new Icon('fa-info-circle').setClassList('info-icon'),
                         `${title}`
-                    ])
+                    ]);
                 }
             }
         ]).appendToParent(this.elem.children[0]);
@@ -551,7 +534,7 @@ class Divider extends Elem {
     constructor(text) {
         super('div', null, 'divider');
 
-        if(text) {
+        if (text) {
             this.elem.classList.add('text-centered');
             this.elem.setAttribute('data-content', text);
         }
@@ -559,19 +542,19 @@ class Divider extends Elem {
 }
 
 module.exports = {
-    Elem : Elem,
-    Div : Div,
-    Span : Span,
-    Clickable : Clickable,
-    Copyable : Copyable,
-    Icon : Icon,
-    Row : Row,
-    Loader : Loader,
-    Modal : Modal,
-    SnackBar : SnackBar,
-    Popover : Popover,
-    Td : Td,
-    Expandable : Expandable,
-    Divider : Divider,
-    Svg: Svg
-}
+    Elem,
+    Div,
+    Span,
+    Clickable,
+    Copyable,
+    Icon,
+    Row,
+    Loader,
+    Modal,
+    SnackBar,
+    Popover,
+    Td,
+    Expandable,
+    Divider,
+    Svg
+};
