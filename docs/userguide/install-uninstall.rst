@@ -38,3 +38,7 @@ To completely uninstall, and remove, the "F5 Applications Services Templates" en
 #. **iApps> Application Services> Applications LX** select F5 Applications Services Templates, click **Delete** then **Yes** to confirm deletion
 
 The result should be a Status of *There are no applications listed*.
+
+.. |installas3| raw:: html
+
+   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html" target="_blank">Downloading and Installing AS3</a>

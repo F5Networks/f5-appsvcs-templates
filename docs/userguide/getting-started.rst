@@ -51,7 +51,3 @@ Next Steps
 ----------
 
 Continue with :ref:`GUI Overview<overview>` for information on using the interface, or use the left navigation to go to a specific page.
-
-.. |installas3| raw:: html
-
-   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html" target="_blank">Downloading and Installing AS3</a>
