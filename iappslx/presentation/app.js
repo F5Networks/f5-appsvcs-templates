@@ -8,10 +8,10 @@ const yaml = require('js-yaml');
 
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
-const UiWorker = require('./js/ui-worker.js');
+const UiWorker = require('./lib/ui-worker.js');
 const {
     Div, Span, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
-} = require('./js/elements');
+} = require('./lib/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
 
