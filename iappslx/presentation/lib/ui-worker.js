@@ -97,19 +97,6 @@ module.exports = class UiWorker {
         this.loader.destroyItself();
     }
 
-    static selectChildren(menu, id) {
-        for (let i = 0; i < menu.children.length; i++) {
-            console.log('menu:', menu);
-            console.log('id:', id);
-            console.log('menu.children[i]', menu.children[i]);
-            if (menu.children[i].id === id) {
-                menu.children[i].classList.add('selected');
-                return;
-            }
-        }
-        console.error('reached selectChildren without finding child. children: ', menu);
-    }
-
     static iterateHtmlCollection(collection, func) {
         console.log('iterateHtmlCollection, children: ', collection);
         for (let i = 0; i < collection.children.length; i++) {
