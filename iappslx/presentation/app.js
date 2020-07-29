@@ -214,6 +214,7 @@ function router() {
     app.appendChild(document.importNode(pageTmpl.content, true));
     app.style.opacity = '.3';
     outputElem = document.getElementById('output');
+    dispOutput('');
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
     pageFunc(urlParts.slice(1).join('/'))
