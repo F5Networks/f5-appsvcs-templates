@@ -230,40 +230,28 @@ window.addEventListener('load', router);
 // Define routes
 route('', 'apps', () => {
     const appListDiv = document.getElementById('app-list');
-    let lastTenant = '';
     return getJSON('applications')
         .then((appsList) => {
-            new Row('th-row').setColumns([new Td('tenant-app-th'), 'Template', 'Actions']).appendToParent(appListDiv);
-            new Row().setAttr('height', '1px').appendToParent(appListDiv);
             appsList.forEach((app) => {
-                const appPair = [app.tenant, app.name];
-                const appPairStr = `${appPair.join('/')}`;
-
-                let appTenant = '';
-                if (appPair[0] !== lastTenant) {
-                    appTenant = appPair[0];
-                    lastTenant = appPair[0];
-                }
-                const appName = appPair[1];
-                const appTemplate = app.template;
+                const appPath = `${app.tenant}/${app.name}`;
 
                 new Row().appendToParent(appListDiv)
-                    .setColumn(new Td('tenant-app-td', [appTenant, appName]))
-                    .setColumn(appTemplate)
+                    .setColumn(new Td('tenant-app-td', [app.tenant, app.name]))
+                    .setColumn(app.template)
                     .setColumn(new Div('td').setChildren([
-                        new Clickable('icon:fa-edit').setHref(`#modify/${appPairStr}`).setToolstrip('Modify Application'),
+                        new Clickable('icon:fa-edit').setHref(`#modify/${appPath}`).setToolstrip('Modify Application'),
                         new Clickable('icon:fa-trash').setOnClick(() => {
                             new Modal().setTitle('Warning')
-                                .setMessage(`Application '${appPairStr}' will be permanently deleted!`)
+                                .setMessage(`Application '${appPath}' will be permanently deleted!`)
                                 .setOkFunction(() => {
-                                    dispOutput(`Deleting ${appPairStr}`);
-                                    safeFetch(`${endPointUrl}/applications/${appPairStr}`, {
+                                    dispOutput(`Deleting ${appPath}`);
+                                    safeFetch(`${endPointUrl}/applications/${appPath}`, {
                                         method: 'DELETE'
                                     })
                                         .then(() => {
                                             window.location.href = '#tasks';
                                         })
-                                        .catch(e => dispOutput(`Failed to delete ${appPairStr}:\n${e.message}`));
+                                        .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
                                 })
                                 .appendToParent(document.getElementById('app'));
                         }).setToolstrip('Delete Application')

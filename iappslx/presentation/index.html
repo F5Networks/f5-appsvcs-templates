@@ -33,7 +33,18 @@
 
         <!-- Page Templates -->
         <template id="page-apps">
-            <div id="app-list" class="styled-list"></div>
+            <div id="app-list" class="styled-list">
+                <div class="th-row">
+                    <div class="td tenant-app-th col1">
+                        <span class="tenant-app-th tenant">Tenant</span>
+                        <span class="fas fa-angle-double-right icon tenant-app-th"></span>
+                        <span class="tenant-app-th application">Application</span>
+                    </div>
+                    <div class="td col2">Template</div>
+                    <div class="td col3">Actions</div>
+                </div>
+                <div class="tr" height="1px"></div>
+            </div>
             <div>
                 <pre id="output">
                 </pre>
