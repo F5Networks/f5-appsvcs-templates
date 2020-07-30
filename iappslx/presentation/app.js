@@ -56,6 +56,10 @@ let UI;
 
 const appState = {
     debugOutput: '',
+    modal: {
+        message: '',
+        icon: ''
+    },
     pageComponent: {
         template: '<div></div>'
     }
@@ -69,7 +73,29 @@ for (const tmpl of document.getElementsByTagName('template')) {
 // eslint-disable-next-line no-unused-vars
 const vueApp = new Vue({
     el: '#vue-app',
-    data: appState
+    data: appState,
+    methods: {
+        cancelModal() {
+            appState.modal.message = '';
+        },
+        continueModal() {
+            const modalFunc = window.modalFunc || Promise.resolve();
+            Promise.resolve()
+                .then(() => modalFunc())
+                .finally(() => this.cancelModal());
+        },
+        showModal(type, msg, func) {
+            if (type === 'warning') {
+                appState.modal.icon = 'info-warning';
+                appState.modal.title = 'Warning';
+            } else {
+                appState.modal.icon = 'info-circle';
+                appState.modal.title = 'Info';
+            }
+            window.modalFunc = func;
+            appState.modal.message = msg;
+        }
+    }
 });
 
 const dispOutput = (output) => {
@@ -248,7 +274,6 @@ function router() {
     // Load new page
     app.style.opacity = '.3';
     dispOutput('');
-    document.getElementById('output').style.display = 'block';
     appState.pageComponent = `page-${routeInfo.pageName}`;
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());

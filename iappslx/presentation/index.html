@@ -26,13 +26,32 @@
                 <a class="btn btn-nav" href="#tasks">Deploy Log</a>
                 <a class="btn btn-nav" href="#api">API</a>
             </div>
-            <div id="content-wrapper">
+            <div id="content-wrapper" v-cloak>
                 <div id="app">
                     <component v-bind:is="pageComponent"></component>
                 </div>
                 <pre id="output">{{debugOutput}}</pre>
                 <div id="snackbar"></div>
                 <div id="copy-div" style="display: none;"></div>
+                <div v-if="modal.message" class="modal active">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <a class="fas fa-times btn-icon modal-exit-icon float-right faded-active-border"
+                                @click="cancelModal">
+                            </a>
+                            <div class="modal-title h4">
+                                <a class="fas fa-exclamation-triangle icon exclamation-icon"></a>
+                                {{modal.title}}
+                            </div>
+                        </div>
+                        <div class="modal-body">{{modal.message}}</div>
+                        <div class="modal-footer">
+                            <button class="btn btn-cancel faded-active-border" @click="cancelModal">CANCEL</button>
+                            <button class="btn btn-continue faded-active-border" @click="continueModal">CONTINUE</button>
+                        </div>
+                    </div>
+                    <a class="modal-overlay faded-active-border"></a>
+                </div>
             </div>
         </div>
 
