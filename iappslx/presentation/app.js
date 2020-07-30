@@ -56,6 +56,7 @@ let UI;
 
 const appState = {
     debugOutput: '',
+    data: {},
     modal: {
         message: '',
         icon: ''
@@ -68,7 +69,10 @@ const appState = {
 // Auto-register HTML template tags as Vue components
 // eslint-disable-next-line no-restricted-syntax
 for (const tmpl of document.getElementsByTagName('template')) {
-    Vue.component(tmpl.id, { template: `#${tmpl.id}` });
+    Vue.component(tmpl.id, {
+        props: ['data'],
+        template: `#${tmpl.id}`
+    });
 }
 // eslint-disable-next-line no-unused-vars
 const vueApp = new Vue({
@@ -291,34 +295,34 @@ window.addEventListener('load', router);
 
 // Define routes
 route('', 'apps', () => {
-    const appListDiv = document.getElementById('app-list');
+    vueApp.$refs.page.deleteApplication = (appPath) => {
+        vueApp.showModal(
+            'warning',
+            `Application ${appPath} will be permanently deleted!`,
+            () => {
+                dispOutput(`Deleting ${appPath}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/applications/${appPath}`, {
+                        method: 'DELETE'
+                    }))
+                    .then(() => {
+                        window.location.href = '#tasks';
+                    })
+                    .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
+            }
+        );
+    };
+
+    appState.data = {
+        appsList: []
+    };
+
     return getJSON('applications')
         .then((appsList) => {
             appsList.forEach((app) => {
-                const appPath = `${app.tenant}/${app.name}`;
-
-                new Row().appendToParent(appListDiv)
-                    .setColumn(new Td('tenant-app-td', [app.tenant, app.name]))
-                    .setColumn(app.template)
-                    .setColumn(new Div('td').setChildren([
-                        new Clickable('icon:fa-edit').setHref(`#modify/${appPath}`).setToolstrip('Modify Application'),
-                        new Clickable('icon:fa-trash').setOnClick(() => {
-                            new Modal().setTitle('Warning')
-                                .setMessage(`Application '${appPath}' will be permanently deleted!`)
-                                .setOkFunction(() => {
-                                    dispOutput(`Deleting ${appPath}`);
-                                    safeFetch(`${endPointUrl}/applications/${appPath}`, {
-                                        method: 'DELETE'
-                                    })
-                                        .then(() => {
-                                            window.location.href = '#tasks';
-                                        })
-                                        .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
-                                })
-                                .appendToParent(document.getElementById('app'));
-                        }).setToolstrip('Delete Application')
-                    ]));
+                app.path = `${app.tenant}/${app.name}`;
             });
+            appState.data.appsList = appsList;
             dispOutput('');
         })
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));

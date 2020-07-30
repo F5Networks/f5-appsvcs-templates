@@ -28,7 +28,7 @@
             </div>
             <div id="content-wrapper" v-cloak>
                 <div id="app">
-                    <component v-bind:is="pageComponent"></component>
+                    <component ref="page" :is="pageComponent" :data="data"></component>
                 </div>
                 <pre id="output">{{debugOutput}}</pre>
                 <div id="snackbar"></div>
@@ -68,6 +68,22 @@
                     <div class="td col3">Actions</div>
                 </div>
                 <div class="tr" height="1px"></div>
+                <div class="tr" v-for="app in data.appsList">
+                    <div class="td tenant-app-td col1">
+                        <span class="tenant-app-td tenant">{{app.tenant}}</span>
+                        <span class="fas fa-angle-double-right icon tenant-app-td"></span>
+                        <span class="tenant-app-td application">{{app.name}}</span>
+                    </div>
+                    <div class="td col2">{{app.template}}</div>
+                    <div class="td col3">
+                        <span class="tooltip tooltip-right" data-tooltip="Modify Application">
+                            <a class="fas fa-edit btn-icon" :href="'#modify/'+app.path"></a>
+                        </span>
+                        <span class="tooltip tooltip-right" data-tooltip="Delete Application">
+                            <a class="fas fa-trash btn-icon" @click="deleteApplication(app.path)"></a>
+                        </span>
+                    </div>
+                </div>
             </div>
         </template>
 
