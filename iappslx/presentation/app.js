@@ -1,3 +1,4 @@
+/* global Vue, JSONEditor */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -51,18 +52,31 @@ const safeFetch = (uri, opts) => {
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
 let editor = null;
-
-let outputElem;
-
 let UI;
+
+const appState = {
+    debugOutput: '',
+    pageComponent: {
+        template: '<div></div>'
+    }
+};
+
+// Auto-register HTML template tags as Vue components
+// eslint-disable-next-line no-restricted-syntax
+for (const tmpl of document.getElementsByTagName('template')) {
+    Vue.component(tmpl.id, { template: `#${tmpl.id}` });
+}
+// eslint-disable-next-line no-unused-vars
+const vueApp = new Vue({
+    el: '#vue-app',
+    data: appState
+});
 
 const dispOutput = (output) => {
     if (output.length > 0) {
         console.log(output);
     }
-    if (outputElem) {
-        outputElem.innerText = output;
-    }
+    appState.debugOutput = output;
 };
 
 const multipartUpload = (file) => {
@@ -140,7 +154,6 @@ const newEditor = (tmplid, view) => {
 
             // Create a new editor
             const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedParameters(view), schema);
-            // eslint-disable-next-line no-undef
             editor = new JSONEditor(formElement, {
                 schema,
                 startval: defaults,
@@ -233,15 +246,14 @@ function router() {
     }
 
     // Load new page
-    const pageId = `#page-${routeInfo.pageName}`;
-    const pageTmpl = document.querySelector(pageId);
-    app.appendChild(document.importNode(pageTmpl.content, true));
     app.style.opacity = '.3';
-    outputElem = document.getElementById('output');
     dispOutput('');
+    document.getElementById('output').style.display = 'block';
+    appState.pageComponent = `page-${routeInfo.pageName}`;
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
-    pageFunc(urlParts.slice(1).join('/'))
+    Promise.resolve()
+        .then(() => pageFunc(urlParts.slice(1).join('/')))
         .finally(() => {
             UI.completeMoveToRoute();
             app.style.opacity = '1';

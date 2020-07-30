@@ -272,6 +272,7 @@ button:disabled:hover {
 
 #output {
   min-height: 25px;
+  display: none;
 }
 
 .td .tenant { 

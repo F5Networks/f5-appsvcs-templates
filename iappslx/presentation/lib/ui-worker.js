@@ -81,8 +81,6 @@ module.exports = class UiWorker {
 
         this.app.scrollIntoView({ behavior: 'smooth' });
 
-        UiWorker.destroyChildren(this.app);
-
         this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
 
         setTimeout(() => {
