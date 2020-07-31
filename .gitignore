@@ -12,3 +12,4 @@ rpmbuild
 test-output.txt
 iappslx/presentation/openapi.json
 venv/
+docs/userguide/proposed-doc-rev.rst
