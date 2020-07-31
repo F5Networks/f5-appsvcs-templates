@@ -116,7 +116,7 @@ const expected = {
                 }],
                 loadBalancingMode: view.load_balancing_mode,
                 slowRampTime: 300,
-                monitors: ['https']
+                monitors: ['tcp', 'https']
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
