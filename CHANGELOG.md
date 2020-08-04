@@ -2,6 +2,7 @@
 ## Added
 
 ## Fixed
+* bigip-fast-templates/tcp: Fix enumFromBigip for monitor_name
 
 ## Changed
 * Use AS3's optimistic locking to detect synchronization issues between FAST and AS3

@@ -45,7 +45,7 @@ definitions:
   monitor_name:
     title: Specify the name of an existing BIG-IP monitor.
     description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
-    enumFromBigip: 'ltm/monitor/http'
+    enumFromBigip: 'ltm/monitor/tcp'
   enable_snat:
     title: SNAT
     description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
