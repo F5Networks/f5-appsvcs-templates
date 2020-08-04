@@ -21,7 +21,8 @@ info:
     # F5 Application Services Templates (FAST)
 
     This is the documentation for the FAST templating extension. This document
-    catalogs the API endpoints exposed by the extension.
+    catalogs the API endpoints exposed by the extension. Note that the path for
+    all endpoints must be preceded by /mgmt/shared/fast.
 
     ## Application Management
 
