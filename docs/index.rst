@@ -6,7 +6,7 @@ F5 Application Services Templates (FAST) are an easy and effective way to deploy
 The FAST Extension provides a toolset for templating and managing AS3 Applications
 on BIG-IP.
 
-.. TIP:: To get started right away, see the :ref:`Quick Start<quick>`.
+.. TIP:: To get started right away, see the :ref:`Quick Start<quick>`.  To see what’s new, see the :ref:`Revision History<revision-history>` or the `Release Notes <https://github.com/F5Networks/f5-appsvcs-templates/releases>`_ on GitHub.
 
 You can also see the FAST Introduction video:
 
