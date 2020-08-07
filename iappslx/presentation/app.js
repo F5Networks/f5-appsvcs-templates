@@ -323,10 +323,18 @@ route('tasks', 'tasks', () => {
                         if (task.message === 'success') {
                             return new Div('td').setChildren('success').setClassList('success-color');
                         }
-                        if (task.message.includes('Error:') || task.message.includes('declaration failed')) {
-                            let title = 'declaration failed';
-                            let message = task.message.substring(18, task.message.length);
-                            if (task.message.includes('Error:')) { title = 'Error'; message = task.message.split(':')[1]; }
+                        if (task.code >= 400) {
+                            let title = 'Error';
+                            let message = task.message;
+                            if (task.message.includes('Error:')) {
+                                message = message.split(':')[1];
+                            } else if (task.message.includes('declaration failed')) {
+                                title = 'declaration failed';
+                                message = message.substring(title.length, task.message.length);
+                            } else if (task.message.includes('declaration is invalid')) {
+                                title = 'declaration is invalid';
+                                message = message.substring(title.length, task.message.length);
+                            }
                             const questionIcon = new Icon('fa-question-circle').setClassList(['cursor-default', 'danger-color']).html();
                             const questionPopover = new Popover(questionIcon).setDirection('left').setStyle('danger')
                                 .setData(title, message);

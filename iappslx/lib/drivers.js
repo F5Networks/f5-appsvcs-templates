@@ -270,7 +270,7 @@ class AS3Driver {
             }
             const changes = [...new Set(results.filter(r => r.message).map(r => r.message))];
             const responses = [...new Set(results.filter(r => r.response).map(r => r.response))];
-            const errors = [...new Set(results.filter(r => r.error).map(r => r.error))];
+            const errors = [...new Set(results.filter(r => r.errors).map(r => r.errors))];
             return {
                 id: item.id,
                 code: item.results[0].code,
