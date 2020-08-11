@@ -1,5 +1,6 @@
 # 1.3.0
 ## Added
+* Support enumFromBigip on array items
 
 ## Fixed
 * bigip-fast-templates/tcp: Fix enumFromBigip for monitor_name

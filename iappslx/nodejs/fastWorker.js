@@ -477,6 +477,9 @@ class FASTWorker {
                 if (value.enumFromBigip) {
                     acc[key] = value;
                 }
+                if (value.items && value.items.enumFromBigip) {
+                    acc[`${key.items}`] = value.items;
+                }
                 return acc;
             }, {});
         const propNames = Object.keys(enumFromBigipProps);

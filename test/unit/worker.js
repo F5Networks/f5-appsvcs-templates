@@ -975,6 +975,13 @@ describe('template worker tests', function () {
                 foo: {
                     type: 'string',
                     enumFromBigip: 'ltm/profile/http-compression'
+                },
+                fooItems: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        enumFromBigip: 'ltm/profile/http-compression'
+                    }
                 }
             }
         };
@@ -993,6 +1000,10 @@ describe('template worker tests', function () {
         return worker.hydrateSchema(inputSchema, 0)
             .then((schema) => {
                 assert.deepEqual(schema.properties.foo.enum, [
+                    '/Common/httpcompression',
+                    '/Common/wan-optimized-compression'
+                ]);
+                assert.deepEqual(schema.properties.fooItems.items.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
                 ]);
