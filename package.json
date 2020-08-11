@@ -26,19 +26,19 @@
   ],
   "devDependencies": {
     "@babel/cli": "^7.10.5",
-    "@babel/core": "^7.10.5",
-    "@babel/plugin-transform-runtime": "^7.10.5",
-    "@babel/preset-env": "^7.10.4",
+    "@babel/core": "^7.11.1",
+    "@babel/plugin-transform-runtime": "^7.11.0",
+    "@babel/preset-env": "^7.11.0",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
-    "browserify": "^16.5.1",
+    "browserify": "^16.5.2",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "eslint": "^6.8.0",
-    "mocha": "^8.0.1",
+    "mocha": "^8.1.1",
     "mock-fs": "^4.12.0",
     "nock": "^12.0.3",
     "nyc": "^15.1.0",
-    "redoc-cli": "^0.9.8"
+    "redoc-cli": "^0.9.10"
   },
   "eslintConfig": {
     "extends": "@f5devcentral/eslint-config-f5-atg",
@@ -54,7 +54,7 @@
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.10.5",
+    "@babel/runtime": "^7.11.2",
     "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#dc4819c4f06a701b2345ad7b0dccc2518e31dc72",
     "@f5devcentral/f5-teem": "^1.4.6",
     "core-js": "^3.6.5",
