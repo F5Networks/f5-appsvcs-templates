@@ -349,7 +349,15 @@ class FASTWorker {
                     && fsTsData && fsTsData.hash !== tsData.hash
                 );
                 return tsData;
-            });
+            })
+            .catch(e => ({
+                name: tsid,
+                hash: '',
+                templates: [],
+                updateAvailable: false,
+                enabled: false,
+                error: e.message
+            }));
     }
 
     gatherInfo(requestId) {

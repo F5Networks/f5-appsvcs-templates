@@ -4,6 +4,7 @@
 
 ## Fixed
 * bigip-fast-templates/tcp: Fix enumFromBigip for monitor_name
+* Fix 500 error when invalid template sets are used
 
 ## Changed
 * Use AS3's optimistic locking to detect synchronization issues between FAST and AS3
