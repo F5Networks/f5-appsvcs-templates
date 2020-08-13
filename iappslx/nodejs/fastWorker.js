@@ -703,7 +703,11 @@ class FASTWorker {
                 ))
                 .then((tmplSet) => {
                     restOperation.setBody(tmplSet);
+                    if (tmplSet.error) {
+                        return Promise.reject(new Error(tmplSet.error));
+                    }
                     this.completeRestOperation(restOperation);
+                    return Promise.resolve();
                 })
                 .catch((e) => {
                     if (e.message.match(/No templates found/) || e.message.match(/does not exist/)) {
