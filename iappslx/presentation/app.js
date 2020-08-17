@@ -11,7 +11,17 @@ const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
 const {
-    Div, Span, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
+    Div,
+    Span,
+    Clickable,
+    Icon,
+    Row,
+    Loader,
+    Modal,
+    Popover,
+    Td,
+    Expandable,
+    Svg
 } = require('./lib/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
