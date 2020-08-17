@@ -16,9 +16,7 @@ const {
     Clickable,
     Icon,
     Row,
-    Loader,
     Modal,
-    Popover,
     Td,
     Expandable,
     Svg
@@ -374,51 +372,21 @@ route('modify', 'create', (appID) => {
 route('tasks', 'tasks', () => {
     const renderTaskList = () => getJSON('tasks')
         .then((tasks) => {
-            const taskList = document.getElementById('task-list');
-            UiWorker.destroyChildren(taskList);
-
-            new Row('th-row').appendToParent(taskList)
-                .setColumns(['Task ID', new Td('tenant-app-th'), 'Operation', 'Result']);
-
-            new Row().setAttr('height', '1px').appendToParent(taskList);
-
             tasks.forEach((task) => {
-                new Row(task.id).setClassList('tr').appendToParent(taskList)
-                    .setColumn(
-                        new Clickable().setInnerText(task.id).setHref(`/mgmt/shared/fast/tasks/${task.id}`)
-                            .setToolstrip('go to task')
-                            .setClassList(['td', 'clickable-darker'])
-                    )
-                    .setColumn(new Td('tenant-app-td', [task.tenant, task.application]))
-                    .setColumn(task.operation)
-                    .setColumn(() => {
-                        if (task.message === 'in progress') {
-                            return new Div('td').setChildren(new Loader().setSize('sm').start().html());
-                        }
-                        if (task.message === 'success') {
-                            return new Div('td').setChildren('success').setClassList('success-color');
-                        }
-                        if (task.code >= 400) {
-                            let title = 'Error';
-                            let message = task.message;
-                            if (task.message.includes('Error:')) {
-                                message = message.split(':')[1];
-                            } else if (task.message.includes('declaration failed')) {
-                                title = 'declaration failed';
-                                message = message.substring(title.length, task.message.length);
-                            } else if (task.message.includes('declaration is invalid')) {
-                                title = 'declaration is invalid';
-                                message = message.substring(title.length, task.message.length);
-                            }
-                            const questionIcon = new Icon('fa-question-circle').setClassList(['cursor-default', 'danger-color']).html();
-                            const questionPopover = new Popover(questionIcon).setDirection('left').setStyle('danger')
-                                .setData(title, message);
-
-                            return new Div('td').setChildren([title, questionPopover]).setClassList('danger-color');
-                        }
-                        return task.message;
-                    });
+                task.errMsg = '';
+                if (task.message.includes('Error:')) {
+                    task.errMsg = task.message.replace(/Error:/);
+                    task.message = 'Error';
+                } else if (task.message.includes('declaration failed')) {
+                    task.errMsg = task.message.replace(/declaration failed/);
+                    task.message = 'declaration failed';
+                } else if (task.message.includes('declaration is invalid')) {
+                    task.errMsg = task.message.replace(/declaration is invalid/);
+                    task.message = 'declaration is invalid';
+                }
+                task.showPopover = false;
             });
+            appState.data.tasks = tasks;
 
             const inProgressJob = (
                 tasks.filter(x => x.message === 'in progress').length !== 0
@@ -428,7 +396,9 @@ route('tasks', 'tasks', () => {
             }
         });
 
-
+    appState.data = {
+        tasks: []
+    };
     return renderTaskList();
 });
 route('api', 'api', () => Promise.resolve());

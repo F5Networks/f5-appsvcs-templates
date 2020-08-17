@@ -103,10 +103,12 @@
   border-width: 10px 10px 0;
   border-color: var(--popup-background-color) transparent;
   display: block;
+  float: right;
   width: 0;
-  z-index: 0;
   transform: rotate(270deg);
   z-index: 2;
+  position: absolute;
+  top: 5px;
 }
 
 .popover-danger:first-child {
