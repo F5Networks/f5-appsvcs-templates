@@ -71,7 +71,8 @@ const appState = {
     },
     pageComponent: {
         template: '<div></div>'
-    }
+    },
+    busy: true
 };
 
 // Auto-register HTML template tags as Vue components
@@ -273,6 +274,8 @@ function router() {
 
     const app = document.getElementById('app');
     if (!UI) UI = new UiWorker(app);
+    appState.busy = true;
+    app.style.display = 'none';
     UI.startMoveToRoute(urlParts[0]);
 
     // Error on unknown route
@@ -284,7 +287,6 @@ function router() {
     }
 
     // Load new page
-    app.style.opacity = '.3';
     dispOutput('');
     appState.pageComponent = `page-${routeInfo.pageName}`;
 
@@ -293,8 +295,8 @@ function router() {
         .then(() => pageFunc(urlParts.slice(1).join('/')))
         .finally(() => {
             UI.completeMoveToRoute();
-            app.style.opacity = '1';
             app.style.display = 'block';
+            appState.busy = false;
         });
 }
 

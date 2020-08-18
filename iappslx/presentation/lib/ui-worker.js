@@ -3,7 +3,7 @@
 
 'use strict';
 
-const { Loader, Elem } = require('./elements');
+const { Elem } = require('./elements');
 
 class NavigationBar {
     constructor(route) {
@@ -80,19 +80,12 @@ module.exports = class UiWorker {
         }
 
         this.app.scrollIntoView({ behavior: 'smooth' });
-
-        this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
-
-        setTimeout(() => {
-            if (this.loader.elem) this.loader.destroyItself();
-        }, 4000);
     }
 
     completeMoveToRoute() {
         if (this.curRoute === 'api') this.app.classList.add('height-100perc');
         else this.app.classList.remove('height-100perc');
         this.navBar.enable();
-        this.loader.destroyItself();
     }
 
     static iterateHtmlCollection(collection, func) {

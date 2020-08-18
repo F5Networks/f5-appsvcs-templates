@@ -27,6 +27,7 @@
                 <a class="btn btn-nav" href="#api">API</a>
             </div>
             <div id="content-wrapper" v-cloak>
+                <div v-if="busy" class='p-centered loading loading-lg'></div>
                 <div id="app">
                     <component ref="page" :is="pageComponent" :data="data"></component>
                 </div>
