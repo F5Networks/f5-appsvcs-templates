@@ -1,6 +1,7 @@
 # 1.3.0
 ## Added
 * Support enumFromBigip on array items
+* GUI: Add textboxes that can output base64 strings when a template is rendered
 
 ## Fixed
 * bigip-fast-templates/tcp: Fix enumFromBigip for monitor_name

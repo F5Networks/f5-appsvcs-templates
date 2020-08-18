@@ -96,6 +96,30 @@ const multipartUpload = (file) => {
     return uploadPart(0, file.size - 1);
 };
 
+// eslint-disable-next-line no-undef
+class Base64Editor extends JSONEditor.defaults.editors.string {
+    setValue(val) {
+        val = Buffer.from(val, 'base64').toString('utf8');
+        super.setValue(val);
+    }
+
+    getValue() {
+        return Buffer.from(super.getValue()).toString('base64');
+    }
+}
+
+// eslint-disable-next-line no-undef
+JSONEditor.defaults.editors.base64 = Base64Editor;
+
+// eslint-disable-next-line no-undef
+JSONEditor.defaults.resolvers.unshift((schema) => {
+    if (schema.type === 'string' && schema.contentEncoding === 'base64') {
+        return 'base64';
+    }
+
+    return undefined;
+});
+
 const newEditor = (tmplid, view) => {
     const formElement = document.getElementById('form-div');
     if (editor) {
