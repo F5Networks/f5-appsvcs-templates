@@ -150,7 +150,7 @@ class FASTWorker {
         // Find any template sets on disk (e.g., from the RPM) and add them to
         // the data store. Do not overwrite template sets already in the data store.
         let saveState = true;
-        this.logger.fine('FAST Worker: Begin startup');
+        this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         return Promise.resolve()
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
