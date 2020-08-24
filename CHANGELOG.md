@@ -2,13 +2,18 @@
 ## Added
 * Support enumFromBigip on array items
 * GUI: Add textboxes that can output base64 strings when a template is rendered
+* Templates: Add option to get variable values from HTTP requests
+* GUI: Use JSON Editor 'select' format for arrays of unique enum items
 
 ## Fixed
 * bigip-fast-templates/tcp: Fix enumFromBigip for monitor_name
 * Fix 500 error when invalid template sets are used
+* GUI: Improve filtering extra properties when using template merging
+* GUI: Improve form render order when using allOf
 
 ## Changed
 * Use AS3's optimistic locking to detect synchronization issues between FAST and AS3
+* Templates: Return an empty array instead of undefined when transforming an undefined array
 
 # 1.2.0
 ## Added
