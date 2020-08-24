@@ -10,13 +10,20 @@ Support will only be provided to customers who have an existing BIG-IP support c
 * FAST releases are supported for 3 months 
 * "End of Support" = End of Software Development (EOSD) + End of Technical Support (EOTS)
 
-Currently Supported Versions:
+Currently supported versions:
+
+| Software Version | First Customer Ship | End of Support |
+| ---------------- | ------------------- | -------------- |
+| 1.2              | 17-Jul-2020         | 17-Oct-2020    |
+| 1.3              | 01-Sep-2020         | 01-Dec-2020    |
+
+
+Versions no longer supported:
 
 | Software Version | First Customer Ship | End of Support |
 | ---------------- | ------------------- | -------------- |
 | 1.0              | 30-Apr-2020         | 30-Jul-2020    |
 | 1.1              | 02-Jun-2020         | 02-Sep-2020    |
-| 1.2              | 17-Jul-2020         | 17-Oct-2020    |
 
 
 See the [Release notes](https://github.com/F5Networks/f5-appsvcs-templates/releases) and [FAST documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/) for new features and issues resolved for each release.
