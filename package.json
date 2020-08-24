@@ -26,7 +26,7 @@
   ],
   "devDependencies": {
     "@babel/cli": "^7.10.5",
-    "@babel/core": "^7.11.1",
+    "@babel/core": "^7.11.4",
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.0",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
@@ -35,10 +35,10 @@
     "chai-as-promised": "^7.1.1",
     "eslint": "^6.8.0",
     "mocha": "^8.1.1",
-    "mock-fs": "^4.12.0",
+    "mock-fs": "^4.13.0",
     "nock": "^12.0.3",
     "nyc": "^15.1.0",
-    "redoc-cli": "^0.9.10"
+    "redoc-cli": "^0.9.12"
   },
   "eslintConfig": {
     "extends": "@f5devcentral/eslint-config-f5-atg",
