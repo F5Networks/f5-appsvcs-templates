@@ -54,4 +54,31 @@ For example, if a URL is specified with no options, default to HTTP POST:
         options:
          ... enumerated options ... 
 
+Multiple Choice Lists
+---------------------
 
+While authoring a template, it is possible to specify multiple choice list boxes for use in cases such as iRules.
+Once the list box endpoint declaration is made, a widget will be available for use in the GUI.  
+
+Some requirements must be met, which are:
+
+* type must be *array*
+* uniqueItems must be *true*
+* items must have an *enum*
+
+An example for generating a multi-select list box for iRules would be:
+
+.. code-block:: json
+
+    contentType: application/json             
+    definitions:                                                                                                           
+        irules:                                            
+            type: array                                                                     
+            uniqueItems: true                                                                  
+            items:          
+                type: string                              
+                enumFromBigip: ltm/rule                      
+     template: |                                                          
+       {                                                                        
+        "irules": {{irules::array}}                                                                   
+       }   
