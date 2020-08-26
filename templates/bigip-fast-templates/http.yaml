@@ -18,7 +18,7 @@ definitions:
     description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
     type: boolean
   make_pool:
-    title: Automatically manage the pool
+    title: Automatically manage the pool.
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
     type: boolean
   pool_name:
@@ -67,13 +67,24 @@ definitions:
     description: Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.
     type: boolean
   persistence_type:
-    title: Specify the type of persistence
+    title: Specify the type of persistence.
   enable_fallback_persistence:
     title: Fallback Persistence
     description: Create a secondary, or fallback, persistence record for each new client connection.
     type: boolean
   fallback_persistence_type:
-    title: Specify the type of fallback persistence
+    title: Specify the type of fallback persistence.
+  common_tcp_profile:
+    title: Use the same TCP profile for ingress and egress traffic.
+    type: boolean
+  make_tcp_profile:
+    title: Automatically manage the TCP profile.
+    type: boolean
+  tcp_topology:
+    title: Specify the type of network that connects both clients and servers to the BIG-IP system.
+  tcp_profile_name:
+    title: Specify the name of an existing BIG-IP TCP profile.
+    enumFromBigip: 'ltm/profile/tcp'
   enable_tls_server:
     title: TLS Server
     description: Enable TLS server to decrypt client-side connections.
@@ -368,24 +379,36 @@ definitions:
       {{/enable_tls_server}}
   service_tcp_def:
     template: |
+      {{#common_tcp_profile}}
+        {{#make_tcp_profile}}
+          "profileTCP": "{{tcp_topology:f5:topology}}"
+        {{/make_tcp_profile}}
+        {{^make_tcp_profile}}
+          "profileTCP": {
+            "bigip": "{{tcp_profile_name:f5:bigip_path}}"
+           }
+        {{/make_tcp_profile}}
+      {{/common_tcp_profile}}
+      {{^common_tcp_profile}}
       "profileTCP": {
-        {{#make_tcp_ingress_profile}}
-          "ingress": "{{tcp_ingress_topology:f5:topology}}",
-        {{/make_tcp_ingress_profile}}
-        {{^make_tcp_ingress_profile}}
-          "ingress": {
-            "bigip": "{{tcp_ingress_profile_name:f5:bigip_path}}"
-          },
-        {{/make_tcp_ingress_profile}}
-        {{#make_tcp_egress_profile}}
-          "egress": "{{tcp_egress_topology:f5:topology}}"
-        {{/make_tcp_egress_profile}}
-        {{^make_tcp_egress_profile}}
-          "egress": {
-            "bigip": "{{tcp_egress_profile_name:f5:bigip_path}}"
-          }
-        {{/make_tcp_egress_profile}}
-      }
+          {{#make_tcp_ingress_profile}}
+            "ingress": "{{tcp_ingress_topology:f5:topology}}",
+          {{/make_tcp_ingress_profile}}
+          {{^make_tcp_ingress_profile}}
+            "ingress": {
+              "bigip": "{{tcp_ingress_profile_name:f5:bigip_path}}"
+            },
+          {{/make_tcp_ingress_profile}}
+          {{#make_tcp_egress_profile}}
+            "egress": "{{tcp_egress_topology:f5:topology}}"
+          {{/make_tcp_egress_profile}}
+          {{^make_tcp_egress_profile}}
+            "egress": {
+              "bigip": "{{tcp_egress_profile_name:f5:bigip_path}}"
+            }
+          {{/make_tcp_egress_profile}}
+       }
+      {{/common_tcp_profile}}
 parameters:
   virtual_port: 443
   enable_pool: true
@@ -404,6 +427,10 @@ parameters:
   persistence_type: cookie
   enable_fallback_persistence: true
   fallback_persistence_type: source-address
+  common_tcp_profile: false
+  make_tcp_profile: true
+  tcp_topology: lan
+  tcp_profile_name: /Common/f5-tcp-progressive
   enable_tls_server: true
   make_tls_server_profile: true
   tls_server_profile_name: /Common/clientssl
