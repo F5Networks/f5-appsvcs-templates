@@ -396,7 +396,7 @@ parameters:
   slow_ramp_time: 300
   enable_monitor: true
   make_monitor: true
-  monitor_name: /Common/http
+  monitor_name: /Common/tcp
   enable_snat: true
   snat_automap: true
   make_snatpool: true
