@@ -7,10 +7,9 @@ Appendix B: Advanced Features
 Base64 Encoding
 ---------------
 
-Using the GUI, FAST has the ability to encode template parameters as base64, which becomes part of the template output (AS3 declaration).  
-
-iRules are a common use case, however AS3 supports base64 for a wide range of objects.
-
+| Using the GUI, FAST has the ability to encode template parameters as base64, which becomes part of the template output (AS3 declaration).  
+| iRules are a common use case, however AS3 supports base64 for a wide range of objects.
+|
 In the following example, the iRules convert to a base64 string:
 
 .. code-block:: json
