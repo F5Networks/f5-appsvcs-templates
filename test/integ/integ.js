@@ -145,4 +145,12 @@ describe('Applications', function () {
             '10.0.0.1'
         ]
     }));
+    it('Deploy bigip-fast-templates/tcp', () => deployApplication('bigip-fast-templates/tcp', {
+        tenant_name: 'tenant',
+        app_name: 'TCP-App',
+        virtual_address: '10.0.0.2',
+        pool_members: [
+            '10.0.0.2'
+        ]
+    }));
 });
