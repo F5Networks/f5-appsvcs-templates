@@ -832,8 +832,9 @@ class FASTWorker {
                         })
                         .then(tmpl => this.recordTransaction(
                             reqid, `rendering template (${x.name})`,
-                            Promise.resolve(yaml.safeLoad(tmpl.render(x.parameters)))
+                            tmpl.fetchAndRender(x.parameters)
                         ))
+                        .then(rendered => yaml.safeLoad(rendered))
                         .catch((e) => {
                             if (restOperation.status >= 400) {
                                 return Promise.reject();
