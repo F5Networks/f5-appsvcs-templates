@@ -86,6 +86,9 @@ class AS3Driver {
                         schemaVersion: '3.0.0'
                     };
                 }
+                if (decl.Common && decl.Common.optimisticLockKey) {
+                    delete decl.Common.optimisticLockKey;
+                }
                 this._declCache = JSON.parse(JSON.stringify(decl));
                 return decl;
             });
