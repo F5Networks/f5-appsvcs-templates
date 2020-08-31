@@ -1,16 +1,16 @@
 contentType: application/json
 definitions:
   tenant_name:
-    title: What is the tenant name?
+    title: Specify the tenant name.
     description: The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
-    title: What is the application name?
+    title: Specify the application name.
     description: The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   virtual_address:
-    title: What IP address do you want to use for the virtual server?
+    title: Specify the IP address for the virtual server.
     description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.
   virtual_port:
-    title: What TCP port do you want to use for the virtual server?
+    title: Specify the TCP port for the virtual server.
   enable_pool:
     title: Create Pool
     description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
@@ -26,19 +26,19 @@ definitions:
     title: Server Addresses
     description: Add the IP addresses of a pool member.
   pool_port:
-    title: What TCP port do you want to use for the pool members?
+    title: Specify the TCP port for the pool members.
   load_balancing_mode:
-    title: Which load balancing method do you want to use?
+    title: Specify the load balancing method.
     description: A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.
   slow_ramp_time:
-    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
+    title: Specify the slow ramp time. (recommended value is 300 seconds)
     description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
   enable_monitor:
     title: Pool Monitor
     description: Determine the availability and performance of devices, links, and services on a network.
     type: boolean
   make_monitor:
-    title: Automatically manage the pool monitor
+    title: Automatically manage the pool monitor.
     type: boolean
   monitor_name:
     title: Specify the name of an existing BIG-IP monitor.
@@ -84,21 +84,28 @@ definitions:
     title: Specify the name of an existing BIG-IP TCP profile.
     enumFromBigip: 'ltm/profile/tcp'
   make_tcp_ingress_profile:
-    title: Automatically manage the ingress TCP profile
+    title: Automatically manage the ingress TCP profile.
     type: boolean
   tcp_ingress_topology:
-    title: Specify the type of network that connects clients to the BIG-IP system
+    title: Specify the type of network that connects clients to the BIG-IP system.
   tcp_ingress_profile_name:
     title: Specify the name of an existing BIG-IP TCP profile for client-side context.
     enumFromBigip: 'ltm/profile/tcp'
   make_tcp_egress_profile:
-    title: Automatically manage the egress TCP profile
+    title: Automatically manage the egress TCP profile.
     type: boolean
   tcp_egress_topology:
-    title: Specify the type of network that connects servers to the BIG-IP system
+    title: Specify the type of network that connects servers to the BIG-IP system.
   tcp_egress_profile_name:
     title: Specify the name of an existing BIG-IP TCP profile for server-side context.
     enumFromBigip: 'ltm/profile/tcp'
+  irule_names:
+    title: Specify the name of one or more iRules to attach.
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      enumFromBigip: 'ltm/rule'
   app_pool_def:
     template: |
       {{#enable_pool}}
@@ -168,7 +175,7 @@ definitions:
           {{/make_snatpool}}
         {{/snat_automap}}
       {{/enable_snat}}
-  service_persistence:
+  service_persistence_def:
     template: |
       {{#enable_persistence}}
         "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
@@ -180,12 +187,12 @@ definitions:
     template: |
       {{#common_tcp_profile}}
         {{#make_tcp_profile}}
-          "profileTCP": "{{tcp_topology:f5:topology}}"
+          "profileTCP": "{{tcp_topology:f5:topology}}",
         {{/make_tcp_profile}}
         {{^make_tcp_profile}}
           "profileTCP": {
             "bigip": "{{tcp_profile_name:f5:bigip_path}}"
-           }
+          },
         {{/make_tcp_profile}}
       {{/common_tcp_profile}}
       {{^common_tcp_profile}}
@@ -206,7 +213,7 @@ definitions:
               "bigip": "{{tcp_egress_profile_name:f5:bigip_path}}"
             }
           {{/make_tcp_egress_profile}}
-       }
+       },
       {{/common_tcp_profile}}
 parameters:
   virtual_port: 443
@@ -252,8 +259,9 @@ template: |
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
-          {{> service_persistence}}
+          {{> service_persistence_def}}
           {{> service_tcp_def}}
+          "iRules": {{irule_names::array}}
         }
       }
     }
