@@ -180,6 +180,26 @@ describe('AS3 Driver tests', function () {
                 assert.strictEqual(response.status, 202);
             });
     });
+    it('create_many_apps', function () {
+        const driver = new AS3Driver();
+        const appdefs = Array.from(Array(100).keys()).map(x => ({
+            tenantName: {
+                class: 'Tenant',
+                [`app-${x}`]: {
+                    class: 'Application'
+                }
+            }
+        }));
+
+        return Promise.resolve()
+            .then(() => Promise.all(appdefs.map(x => driver._prepareAppDef(x))))
+            .then(preparedDefs => Promise.all(
+                preparedDefs.map(def => driver._stitchDecl(as3stub, def))
+            ))
+            .then((declList) => {
+                console.log(JSON.stringify(declList[0], null, 2));
+            });
+    });
     it('delete_app', function () {
         const driver = new AS3Driver();
         nock(host)
