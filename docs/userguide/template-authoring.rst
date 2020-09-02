@@ -415,6 +415,8 @@ For example, if the virtual IP address is a variable, use schema to validate if 
    FAST does not encrypt the data and it will remain as plain text.
    Careful consideration should be made when adding this type of data onto the template.
 
+.. _as3_secrets:
+
 AS3 Secrets
 -----------
 
