@@ -143,8 +143,23 @@
     },
 		"monitor_name": {
 			"title": "Specify the name of an existing BIG-IP monitor.",
-			"description": "Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.",
+			"description": "Monitors are used to determine the health of the application on each server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.",
 			"type": "string"
+    },
+    "snatpool_name": {
+			"title": "Specify the name of an existing BIG-IP SNAT pool.",
+			"type": "string",
+			"enumFromBigip": "ltm/snatpool"
+		},
+		"snat_addresses": {
+      "title": "SNAT Pool Addresses",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "ipv4",
+        "default": "10.0.0.1"
+      },
+      "default": []
 		}
   }
 }

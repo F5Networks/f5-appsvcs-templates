@@ -1,9 +1,9 @@
 contentType: application/json
 definitions:
-  tenant_name:
-  app_name:
-  virtual_address:
-  virtual_port:
+  tenant_name: {}
+  app_name: {}
+  virtual_address: {}
+  virtual_port: {}
   enable_pool:
     title: Create Pool
     description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
@@ -12,11 +12,11 @@ definitions:
     title: Automatically manage the pool
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
     type: boolean
-  pool_name:
-  pool_members:
-  pool_port:
-  load_balancing_mode:
-  slow_ramp_time:
+  pool_name: {}
+  pool_members: {}
+  pool_port: {}
+  load_balancing_mode: {}
+  slow_ramp_time: {}
   enable_monitor:
     title: Pool Monitor
     description: Determine the availability and performance of devices, links, and services on a network.
@@ -37,11 +37,8 @@ definitions:
   make_snatpool:
     title: Automatically manage the SNAT pool.
     type: boolean
-  snatpool_name:
-    title: Specify the name of an existing BIG-IP SNAT pool.
-    enumFromBigip: 'ltm/snatpool'
-  snat_addresses:
-    title: SNAT Pool Addresses
+  snatpool_name: {}
+  snat_addresses: {}
   enable_persistence:
     title: Persistence
     description: Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.
@@ -121,7 +118,7 @@ definitions:
           {{#make_snatpool}}
             "{{app_name:f5:app_name}}_snatpool": {
               "class": "SNAT_Pool",
-              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
+              "snatAddresses": {{snat_addresses:f5:snat_addresses}}
             },
           {{/make_snatpool}}
         {{/snat_automap}}
@@ -152,7 +149,7 @@ definitions:
           {{/make_snatpool}}
           {{^make_snatpool}}
             "snat": {
-              "bigip": "{{snatpool_name::string}}"
+              "bigip": "{{snatpool_name:f5:snatpool_name}}"
             },
           {{/make_snatpool}}
         {{/snat_automap}}
