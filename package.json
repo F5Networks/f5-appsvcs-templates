@@ -6,7 +6,7 @@
   "description": "",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test",
+    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test scripts",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
