@@ -21,11 +21,94 @@
     "ipv4_array": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/ipv4"
+        "type": "string",
+        "format": "ipv4",
+        "default": "10.0.0.1"
       },
       "default": []
     },
-    "load_balancing_mode": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "persistence": {
+      "type": "string",
+      "enum": [
+        "cookie",
+        "destination-address",
+        "msrdp",
+        "source-address",
+        "tls-session-id"
+      ]
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "topology": {
+      "type": "string",
+      "enum": [
+        "lan",
+        "wan",
+        "mobile"
+      ]
+    },
+    "tenant_name": {
+			"title": "Specify the tenant name.",
+			"description": "The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z][0-9A-Za-z_.-]*$"
+		},
+		"app_name": {
+			"title": "Specify the application name.",
+			"description": "The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[A-Za-z][0-9A-Za-z_.-]*$"
+		},
+		"virtual_address": {
+			"title": "Specify the IP address for the virtual server.",
+			"description": "This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.",
+      "type": "string",
+      "format": "ipv4",
+      "default": "10.0.0.1"
+		},
+		"virtual_port": {
+			"title": "Specify the TCP port for the virtual server.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535,
+      "default": 443
+    },
+		"pool_name": {
+			"title": "Specify the name of an existing BIG-IP pool.",
+      "type": "string",
+      "enumFromBigip": "ltm/pool"
+		},
+		"pool_members": {
+			"title": "Server Addresses",
+			"description": "Add the IP addresses of a pool member.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "ipv4",
+        "default": "10.0.0.1"
+      },
+      "default": []
+		},
+		"pool_port": {
+			"title": "Specify the TCP port for the pool members.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+		},
+		"load_balancing_mode": {
+			"title": "Specify the load balancing method.",
+			"description": "A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.",
       "type": "string",
       "enum": [
         "dynamic-ratio-member",
@@ -49,33 +132,19 @@
         "weighted-least-connections-node"
       ],
       "default": "least-connections-member"
-    },
-    "non_empty_string": {
-      "type": "string",
-      "minLength": 1
-    },
-    "persistence": {
-      "type": "string",
-      "enum": [
-        "cookie",
-        "destination-address",
-        "msrdp",
-        "source-address",
-        "tls-session-id"
-      ]
-    },
-    "topology": {
-      "type": "string",
-      "enum": [
-        "lan",
-        "wan",
-        "mobile"
-      ]
-    },
-    "port": {
+		},
+		"slow_ramp_time": {
+			"title": "Specify the slow ramp time. (recommended value is 300 seconds)",
+      "description": "Slowly increases the number of connection requests that are load balanced to a new pool member.",
       "type": "integer",
       "minimum": 0,
-      "maximum": 65535
-    }
+      "maximum": 65535,
+      "default": 300
+    },
+		"monitor_name": {
+			"title": "Specify the name of an existing BIG-IP monitor.",
+			"description": "Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.",
+			"type": "string"
+		}
   }
 }

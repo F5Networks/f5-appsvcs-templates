@@ -1,16 +1,9 @@
 contentType: application/json
 definitions:
   tenant_name:
-    title: Specify the tenant name.
-    description: The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
-    title: Specify the application name.
-    description: The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   virtual_address:
-    title: Specify the IP address for the virtual server.
-    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.
   virtual_port:
-    title: Specify the TCP port for the virtual server.
   enable_pool:
     title: Create Pool
     description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
@@ -20,19 +13,10 @@ definitions:
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
     type: boolean
   pool_name:
-    title: Specify the name of an existing BIG-IP pool.
-    enumFromBigip: 'ltm/pool'
   pool_members:
-    title: Server Addresses
-    description: Add the IP addresses of a pool member.
   pool_port:
-    title: Specify the TCP port for the pool members.
   load_balancing_mode:
-    title: Specify the load balancing method.
-    description: A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.
   slow_ramp_time:
-    title: Specify the slow ramp time. (recommended value is 300 seconds)
-    description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
   enable_monitor:
     title: Pool Monitor
     description: Determine the availability and performance of devices, links, and services on a network.
@@ -41,8 +25,6 @@ definitions:
     title: Automatically manage the pool monitor.
     type: boolean
   monitor_name:
-    title: Specify the name of an existing BIG-IP monitor.
-    description: Monitors are used to determine the health of the application on each web server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.
     enumFromBigip: 'ltm/monitor/tcp'
   enable_snat:
     title: SNAT
@@ -110,22 +92,22 @@ definitions:
     template: |
       {{#enable_pool}}
         {{#make_pool}}
-          "{{app_name:f5:bigip_name}}_pool": {
+          "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
             "members": [{
-              "serverAddresses": {{pool_members:f5:ipv4_array}},
-              "servicePort": {{pool_port:f5:port}},
+              "serverAddresses": {{pool_members:f5:pool_members}},
+              "servicePort": {{pool_port:f5:pool_port}},
               "shareNodes": true
             }],
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
-            "slowRampTime": {{slow_ramp_time::integer}},
+            "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor}}
               {{#make_monitor}}
                 "monitors": [ "tcp" ]
               {{/make_monitor}}
               {{^make_monitor}}
                 "monitors": [{
-                  "bigip": "{{monitor_name:f5:bigip_path}}"
+                  "bigip": "{{monitor_name:f5:monitor_name}}"
                 }]
               {{/make_monitor}}
             {{/enable_monitor}}
@@ -137,7 +119,7 @@ definitions:
       {{#enable_snat}}
         {{^snat_automap}}
           {{#make_snatpool}}
-            "{{app_name:f5:bigip_name}}_snatpool": {
+            "{{app_name:f5:app_name}}_snatpool": {
               "class": "SNAT_Pool",
               "snatAddresses": {{snat_addresses:f5:ipv4_array}}
             },
@@ -148,11 +130,11 @@ definitions:
     template: |
       {{#enable_pool}}
         {{#make_pool}}
-          "pool": "{{app_name:f5:bigip_name}}_pool",
+          "pool": "{{app_name:f5:app_name}}_pool",
         {{/make_pool}}
         {{^make_pool}}
           "pool": {
-            "bigip": "{{pool_name::string}}"
+            "bigip": "{{pool_name:f5:pool_name}}"
           },
         {{/make_pool}}
       {{/enable_pool}}
@@ -165,7 +147,7 @@ definitions:
         {{^snat_automap}}
           {{#make_snatpool}}
             "snat": {
-              "use": "{{app_name:f5:bigip_name}}_snatpool"
+              "use": "{{app_name:f5:app_name}}_snatpool"
             },
           {{/make_snatpool}}
           {{^make_snatpool}}
@@ -219,6 +201,7 @@ parameters:
   virtual_port: 443
   enable_pool: true
   make_pool: true
+  pool_name: ''
   pool_port: 80
   slow_ramp_time: 300
   enable_monitor: true
@@ -227,6 +210,7 @@ parameters:
   enable_snat: true
   snat_automap: true
   make_snatpool: true
+  snatpool_name: ''
   enable_persistence: true
   persistence_type: source-address
   enable_fallback_persistence: false
@@ -246,17 +230,17 @@ template: |
     "class": "ADC",
     "schemaVersion": "3.0.0",
     "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
-    "{{tenant_name:f5:bigip_name}}": {
+    "{{tenant_name:f5:tenant_name}}": {
       "class": "Tenant",
-      "{{app_name:f5:bigip_name}}": {
+      "{{app_name:f5:app_name}}": {
         "class": "Application",
         "template": "tcp",
         {{> app_pool_def}}
         {{> app_snatpool_def}}
         "serviceMain": {
           "class": "Service_TCP",
-          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
-          "virtualPort": {{virtual_port:f5:port}},
+          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
+          "virtualPort": {{virtual_port:f5:virtual_port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
           {{> service_persistence_def}}
