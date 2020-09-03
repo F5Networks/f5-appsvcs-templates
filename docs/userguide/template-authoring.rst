@@ -32,6 +32,7 @@ For more information on a given command use the ``--help`` flag combined with a 
 | For VSCode users, installing the F5 Automated Toolchain Extension helps with managing templates/declarations.
 | 1. Download and install the `VSCode Microsoft extension <https://marketplace.visualstudio.com/items?itemName=DumpySquare.vscode-f5-fast>`_
 | 2. Once installed, add a device:
+
 * Under the vscode extension settings, press F1, type f5, select "F5: Settings", click add item button, or
 * Add device from the F5 HOSTS view. Click F5: Add HOST button in top right of the extension view for "F5 HOSTS" 
 * See the `Device Mgmt <https://marketplace.visualstudio.com/items?itemName=DumpySquare.vscode-f5-fast>`_ section for more information.
@@ -148,6 +149,7 @@ For this example, the following items are changed:
             }
           }
       }
+
 Once the declaration is parameterized to fit your needs, it is the template you use to deploy your BIG-IP(s).  
 
 4. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
