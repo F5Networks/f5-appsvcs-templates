@@ -11,19 +11,21 @@ Base64 Encoding
 | iRules are a common use case, however AS3 supports base64 for a wide range of objects.
 |
 
-In the following example, the iRules convert to a base64 string:
+In the following example, *base64var* will display as editable plain text but render as base64-encoded text:
 
-.. code-block:: json
+.. code-block:: yaml
 
-    { 
-        "irules":  [
-            "/Common/_sys_APM_ExchangeSupport_helper",
-            "/Common/_sys_APM_Office365_SAML_BasicAuth",
-            "/Common/_sys_APM_activesync"
-        ],
-        "data": "I2;uY2x1ZGUgPGlvc3RyZwFtPgoKaW50IGlhaW4oKSB7CiAgICBzdGQ6OmNvdXQgPDwgIkhlbGxvIFdvcmxkISI7CiAgICByZXR1cm4gMDsKfQo="
-    }
-
+   contentType: application/json
+   definitions:
+       base64var:
+           type: string
+           format: text
+           contentEncoding: base64
+           default: ZmRhZWVhZWZl # will display as plain text in the GUI
+   template: |
+     {
+       "data": {{base64var}}
+     }
 
 .. seealso:: `AS3 Schema Reference <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/schema-reference.html>`_ for a full list of **f5base64** fields.
 
