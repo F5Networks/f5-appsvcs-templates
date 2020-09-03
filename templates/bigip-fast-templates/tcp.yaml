@@ -223,6 +223,7 @@ parameters:
   make_tcp_egress_profile: true
   tcp_egress_topology: lan
   tcp_egress_profile_name: /Common/f5-tcp-progressive
+  irule_names: []
 template: |
   {
     "class": "ADC",
