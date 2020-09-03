@@ -105,7 +105,8 @@ const expected = {
                 },
                 profileHTTPAcceleration: 'basic',
                 profileHTTPCompression: 'basic',
-                profileMultiplex: 'basic'
+                profileMultiplex: 'basic',
+                iRules: []
             },
             app1_pool: {
                 class: 'Pool',
