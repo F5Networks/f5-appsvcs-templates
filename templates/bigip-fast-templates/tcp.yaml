@@ -85,6 +85,7 @@ definitions:
     items:
       type: string
       enumFromBigip: 'ltm/rule'
+    default: []
   app_pool_def:
     template: |
       {{#enable_pool}}
