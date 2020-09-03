@@ -244,7 +244,7 @@ template: |
           {{> service_snat_def}}
           {{> service_persistence_def}}
           {{> service_tcp_def}}
-          "iRules": {{irule_names::array}}
+          "iRules": [{{irule_names::array}}]
         }
       }
     }
