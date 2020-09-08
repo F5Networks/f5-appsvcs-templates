@@ -1,3 +1,11 @@
+# 1.4.0
+## Added
+
+## Fixed
+
+## Changed
+* Use template merging to reduce duplication between TCP and HTTP templates
+
 # 1.3.0
 ## Added
 * Support enumFromBigip on array items
