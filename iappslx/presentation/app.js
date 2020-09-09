@@ -10,10 +10,6 @@ const yaml = require('js-yaml');
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
-const {
-    Clickable,
-    Expandable
-} = require('./lib/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
 
@@ -331,24 +327,22 @@ route('', 'apps', () => {
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
 });
 route('create', 'create', () => {
-    const addTmplBtns = (sets) => {
-        const elem = document.getElementById('tmpl-btns');
-        sets.forEach((setData) => {
-            const templateSet = new Expandable(setData.name, ['template-set-title', 'clickable']).appendToParent(elem);
-            setData.templates.map(x => x.name).forEach((item) => {
-                templateSet.addExpandable(
-                    new Clickable('button').setClassList(['btn', 'btn-template'])
-                        .setInnerText(item).setOnClick((e) => { newEditor(item); e.stopPropagation(); })
-                );
-            });
-            templateSet.completeSetup();
+    vueApp.$refs.page.newEditor = (tmplid) => {
+        newEditor(tmplid);
+    };
+
+    vueApp.$refs.page.currentSet = (setName) => {
+        appState.data.sets.forEach((set) => {
+            set.expanded = set.name === setName;
         });
+    };
+
+    appState.data = {
+        sets: []
     };
     return getJSON('templatesets')
         .then((data) => {
-            addTmplBtns(data);
-            const deployText = document.getElementById('available-text');
-            deployText.classList.remove('display-none');
+            appState.data.sets = data.map(x => Object.assign({}, x, { expanded: false }));
             dispOutput('');
         })
         .catch(e => dispOutput(e.message));
@@ -357,8 +351,6 @@ route('modify', 'create', (appID) => {
     dispOutput(`Fetching app data for ${appID}`);
     return getJSON(`applications/${appID}`)
         .then((appData) => {
-            const availableText = document.getElementById('available-text');
-            availableText.classList.add('display-none');
             const appDef = appData.constants.fast;
             newEditor(appDef.template, appDef.view);
         })
