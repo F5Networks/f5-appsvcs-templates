@@ -3,8 +3,6 @@
 
 'use strict';
 
-const { Elem } = require('./elements');
-
 class NavigationBar {
     constructor(route) {
         this.navBar = document.getElementById('nav-bar');
@@ -101,15 +99,5 @@ module.exports = class UiWorker {
 
     static getStore(key) {
         return localStorage.getItem(key);
-    }
-
-    static destroyChildren(elem) {
-        if (elem) {
-            if (elem instanceof Elem) elem = elem.elem;
-            while (elem.firstChild) {
-                elem.lastChild.remove();
-            }
-        }
-        return elem;
     }
 };
