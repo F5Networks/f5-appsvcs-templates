@@ -14,22 +14,44 @@
     </head>
     <body>
         <!-- Static Content -->
-        <div id="header">
-            <div class="header-logo"><img src="img/as3robot.png" height="55px"/></div>
-            <div class="header-title">F5 Application Services Templates</div>
-        </div>
-        <div id="nav-bar">
-            <a class="btn btn-nav" href="#">Application List</a>
-            <a class="btn btn-nav" href="#create">Deploy</a>
-            <a class="btn btn-nav" href="#templates">Templates</a>
-            <a class="btn btn-nav" href="#tasks">Deploy Log</a>
-            <a class="btn btn-nav" href="#api">API</a>
-        </div>
-        <div id="content-wrapper">
-            <div id="app"></div>
-            <pre id="output"></pre>
-            <div id="snackbar"></div>
-            <div id="copy-div" style="display: none;"></div>
+        <div id="vue-app">
+            <div id="header">
+                <div class="header-logo"><img src="img/as3robot.png" height="55px"/></div>
+                <div class="header-title">F5 Application Services Templates</div>
+            </div>
+            <div id="nav-bar">
+                <a class="btn btn-nav" href="#">Application List</a>
+                <a class="btn btn-nav" href="#create">Deploy</a>
+                <a class="btn btn-nav" href="#templates">Templates</a>
+                <a class="btn btn-nav" href="#tasks">Deploy Log</a>
+                <a class="btn btn-nav" href="#api">API</a>
+            </div>
+            <div id="content-wrapper">
+                <div v-if="busy" class='p-centered loading loading-lg'></div>
+                <div id="app" v-cloak>
+                    <component ref="page" :is="pageComponent" :data="data"></component>
+                    <pre id="output">{{debugOutput}}</pre>
+                    <div v-if="modal.message" class="modal active">
+                        <div class="modal-container">
+                            <div class="modal-header">
+                                <a class="fas fa-times btn-icon modal-exit-icon float-right faded-active-border"
+                                    @click="cancelModal">
+                                </a>
+                                <div class="modal-title h4">
+                                    <a class="fas fa-exclamation-triangle icon exclamation-icon"></a>
+                                    {{modal.title}}
+                                </div>
+                            </div>
+                            <div class="modal-body">{{modal.message}}</div>
+                            <div class="modal-footer">
+                                <button class="btn btn-cancel faded-active-border" @click="cancelModal">CANCEL</button>
+                                <button class="btn btn-continue faded-active-border" @click="continueModal">CONTINUE</button>
+                            </div>
+                        </div>
+                        <a class="modal-overlay faded-active-border"></a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Page Templates -->
@@ -45,54 +67,206 @@
                     <div class="td col3">Actions</div>
                 </div>
                 <div class="tr" height="1px"></div>
+                <div class="tr" v-for="app in data.appsList">
+                    <div class="td tenant-app-td col1">
+                        <span class="tenant-app-td tenant">{{app.tenant}}</span>
+                        <span class="fas fa-angle-double-right icon tenant-app-td"></span>
+                        <span class="tenant-app-td application">{{app.name}}</span>
+                    </div>
+                    <div class="td col2">{{app.template}}</div>
+                    <div class="td col3">
+                        <span class="tooltip tooltip-right" data-tooltip="Modify Application">
+                            <a class="fas fa-edit btn-icon" :href="'#modify/'+app.path"></a>
+                        </span>
+                        <span class="tooltip tooltip-right" data-tooltip="Delete Application">
+                            <a class="fas fa-trash btn-icon" @click="deleteApplication(app.path)"></a>
+                        </span>
+                    </div>
+                </div>
             </div>
         </template>
 
         <template id="page-create">
-            <p id="available-text">Available Templates: </p>
-            <div id="tmpl-btns"></div>
-            <div>
-                <div id="form-div"></div>
-                <div class="text-right">
-                    <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
-                    <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
-                    <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
-                    <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
-                    <button type="button" class="btn" id="btn-form-submit" disabled>SUBMIT</button>
+            <div id="page-create">
+                <p v-if="data.sets" id="available-text">Available Templates: </p>
+                <div id="tmpl-btns">
+                    <div v-for="set in data.sets"
+                        class="template-set-title clickable"
+                        @click="currentSet(set.name)"
+                        >
+                        <div v-if="set.expanded">
+                            <span class="fas icon fa-angle-down"></span>
+                            <div class="divider text-centered divider-after" :data-content="set.name"></div>
+                            <div class="expandable-holder">
+                                <button v-for="template in set.templates"
+                                        class="btn btn-template"
+                                        @click.stop="newEditor(template.name)"
+                                        >
+                                    {{template.name}}
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <span class="fas icon fa-angle-right"></span>
+                            {{set.name}}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div id="form-div"></div>
+                    <div class="text-right">
+                        <button type="button" class="btn" id="view-tmpl-btn" disabled>View Template</button>
+                        <button type="button" class="btn" id="view-schema-btn" disabled>View Schema</button>
+                        <button type="button" class="btn" id="view-view-btn" disabled>View Inputs</button>
+                        <button type="button" class="btn" id="view-render-btn" disabled>View Rendered</button>
+                        <button type="button" class="btn" id="btn-form-submit" disabled>SUBMIT</button>
+                    </div>
                 </div>
             </div>
         </template>
 
         <template id="page-templates">
-            <div class="button-row-deploy">
-                <button type="button" id="btn-delete-all-ts" class="btn btn-red" style="display: none;">Delete All</button>
-                <button type="button" id="btn-add-ts" class="btn btn-green">Add Template Set</button>
-                <input type="file" id="input-ts-file" style="display:none" accept=".zip">
-                <div id="templates-filter" class="dropdown dropdown-left">
-                    <a class="btn btn-primary dropdown-toggle inline-flex" tabindex="0">
-                        <p id="filterTag">Filter:</p> <p id="filter">All Template Sets</p>
-                        <i class="fas fa-angle-down white"></i>
-                    </a>
-                    <ul class="menu text-left">
-                        <li id="enabled" class="menu-item clickable selected"><a>Enabled</a></li>
-                        <li id="f5" class="menu-item clickable"><a>F5 Supported</a></li>
-                        <li id="disabled" class="menu-item clickable"><a>Disabled</a></li>
-                        <li id="all" class="menu-item clickable"><a>All Template Sets</a></li>
-                    </ul>
+            <div id="page-templates">
+                <div class="button-row-deploy">
+                    <button type="button" id="btn-delete-all-ts" class="btn btn-red">Delete All</button>
+                    <button type="button" id="btn-add-ts" class="btn btn-green">Add Template Set</button>
+                    <input type="file" id="input-ts-file" style="display:none" accept=".zip">
+                    <div id="templates-filter" class="dropdown dropdown-left">
+                        <a class="btn btn-primary dropdown-toggle inline-flex" tabindex="0">
+                            <p id="filterTag">Filter:</p>
+                            <p id="filter">{{data.filters ? data.filters[data.currentFilter] : ''}}</p>
+                            <i class="fas fa-angle-down white"></i>
+                        </a>
+                        <ul class="menu text-left">
+                            <li v-for="(text, id) in data.filters"
+                                v-bind:class="{ selected: data.currentFilter === id }"
+                                class="menu-item clickable">
+                                <a @click="setFilter(id)">{{text}}</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-            <div id="template-list">
-                <div class="th-row">
-                    <div class="td col1">TEMPLATES</div>
-                    <div class="td col2">APPLICATIONS</div>
-                    <div class="td col3">ACTIONS</div>
+                <div id="template-list">
+                    <div class="th-row">
+                        <div class="td col1">TEMPLATES</div>
+                        <div class="td col2">APPLICATIONS</div>
+                        <div class="td col3">ACTIONS</div>
+                    </div>
+                    <div class="tr" height="1px"></div>
+                    <div v-for="(setData, setName) in data.sets"
+                         v-bind:class="{ 'row-dark-red': !setData.enabled, 'red-hover': !setData.enabled }"
+                         class="tr row-dark clickable"
+                         @click="setData.expanded = !setData.expanded"
+                         >
+                        <div class="td td-template-set col1">
+                            <span class="fas icon"
+                                  :class="{ 'fa-angle-right': !setData.expanded, 'fa-angle-down': setData.expanded }">
+                            </span>
+                            {{setName}}&nbsp;
+                            <span class="traits">
+                                <span v-if="setData.supported"
+                                      class="tooltip tooltip-right tooltipped-f5-icon"
+                                      data-tooltip="Template Set Supported by F5"
+                                      >
+                                    <svg class="f5-icon"></svg>
+                                </span>
+                                <span v-if="setData.enabled"
+                                      class="tooltip tooltip-right"
+                                      data-tooltip="Template Set is Enabled"
+                                      >
+                                    <a class="fas fa-check-circle icon"></a>
+                                </span>
+                                <span v-else
+                                      class="tooltip tooltip-right tooltip-red red-base-forecolor"
+                                      data-tooltip="Template Set is Disabled!"
+                                      >
+                                    <a class="fas fa-times-circle icon"></a>
+                                </span>
+
+                            </span>
+                        </div>
+                        <div class="td col2 fontsize-6rem">
+                            <div v-if="setData.expanded">
+                                <div v-for="app in setData.apps">
+                                    {{app.tenant}}
+                                    <a class="fas fa-angle-double-right icon fontsize-5rem"></a>
+                                    {{app.name}}
+                                </div>
+                            </div>
+                            <div v-else-if="setData.apps && setData.apps.length > 0">
+                                * click to view *
+                            </div>
+                        </div>
+                        <div class="td col3">
+                            <span v-if="setData.enabled"
+                                  class="tooltip tooltip-right"
+                                  data-tooltip="Remove Template Set"
+                                  >
+                                <a @click.stop="removeSet(setName)" class="fas fa-trash btn-icon"></a>
+                            </span>
+                            <span v-else
+                                  class="tooltip tooltip-right"
+                                  data-tooltip="Install Template Set"
+                                  >
+                                <a @click.stop="installSet(setName)" class="fas fa-download btn-icon"></a>
+                            </span>
+                            <span v-if="setData.updateAvailable"
+                                  class="tooltip tooltip-right"
+                                  data-tooltip="Update Template Set"
+                                  >
+                                <a @click.stop="updateSet(setName)" class="fas fa-edit btn-icon"></a>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <div class="tr" height="1px"></div>
             </div>
         </template>
 
         <template id="page-tasks">
-            <div id="task-list" class="styled-list"></div>
+            <div id="task-list" class="styled-list">
+                <div class="th-row">
+                    <div class="td col1">Task ID</div>
+                    <div class="td tenant-app-th col2">
+                        <span class="tenant-app-th tenant">Tenant</span>
+                        <a class="fas fa-angle-double-right icon tenant-app-th"></a>
+                        <span class="tenant-app-th application">Application</span>
+                    </div>
+                    <div class="td col3">Operation</div>
+                    <div class="td col4">Result</div></div>
+                <div class="tr" height="1px"></div>
+                <div v-for="task in data.tasks" class="tr">
+                    <span class="tooltip tooltip-right td clickable-darker col1" data-tooltip="go to task">
+                        <a :href="'/mgmt/shared/fast/tasks/' + task.id">{{task.id}}</a>
+                    </span>
+                    <div class="td tenant-app-td col2">
+                        <span class="tenant-app-td tenant">{{task.tenant}}</span>
+                        <a class="fas fa-angle-double-right icon tenant-app-td"></a>
+                        <span class="tenant-app-td application">{{task.application}}</span>
+                    </div>
+                    <div class="td col3">{{task.operation}}</div>
+                    <div v-if="task.message === 'in progress'" class="td col4">
+                        <div class='loading loading-sm p-centered'></div>
+                    </div>
+                    <div v-else
+                         v-bind:class="{ 'success-color': task.message === 'success', 'danger-color': task.errMsg }"
+                         class="td col4"
+                         >
+                        {{task.message}}
+                        <div v-if="task.errMsg" class="popover popover-left">
+                            <a class="cursor-default danger-color fas fa-question-circle icon"></a>
+                            <div class="popover-container">
+                                <div class='popover-header' style="background-color: #2b1111e6;">
+                                    {{task.message}}
+                                </div>
+                                <div class='popover-arrow-right arrow-danger'></div>
+                                <div class='popover-body' style="background-color: #442222f0;">
+                                    {{task.errMsg}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </template>
 
         <template id="page-api">
@@ -101,6 +275,7 @@
 
         <!-- Scripts -->
         <script src="js/jsoneditor.min.js"></script>
+        <script src="js/vue.min.js"></script>
         <script src="bundle.js" charset="utf-8"></script>
     </body>
 </html>

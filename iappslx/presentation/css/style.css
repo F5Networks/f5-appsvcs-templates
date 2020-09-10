@@ -263,8 +263,11 @@ button:disabled:hover {
 
 .btn-disabled { opacity: .9; pointer-events: none; }
 
+[v-cloak] {
+    display: none;
+}
+
 #app {
-  display: none;
   padding: 0px 5px;
   position: relative;
   z-index: 2;

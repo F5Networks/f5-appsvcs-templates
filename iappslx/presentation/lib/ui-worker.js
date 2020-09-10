@@ -3,8 +3,6 @@
 
 'use strict';
 
-const { Loader, Elem } = require('./elements');
-
 class NavigationBar {
     constructor(route) {
         this.navBar = document.getElementById('nav-bar');
@@ -80,21 +78,12 @@ module.exports = class UiWorker {
         }
 
         this.app.scrollIntoView({ behavior: 'smooth' });
-
-        UiWorker.destroyChildren(this.app);
-
-        this.loader = new Loader().setClassList('loader-main').appendToParent(this.app.parentElement).start();
-
-        setTimeout(() => {
-            if (this.loader.elem) this.loader.destroyItself();
-        }, 4000);
     }
 
     completeMoveToRoute() {
         if (this.curRoute === 'api') this.app.classList.add('height-100perc');
         else this.app.classList.remove('height-100perc');
         this.navBar.enable();
-        this.loader.destroyItself();
     }
 
     static iterateHtmlCollection(collection, func) {
@@ -110,15 +99,5 @@ module.exports = class UiWorker {
 
     static getStore(key) {
         return localStorage.getItem(key);
-    }
-
-    static destroyChildren(elem) {
-        if (elem) {
-            if (elem instanceof Elem) elem = elem.elem;
-            while (elem.firstChild) {
-                elem.lastChild.remove();
-            }
-        }
-        return elem;
     }
 };
