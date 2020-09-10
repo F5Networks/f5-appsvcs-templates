@@ -6,6 +6,8 @@
 
 ## Changed
 * Use template merging to reduce duplication between TCP and HTTP templates
+* Update style to better match BIG-IP GUI
+* Make editor form titles more consistent in the Deploy tab
 
 # 1.3.0
 ## Added

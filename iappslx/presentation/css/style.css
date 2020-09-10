@@ -19,19 +19,21 @@
   --light-row-color: #ececeaa1;
   --normal-btn-width: 100px;
 }
+html {
+    font-size: initial;
+}
 body {
   background-color: #eae9e5;
   border-left: 1px solid #ffffff1a;
+  font: 75% "FreeSans", Arial, Helvetica, sans-serif;
+  color: #333;
+  line-height: 122%;
 }
 iframe {
   width: 100%;
   height: 100%;
   overflow-y: hidden;
   overflow-x: hidden;
-}
-p {
-  font-size: .85rem;
-  font-weight: 500;
 }
 
 button:disabled {
@@ -50,7 +52,6 @@ button:disabled:hover {
   padding: 5px;
   border-radius: 20%;
   cursor: default;
-  font-size: .8rem;
   color: var(--base-color);
   top: -2px;
   left: -2px;
@@ -59,12 +60,7 @@ button:disabled:hover {
   color: var(--base-black);
 }
 .btn-icon {
-  margin-right: 2px;
-  padding: 5px;
-  border-radius: 20%;
-  cursor: pointer;
-  font-size: .8rem;
-  color: var(--base-color);
+  cursor: pointer !important;
 }
 .btn-icon:hover, .btn-icon:active {
   background-color: rgba(48,55,66,.95);
@@ -77,10 +73,7 @@ button:disabled:hover {
   border: 1px solid #f0f3ca;
 }
 .btn-template {
-  flex: 1;
   margin: 5px 10px;
-  font-size: .8em;
-  height: auto;
   position: relative;
   top: -5px;
 }
@@ -101,8 +94,6 @@ button:disabled:hover {
 }
 .td {
   flex: 2;
-  font-size: .8em;
-  font-weight: 500;
   margin: 5px;
   align-self: center;
 }
@@ -114,7 +105,7 @@ button:disabled:hover {
   border-top: 1px solid #ababab;
   border-bottom: 1px solid #89909d;
   padding-bottom: 2px;
-  font-size: 1rem;
+  font-weight: bold;
 }
 .row-dark {
   background-color: var(--dark-row-color);
@@ -158,15 +149,13 @@ button:disabled:hover {
 
 #templates-filter { float: left; }
 #filterTag { margin: auto 12.5px auto 0px; }
-#filter { margin: auto; font-style: oblique; font-size: .83rem; }
-#templates-filter .fa-angle-down { margin: auto 5px; font-style: oblique; padding: 1px 0px 0px 3px; }
-#templates-filter .selected { pointer-events: none; color: #f0f3ca; font-size: .9rem; font-style: oblique; background-color: rgba(240, 243, 202, 0.1); }
-
-#tmpl-btns .template-set-title {
-  margin-bottom: 10px;
-  font-weight: 600;
-  cursor: pointer;
+#filter {
+   margin: auto;
+   font-style: oblique;
 }
+#templates-filter .fa-angle-down { margin: auto 5px; font-style: oblique; padding: 1px 0px 0px 3px; }
+#templates-filter .selected { pointer-events: none; color: #f0f3ca; font-style: oblique; background-color: rgba(240, 243, 202, 0.1); }
+
 #tmpl-btns .divider { border-top: .05rem solid #969b9f; }
 #tmpl-btns .expandable-holder { text-align: center; }
 #tmpl-btns .divider-after {
@@ -174,7 +163,7 @@ button:disabled:hover {
   position: relative;
   top: -15px;
   margin-bottom: 10px;
-  font-weight: 600;
+  font-weight: bold;
   text-align: center;
 }
 
@@ -182,7 +171,6 @@ button:disabled:hover {
 #template-list .col2, #template-list .col3 { text-align: center; }
 #template-list .col4 { text-align: center; max-width: 50px; }
 #template-list .td-template-set {
-  font-size: .8rem;
   color: rgba(48, 55, 66, 0.95);
   padding-left: 4px;
 }
@@ -192,7 +180,6 @@ button:disabled:hover {
 
 #task-list .tooltip.tooltip-right::after {
   left: 85%;
-  font-size: .66rem;
   font-weight: normal;
 }
 #task-list .col1 { min-width: 325px; padding-left: 15px; }
@@ -206,11 +193,6 @@ button:disabled:hover {
   padding-right: 15px;
 }
 
-#available-text {
-  margin: 10px 0px 0px;
-  padding-bottom: 3px;
-  border-bottom: .9px solid #8786866e;
-}
 #tmpl-btns>div {
   margin: 10px 2px;
   border-bottom: .9px solid #8786866e;
@@ -230,9 +212,8 @@ button:disabled:hover {
 #app-list .tr:nth-child(even), #task-list .tr:nth-child(even) { background-color: var(--dark-row-color); }
 
 #template-list .traits * { position: relative; }
-#template-list .traits .tooltip.tooltip-right::after { bottom: 50%; font-size: .7rem; }
+#template-list .traits .tooltip.tooltip-right::after { bottom: 50%; }
 
-.display-none { display: none; }
 .inline-flex { display: inline-flex; }
 
 .red-base-forecolor { color: var(--red-base); }
@@ -242,11 +223,6 @@ button:disabled:hover {
 .grey-forecolor { color: var(--grey); }
 .light-green-forecolor { color: var(--green-light); }
 .white { color: white; }
-.fontsize-5rem { font-size: .5rem }
-.fontsize-6rem { font-size: .6rem }
-.fontsize-7rem { font-size: .7rem }
-
-.italic { font-style: italic; }
 
 .height-100perc { height: 100%; }
 
@@ -258,8 +234,6 @@ button:disabled:hover {
 .no-hover:hover { background-color: inherit; }
 
 .cursor-default { cursor: default; }
-
-.text-right { text-align: right; }
 
 .btn-disabled { opacity: .9; pointer-events: none; }
 
