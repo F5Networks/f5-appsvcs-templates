@@ -296,3 +296,16 @@ button:disabled:hover {
   width: 120px;
   text-align: left;
 }
+
+/* JSON Editor tweaks */
+.form-checkbox, .form-radio, .form-switch {
+    font-weight: 600;
+}
+
+#form-div h4 {
+	font-size: revert;
+	font-weight: 600;
+	display: block;
+	line-height: 1.2rem;
+	padding: .3rem 0;
+}}
