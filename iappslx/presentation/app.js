@@ -390,47 +390,6 @@ route('tasks', 'tasks', () => {
 });
 route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {
-    document.getElementById('btn-add-ts').onclick = () => {
-        document.getElementById('input-ts-file').click();
-    };
-    document.getElementById('input-ts-file').onchange = () => {
-        const file = document.getElementById('input-ts-file').files[0];
-        const tsName = file.name.slice(0, -4);
-        dispOutput(`Uploading file: ${file.name}`);
-        multipartUpload(file)
-            .then(() => dispOutput(`Installing template set ${tsName}`))
-            .then(() => safeFetch('/mgmt/shared/fast/templatesets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: file.name.slice(0, -4)
-                })
-            }))
-            .then(() => {
-                dispOutput(`${tsName} installed successfully`);
-                window.location.reload();
-            })
-            .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`));
-    };
-    document.getElementById('btn-delete-all-ts').onclick = () => {
-        vueApp.showModal(
-            'warning',
-            'All Template Sets will be removed!',
-            () => {
-                dispOutput('Deleting All Template Sets');
-                return safeFetch(`${endPointUrl}/templatesets`, {
-                    method: 'DELETE'
-                })
-                    .then(() => {
-                        dispOutput('All Template Sets deleted successfully');
-                        window.location.reload();
-                    })
-                    .catch(e => dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`));
-            }
-        );
-    };
     const filters = {
         enabled: 'Enabled',
         f5: 'F5 Supported',
@@ -443,93 +402,12 @@ route('templates', 'templates', () => {
         currentFilter = 'enabled';
     }
 
-    vueApp.$refs.page.setFilter = (filter) => {
-        appState.data.currentFilter = filter;
-        UiWorker.store(templatesFilterKey, filter);
-        window.location.reload();
-    };
-
-    vueApp.$refs.page.removeSet = (setName) => {
-        vueApp.showModal(
-            'warning',
-            `Template Set '${setName}' will be removed!`,
-            () => {
-                dispOutput(`Deleting ${setName}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                        method: 'DELETE'
-                    }))
-                    .then(() => {
-                        dispOutput(`${setName} deleted successfully`);
-                        window.location.reload();
-                    })
-                    .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`));
-            }
-        );
-    };
-
-    vueApp.$refs.page.installSet = (setName) => {
-        vueApp.showModal(
-            'info',
-            `Template Set '${setName}' will be enabled.`,
-            () => {
-                dispOutput(`Enabling ${setName}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: setName
-                        })
-                    }))
-                    .then(() => {
-                        dispOutput(`${setName} enabled successfully`);
-                        window.location.reload();
-                    })
-                    .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`));
-            }
-        );
-    };
-
-    vueApp.$refs.page.updateSet = (setName) => {
-        vueApp.showModal(
-            'warning',
-            `Template Set '${setName}' will be updated!`,
-            () => {
-                dispOutput(`Updating ${setName}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: setName
-                        })
-                    }))
-                    .then(() => {
-                        dispOutput(`${setName} installed successfully`);
-                        window.location.reload();
-                    })
-                    .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`));
-            }
-        );
-    };
-
-    appState.data = {
-        filters,
-        currentFilter,
-        sets: [],
-        apps: {}
-    };
-
-    return Promise.all([
-        getJSON('applications'),
-        getJSON('templatesets'),
-        getJSON('templatesets?showDisabled=true')
-    ])
+    const renderTemplates = () => Promise.resolve()
+        .then(() => Promise.all([
+            getJSON('applications'),
+            getJSON('templatesets'),
+            getJSON('templatesets?showDisabled=true')
+        ]))
         .then(([applications, templatesets, disabledTemplateSets]) => {
             const allTemplates = templatesets
                 .concat(disabledTemplateSets)
@@ -567,4 +445,141 @@ route('templates', 'templates', () => {
             });
         })
         .then(() => dispOutput(''));
+
+    const reloadTemplates = () => Promise.resolve()
+        .then(() => {
+            appState.busy = true;
+        })
+        .then(() => renderTemplates())
+        .then(() => {
+            appState.busy = false;
+        });
+
+    document.getElementById('btn-add-ts').onclick = () => {
+        document.getElementById('input-ts-file').click();
+    };
+    document.getElementById('input-ts-file').onchange = () => {
+        const file = document.getElementById('input-ts-file').files[0];
+        const tsName = file.name.slice(0, -4);
+        dispOutput(`Uploading file: ${file.name}`);
+        multipartUpload(file)
+            .then(() => dispOutput(`Installing template set ${tsName}`))
+            .then(() => safeFetch('/mgmt/shared/fast/templatesets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: file.name.slice(0, -4)
+                })
+            }))
+            .then(() => {
+                dispOutput(`${tsName} installed successfully`);
+            })
+            .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`))
+            .then(() => reloadTemplates());
+    };
+    document.getElementById('btn-delete-all-ts').onclick = () => {
+        vueApp.showModal(
+            'warning',
+            'All Template Sets will be removed!',
+            () => {
+                dispOutput('Deleting All Template Sets');
+                return safeFetch(`${endPointUrl}/templatesets`, {
+                    method: 'DELETE'
+                })
+                    .then(() => {
+                        dispOutput('All Template Sets deleted successfully');
+                    })
+                    .catch(e => dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
+
+    vueApp.$refs.page.setFilter = (filter) => {
+        currentFilter = filter;
+        appState.data.currentFilter = filter;
+        UiWorker.store(templatesFilterKey, filter);
+        document.getElementById('templates-filter').classList.remove('active'); // Collapse the drop down
+        reloadTemplates();
+    };
+
+    vueApp.$refs.page.removeSet = (setName) => {
+        vueApp.showModal(
+            'warning',
+            `Template Set '${setName}' will be removed!`,
+            () => {
+                dispOutput(`Deleting ${setName}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/templatesets/${setName}`, {
+                        method: 'DELETE'
+                    }))
+                    .then(() => {
+                        dispOutput(`${setName} deleted successfully`);
+                    })
+                    .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
+
+    vueApp.$refs.page.installSet = (setName) => {
+        vueApp.showModal(
+            'info',
+            `Template Set '${setName}' will be enabled.`,
+            () => {
+                dispOutput(`Enabling ${setName}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: setName
+                        })
+                    }))
+                    .then(() => {
+                        dispOutput(`${setName} enabled successfully`);
+                    })
+                    .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
+
+    vueApp.$refs.page.updateSet = (setName) => {
+        vueApp.showModal(
+            'warning',
+            `Template Set '${setName}' will be updated!`,
+            () => {
+                dispOutput(`Updating ${setName}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: setName
+                        })
+                    }))
+                    .then(() => {
+                        dispOutput(`${setName} installed successfully`);
+                    })
+                    .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
+
+    appState.data = {
+        filters,
+        currentFilter,
+        sets: [],
+        apps: {}
+    };
+
+    return renderTemplates();
 });
