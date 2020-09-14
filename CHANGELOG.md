@@ -3,6 +3,7 @@
 
 ## Fixed
 * Fix REST worker error when loading a template with schema that has no properties defined
+* Cleanup task messages on BIG-IPs with multiple tenants
 
 ## Changed
 * Use template merging to reduce duplication between TCP and HTTP templates
