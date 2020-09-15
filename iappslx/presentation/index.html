@@ -20,11 +20,11 @@
                 <div class="header-title">F5 Application Services Templates</div>
             </div>
             <div id="nav-bar">
-                <a class="btn btn-nav" href="#">Application List</a>
-                <a class="btn btn-nav" href="#create">Deploy</a>
-                <a class="btn btn-nav" href="#templates">Templates</a>
-                <a class="btn btn-nav" href="#tasks">Deploy Log</a>
-                <a class="btn btn-nav" href="#api">API</a>
+                <a class="btn-nav" href="#">Application List</a>
+                <a class="btn-nav" href="#create">Deploy</a>
+                <a class="btn-nav" href="#templates">Templates</a>
+                <a class="btn-nav" href="#tasks">Deploy Log</a>
+                <a class="btn-nav" href="#api">API</a>
             </div>
             <div id="content-wrapper">
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
@@ -34,7 +34,7 @@
                     <div v-if="modal.message" class="modal active">
                         <div class="modal-container">
                             <div class="modal-header">
-                                <a class="fas fa-times btn-icon modal-exit-icon float-right faded-active-border"
+                                <a class="fas fa-times icon btn-icon modal-exit-icon float-right faded-active-border"
                                     @click="cancelModal">
                                 </a>
                                 <div class="modal-title h4">
@@ -76,10 +76,10 @@
                     <div class="td col2">{{app.template}}</div>
                     <div class="td col3">
                         <span class="tooltip tooltip-right" data-tooltip="Modify Application">
-                            <a class="fas fa-edit btn-icon" :href="'#modify/'+app.path"></a>
+                            <a class="fas fa-edit icon btn-icon" :href="'#modify/'+app.path"></a>
                         </span>
                         <span class="tooltip tooltip-right" data-tooltip="Delete Application">
-                            <a class="fas fa-trash btn-icon" @click="deleteApplication(app.path)"></a>
+                            <a class="fas fa-trash icon btn-icon" @click="deleteApplication(app.path)"></a>
                         </span>
                     </div>
                 </div>
@@ -88,10 +88,10 @@
 
         <template id="page-create">
             <div id="page-create">
-                <p v-if="data.sets" id="available-text">Available Templates: </p>
+                <p v-if="data.sets" class="text-bold">Available Templates: </p>
                 <div id="tmpl-btns">
                     <div v-for="set in data.sets"
-                        class="template-set-title clickable"
+                        class="clickable"
                         @click="currentSet(set.name)"
                         >
                         <div v-if="set.expanded">
@@ -108,7 +108,7 @@
                         </div>
                         <div v-else>
                             <span class="fas icon fa-angle-right"></span>
-                            {{set.name}}
+                            <span class="text-bold">{{set.name}}</span>
                         </div>
                     </div>
                 </div>
@@ -185,11 +185,11 @@
 
                             </span>
                         </div>
-                        <div class="td col2 fontsize-6rem">
+                        <div class="td col2">
                             <div v-if="setData.expanded">
                                 <div v-for="app in setData.apps">
                                     {{app.tenant}}
-                                    <a class="fas fa-angle-double-right icon fontsize-5rem"></a>
+                                    <a class="fas fa-angle-double-right icon"></a>
                                     {{app.name}}
                                 </div>
                             </div>
@@ -202,19 +202,19 @@
                                   class="tooltip tooltip-right"
                                   data-tooltip="Remove Template Set"
                                   >
-                                <a @click.stop="removeSet(setName)" class="fas fa-trash btn-icon"></a>
+                                <a @click.stop="removeSet(setName)" class="fas fa-trash icon btn-icon"></a>
                             </span>
                             <span v-else
                                   class="tooltip tooltip-right"
                                   data-tooltip="Install Template Set"
                                   >
-                                <a @click.stop="installSet(setName)" class="fas fa-download btn-icon"></a>
+                                <a @click.stop="installSet(setName)" class="fas fa-download icon btn-icon"></a>
                             </span>
                             <span v-if="setData.updateAvailable"
                                   class="tooltip tooltip-right"
                                   data-tooltip="Update Template Set"
                                   >
-                                <a @click.stop="updateSet(setName)" class="fas fa-edit btn-icon"></a>
+                                <a @click.stop="updateSet(setName)" class="fas fa-edit icon btn-icon"></a>
                             </span>
                         </div>
                     </div>
