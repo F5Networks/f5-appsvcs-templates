@@ -264,6 +264,9 @@
                                 </div>
                             </div>
                         </div>
+                        <span v-if="task.canResubmit" class="tooltip tooltip-right" data-tooltip="Modify and Resubmit Application">
+                            <a class="fas fa-edit btn-icon" :href="'#resubmit/'+task.id"></a>
+                        </span>
                     </div>
                 </div>
             </div>

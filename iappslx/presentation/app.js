@@ -138,6 +138,15 @@ const multipartUpload = (file) => {
     return uploadPart(0, file.size - 1);
 };
 
+const storeSubmissionData = (data) => {
+    UiWorker.store('submission-data', JSON.stringify(data));
+};
+
+const getSubmissionData = () => {
+    const submissionData = UiWorker.getStore('submission-data') || '{}';
+    return JSON.parse(submissionData);
+};
+
 // eslint-disable-next-line no-undef
 class Base64Editor extends JSONEditor.defaults.editors.string {
     setValue(val) {
@@ -225,6 +234,7 @@ const newEditor = (tmplid, view) => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
             };
             document.getElementById('btn-form-submit').onclick = () => {
+                const parameters = editor.getValue();
                 const data = {
                     method: 'POST',
                     headers: {
@@ -232,13 +242,22 @@ const newEditor = (tmplid, view) => {
                     },
                     body: JSON.stringify({
                         name: tmplid,
-                        parameters: editor.getValue()
+                        parameters
                     })
                 };
                 dispOutput(JSON.stringify(data, null, 2));
-                safeFetch(`${endPointUrl}/applications`, data)
+                Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/applications`, data))
                     .then((result) => {
                         dispOutput(JSON.stringify(result, null, 2));
+
+                        const submissionData = getSubmissionData();
+                        const taskid = result.message[0].id;
+                        submissionData[taskid] = {
+                            template: tmplid,
+                            parameters
+                        };
+                        storeSubmissionData(submissionData);
                     })
                     .then(() => {
                         window.location.href = '#tasks';
@@ -356,7 +375,22 @@ route('modify', 'create', (appID) => {
         })
         .catch(e => dispOutput(e.message));
 });
+route('resubmit', 'create', (taskid) => {
+    const submissionData = getSubmissionData();
+    if (!submissionData[taskid]) {
+        dispOutput(`Could not find submission data for task ${taskid}`);
+        return Promise.resolve();
+    }
+
+    const template = submissionData[taskid].template;
+    const parameters = submissionData[taskid].parameters;
+
+    return Promise.resolve()
+        .then(() => newEditor(template, parameters))
+        .catch(e => dispOutput(e.message));
+});
 route('tasks', 'tasks', () => {
+    const submissionData = getSubmissionData();
     const renderTaskList = () => getJSON('tasks')
         .then((tasks) => {
             tasks.forEach((task) => {
@@ -372,6 +406,14 @@ route('tasks', 'tasks', () => {
                     task.message = 'declaration is invalid';
                 }
                 task.showPopover = false;
+                if (task.message === 'success' && submissionData[task.id]) {
+                    delete submissionData[task.id];
+                    storeSubmissionData(submissionData);
+                }
+
+                if (submissionData[task.id]) {
+                    task.canResubmit = true;
+                }
             });
             appState.data.tasks = tasks;
 
