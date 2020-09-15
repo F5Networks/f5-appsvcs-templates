@@ -7,11 +7,35 @@ This chapter is dedicated to explaining the relationship of schema vs templates.
 FAST makes use of Mustache, JSON schema and JSONPath, therefore FAST may be familiar if you already understand any of these syntaxes.  
 Schema is generated from template text, combined with definitions, and used to validate template parameters.  
 
+Mustache
+-------------
+Mustache is not the templating engine. Mustache is a specification for a templating language, and it is the specification for how the template file must look. 
+You write templates adhering to the Mustache specification, it works by expanding tags in a templet using values provided in a hash or object.  
+The template is then rendered to create an output.
+
+Sections
+^^^^^^^
+For iterating over a list of data, we make use of Mustache sections. 
+Sections render block of text one or more times depending on the value of the key.  
+Sections begin with a pound (#) and end with a slash (/). Each of the signs are followed by the key whose value is the basis for rendering the section.
+
+.. code-block:: mustache
+
+    {{#tenant}}
+    < Other_code>
+    {{/tenant}}
+
+Partials
+^^^^^^
+Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
+The syntax for including a partial uses curley braces and an angle bracket (>). 
+As an example we define a `node` partial  ``{{> node}}``
+
 
 JSON Schema Basic Types
 -----------------------
 
-| **Array**: Arrays can be used for lists and sets, and may be ordered or unordered depending on context and how they are defined. 
+| **Array**: Arrays are used for ordered elements. In JSON, each element in an array may be of a different type.
 This section covers typical JSON schema definitions for common patterns.
 |
 | For example, *virtuals* is defined with a *type: array* having *items* defined with *type: string* and *format: ipv4* (more on formats later).
@@ -56,9 +80,9 @@ The length of a *string* may be constrained using *minLength* and *maxLength* wh
     maxLength: 5
     
 Along with the *string* type, JSON has some built in formats, using the *format* keyword.  
-This allows for basic validation and can be used for certain strings such as ipV4 and ipV6 addressing.  
+This allows for basic validation and can be used for certain strings such as IPv4 and IPv6 addressing.  
 
-| Regular Expressions *regex* are used to match and extract parts of a string by searching for one or more matches of a search *pattern*.  
+| Regular Expressions (regexes) are used to match and extract parts of a string by searching for one or more matches of a search *pattern*.  
 | This example matches numbers from 0 and 255. ``String zeroTo255 = "([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])"``
 |
 | The string consists of three groups separated with a pipe.
