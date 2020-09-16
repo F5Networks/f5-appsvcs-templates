@@ -4,10 +4,7 @@ definitions:
   app_name: {}
   virtual_address: {}
   virtual_port: {}
-  enable_pool:
-    title: Create Pool
-    description: A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.
-    type: boolean
+  enable_pool: {}
   make_pool:
     title: Automatically manage the pool
     description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.

@@ -84,6 +84,11 @@
       "maximum": 65535,
       "default": 443
     },
+    "enable_pool": {
+        "title": "Create Pool",
+        "description": "A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.",
+        "type": "boolean"
+    },
 		"pool_name": {
 			"title": "Specify the name of an existing BIG-IP pool.",
       "type": "string",
