@@ -1,3 +1,16 @@
+# 1.4.0
+## Added
+* Allow retrieving failed application submissions to modify and resubmit
+
+## Fixed
+* Fix REST worker error when loading a template with schema that has no properties defined
+* Cleanup task messages on BIG-IPs with multiple tenants
+
+## Changed
+* Use template merging to reduce duplication between TCP and HTTP templates
+* Update style to better match BIG-IP GUI
+* Make editor form titles more consistent in the Deploy tab
+
 # 1.3.0
 ## Added
 * Support enumFromBigip on array items

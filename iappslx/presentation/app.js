@@ -1,3 +1,4 @@
+/* global Vue, JSONEditor */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -9,9 +10,6 @@ const yaml = require('js-yaml');
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
-const {
-    Div, Span, Clickable, Icon, Row, Loader, Modal, Popover, Td, Expandable, Svg
-} = require('./lib/elements');
 
 const endPointUrl = '/mgmt/shared/fast';
 
@@ -51,18 +49,62 @@ const safeFetch = (uri, opts) => {
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
 let editor = null;
-
-let outputElem;
-
 let UI;
+
+const appState = {
+    debugOutput: '',
+    data: {},
+    modal: {
+        message: '',
+        icon: ''
+    },
+    pageComponent: {
+        template: '<div></div>'
+    },
+    busy: true
+};
+
+// Auto-register HTML template tags as Vue components
+// eslint-disable-next-line no-restricted-syntax
+for (const tmpl of document.getElementsByTagName('template')) {
+    Vue.component(tmpl.id, {
+        props: ['data'],
+        template: `#${tmpl.id}`
+    });
+}
+// eslint-disable-next-line no-unused-vars
+const vueApp = new Vue({
+    el: '#vue-app',
+    data: appState,
+    methods: {
+        cancelModal() {
+            appState.modal.message = '';
+        },
+        continueModal() {
+            const modalFunc = window.modalFunc || Promise.resolve();
+            Promise.resolve()
+                .then(() => modalFunc())
+                .finally(() => this.cancelModal());
+        },
+        showModal(type, msg, func) {
+            if (type === 'warning') {
+                appState.modal.icon = 'info-warning';
+                appState.modal.title = 'Warning';
+            } else {
+                appState.modal.icon = 'info-circle';
+                appState.modal.title = 'Info';
+            }
+            window.modalFunc = func;
+            appState.modal.message = msg;
+        }
+    }
+});
 
 const dispOutput = (output) => {
     if (output.length > 0) {
         console.log(output);
     }
-    if (outputElem) {
-        outputElem.innerText = output;
-    }
+    appState.debugOutput = output;
 };
 
 const multipartUpload = (file) => {
@@ -94,6 +136,15 @@ const multipartUpload = (file) => {
         return uploadPart(0, CHUNK_SIZE - 1);
     }
     return uploadPart(0, file.size - 1);
+};
+
+const storeSubmissionData = (data) => {
+    UiWorker.store('submission-data', JSON.stringify(data));
+};
+
+const getSubmissionData = () => {
+    const submissionData = UiWorker.getStore('submission-data') || '{}';
+    return JSON.parse(submissionData);
 };
 
 // eslint-disable-next-line no-undef
@@ -140,7 +191,6 @@ const newEditor = (tmplid, view) => {
 
             // Create a new editor
             const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedParameters(view), schema);
-            // eslint-disable-next-line no-undef
             editor = new JSONEditor(formElement, {
                 schema,
                 startval: defaults,
@@ -184,6 +234,7 @@ const newEditor = (tmplid, view) => {
                 dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
             };
             document.getElementById('btn-form-submit').onclick = () => {
+                const parameters = editor.getValue();
                 const data = {
                     method: 'POST',
                     headers: {
@@ -191,13 +242,22 @@ const newEditor = (tmplid, view) => {
                     },
                     body: JSON.stringify({
                         name: tmplid,
-                        parameters: editor.getValue()
+                        parameters
                     })
                 };
                 dispOutput(JSON.stringify(data, null, 2));
-                safeFetch(`${endPointUrl}/applications`, data)
+                Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/applications`, data))
                     .then((result) => {
                         dispOutput(JSON.stringify(result, null, 2));
+
+                        const submissionData = getSubmissionData();
+                        const taskid = result.message[0].id;
+                        submissionData[taskid] = {
+                            template: tmplid,
+                            parameters
+                        };
+                        storeSubmissionData(submissionData);
                     })
                     .then(() => {
                         window.location.href = '#tasks';
@@ -222,6 +282,8 @@ function router() {
 
     const app = document.getElementById('app');
     if (!UI) UI = new UiWorker(app);
+    appState.busy = true;
+    app.style.display = 'none';
     UI.startMoveToRoute(urlParts[0]);
 
     // Error on unknown route
@@ -233,19 +295,16 @@ function router() {
     }
 
     // Load new page
-    const pageId = `#page-${routeInfo.pageName}`;
-    const pageTmpl = document.querySelector(pageId);
-    app.appendChild(document.importNode(pageTmpl.content, true));
-    app.style.opacity = '.3';
-    outputElem = document.getElementById('output');
     dispOutput('');
+    appState.pageComponent = `page-${routeInfo.pageName}`;
 
     const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
-    pageFunc(urlParts.slice(1).join('/'))
+    Promise.resolve()
+        .then(() => pageFunc(urlParts.slice(1).join('/')))
         .finally(() => {
             UI.completeMoveToRoute();
-            app.style.opacity = '1';
             app.style.display = 'block';
+            appState.busy = false;
         });
 }
 
@@ -254,57 +313,55 @@ window.addEventListener('load', router);
 
 // Define routes
 route('', 'apps', () => {
-    const appListDiv = document.getElementById('app-list');
+    vueApp.$refs.page.deleteApplication = (appPath) => {
+        vueApp.showModal(
+            'warning',
+            `Application ${appPath} will be permanently deleted!`,
+            () => {
+                dispOutput(`Deleting ${appPath}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/applications/${appPath}`, {
+                        method: 'DELETE'
+                    }))
+                    .then(() => {
+                        window.location.href = '#tasks';
+                    })
+                    .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
+            }
+        );
+    };
+
+    appState.data = {
+        appsList: []
+    };
+
     return getJSON('applications')
         .then((appsList) => {
             appsList.forEach((app) => {
-                const appPath = `${app.tenant}/${app.name}`;
-
-                new Row().appendToParent(appListDiv)
-                    .setColumn(new Td('tenant-app-td', [app.tenant, app.name]))
-                    .setColumn(app.template)
-                    .setColumn(new Div('td').setChildren([
-                        new Clickable('icon:fa-edit').setHref(`#modify/${appPath}`).setToolstrip('Modify Application'),
-                        new Clickable('icon:fa-trash').setOnClick(() => {
-                            new Modal().setTitle('Warning')
-                                .setMessage(`Application '${appPath}' will be permanently deleted!`)
-                                .setOkFunction(() => {
-                                    dispOutput(`Deleting ${appPath}`);
-                                    safeFetch(`${endPointUrl}/applications/${appPath}`, {
-                                        method: 'DELETE'
-                                    })
-                                        .then(() => {
-                                            window.location.href = '#tasks';
-                                        })
-                                        .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
-                                })
-                                .appendToParent(document.getElementById('app'));
-                        }).setToolstrip('Delete Application')
-                    ]));
+                app.path = `${app.tenant}/${app.name}`;
             });
+            appState.data.appsList = appsList;
             dispOutput('');
         })
         .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
 });
 route('create', 'create', () => {
-    const addTmplBtns = (sets) => {
-        const elem = document.getElementById('tmpl-btns');
-        sets.forEach((setData) => {
-            const templateSet = new Expandable(setData.name, ['template-set-title', 'clickable']).appendToParent(elem);
-            setData.templates.map(x => x.name).forEach((item) => {
-                templateSet.addExpandable(
-                    new Clickable('button').setClassList(['btn', 'btn-template'])
-                        .setInnerText(item).setOnClick((e) => { newEditor(item); e.stopPropagation(); })
-                );
-            });
-            templateSet.completeSetup();
+    vueApp.$refs.page.newEditor = (tmplid) => {
+        newEditor(tmplid);
+    };
+
+    vueApp.$refs.page.currentSet = (setName) => {
+        appState.data.sets.forEach((set) => {
+            set.expanded = set.name === setName;
         });
+    };
+
+    appState.data = {
+        sets: []
     };
     return getJSON('templatesets')
         .then((data) => {
-            addTmplBtns(data);
-            const deployText = document.getElementById('available-text');
-            deployText.classList.remove('display-none');
+            appState.data.sets = data.map(x => Object.assign({}, x, { expanded: false }));
             dispOutput('');
         })
         .catch(e => dispOutput(e.message));
@@ -313,61 +370,52 @@ route('modify', 'create', (appID) => {
     dispOutput(`Fetching app data for ${appID}`);
     return getJSON(`applications/${appID}`)
         .then((appData) => {
-            const availableText = document.getElementById('available-text');
-            availableText.classList.add('display-none');
             const appDef = appData.constants.fast;
             newEditor(appDef.template, appDef.view);
         })
         .catch(e => dispOutput(e.message));
 });
+route('resubmit', 'create', (taskid) => {
+    const submissionData = getSubmissionData();
+    if (!submissionData[taskid]) {
+        dispOutput(`Could not find submission data for task ${taskid}`);
+        return Promise.resolve();
+    }
+
+    const template = submissionData[taskid].template;
+    const parameters = submissionData[taskid].parameters;
+
+    return Promise.resolve()
+        .then(() => newEditor(template, parameters))
+        .catch(e => dispOutput(e.message));
+});
 route('tasks', 'tasks', () => {
+    const submissionData = getSubmissionData();
     const renderTaskList = () => getJSON('tasks')
         .then((tasks) => {
-            const taskList = document.getElementById('task-list');
-            UiWorker.destroyChildren(taskList);
-
-            new Row('th-row').appendToParent(taskList)
-                .setColumns(['Task ID', new Td('tenant-app-th'), 'Operation', 'Result']);
-
-            new Row().setAttr('height', '1px').appendToParent(taskList);
-
             tasks.forEach((task) => {
-                new Row(task.id).setClassList('tr').appendToParent(taskList)
-                    .setColumn(
-                        new Clickable().setInnerText(task.id).setHref(`/mgmt/shared/fast/tasks/${task.id}`)
-                            .setToolstrip('go to task')
-                            .setClassList(['td', 'clickable-darker'])
-                    )
-                    .setColumn(new Td('tenant-app-td', [task.tenant, task.application]))
-                    .setColumn(task.operation)
-                    .setColumn(() => {
-                        if (task.message === 'in progress') {
-                            return new Div('td').setChildren(new Loader().setSize('sm').start().html());
-                        }
-                        if (task.message === 'success') {
-                            return new Div('td').setChildren('success').setClassList('success-color');
-                        }
-                        if (task.code >= 400) {
-                            let title = 'Error';
-                            let message = task.message;
-                            if (task.message.includes('Error:')) {
-                                message = message.split(':')[1];
-                            } else if (task.message.includes('declaration failed')) {
-                                title = 'declaration failed';
-                                message = message.substring(title.length, task.message.length);
-                            } else if (task.message.includes('declaration is invalid')) {
-                                title = 'declaration is invalid';
-                                message = message.substring(title.length, task.message.length);
-                            }
-                            const questionIcon = new Icon('fa-question-circle').setClassList(['cursor-default', 'danger-color']).html();
-                            const questionPopover = new Popover(questionIcon).setDirection('left').setStyle('danger')
-                                .setData(title, message);
+                task.errMsg = '';
+                if (task.message.includes('Error:')) {
+                    task.errMsg = task.message.replace(/Error:/);
+                    task.message = 'Error';
+                } else if (task.message.includes('declaration failed')) {
+                    task.errMsg = task.message.replace(/declaration failed/);
+                    task.message = 'declaration failed';
+                } else if (task.message.includes('declaration is invalid')) {
+                    task.errMsg = task.message.replace(/declaration is invalid/);
+                    task.message = 'declaration is invalid';
+                }
+                task.showPopover = false;
+                if (task.message === 'success' && submissionData[task.id]) {
+                    delete submissionData[task.id];
+                    storeSubmissionData(submissionData);
+                }
 
-                            return new Div('td').setChildren([title, questionPopover]).setClassList('danger-color');
-                        }
-                        return task.message;
-                    });
+                if (submissionData[task.id]) {
+                    task.canResubmit = true;
+                }
             });
+            appState.data.tasks = tasks;
 
             const inProgressJob = (
                 tasks.filter(x => x.message === 'in progress').length !== 0
@@ -377,11 +425,78 @@ route('tasks', 'tasks', () => {
             }
         });
 
-
+    appState.data = {
+        tasks: []
+    };
     return renderTaskList();
 });
 route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {
+    const filters = {
+        enabled: 'Enabled',
+        f5: 'F5 Supported',
+        disabled: 'Disabled',
+        all: 'All Template Sets'
+    };
+    const templatesFilterKey = 'templates-filter';
+    let currentFilter = UiWorker.getStore(templatesFilterKey);
+    if (!currentFilter) {
+        currentFilter = 'enabled';
+    }
+
+    const renderTemplates = () => Promise.resolve()
+        .then(() => Promise.all([
+            getJSON('applications'),
+            getJSON('templatesets'),
+            getJSON('templatesets?showDisabled=true')
+        ]))
+        .then(([applications, templatesets, disabledTemplateSets]) => {
+            const allTemplates = templatesets
+                .concat(disabledTemplateSets)
+                .filter(x => (
+                    (currentFilter === 'all')
+                    || (currentFilter === 'f5' && x.supported)
+                    || (currentFilter === 'enabled' && x.enabled)
+                    || (currentFilter === 'disabled' && !x.enabled)
+                ));
+
+            // build dictionary of app lists, keyed by set
+            const appDict = applications.reduce((acc, curr) => {
+                const setName = curr.template.split('/')[0];
+                if (!acc[setName]) {
+                    acc[setName] = [];
+                }
+                acc[setName].push(curr);
+                return acc;
+            }, {});
+
+            const setMap = allTemplates.reduce((acc, curr) => {
+                const apps = appDict[curr.name] || [];
+                acc[curr.name] = Object.assign(curr, {
+                    expanded: apps.length < 3,
+                    apps
+                });
+                return acc;
+            }, {});
+
+            appState.data.sets = setMap;
+            Object.values(setMap).forEach((setData) => {
+                if (!setData.enabled && setData.updateAvailable) {
+                    console.error('enabled === false && updateAvailable is illegal. Critical Error');
+                }
+            });
+        })
+        .then(() => dispOutput(''));
+
+    const reloadTemplates = () => Promise.resolve()
+        .then(() => {
+            appState.busy = true;
+        })
+        .then(() => renderTemplates())
+        .then(() => {
+            appState.busy = false;
+        });
+
     document.getElementById('btn-add-ts').onclick = () => {
         document.getElementById('input-ts-file').click();
     };
@@ -402,250 +517,111 @@ route('templates', 'templates', () => {
             }))
             .then(() => {
                 dispOutput(`${tsName} installed successfully`);
-                window.location.reload();
             })
-            .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`));
+            .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`))
+            .then(() => reloadTemplates());
     };
     document.getElementById('btn-delete-all-ts').onclick = () => {
-        new Modal().setTitle('Warning').setMessage('All Template Sets will be removed!').setOkFunction(() => {
-            dispOutput('Deleting All Template Sets');
-            return safeFetch(`${endPointUrl}/templatesets`, {
-                method: 'DELETE'
-            })
-                .then(() => {
-                    dispOutput('All Template Sets deleted successfully');
-                    window.location.reload();
+        vueApp.showModal(
+            'warning',
+            'All Template Sets will be removed!',
+            () => {
+                dispOutput('Deleting All Template Sets');
+                return safeFetch(`${endPointUrl}/templatesets`, {
+                    method: 'DELETE'
                 })
-                .catch(e => dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`));
-        })
-            .appendToParent(document.getElementById('app'));
+                    .then(() => {
+                        dispOutput('All Template Sets deleted successfully');
+                    })
+                    .catch(e => dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
     };
 
-    const templatesFilterKey = 'templates-filter';
-    const templatesFilterElem = document.getElementById('templates-filter');
-    const filterElem = document.getElementById('filter');
-    const menu = templatesFilterElem.getElementsByClassName('menu')[0];
-    const selected = templatesFilterElem.getElementsByClassName('selected')[0];
-    if (!UiWorker.getStore(templatesFilterKey)) {
-        UiWorker.store(templatesFilterKey, selected.id);
-        console.log('templatesFilter empty in store. Pulled from  stored:', selected.id);
-    }
+    vueApp.$refs.page.setFilter = (filter) => {
+        currentFilter = filter;
+        appState.data.currentFilter = filter;
+        UiWorker.store(templatesFilterKey, filter);
+        document.getElementById('templates-filter').classList.remove('active'); // Collapse the drop down
+        reloadTemplates();
+    };
 
-    const curFilter = UiWorker.getStore(templatesFilterKey);
-    if (document.getElementById(curFilter).innerText.toLowerCase() !== templatesFilterElem.innerText.toLowerCase()) {
-        selected.classList.remove('selected');
-        document.getElementById(curFilter).classList.add('selected');
-    }
+    vueApp.$refs.page.removeSet = (setName) => {
+        vueApp.showModal(
+            'warning',
+            `Template Set '${setName}' will be removed!`,
+            () => {
+                dispOutput(`Deleting ${setName}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/templatesets/${setName}`, {
+                        method: 'DELETE'
+                    }))
+                    .then(() => {
+                        dispOutput(`${setName} deleted successfully`);
+                    })
+                    .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
 
-    UiWorker.iterateHtmlCollection(menu, (item) => {
-        item.onclick = () => {
-            UiWorker.store(templatesFilterKey, item.id);
-            window.location.reload();
-        };
-    });
-
-    filterElem.innerText = document.getElementById(curFilter).innerText;
-
-    const templateDiv = document.getElementById('template-list');
-    return Promise.all([
-        getJSON('applications'),
-        getJSON('templatesets'),
-        getJSON('templatesets?showDisabled=true')
-    ])
-        .then(([applications, templatesets, disabledTemplateSets]) => {
-            const filter = document.getElementById('templates-filter').getElementsByClassName('selected')[0].id.toLowerCase();
-            const allTemplates = templatesets.concat(disabledTemplateSets);
-            const setMap = allTemplates.reduce((acc, curr) => {
-                if (filter === 'all') acc[curr.name] = curr;
-                if (filter === 'f5' && curr.supported) acc[curr.name] = curr;
-                if (filter === 'enabled' && curr.enabled) acc[curr.name] = curr;
-                if (filter === 'disabled' && !curr.enabled) acc[curr.name] = curr;
-                return acc;
-            }, {});
-
-            // build dictionary of app lists, keyed by template
-            const appDict = applications.reduce((a, c) => {
-                if (c.template) {
-                    if (!a[c.template]) {
-                        a[c.template] = [];
-                    }
-                    a[c.template].push(c);
-                }
-                return a;
-            }, {});
-
-            Object.values(setMap).forEach((setData) => {
-                const setName = setData.name;
-                const setActions = {
-                    Remove: (e) => {
-                        new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be removed!`).setOkFunction(() => {
-                            dispOutput(`Deleting ${setName}`);
-                            return safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                                method: 'DELETE'
-                            })
-                                .then(() => {
-                                    dispOutput(`${setName} deleted successfully`);
-                                    window.location.reload();
-                                })
-                                .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`));
-                        })
-                            .appendToParent(document.getElementById('app'));
-
-                        e.stopPropagation();
-                    }
-                };
-
-                if (!setData.enabled) {
-                    setActions.Install = (e) => {
-                        new Modal().setTitle('Enabling Template Set').setMessage(`Template Set '${setName}' will be enabled.`).setOkFunction(() => {
-                            dispOutput(`Enabling ${setName}`);
-                            return Promise.resolve()
-                                .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        name: setName
-                                    })
-                                }))
-                                .then(() => {
-                                    dispOutput(`${setName} enabled successfully`);
-                                    window.location.reload();
-                                })
-                                .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`));
-                        })
-                            .appendToParent(document.getElementById('app'));
-
-                        e.stopPropagation();
-                    };
-                }
-
-                if (setData.updateAvailable) {
-                    setActions.Update = (e) => {
-                        new Modal().setTitle('Warning').setMessage(`Template Set '${setName}' will be updated!`).setOkFunction(() => {
-                            dispOutput(`Updating ${setName}`);
-                            return Promise.resolve()
-                                .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        name: setName
-                                    })
-                                }))
-                                .then(() => {
-                                    dispOutput(`${setName} installed successfully`);
-                                    window.location.reload();
-                                })
-                                .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`));
-                        })
-                            .appendToParent(document.getElementById('app'));
-
-                        e.stopPropagation();
-                    };
-                }
-
-                if (!setData.enabled && setData.updateAvailable) { console.error('enabled === false && updateAvailable is illegal. Critical Error'); }
-
-                const templateSetRow = new Row('tr row-dark clickable').setId(setName).appendToParent(templateDiv).setColumns([
-                    () => {
-                        const tempSetName = new Div('td td-template-set').setChildren([
-                            new Icon('fa-angle-right').html(),
-                            `${setName}&nbsp`
-                        ]);
-                        const traitsDiv = new Span('traits');
-                        if (setData.supported) {
-                            new Svg('f5-icon').setToolstrip('Template Set Supported by F5')
-                                .setClassList('tooltipped-f5-icon').appendToParent(traitsDiv);
-                        }
-                        if (setData.enabled) {
-                            new Icon('fa-check-circle').setToolstrip('Template Set is Enabled').appendToParent(traitsDiv);
-                        } else { // can a template set be removable if it's disabled?
-                            new Icon('fa-times-circle').setClassList('red-base-forecolor').setToolstrip('Template Set is Disabled!')
-                                .setClassList('tooltip-red')
-                                .appendToParent(traitsDiv);
-                        }
-                        traitsDiv.appendToParent(tempSetName);
-                        return tempSetName;
-                    },
-                    new Td(),
-                    () => {
-                        const actions = new Td();
-
-                        if (!setData.enabled) {
-                            const installBtn = new Clickable('icon:fa-download').setOnClick(setActions.Install).setToolstrip('Install Template Set');
-                            actions.safeAppend(installBtn);
-                            return actions;
-                        }
-
-                        Object.entries(setActions).forEach(([actName, actFn]) => {
-                            const iconClass = (actName.toLowerCase() === 'update') ? 'fa-edit' : 'fa-trash';
-                            actions.safeAppend(new Clickable(`icon:${iconClass}`).setOnClick(actFn).setToolstrip(`${actName} Template Set`));
-                        });
-                        return actions;
-                    }
-                ]);
-
-                const tempSetChild = `${setName}-child`;
-                templateSetRow.makeExpandable(tempSetChild);
-
-                if (!setData.enabled) { templateSetRow.setClassList('row-dark-red red-hover'); }
-
-                setMap[setName].templates.forEach((tmpl) => {
-                    const templateName = tmpl.name;
-                    const appList = appDict[tmpl.name] || [];
-
-                    const templateRow = new Row('tr row-light').setClassList(tempSetChild).appendToParent(templateDiv);
-                    templateRow.setColumns([
-                        templateName,
-                        () => {
-                            const applicationsDiv = () => {
-                                const applicationsMapped = appList.map(app => `${app.tenant} ${app.name}`);
-                                const div = new Div();
-                                applicationsMapped.forEach((item) => {
-                                    const tenantApp = item.split(' ');
-                                    new Div('fontsize-6rem').setChildren([
-                                        tenantApp[0],
-                                        new Icon('fa-angle-double-right').setClassList('fontsize-5rem').html(),
-                                        tenantApp[1]
-                                    ]).appendToParent(div);
-                                });
-                                return div;
-                            };
-
-                            const appsTd = new Td().appendToParent(templateRow);
-                            if (appList.length < 3) {
-                                appsTd.safeAppend(applicationsDiv());
-                            } else {
-                                appsTd.setClassList('italic').setInnerText('*click to view*');
-                                templateRow.setClassList('clickable');
-                                templateRow.elem.onclick = () => {
-                                    if (appsTd.elem.innerText === '*click to view*') {
-                                        UiWorker.destroyChildren(appsTd);
-                                        appsTd.elem.innerText = '';
-                                        appsTd.elem.classList.remove('italic');
-                                        appsTd.safeAppend(applicationsDiv());
-                                    } else {
-                                        UiWorker.destroyChildren(appsTd.elem);
-                                        appsTd.elem.innerText = '*click to view*';
-                                        appsTd.elem.classList.add('italic');
-                                    }
-                                };
-                            }
-                            return appsTd;
+    vueApp.$refs.page.installSet = (setName) => {
+        vueApp.showModal(
+            'info',
+            `Template Set '${setName}' will be enabled.`,
+            () => {
+                dispOutput(`Enabling ${setName}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
                         },
-                        new Td()
-                    ]);
+                        body: JSON.stringify({
+                            name: setName
+                        })
+                    }))
+                    .then(() => {
+                        dispOutput(`${setName} enabled successfully`);
+                    })
+                    .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
 
-                    if (!templateSetRow.elem.classList.contains('expanded')) { templateRow.elem.classList.add('display-none'); }
+    vueApp.$refs.page.updateSet = (setName) => {
+        vueApp.showModal(
+            'warning',
+            `Template Set '${setName}' will be updated!`,
+            () => {
+                dispOutput(`Updating ${setName}`);
+                return Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: setName
+                        })
+                    }))
+                    .then(() => {
+                        dispOutput(`${setName} installed successfully`);
+                    })
+                    .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`))
+                    .then(() => reloadTemplates());
+            }
+        );
+    };
 
-                    if (!setData.enabled) {
-                        templateRow.setClassList('row-light-red grey-forecolor');
-                    }
-                });
-            });
-        })
-        .then(() => dispOutput(''));
+    appState.data = {
+        filters,
+        currentFilter,
+        sets: [],
+        apps: {}
+    };
+
+    return renderTemplates();
 });

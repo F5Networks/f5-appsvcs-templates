@@ -5,7 +5,8 @@ Appendix C: FAST Available Templates
 
 | FAST comes pre-installed with a base set of templates. Included are templates to deploy virtual servers for basic deployments as well as several example templates. 
 | FAST templates are broken into 2 sections; bigip-fast-templates and examples. 
-| 
+|
+
 The following table lists the template set, the corresponding template(s) and a brief description:
 
 .. list-table::
@@ -47,7 +48,3 @@ The following table lists the template set, the corresponding template(s) and a 
       * - examples
         - simple_waf
         - Example of an HTTPS application using an ASM Policy
-
-
-
-

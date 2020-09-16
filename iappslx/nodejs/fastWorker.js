@@ -480,6 +480,10 @@ class FASTWorker {
     }
 
     hydrateSchema(schema, requestId) {
+        if (!schema.properties) {
+            return Promise.resolve();
+        }
+
         const enumFromBigipProps = Object.entries(schema.properties)
             .reduce((acc, curr) => {
                 const [key, value] = curr;

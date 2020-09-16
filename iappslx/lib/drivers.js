@@ -264,11 +264,14 @@ class AS3Driver {
                 } else {
                     [operation, tenant, application] = idParts.slice(1, 4);
                 }
+                results = item.results.filter(r => r.tenant === tenant);
+                if (results.length === 0) {
+                    results = item.results;
+                }
                 if (item.declaration[tenant] && item.declaration[tenant][application]) {
                     const appDef = this._appFromDecl(item.declaration, tenant, application);
                     name = appDef.template;
                     parameters = appDef.view;
-                    results = item.results.filter(r => r.tenant === tenant);
                 }
             }
             const changes = [...new Set(results.filter(r => r.message).map(r => r.message))];
