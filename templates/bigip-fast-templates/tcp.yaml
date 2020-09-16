@@ -5,35 +5,19 @@ definitions:
   virtual_address: {}
   virtual_port: {}
   enable_pool: {}
-  make_pool:
-    title: Automatically manage the pool
-    description: A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.
-    type: boolean
+  make_pool: {}
   pool_name: {}
   pool_members: {}
   pool_port: {}
   load_balancing_mode: {}
   slow_ramp_time: {}
-  enable_monitor:
-    title: Pool Monitor
-    description: Determine the availability and performance of devices, links, and services on a network.
-    type: boolean
-  make_monitor:
-    title: Automatically manage the pool monitor.
-    type: boolean
+  enable_monitor: {}
+  make_monitor: {}
   monitor_name:
     enumFromBigip: 'ltm/monitor/tcp'
-  enable_snat:
-    title: SNAT
-    description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
-    type: boolean
-  snat_automap:
-    title: SNAT Automap
-    description: SNAT automap uses BIG-IP self IP addresses as the translation address.
-    type: boolean
-  make_snatpool:
-    title: Automatically manage the SNAT pool.
-    type: boolean
+  enable_snat: {}
+  snat_automap: {}
+  make_snatpool: {}
   snatpool_name: {}
   snat_addresses: {}
   enable_persistence:
@@ -85,8 +69,8 @@ definitions:
     default: []
   app_pool_def:
     template: |
-      {{#enable_pool}}
-        {{#make_pool}}
+      {{#enable_pool:f5:enable_pool}}
+        {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
             "members": [{
@@ -96,62 +80,62 @@ definitions:
             }],
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
-            {{#enable_monitor}}
-              {{#make_monitor}}
+            {{#enable_monitor:f5:enable_monitor}}
+              {{#make_monitor:f5:make_monitor}}
                 "monitors": [ "tcp" ]
-              {{/make_monitor}}
-              {{^make_monitor}}
+              {{/make_monitor:f5:make_monitor}}
+              {{^make_monitor:f5:make_monitor}}
                 "monitors": [{
                   "bigip": "{{monitor_name:f5:monitor_name}}"
                 }]
-              {{/make_monitor}}
-            {{/enable_monitor}}
+              {{/make_monitor:f5:make_monitor}}
+            {{/enable_monitor:f5:enable_monitor}}
           },
-        {{/make_pool}}
-      {{/enable_pool}}
+        {{/make_pool:f5:make_pool}}
+      {{/enable_pool:f5:enable_pool}}
   app_snatpool_def:
     template: |
-      {{#enable_snat}}
-        {{^snat_automap}}
-          {{#make_snatpool}}
+      {{#enable_snat:f5:enable_snat}}
+        {{^snat_automap:f5:snat_automap}}
+          {{#make_snatpool:f5:make_snatpool}}
             "{{app_name:f5:app_name}}_snatpool": {
               "class": "SNAT_Pool",
               "snatAddresses": {{snat_addresses:f5:snat_addresses}}
             },
-          {{/make_snatpool}}
-        {{/snat_automap}}
-      {{/enable_snat}}
+          {{/make_snatpool:f5:make_snatpool}}
+        {{/snat_automap:f5:snat_automap}}
+      {{/enable_snat:f5:enable_snat}}
   service_pool_def:
     template: |
-      {{#enable_pool}}
-        {{#make_pool}}
+      {{#enable_pool:f5:enable_pool}}
+        {{#make_pool:f5:make_pool}}
           "pool": "{{app_name:f5:app_name}}_pool",
-        {{/make_pool}}
-        {{^make_pool}}
+        {{/make_pool:f5:make_pool}}
+        {{^make_pool:f5:make_pool}}
           "pool": {
             "bigip": "{{pool_name:f5:pool_name}}"
           },
-        {{/make_pool}}
-      {{/enable_pool}}
+        {{/make_pool:f5:make_pool}}
+      {{/enable_pool:f5:enable_pool}}
   service_snat_def:
     template: |
-      {{#enable_snat}}
-        {{#snat_automap}}
+      {{#enable_snat:f5:enable_snat}}
+        {{#snat_automap:f5:snat_automap}}
           "snat": "auto",
-        {{/snat_automap}}
-        {{^snat_automap}}
-          {{#make_snatpool}}
+        {{/snat_automap:f5:snat_automap}}
+        {{^snat_automap:f5:snat_automap}}
+          {{#make_snatpool:f5:make_snatpool}}
             "snat": {
               "use": "{{app_name:f5:app_name}}_snatpool"
             },
-          {{/make_snatpool}}
-          {{^make_snatpool}}
+          {{/make_snatpool:f5:make_snatpool}}
+          {{^make_snatpool:f5:make_snatpool}}
             "snat": {
               "bigip": "{{snatpool_name:f5:snatpool_name}}"
             },
-          {{/make_snatpool}}
-        {{/snat_automap}}
-      {{/enable_snat}}
+          {{/make_snatpool:f5:make_snatpool}}
+        {{/snat_automap:f5:snat_automap}}
+      {{/enable_snat:f5:enable_snat}}
   service_persistence_def:
     template: |
       {{#enable_persistence}}

@@ -21,9 +21,7 @@
     "ipv4_array": {
       "type": "array",
       "items": {
-        "type": "string",
-        "format": "ipv4",
-        "default": "10.0.0.1"
+        "$ref": "#/definitions/ipv4"
       },
       "default": []
     },
@@ -89,6 +87,11 @@
         "description": "A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.",
         "type": "boolean"
     },
+    "make_pool": {
+      "title": "Automatically manage the pool",
+      "description": "A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.",
+      "type": "boolean"
+    },
 		"pool_name": {
 			"title": "Specify the name of an existing BIG-IP pool.",
       "type": "string",
@@ -146,10 +149,33 @@
       "maximum": 65535,
       "default": 300
     },
+    "enable_monitor": {
+      "title": "Pool Monitor",
+      "description": "Determine the availability and performance of devices, links, and services on a network.",
+      "type": "boolean"
+    },
+    "make_monitor": {
+      "title": "Automatically manage the pool monitor.",
+      "type": "boolean"
+    },
 		"monitor_name": {
 			"title": "Specify the name of an existing BIG-IP monitor.",
 			"description": "Monitors are used to determine the health of the application on each server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.",
 			"type": "string"
+    },
+    "enable_snat": {
+      "title": "SNAT",
+      "description": "Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.",
+      "type": "boolean"
+    },
+    "snat_automap": {
+      "title": "SNAT Automap",
+      "description": "SNAT automap uses BIG-IP self IP addresses as the translation address.",
+      "type": "boolean"
+    },
+    "make_snatpool": {
+      "title": "Automatically manage the SNAT pool.",
+      "type": "boolean"
     },
     "snatpool_name": {
 			"title": "Specify the name of an existing BIG-IP SNAT pool.",
