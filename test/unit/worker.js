@@ -190,6 +190,11 @@ describe('template worker tests', function () {
     afterEach(function () {
         nock.cleanAll();
         mockfs.restore();
+
+        const scratchPath = path.join(process.cwd(), 'templates', 'scratch');
+        if (fs.existsSync(scratchPath)) {
+            fs.rmdirSync(scratchPath, { recursive: true });
+        }
     });
 
     it('info', function () {
