@@ -138,7 +138,7 @@ definitions:
           {{/make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
           {{^make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
             "ingress": {
-              "bigip": "{{tcp_ingress_profile_name:f5:bigip_path}}"
+              "bigip": "{{tcp_ingress_profile_name:f5:tcp_ingress_profile_name}}"
             },
           {{/make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
           {{#make_tcp_egress_profile:f5:make_tcp_egress_profile}}
@@ -146,7 +146,7 @@ definitions:
           {{/make_tcp_egress_profile:f5:make_tcp_egress_profile}}
           {{^make_tcp_egress_profile:f5:make_tcp_egress_profile}}
             "egress": {
-              "bigip": "{{tcp_egress_profile_name:f5:bigip_path}}"
+              "bigip": "{{tcp_egress_profile_name:f5:tcp_egress_profile_name}}"
             }
           {{/make_tcp_egress_profile:f5:make_tcp_egress_profile}}
        },
@@ -201,9 +201,9 @@ template: |
           {{> service_persistence_def}}
           {{> service_tcp_def}}
           "iRules": [
-            {{#irule_names}}
+            {{#irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
-            {{/irule_names}}
+            {{/irule_names:f5:irule_names}}
           ]
         }
       }
