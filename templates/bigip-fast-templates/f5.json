@@ -71,9 +71,7 @@
     "virtual_address": {
       "title": "Specify the IP address for the virtual server.",
       "description": "This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.",
-      "type": "string",
-      "format": "ipv4",
-      "default": "10.0.0.1"
+      "$ref": "#/definitions/ipv4"
     },
     "virtual_port": {
       "title": "Specify the TCP port for the virtual server.",
@@ -102,9 +100,7 @@
       "description": "Add the IP addresses of a pool member.",
       "type": "array",
       "items": {
-        "type": "string",
-        "format": "ipv4",
-        "default": "10.0.0.1"
+        "$ref": "#/definitions/ipv4"
       },
       "default": []
     },
@@ -186,9 +182,7 @@
       "title": "SNAT Pool Addresses",
       "type": "array",
       "items": {
-        "type": "string",
-        "format": "ipv4",
-        "default": "10.0.0.1"
+        "$ref": "#/definitions/ipv4"
       },
       "default": []
     },
@@ -206,6 +200,7 @@
     },
     "tcp_profile_name": {
       "title": "Specify the name of an existing BIG-IP TCP profile.",
+      "type": "string",
       "enumFromBigip": "ltm/profile/tcp"
     },
     "make_tcp_ingress_profile": {
@@ -218,6 +213,7 @@
     },
     "tcp_ingress_profile_name": {
       "title": "Specify the name of an existing BIG-IP TCP profile for client-side context.",
+      "type": "string",
       "enumFromBigip": "ltm/profile/tcp"
     },
     "make_tcp_egress_profile": {
@@ -230,6 +226,7 @@
     },
     "tcp_egress_profile_name": {
       "title": "Specify the name of an existing BIG-IP TCP profile for server-side context.",
+      "type": "string",
       "enumFromBigip": "ltm/profile/tcp"
     },
     "irule_names": {

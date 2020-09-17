@@ -32,6 +32,7 @@ definitions:
     type: boolean
   fallback_persistence_type:
     title: Specify the type of fallback persistence.
+  common_tcp_profile: {}
   make_tcp_profile: {}
   tcp_topology: {}
   tcp_profile_name: {}
