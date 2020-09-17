@@ -119,7 +119,7 @@ definitions:
           {{/make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
           {{^make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
             "ingress": {
-              "bigip": "{{tcp_ingress_profile_name:f5:bigip_path}}"
+              "bigip": "{{tcp_ingress_profile_name:f5:tcp_ingress_profile_name}}"
             },
           {{/make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
           {{#make_tcp_egress_profile:f5:make_tcp_egress_profile}}
@@ -127,7 +127,7 @@ definitions:
           {{/make_tcp_egress_profile:f5:make_tcp_egress_profile}}
           {{^make_tcp_egress_profile:f5:make_tcp_egress_profile}}
             "egress": {
-              "bigip": "{{tcp_egress_profile_name:f5:bigip_path}}"
+              "bigip": "{{tcp_egress_profile_name:f5:tcp_egress_profile_name}}"
             }
           {{/make_tcp_egress_profile:f5:make_tcp_egress_profile}}
        },
@@ -166,10 +166,10 @@ template: |
       "class": "Tenant",
       "{{app_name:f5:app_name}}": {
         "class": "Application",
-        "template": "tcp",
+        "template": "generic",
         {{> app_pool_def}}
         {{> app_snatpool_def}}
-        "serviceMain": {
+        "{{app_name:f5:app_name}}_TCP": {
           "class": "Service_TCP",
           "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
           "virtualPort": {{virtual_port:f5:virtual_port}},
@@ -177,9 +177,21 @@ template: |
           {{> service_snat_def}}
           {{> service_tcp_def}}
           "iRules": [
-            {{#irule_names}}
+            {{#irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
-            {{/irule_names}}
+            {{/irule_names:f5:irule_names}}
+          ]
+        },
+        "{{app_name:f5:app_name}}_UDP": {
+          "class": "Service_UDP",
+          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
+          "virtualPort": {{virtual_port:f5:virtual_port}},
+          {{> service_pool_def}}
+          {{> service_snat_def}}
+          "iRules": [
+            {{#irule_names:f5:irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names:f5:irule_names}}
           ]
         }
       }
