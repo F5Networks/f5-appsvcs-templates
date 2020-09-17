@@ -83,22 +83,22 @@ definitions:
       {{/enable_tls_server}}
   app_monitor_def:
     template: |
-      {{#enable_pool}}
-        {{#make_pool}}
+      {{#enable_pool:f5:enable_pool}}
+        {{#make_pool:f5:make_pool}}
           "{{app_name:f5:bigip_name}}_pool": {
-            {{#enable_monitor}}
-              {{#make_monitor}}
+            {{#enable_monitor:f5:enable_monitor}}
+              {{#make_monitor:f5:make_monitor}}
                 {{#enable_tls_client}}
                   "monitors": [ "https" ]
                 {{/enable_tls_client}}
                 {{^enable_tls_client}}
                   "monitors": [ "http" ]
                 {{/enable_tls_client}}
-              {{/make_monitor}}
-            {{/enable_monitor}}
+              {{/make_monitor:f5:make_monitor}}
+            {{/enable_monitor:f5:enable_monitor}}
           },
-        {{/make_pool}}
-      {{/enable_pool}}
+        {{/make_pool:f5:make_pool}}
+      {{/enable_pool:f5:enable_pool}}
   app_tls_server_def:
     template: |
       {{#enable_tls_server}}
