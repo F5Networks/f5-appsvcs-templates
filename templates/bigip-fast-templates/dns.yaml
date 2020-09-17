@@ -176,7 +176,11 @@ template: |
           {{> service_pool_def}}
           {{> service_snat_def}}
           {{> service_tcp_def}}
-          "iRules": [{{irule_names:f5:irule_names}}]
+          "iRules": [
+            {{#irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names}}
+          ]
         }
       }
     }
