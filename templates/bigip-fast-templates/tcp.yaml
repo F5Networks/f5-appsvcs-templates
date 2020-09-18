@@ -120,6 +120,9 @@ definitions:
           "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
         {{/enable_fallback_persistence}}
       {{/enable_persistence}}
+      {{^enable_persistence}}
+        "persistenceMethods": [],
+      {{/enable_persistence}}
   service_tcp_def:
     template: |
       {{#common_tcp_profile:f5:common_tcp_profile}}
