@@ -147,17 +147,24 @@ class FASTWorker {
      */
     onStart(success, error) {
         this.hookCompleteRestOp();
+        this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
+        const startTime = Date.now();
 
         // Find any template sets on disk (e.g., from the RPM) and add them to
         // the data store. Do not overwrite template sets already in the data store.
         let saveState = true;
-        this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         return Promise.resolve()
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
             .then(() => Promise.all([
-                this.fsTemplateProvider.listSets(),
-                this.templateProvider.listSets(),
+                this.recordTransaction(
+                    0, 'gather list of templates from disk',
+                    this.fsTemplateProvider.listSets()
+                ),
+                this.recordTransaction(
+                    0, 'gather list of loaded templates',
+                    this.templateProvider.listSets()
+                ),
                 this.getConfig(0)
             ]))
             .then(([fsSets, knownSets, config]) => {
@@ -227,6 +234,10 @@ class FASTWorker {
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
                 error();
+            })
+            .finally(() => {
+                const dt = Date.now() - startTime;
+                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
             });
     }
 
@@ -536,7 +547,7 @@ class FASTWorker {
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
-        this.requestTimes[restOp.requestId] = new Date();
+        this.requestTimes[restOp.requestId] = Date.now();
         this.logger.fine(
             `FAST Worker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().pathname}`
         );
@@ -548,7 +559,7 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
-        const dt = Date.now() - this.requestTimes[restOp.requestId].getTime();
+        const dt = Date.now() - this.requestTimes[restOp.requestId];
         const msg = `FAST Worker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];
         if (minOp.status >= 400) {
