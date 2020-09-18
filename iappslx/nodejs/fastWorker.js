@@ -113,10 +113,8 @@ class FASTWorker {
                     .then(() => {
                         this.logger.info('FAST Worker: no config found, loading defaults');
                     })
-                    .then(() => this.configStorage.setItem('foo', 'bar'))
-                    .then(() => this.configStorage.deleteItem('foo'))
-                    .then(() => this.configStorage.persist())
                     .then(() => this.configStorage.setItem(configKey, defaultConfig))
+                    .then(() => this.configStorage.persist())
                     .then(() => defaultConfig);
             })
             .then((config) => {
