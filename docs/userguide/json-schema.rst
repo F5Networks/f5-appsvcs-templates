@@ -5,37 +5,84 @@ Templating with FAST
 
 This chapter is dedicated to explaining the relationship of schema vs templates. 
 FAST makes use of Mustache, JSON schema and JSONPath, therefore FAST may be familiar if you already understand any of these syntaxes.  
+Fast combines these technologies to provide a complete templating solution. At the foundation, FAST uses a templating specification called mustache to convert parameters into a fully rendered API body. 
+Parameter types can be specified in JSON schema, and are used to validate template inputs when the template is rendered. 
+FAST will auto generate a schema for each template based off the template and json-schema provided.
 Schema is generated from template text, combined with definitions, and used to validate template parameters.  
 
 Mustache
 -------------
-Mustache is not the templating engine. Mustache is a specification for a templating language, and it is the specification for how the template file must look. 
-You write templates adhering to the Mustache specification, it works by expanding tags in a templet using values provided in a hash or object.  
+Mustache is not the templating engine. Mustache is a specification for a templating language, and it specifies how the template file must look. 
+You write templates adhering to the Mustache specification, and it works by expanding tags in a template using values provided in a hash or object.  
 The template is then rendered to create an output.
+ 
+Tags
+^^^^
+
+Tags are easily identifiable by the `double mustache` of opening and closing curley braces ``{{ }}``. 
+The most basic type of tag is a variable. When Mustache process the template it passes an object or hash containing the variable name and associated values.
+A ``{{tenant}}`` tag in a template renders the value of the `tenant` key.
+
 
 Sections
 ^^^^^^^
 For iterating over a list of data, we make use of Mustache sections. 
 Sections render block of text one or more times depending on the value of the key.  
-Sections begin with a pound (#) and end with a slash (/). Each of the signs are followed by the key whose value is the basis for rendering the section.
+Sections begin with a pound (#) and end with a slash (/). 
+Each of the signs are followed by the key whose value is the basis for rendering the section.
 
 .. code-block:: mustache
 
-    {{#tenant}}
-    < Other_code>
-    {{/tenant}}
+   {{#tenant}}
+   < Other_code>
+   {{/tenant}}
+
 
 Partials
 ^^^^^^
 Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
 The syntax for including a partial uses curley braces and an angle bracket (>). 
-As an example we define a `node` partial  ``{{> node}}``
+As an example we define a `node` partial as: ``{{> node}}`` written in `yaml` format.
+
+.. code-block:: yaml
+
+    template: |
+    {
+        "{{tenant}}": {
+        "{{application_name}}" {
+            ... etc ... 
+            }
+        }
+    }
 
 
 JSON Schema Basic Types
 -----------------------
 
-| **Array**: Arrays are used for ordered elements. In JSON, each element in an array may be of a different type.
+Definitions
+^^^^^^^^^^^
+| JSON Schema allows us to define auxiliary schema in order to be reused and combined later on. 
+| This involves two steps: 
+| 1. We need to define the subschemas to be used later on, and 
+| 2. We need a standard for calling and reusing these definitions.
+|
+To establish a difference between the main schema and the auxiliary definitions, we adopt the convention that every JSON Schema document consists of two parts; a JSON Schema, and a set of definitions.  
+
+For example, if we want a definition for virtuals, it may look like this:
+
+.. code-block:: yaml
+
+    definitions:
+        virtuals:
+            type: array
+            items:  {
+	            type: string,
+	            format: ipv4
+        }
+
+| **Array**: Arrays are used for ordered elements. 
+In JSON, each element in an array may be of a different type.  
+Elements of the array may be ordered or unordered based on the API being templated.
 This section covers typical JSON schema definitions for common patterns.
 |
 | For example, *virtuals* is defined with a *type: array* having *items* defined with *type: string* and *format: ipv4* (more on formats later).
@@ -105,20 +152,7 @@ Combining Schema
 | JSON uses the keywords *allOf*, *anyOf* and *oneOf* for combining schema together.  
 | FAST also uses they keywords of *oneOf/allOf/anyOf* for template merging, however this section is focused on JSON schema.
 |
-| **allOf**: All of the contained schemas must validate against the instance value.
-
-.. code-block:: json
-
-    {
-        "allOf": [
-            { "type": "string" },
-            { "maxLength": 5 }
-        ]
-    }
-
-.. NOTE::  When using *allOf*, be cautious of specifying multiple *types* such as ``{ type: string }`` and ``{ type: number }`` as a type cannot be a string and a number at the same time.
-
-**anyOf**: One or more of the contained schema is validated against the instance value.  
+| **anyOf**: One or more of the contained schema is validated against the instance value.  
 It is less restrictive than *allOf* as more than one of the same *type* may be specified.
 
 .. code-block:: json
@@ -142,5 +176,38 @@ It will also fail on 15 as it is a *multipleOf*  both 5 and 3 not *oneOf*.
             { "type": "number", "multipleOf": 3 }
         ]
     }
+
+| **allOf**: All of the contained schemas must validate against the instance value.
+
+.. code-block:: json
+
+    {
+        "allOf": [
+            { "type": "string" },
+            { "maxLength": 5 }
+        ]
+    }
+
+When authoring templates using yaml, *allOf* takes on a special meaning by referencing another template in the set, known as *Template Merging*.
+
+* *allOf* will merge the schema of the merge templete with external template(s) just as JSON schema will when generating schema for the merged templates
+* When a merge template is rendered, the JSON output of the templates will be merged together
+* Merge can be used to add additional configuration to a template
+
+.. code-block:: yaml
+
+    parameters:
+        ...
+    definitions:
+        ...
+    template: | 
+        ...
+    allOf:
+        - $ref: "tcp.yaml#"
+
+.. NOTE::  When using *allOf*, be cautious of specifying multiple *types* such as ``{ type: string }`` and ``{ type: number }`` as a type cannot be a string and a number at the same time.
+
+
+
 
 .. seealso:: For detailed information, additional code examples and references, visit `Understanding JSON Schema <https://json-schema.org/understanding-json-schema/index.html>`_
