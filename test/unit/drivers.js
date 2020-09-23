@@ -272,7 +272,7 @@ describe('AS3 Driver tests', function () {
             .persist()
             .get(as3ep)
             .query(true)
-            .reply(404, as3WithApp);
+            .reply(200, as3WithApp);
 
         return assert.isRejected(driver.getApplication('badTenent', 'appName'), /no tenant found/)
             .then(() => assert.isRejected(driver.getApplication('tenantName', 'badApp'), /could not find app/));
@@ -282,7 +282,7 @@ describe('AS3 Driver tests', function () {
         nock(host)
             .get(as3ep)
             .query(true)
-            .reply(404, Object.assign({}, as3stub, appDef));
+            .reply(200, Object.assign({}, as3stub, appDef));
 
         return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);
     });
