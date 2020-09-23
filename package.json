@@ -57,6 +57,7 @@
     "@babel/runtime": "^7.11.2",
     "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#f52fa9057610cc5beb5a8a42266b91f06fcf43a4",
     "@f5devcentral/f5-teem": "^1.4.6",
+    "axios": "^0.20.0",
     "core-js": "^3.6.5",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
