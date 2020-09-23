@@ -13,7 +13,11 @@ const UiWorker = require('./lib/ui-worker.js');
 
 const endPointUrl = '/mgmt/shared/fast';
 
-const safeFetch = (uri, opts) => {
+const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
+
+const safeFetch = (uri, opts, numAttempts) => {
+    numAttempts = numAttempts || 0;
+
     opts = Object.assign({
         // Add any defaults here
     }, opts);
@@ -33,6 +37,21 @@ const safeFetch = (uri, opts) => {
                 console.log(`Failed to parse JSON data: ${textData}`);
             }
             if (!response.ok) {
+                const retry = (
+                    response.status === 404
+                    && (
+                        data.errorStack
+                        || (data.message && data.message.match(/Public URI path not registered/))
+                    )
+                    && (!numAttempts || numAttempts < 5)
+                );
+                if (retry) {
+                    numAttempts += 1;
+                    console.log(`attempting retry ${numAttempts} to ${uri}`);
+                    return Promise.resolve()
+                        .then(() => wait(1000))
+                        .then(() => safeFetch(uri, opts, numAttempts));
+                }
                 let msg = data;
                 if (data.message) {
                     msg = data.message;
