@@ -243,6 +243,7 @@ parameters:
   make_multiplex_profile: true
   multiplex_profile_name: /Common/oneconnect
   enable_redirect: true
+  irule_names: []
 template: |
   {
     "class": "ADC",
@@ -252,12 +253,21 @@ template: |
       "{{app_name:f5:bigip_name}}": {
         "class": "Application",
         {{> app_type_def}}
+        "template": "tcp",
+        {{> app_pool_def}}
         {{> app_monitor_def}}
+        {{> app_snatpool_def}}
         {{> app_tls_server_def}}
         {{> app_tls_client_def}}
         {{> app_http_def}}
         "serviceMain": {
-          {{> service_type_def}}
+          {{> service_type_def}} 
+          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
+          "virtualPort": {{virtual_port:f5:virtual_port}},
+          {{> service_pool_def}}
+          {{> service_snat_def}}
+          {{> service_persistence_def}}
+          {{> service_tcp_def}}
           {{> service_tls_server_def}}
           {{> service_tls_client_def}}
           {{> service_http_def}}
@@ -265,6 +275,11 @@ template: |
           {{> service_compression_def}}
           {{> service_multiplex_def}}
           {{> service_redirect80_def}}
+          "iRules": [
+            {{#irule_names:f5:irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names:f5:irule_names}}
+          ]
         }
       }
     }
