@@ -13,7 +13,11 @@ const UiWorker = require('./lib/ui-worker.js');
 
 const endPointUrl = '/mgmt/shared/fast';
 
-const safeFetch = (uri, opts) => {
+const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
+
+const safeFetch = (uri, opts, numAttempts) => {
+    numAttempts = numAttempts || 0;
+
     opts = Object.assign({
         // Add any defaults here
     }, opts);
@@ -33,6 +37,21 @@ const safeFetch = (uri, opts) => {
                 console.log(`Failed to parse JSON data: ${textData}`);
             }
             if (!response.ok) {
+                const retry = (
+                    response.status === 404
+                    && (
+                        data.errorStack
+                        || (data.message && data.message.match(/Public URI path not registered/))
+                    )
+                    && (!numAttempts || numAttempts < 5)
+                );
+                if (retry) {
+                    numAttempts += 1;
+                    console.log(`attempting retry ${numAttempts} to ${uri}`);
+                    return Promise.resolve()
+                        .then(() => wait(1000))
+                        .then(() => safeFetch(uri, opts, numAttempts));
+                }
                 let msg = data;
                 if (data.message) {
                     msg = data.message;
@@ -245,6 +264,7 @@ const newEditor = (tmplid, view) => {
                         parameters
                     })
                 };
+                appState.busy = true;
                 dispOutput(JSON.stringify(data, null, 2));
                 Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/applications`, data))
@@ -283,7 +303,6 @@ function router() {
     const app = document.getElementById('app');
     if (!UI) UI = new UiWorker(app);
     appState.busy = true;
-    app.style.display = 'none';
     UI.startMoveToRoute(urlParts[0]);
 
     // Error on unknown route
@@ -303,7 +322,6 @@ function router() {
         .then(() => pageFunc(urlParts.slice(1).join('/')))
         .finally(() => {
             UI.completeMoveToRoute();
-            app.style.display = 'block';
             appState.busy = false;
         });
 }
@@ -318,6 +336,7 @@ route('', 'apps', () => {
             'warning',
             `Application ${appPath} will be permanently deleted!`,
             () => {
+                appState.busy = true;
                 dispOutput(`Deleting ${appPath}`);
                 return Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/applications/${appPath}`, {
@@ -503,6 +522,7 @@ route('templates', 'templates', () => {
     document.getElementById('input-ts-file').onchange = () => {
         const file = document.getElementById('input-ts-file').files[0];
         const tsName = file.name.slice(0, -4);
+        appState.busy = true;
         dispOutput(`Uploading file: ${file.name}`);
         multipartUpload(file)
             .then(() => dispOutput(`Installing template set ${tsName}`))
@@ -526,6 +546,7 @@ route('templates', 'templates', () => {
             'warning',
             'All Template Sets will be removed!',
             () => {
+                appState.busy = true;
                 dispOutput('Deleting All Template Sets');
                 return safeFetch(`${endPointUrl}/templatesets`, {
                     method: 'DELETE'
@@ -552,6 +573,7 @@ route('templates', 'templates', () => {
             'warning',
             `Template Set '${setName}' will be removed!`,
             () => {
+                appState.busy = true;
                 dispOutput(`Deleting ${setName}`);
                 return Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/templatesets/${setName}`, {
@@ -571,6 +593,7 @@ route('templates', 'templates', () => {
             'info',
             `Template Set '${setName}' will be enabled.`,
             () => {
+                appState.busy = true;
                 dispOutput(`Enabling ${setName}`);
                 return Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/templatesets`, {
@@ -596,6 +619,7 @@ route('templates', 'templates', () => {
             'warning',
             `Template Set '${setName}' will be updated!`,
             () => {
+                appState.busy = true;
                 dispOutput(`Updating ${setName}`);
                 return Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/templatesets`, {

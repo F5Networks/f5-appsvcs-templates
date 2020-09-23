@@ -282,4 +282,11 @@ button:disabled:hover {
 	display: block;
 	line-height: 1.2rem;
 	padding: .3rem 0;
-}}
+}
+
+.form-select, .form-input {
+	line-height: initial;
+	font-size: inherit;
+	height: initial;
+	padding: 2px 5px 1px 5px;
+}

@@ -29,7 +29,7 @@
             <div id="content-wrapper">
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
                 <div id="app" v-cloak>
-                    <component ref="page" :is="pageComponent" :data="data"></component>
+                    <component ref="page" :is="pageComponent" :data="data" :class="{ 'display-none': busy }"></component>
                     <pre id="output">{{debugOutput}}</pre>
                     <div v-if="modal.message" class="modal active">
                         <div class="modal-container">
