@@ -243,7 +243,6 @@ parameters:
   make_multiplex_profile: true
   multiplex_profile_name: /Common/oneconnect
   enable_redirect: true
-  irule_names: []
 template: |
   {
     "class": "ADC",
@@ -253,7 +252,6 @@ template: |
       "{{app_name:f5:bigip_name}}": {
         "class": "Application",
         {{> app_type_def}}
-        "template": "tcp",
         {{> app_pool_def}}
         {{> app_monitor_def}}
         {{> app_snatpool_def}}
