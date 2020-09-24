@@ -14,24 +14,12 @@ definitions:
   enable_monitor: {}
   make_monitor: {}
   monitor_name:
-    enumFromBigip: 'ltm/monitor/tcp'
+    enumFromBigip: 'ltm/monitor/dns'
   enable_snat: {}
   snat_automap: {}
   make_snatpool: {}
   snatpool_name: {}
   snat_addresses: {}
-  enable_persistence:
-    title: Persistence
-    description: Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.
-    type: boolean
-  persistence_type:
-    title: Specify the type of persistence.
-  enable_fallback_persistence:
-    title: Fallback Persistence
-    description: Create a secondary, or fallback, persistence record for each new client connection.
-    type: boolean
-  fallback_persistence_type:
-    title: Specify the type of fallback persistence.
   common_tcp_profile: {}
   make_tcp_profile: {}
   tcp_topology: {}
@@ -58,7 +46,7 @@ definitions:
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
               {{#make_monitor:f5:make_monitor}}
-                "monitors": [ "tcp" ]
+                "monitors": [ "dns" ]
               {{/make_monitor:f5:make_monitor}}
               {{^make_monitor:f5:make_monitor}}
                 "monitors": [{
@@ -112,17 +100,6 @@ definitions:
           {{/make_snatpool:f5:make_snatpool}}
         {{/snat_automap:f5:snat_automap}}
       {{/enable_snat:f5:enable_snat}}
-  service_persistence_def:
-    template: |
-      {{#enable_persistence}}
-        "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
-        {{#enable_fallback_persistence}}
-          "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
-        {{/enable_fallback_persistence}}
-      {{/enable_persistence}}
-      {{^enable_persistence}}
-        "persistenceMethods": [],
-      {{/enable_persistence}}
   service_tcp_def:
     template: |
       {{#common_tcp_profile:f5:common_tcp_profile}}
@@ -156,24 +133,19 @@ definitions:
        },
       {{/common_tcp_profile:f5:common_tcp_profile}}
 parameters:
-  virtual_address: ''
-  virtual_port: 443
+  virtual_port: 53
   enable_pool: true
   make_pool: true
   pool_name: ''
-  pool_port: 80
+  pool_port: 53
   slow_ramp_time: 300
   enable_monitor: true
   make_monitor: true
-  monitor_name: /Common/tcp
+  monitor_name: /Common/dns
   enable_snat: true
   snat_automap: true
   make_snatpool: true
   snatpool_name: ''
-  enable_persistence: true
-  persistence_type: source-address
-  enable_fallback_persistence: false
-  fallback_persistence_type: source-address
   common_tcp_profile: false
   make_tcp_profile: true
   tcp_topology: lan
@@ -194,17 +166,28 @@ template: |
       "class": "Tenant",
       "{{app_name:f5:app_name}}": {
         "class": "Application",
-        "template": "tcp",
+        "template": "generic",
         {{> app_pool_def}}
         {{> app_snatpool_def}}
-        "serviceMain": {
+        "{{app_name:f5:app_name}}_TCP": {
           "class": "Service_TCP",
           "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
           "virtualPort": {{virtual_port:f5:virtual_port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
-          {{> service_persistence_def}}
           {{> service_tcp_def}}
+          "iRules": [
+            {{#irule_names:f5:irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names:f5:irule_names}}
+          ]
+        },
+        "{{app_name:f5:app_name}}_UDP": {
+          "class": "Service_UDP",
+          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
+          "virtualPort": {{virtual_port:f5:virtual_port}},
+          {{> service_pool_def}}
+          {{> service_snat_def}}
           "iRules": [
             {{#irule_names:f5:irule_names}}
             { "bigip": {{ . }} },

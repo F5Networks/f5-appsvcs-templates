@@ -9,7 +9,7 @@ docs/_build/
 docs/_static/apidocs.html
 node_modules
 rpmbuild
-test-output.txt
+test-output.*
 iappslx/presentation/openapi.json
 venv/
 docs/userguide/proposed-doc-rev.rst
