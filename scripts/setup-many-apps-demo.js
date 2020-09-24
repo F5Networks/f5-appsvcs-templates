@@ -5,6 +5,8 @@
 
 const https = require('https');
 
+const axios = require('axios');
+
 const bigipTarget = process.env.BIGIP_TARGET;
 const bigipCreds = process.env.BIGIP_CREDS;
 const MAX_TENANTS = process.env.MAX_TENANTS || 5;
@@ -18,62 +20,16 @@ if (!bigipCreds) {
     throw new Error('BIGIP_CREDS env var needs to be defined');
 }
 
-function doRequest(opts, payload) {
-    const [host, port] = bigipTarget.split(':');
-    const defaultOpts = {
-        host,
-        port: port || 80,
-        rejectUnauthorized: false,
-        headers: {
-            Authorization: `Basic ${Buffer.from(bigipCreds).toString('base64')}`,
-            'Content-Type': 'application/json'
-        }
-    };
-    const combOpts = Object.assign({}, defaultOpts, opts);
-
-    return new Promise((resolve, reject) => {
-        const req = https.request(combOpts, (res) => {
-            const buffer = [];
-            res.setEncoding('utf8');
-            res.on('data', (data) => {
-                buffer.push(data);
-            });
-            res.on('end', () => {
-                let body = buffer.join('');
-                body = body || '{}';
-                try {
-                    body = JSON.parse(body);
-                } catch (e) {
-                    return reject(new Error(`Invalid response object from ${combOpts.method} to ${combOpts.path}`));
-                }
-                return resolve({
-                    status: res.statusCode,
-                    headers: res.headers,
-                    body
-                });
-            });
-        });
-
-        req.on('error', (e) => {
-            reject(new Error(`${opts.host}:${e.message}`));
-        });
-
-        if (payload) req.write(JSON.stringify(payload));
-        req.end();
-    });
-}
-
-function doGet(path) {
-    return doRequest({ path, method: 'GET' });
-}
-
-function doPost(path, payload) {
-    return doRequest({ path, method: 'POST' }, payload);
-}
-
-function doDelete(path) {
-    return doRequest({ path, method: 'DELETE' });
-}
+const endpoint = axios.create({
+    baseURL: `https://${bigipTarget}`,
+    auth: {
+        username: bigipCreds.split(':')[0],
+        password: bigipCreds.split(':')[1]
+    },
+    httpsAgent: new https.Agent({
+        rejectUnauthorized: false
+    })
+});
 
 function promiseDelay(timems) {
     return new Promise((resolve) => {
@@ -88,18 +44,13 @@ function waitForCompletedTask(taskid) {
 
     console.log(`Waiting for taskid ${taskid} to complete...`);
     return Promise.resolve()
-        .then(() => doGet(`/mgmt/shared/fast/tasks/${taskid}`))
+        .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
         .then((response) => {
-            if (response.body.code === 0) {
+            if (response.data.code === 0) {
                 return promiseDelay(1000)
                     .then(() => waitForCompletedTask(taskid));
             }
-            if (response.body.code !== 200) {
-                return Promise.reject(
-                    new Error(response.body.message)
-                );
-            }
-            return response.body;
+            return response.data;
         });
 }
 
@@ -122,16 +73,27 @@ function createApplication(id) {
     };
 }
 
+function handleResponseError(e) {
+    if (e.response) {
+        const errData = JSON.stringify({
+            status: e.response.status,
+            body: e.response.data
+        }, null, 2);
+        console.error(errData);
+    }
+    return Promise.reject(e);
+}
+
 function deleteApplications() {
     console.log('Deleting all applications...');
     return Promise.resolve()
-        .then(() => doDelete('/mgmt/shared/fast/applications'))
+        .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
-            const taskid = response.body.id;
+            const taskid = response.data.id;
             return Promise.resolve()
                 .then(() => waitForCompletedTask(taskid))
                 .catch((e) => {
-                    console.log(response.body);
+                    console.log(response.data);
                     return Promise.reject(e);
                 });
         })
@@ -144,19 +106,20 @@ function deployApplications() {
     const appdefs = Array.from(Array(NUM_APPS).keys()).map(x => createApplication(x));
     console.log(`Deploying ${NUM_APPS} applications across ${MAX_TENANTS} tenants`);
     return Promise.resolve()
-        .then(() => doPost('/mgmt/shared/fast/applications', appdefs))
+        .then(() => endpoint.post('/mgmt/shared/fast/applications', appdefs))
         .then((response) => {
-            const taskid = response.body.message[0].id;
+            const taskid = response.data.message[0].id;
             return Promise.resolve()
                 .then(() => waitForCompletedTask(taskid))
                 .catch((e) => {
-                    console.log(response.body);
+                    console.log(response.data);
                     return Promise.reject(e);
                 });
         })
         .then(() => {
             console.log('Applications deployed');
-        });
+        })
+        .catch(e => handleResponseError(e));
 }
 
 Promise.resolve()
