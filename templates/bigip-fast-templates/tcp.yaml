@@ -156,6 +156,7 @@ definitions:
        },
       {{/common_tcp_profile:f5:common_tcp_profile}}
 parameters:
+  virtual_address: ''
   virtual_port: 443
   enable_pool: true
   make_pool: true
