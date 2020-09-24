@@ -57,7 +57,8 @@ const expected = {
                 profileTCP: {
                     ingress: 'wan',
                     egress: 'lan'
-                }
+                },
+                iRules: []
             },
             app1_pool: {
                 class: 'Pool',
