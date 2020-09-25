@@ -95,7 +95,6 @@ const expected = {
 };
 
 describe(template, function () {
-
     describe('new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
