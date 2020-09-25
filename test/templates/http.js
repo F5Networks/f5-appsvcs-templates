@@ -112,7 +112,12 @@ const expected = {
                 class: 'Pool',
                 members: [{
                     servicePort: view.pool_port,
-                    serverAddresses: ['10.2.1.1', '10.2.1.2'],
+                    serverAddresses: ['10.2.1.1'],
+                    shareNodes: true
+                },
+                {
+                    servicePort: view.pool_port,
+                    serverAddresses: ['10.2.1.2'],
                     shareNodes: true
                 }],
                 loadBalancingMode: view.load_balancing_mode,

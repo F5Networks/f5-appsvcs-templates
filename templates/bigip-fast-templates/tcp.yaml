@@ -8,7 +8,6 @@ definitions:
   make_pool: {}
   pool_name: {}
   pool_members: {}
-  pool_port: {}
   load_balancing_mode: {}
   slow_ramp_time: {}
   enable_monitor: {}
@@ -20,18 +19,10 @@ definitions:
   make_snatpool: {}
   snatpool_name: {}
   snat_addresses: {}
-  enable_persistence:
-    title: Persistence
-    description: Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.
-    type: boolean
-  persistence_type:
-    title: Specify the type of persistence.
-  enable_fallback_persistence:
-    title: Fallback Persistence
-    description: Create a secondary, or fallback, persistence record for each new client connection.
-    type: boolean
-  fallback_persistence_type:
-    title: Specify the type of fallback persistence.
+  enable_persistence: {}
+  persistence_type: {}
+  enable_fallback_persistence: {}
+  fallback_persistence_type: {}
   common_tcp_profile: {}
   make_tcp_profile: {}
   tcp_topology: {}
@@ -43,17 +34,26 @@ definitions:
   tcp_egress_topology: {}
   tcp_egress_profile_name: {}
   irule_names: {}
+  app_pool_member_def:
+    template: |
+      {
+        "serverAddresses": ["{{serverAddresses::array}}"],
+        "servicePort": {{servicePort::integer}},
+        "connectionLimit": {{connectionLimit::integer}},
+        "priorityGroup": {{priorityGroup::integer}},
+        "shareNodes": {{shareNodes::boolean}}
+      },
   app_pool_def:
     template: |
       {{#enable_pool:f5:enable_pool}}
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": [{
-              "serverAddresses": {{pool_members:f5:pool_members}},
-              "servicePort": {{pool_port:f5:pool_port}},
-              "shareNodes": true
-            }],
+            "members": [
+              {{#pool_members:f5:pool_members}}
+                { {{ . }} },
+              {{/pool_members:f5:pool_members}}
+            ],
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
@@ -114,15 +114,15 @@ definitions:
       {{/enable_snat:f5:enable_snat}}
   service_persistence_def:
     template: |
-      {{#enable_persistence}}
-        "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
-        {{#enable_fallback_persistence}}
-          "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
-        {{/enable_fallback_persistence}}
-      {{/enable_persistence}}
-      {{^enable_persistence}}
+      {{#enable_persistence:f5:enable_persistence}}
+        "persistenceMethods": ["{{persistence_type:f5:persistence_type}}"],
+        {{#enable_fallback_persistence:f5:enable_fallback_persistence}}
+          "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:fallback_persistence_type}}",
+        {{/enable_fallback_persistence:f5:enable_fallback_persistence}}
+      {{/enable_persistence:f5:enable_persistence}}
+      {{^enable_persistence:f5:enable_persistence}}
         "persistenceMethods": [],
-      {{/enable_persistence}}
+      {{/enable_persistence:f5:enable_persistence}}
   service_tcp_def:
     template: |
       {{#common_tcp_profile:f5:common_tcp_profile}}
@@ -156,35 +156,9 @@ definitions:
        },
       {{/common_tcp_profile:f5:common_tcp_profile}}
 parameters:
-  virtual_address: ''
-  virtual_port: 443
-  enable_pool: true
-  make_pool: true
-  pool_name: ''
-  pool_port: 80
-  slow_ramp_time: 300
-  enable_monitor: true
-  make_monitor: true
   monitor_name: /Common/tcp
-  enable_snat: true
-  snat_automap: true
-  make_snatpool: true
-  snatpool_name: ''
-  enable_persistence: true
   persistence_type: source-address
   enable_fallback_persistence: false
-  fallback_persistence_type: source-address
-  common_tcp_profile: false
-  make_tcp_profile: true
-  tcp_topology: lan
-  tcp_profile_name: /Common/f5-tcp-progressive
-  make_tcp_ingress_profile: true
-  tcp_ingress_topology: wan
-  tcp_ingress_profile_name: /Common/f5-tcp-progressive
-  make_tcp_egress_profile: true
-  tcp_egress_topology: lan
-  tcp_egress_profile_name: /Common/f5-tcp-progressive
-  irule_names: []
 template: |
   {
     "class": "ADC",

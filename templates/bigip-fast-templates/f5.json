@@ -20,10 +20,11 @@
     },
     "ipv4_array": {
       "type": "array",
+      "uniqueItems": true,
+      "default": [],
       "items": {
         "$ref": "#/definitions/ipv4"
-      },
-      "default": []
+      }
     },
     "non_empty_string": {
       "type": "string",
@@ -71,49 +72,75 @@
     "virtual_address": {
       "title": "Specify the IP address for the virtual server.",
       "description": "This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.",
-      "$ref": "#/definitions/ipv4"
+      "$ref": "#/definitions/ipv4",
+      "default": "10.1.1.1"
     },
     "virtual_port": {
       "title": "Specify the TCP port for the virtual server.",
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 65535,
+      "$ref": "#/definitions/port",
       "default": 443
     },
     "enable_pool": {
       "title": "Create Pool",
       "description": "A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "make_pool": {
       "title": "Automatically manage the pool",
       "description": "A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "pool_name": {
       "title": "Specify the name of an existing BIG-IP pool.",
       "type": "string",
-      "enumFromBigip": "ltm/pool"
+      "enumFromBigip": "ltm/pool",
+      "default": ""
     },
     "pool_members": {
-      "title": "Server Addresses",
-      "description": "Add the IP addresses of a pool member.",
+      "title": "Pool Members",
+      "description": "Add the addresses of the servers in the pool. Use a connection limit of 0 for unlimited connections.",
       "type": "array",
+      "uniqueItems": true,
+      "default": [],
       "items": {
-        "$ref": "#/definitions/ipv4"
-      },
-      "default": []
-    },
-    "pool_port": {
-      "title": "Specify the TCP port for the pool members.",
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 65535
+        "type": "object",
+        "properties": {
+          "serverAddresses": {
+            "title": "Server Address",
+            "$ref": "#/definitions/ipv4_array"
+          },
+          "servicePort": {
+            "title": "Server Port",
+            "$ref": "#/definitions/port",
+            "default": 80
+          },
+          "connectionLimit": {
+            "title": "Connection Limit",
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "priorityGroup": {
+            "title": "Priority Group",
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "shareNodes": {
+            "title": "Share Node",
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
     },
     "load_balancing_mode": {
       "title": "Specify the load balancing method.",
       "description": "A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.",
       "type": "string",
+      "default": "least-connections-member",
       "enum": [
         "dynamic-ratio-member",
         "dynamic-ratio-node",
@@ -134,8 +161,7 @@
         "round-robin",
         "weighted-least-connections-member",
         "weighted-least-connections-node"
-      ],
-      "default": "least-connections-member"
+      ]
     },
     "slow_ramp_time": {
       "title": "Specify the slow ramp time. (recommended value is 300 seconds)",
@@ -148,96 +174,138 @@
     "enable_monitor": {
       "title": "Pool Monitor",
       "description": "Determine the availability and performance of devices, links, and services on a network.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "make_monitor": {
       "title": "Automatically manage the pool monitor.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "monitor_name": {
       "title": "Specify the name of an existing BIG-IP monitor.",
       "description": "Monitors are used to determine the health of the application on each server. If an application instance does not respond or responds incorrectly, the system will cease to send client requests to that web server. The system will continue to monitor the instance and will begin sending requests once the application responds correctly.",
-      "type": "string"
+      "type": "string",
+      "default": ""
     },
     "enable_snat": {
       "title": "SNAT",
       "description": "Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "snat_automap": {
       "title": "SNAT Automap",
       "description": "SNAT automap uses BIG-IP self IP addresses as the translation address.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "make_snatpool": {
       "title": "Automatically manage the SNAT pool.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "snatpool_name": {
       "title": "Specify the name of an existing BIG-IP SNAT pool.",
       "type": "string",
-      "enumFromBigip": "ltm/snatpool"
+      "enumFromBigip": "ltm/snatpool",
+      "default": ""
     },
     "snat_addresses": {
       "title": "SNAT Pool Addresses",
       "type": "array",
+      "uniqueItems": true,
+      "default": [],
       "items": {
         "$ref": "#/definitions/ipv4"
-      },
-      "default": []
+      }
+    },
+    "enable_persistence": {
+      "title": "Persistence",
+      "description": "Ensures that client requests are directed to the same pool member throughout the life of a session or during subsequent sessions.",
+      "type": "boolean",
+      "default": true
+    },
+    "persistence_type": {
+      "title": "Specify the type of persistence.",
+      "$ref": "#/definitions/persistence",
+      "default": "cookie"
+    },
+    "enable_fallback_persistence": {
+      "title": "Fallback Persistence",
+      "description": "Create a secondary, or fallback, persistence record for each new client connection.",
+      "type": "boolean",
+      "default": true
+    },
+    "fallback_persistence_type": {
+      "title": "Specify the type of fallback persistence.",
+      "$ref": "#/definitions/persistence",
+      "default": "source-address"
     },
     "common_tcp_profile": {
       "title": "Use the same TCP profile for ingress and egress traffic.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
     },
     "make_tcp_profile": {
       "title": "Automatically manage the TCP profile.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "tcp_topology": {
       "title": "Specify the type of network that connects both clients and servers to the BIG-IP system.",
-      "$ref": "#/definitions/topology"
+      "$ref": "#/definitions/topology",
+      "default": "wan"
     },
     "tcp_profile_name": {
       "title": "Specify the name of an existing BIG-IP TCP profile.",
       "type": "string",
-      "enumFromBigip": "ltm/profile/tcp"
+      "enumFromBigip": "ltm/profile/tcp",
+      "default": "/Common/f5-tcp-progressive"
     },
     "make_tcp_ingress_profile": {
       "title": "Automatically manage the ingress TCP profile.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "tcp_ingress_topology": {
       "title": "Specify the type of network that connects clients to the BIG-IP system.",
-      "$ref": "#/definitions/topology"
+      "$ref": "#/definitions/topology",
+      "default": "wan"
     },
     "tcp_ingress_profile_name": {
       "title": "Specify the name of an existing BIG-IP TCP profile for client-side context.",
       "type": "string",
-      "enumFromBigip": "ltm/profile/tcp"
+      "enumFromBigip": "ltm/profile/tcp",
+      "default": "/Common/f5-tcp-progressive"
     },
     "make_tcp_egress_profile": {
       "title": "Automatically manage the egress TCP profile.",
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "tcp_egress_topology": {
       "title": "Specify the type of network that connects servers to the BIG-IP system.",
-      "$ref": "#/definitions/topology"
+      "$ref": "#/definitions/topology",
+      "default": "lan"
     },
     "tcp_egress_profile_name": {
       "title": "Specify the name of an existing BIG-IP TCP profile for server-side context.",
       "type": "string",
-      "enumFromBigip": "ltm/profile/tcp"
+      "enumFromBigip": "ltm/profile/tcp",
+      "default": "/Common/f5-tcp-progressive"
     },
     "irule_names": {
       "title": "Specify the name of one or more iRules to attach.",
       "type": "array",
       "uniqueItems": true,
+      "default": [],
       "items": {
+        "title": "iRule Name",
         "type": "string",
-        "enumFromBigip": "ltm/rule"
-      },
-      "default": []
+        "enumFromBigip": "ltm/rule",
+        "default": ""
+      }
     }
   }
 }

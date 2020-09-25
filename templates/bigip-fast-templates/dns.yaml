@@ -7,8 +7,39 @@ definitions:
   enable_pool: {}
   make_pool: {}
   pool_name: {}
-  pool_members: {}
-  pool_port: {}
+  pool_members:
+    items:
+      type: object
+      properties:
+        serverAddresses:
+          title: Server Address
+          type: array
+          uniqueItems: true
+          default: []
+          items:
+            type: string
+            format: ipv4
+            default: 10.0.0.1
+        servicePort:
+          title: Service Port
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 53
+        connectionLimit:
+          title: Connection Limit
+          type: integer
+          minimum: 0
+          default: 0
+        priorityGroup:
+          title: Priority Group
+          type: integer
+          minimum: 0
+          default: 0
+        shareNodes:
+          title: Share Node
+          type: boolean
+          default: true
   load_balancing_mode: {}
   slow_ramp_time: {}
   enable_monitor: {}
@@ -30,23 +61,32 @@ definitions:
   make_tcp_egress_profile: {}
   tcp_egress_topology: {}
   tcp_egress_profile_name: {}
-  irule_names: {}
+  tcp_irule_names:
+    title: TCP iRules
+    description: Specify the name of one or more iRules to attach to the TCP virtual server.
+  udp_irule_names:
+    title: UDP iRules
+    description: Specify the name of one or more iRules to attach to the UDP virtual server.
   app_pool_def:
     template: |
       {{#enable_pool:f5:enable_pool}}
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": [{
-              "serverAddresses": {{pool_members:f5:pool_members}},
-              "servicePort": {{pool_port:f5:pool_port}},
-              "shareNodes": true
-            }],
+            "members": [
+              {{#pool_members:f5:pool_members}}
+                {
+                  "serverAddresses": [{{serverAddresses::array}}],
+                  "servicePort": {{servicePort::integer}},
+                  "connectionLimit": {{connectionLimit::integer}}
+                }
+              {{/pool_members:f5:pool_members}}
+            ],
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
               {{#make_monitor:f5:make_monitor}}
-                "monitors": [ "dns" ]
+                "monitors": [ "tcp" ]
               {{/make_monitor:f5:make_monitor}}
               {{^make_monitor:f5:make_monitor}}
                 "monitors": [{
@@ -134,29 +174,7 @@ definitions:
       {{/common_tcp_profile:f5:common_tcp_profile}}
 parameters:
   virtual_port: 53
-  enable_pool: true
-  make_pool: true
-  pool_name: ''
-  pool_port: 53
-  slow_ramp_time: 300
-  enable_monitor: true
-  make_monitor: true
   monitor_name: /Common/dns
-  enable_snat: true
-  snat_automap: true
-  make_snatpool: true
-  snatpool_name: ''
-  common_tcp_profile: false
-  make_tcp_profile: true
-  tcp_topology: lan
-  tcp_profile_name: /Common/f5-tcp-progressive
-  make_tcp_ingress_profile: true
-  tcp_ingress_topology: wan
-  tcp_ingress_profile_name: /Common/f5-tcp-progressive
-  make_tcp_egress_profile: true
-  tcp_egress_topology: lan
-  tcp_egress_profile_name: /Common/f5-tcp-progressive
-  irule_names: []
 template: |
   {
     "class": "ADC",
@@ -177,9 +195,9 @@ template: |
           {{> service_snat_def}}
           {{> service_tcp_def}}
           "iRules": [
-            {{#irule_names:f5:irule_names}}
+            {{#tcp_irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
-            {{/irule_names:f5:irule_names}}
+            {{/tcp_irule_names:f5:irule_names}}
           ]
         },
         "{{app_name:f5:app_name}}_UDP": {
@@ -189,9 +207,9 @@ template: |
           {{> service_pool_def}}
           {{> service_snat_def}}
           "iRules": [
-            {{#irule_names:f5:irule_names}}
+            {{#udp_irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
-            {{/irule_names:f5:irule_names}}
+            {{/udp_irule_names:f5:irule_names}}
           ]
         }
       }
