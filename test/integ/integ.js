@@ -4,6 +4,8 @@
 'use strict';
 
 const https = require('https');
+
+const axios = require('axios');
 const assert = require('assert');
 
 const bigipTarget = process.env.BIGIP_TARGET;
@@ -17,62 +19,16 @@ if (!bigipCreds) {
     throw new Error('BIGIP_CREDS env var needs to be defined');
 }
 
-function doRequest(opts, payload) {
-    const [host, port] = bigipTarget.split(':');
-    const defaultOpts = {
-        host,
-        port: port || 80,
-        rejectUnauthorized: false,
-        headers: {
-            Authorization: `Basic ${Buffer.from(bigipCreds).toString('base64')}`,
-            'Content-Type': 'application/json'
-        }
-    };
-    const combOpts = Object.assign({}, defaultOpts, opts);
-
-    return new Promise((resolve, reject) => {
-        const req = https.request(combOpts, (res) => {
-            const buffer = [];
-            res.setEncoding('utf8');
-            res.on('data', (data) => {
-                buffer.push(data);
-            });
-            res.on('end', () => {
-                let body = buffer.join('');
-                body = body || '{}';
-                try {
-                    body = JSON.parse(body);
-                } catch (e) {
-                    return reject(new Error(`Invalid response object from ${combOpts.method} to ${combOpts.path}`));
-                }
-                return resolve({
-                    status: res.statusCode,
-                    headers: res.headers,
-                    body
-                });
-            });
-        });
-
-        req.on('error', (e) => {
-            reject(new Error(`${opts.host}:${e.message}`));
-        });
-
-        if (payload) req.write(JSON.stringify(payload));
-        req.end();
-    });
-}
-
-function doGet(path) {
-    return doRequest({ path, method: 'GET' });
-}
-
-function doPost(path, payload) {
-    return doRequest({ path, method: 'POST' }, payload);
-}
-
-function doDelete(path) {
-    return doRequest({ path, method: 'DELETE' });
-}
+const endpoint = axios.create({
+    baseURL: `https://${bigipTarget}`,
+    auth: {
+        username: bigipCreds.split(':')[0],
+        password: bigipCreds.split(':')[1]
+    },
+    httpsAgent: new https.Agent({
+        rejectUnauthorized: false
+    })
+});
 
 function promiseDelay(timems) {
     return new Promise((resolve) => {
@@ -82,27 +38,27 @@ function promiseDelay(timems) {
 
 function waitForCompletedTask(taskid) {
     return Promise.resolve()
-        .then(() => doGet(`/mgmt/shared/fast/tasks/${taskid}`))
+        .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
         .then((response) => {
-            if (response.body.code === 0) {
+            if (response.data.code === 0) {
                 return promiseDelay(1000)
                     .then(() => waitForCompletedTask(taskid));
             }
-            return response.body;
+            return response.data;
         });
 }
 
 function deployApplication(templateName, parameters) {
     parameters = parameters || {};
     return Promise.resolve()
-        .then(() => doPost('/mgmt/shared/fast/applications', {
+        .then(() => endpoint.post('/mgmt/shared/fast/applications', {
             name: templateName,
             parameters
         }))
         .then((response) => {
-            const taskid = response.body.message[0].id;
+            const taskid = response.data.message[0].id;
             if (!taskid) {
-                console.log(response.body);
+                console.log(response.data);
                 assert(false, 'failed to get a taskid');
             }
             return waitForCompletedTask(taskid);
@@ -119,11 +75,11 @@ function deployApplication(templateName, parameters) {
 describe('Applications', function () {
     this.timeout(120000);
     it('Delete all applications', () => Promise.resolve()
-        .then(() => doDelete('/mgmt/shared/fast/applications'))
+        .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
-            const taskid = response.body.id;
+            const taskid = response.data.id;
             if (!taskid) {
-                console.log(response.body);
+                console.log(response.data);
                 assert(false, 'failed to get a taskid');
             }
             return waitForCompletedTask(taskid);

@@ -195,9 +195,15 @@ template: |
           {{> service_snat_def}}
           {{> service_tcp_def}}
           "iRules": [
+<<<<<<< HEAD
             {{#tcp_irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
             {{/tcp_irule_names:f5:irule_names}}
+=======
+            {{#irule_names:f5:irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names:f5:irule_names}}
+>>>>>>> origin/develop
           ]
         },
         "{{app_name:f5:app_name}}_UDP": {

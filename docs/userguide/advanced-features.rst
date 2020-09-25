@@ -68,7 +68,7 @@ HTTP Calls to External Resources
 | Some template parameters may be sourced from other places, such as external APIs or databases.
 |
 
-| A *Template.fetchHttp()* method does an HTTP request for each parameter definition that has a *url* property returning a parameter object with the response results. The value used from a response can be altered by specifying a *JSONPath* query in an optional data property of the parameter definition. *url* can also be an object matching Node's *http.request()* options object.
+| A *Template.fetchHttp()* method does an HTTP request for each parameter definition that has a *url* property returning a parameter object with the response results. The value used from a response can be altered by specifying a *JSONPath* query in an optional pathQuery property of the parameter definition. *url* can also be an object matching Node's *http.request()* options object.
 |
 
 .. code-block:: yaml
@@ -80,6 +80,6 @@ HTTP Calls to External Resources
          oneOf:
            - type: string
            - type: object # looks like Node request options
-     data:
+     pathQuery:
        type: string
        description: JSONPath of data to be fetched, must match schema

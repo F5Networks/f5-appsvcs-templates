@@ -99,7 +99,7 @@ describe(template, function () {
     describe('new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
-    return;
+
     describe('default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
             // default https pool port and existing monitor

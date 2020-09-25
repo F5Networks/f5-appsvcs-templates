@@ -8,6 +8,7 @@ const fs = require('fs-extra');
 
 const yaml = require('js-yaml');
 const extract = require('extract-zip');
+const axios = require('axios');
 
 const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
@@ -17,7 +18,6 @@ const drivers = require('../lib/drivers');
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
-const httpUtils = fast.httpUtils;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 
@@ -83,6 +83,14 @@ class FASTWorker {
             }
         );
 
+        this.endpoint = axios.create({
+            baseURL: 'http://localhost:8100',
+            auth: {
+                username: 'admin',
+                password: ''
+            }
+        });
+
         this.requestTimes = {};
         this.requestCounter = 1;
         this.provisionData = null;
@@ -139,6 +147,18 @@ class FASTWorker {
             });
     }
 
+    handleResponseError(e, description) {
+        description = description || 'request';
+        if (e.response) {
+            const errData = JSON.stringify({
+                status: e.response.status,
+                body: e.response.data
+            }, null, 2);
+            return Promise.reject(new Error(`failed ${description}: ${errData}`));
+        }
+        return Promise.reject(e);
+    }
+
 
     /**
      * Worker Handlers
@@ -192,12 +212,10 @@ class FASTWorker {
             .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
             // Automatically add a block
             .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-            .then(() => httpUtils.makeGet('/shared/iapp/blocks'))
+            .then(() => this.endpoint.get('/shared/iapp/blocks'))
+            .catch(e => this.handleResponseError(e, 'to get blocks'))
             .then((results) => {
-                if (results.status !== 200) {
-                    return Promise.reject(new Error(`failed to get blocks: ${JSON.stringify(results.body, null, 2)}`));
-                }
-                const matchingBlocks = results.body.items.filter(x => x.name === mainBlockName);
+                const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
                 const blockData = {
                     name: mainBlockName,
                     state: 'BOUND',
@@ -211,20 +229,13 @@ class FASTWorker {
 
                 if (matchingBlocks.length === 0) {
                     // No existing block, make a new one
-                    return httpUtils.makePost('/shared/iapp/blocks', blockData);
+                    return this.endpoint.post('/shared/iapp/blocks', blockData);
                 }
 
                 // Found a block, do nothing
                 return Promise.resolve({ status: 200 });
             })
-            .then((results) => {
-                if (results.status !== 200) {
-                    return Promise.reject(
-                        new Error(`failed to set block state: ${JSON.stringify(results.body, null, 2)}`)
-                    );
-                }
-                return Promise.resolve();
-            })
+            .catch(e => this.handleResponseError(e, 'to set block state'))
             .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'))
             // Done
             .then(() => success())
@@ -381,12 +392,12 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 requestId, 'GET to appsvcs/info',
-                httpUtils.makeGet('/mgmt/shared/appsvcs/info')
+                this.endpoint.get('/mgmt/shared/appsvcs/info', {
+                    validateStatus: () => true // ignore failure status codes
+                })
             ))
             .then((as3response) => {
-                if (as3response.status < 300) {
-                    info.as3Info = as3response.body;
-                }
+                info.as3Info = as3response.data;
             })
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
             .then(() => this.templateProvider.listSets())
@@ -406,16 +417,12 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 requestId, 'Fetching module provision information',
-                httpUtils.makeGet('/mgmt/tm/sys/provision')
+                this.endpoint.get('/mgmt/tm/sys/provision')
             ))
+            .catch(e => this.handleResponseError(e, 'to get module provision information'))
             .then((response) => {
-                if (response.status !== 200) {
-                    return Promise.reject(new Error(
-                        `failed to get module provision information:\n${JSON.stringify(response, null, 2)}`
-                    ));
-                }
-                this.provisionData = response.body;
-                return Promise.resolve(response.body);
+                this.provisionData = response.data;
+                return Promise.resolve(response.data);
             });
     }
 
@@ -515,21 +522,16 @@ class FASTWorker {
                 return Promise.resolve()
                     .then(() => this.recordTransaction(
                         requestId, `fetching data from ${endPoint}`,
-                        httpUtils.makeGet(endPoint)
+                        this.endpoint.get(endPoint)
                     ))
                     .then((response) => {
-                        if (response.status !== 200) {
-                            return Promise.reject(new Error(
-                                `failed GET to ${endPoint}:\n${JSON.stringify(response, null, 2)}`
-                            ));
-                        }
-                        this.logger.info(JSON.stringify(response, null, 2));
-                        const items = response.body.items;
+                        const items = response.data.items;
                         if (items) {
                             return Promise.resolve(items.map(x => x.fullPath));
                         }
                         return Promise.resolve([]);
                     })
+                    .catch(e => this.handleResponseError(e, `GET to ${endPoint}`))
                     .then((items) => {
                         if (items.length !== 0) {
                             prop.enum = items;
@@ -652,10 +654,10 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid, 'GET request to appsvcs/declare',
-                    httpUtils.makeGet('/mgmt/shared/appsvcs/declare')
+                    this.endpoint.get('/mgmt/shared/appsvcs/declare')
                 ))
                 .then((resp) => {
-                    const decl = resp.body;
+                    const decl = resp.data;
                     restOperation.setBody(decl[tenant][app]);
                     this.completeRestOperation(restOperation);
                 })
@@ -1175,12 +1177,12 @@ class FASTWorker {
             ))
             .then(appData => this.recordTransaction(
                 reqid, 'Re-deploying application',
-                httpUtils.makePost(`/mgmt/${this.WORKER_URI_PATH}/applications`, {
+                this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications`, {
                     name: appData.template,
                     parameters: Object.assign({}, appData.view, newParameters)
                 })
             ))
-            .then(resp => this.genRestResponse(restOperation, resp.status, resp.body))
+            .then(resp => this.genRestResponse(restOperation, resp.status, resp.data))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 

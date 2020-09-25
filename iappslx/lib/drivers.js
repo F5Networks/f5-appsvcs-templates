@@ -1,21 +1,24 @@
 'use strict';
 
-const url = require('url');
 const uuid4 = require('uuid').v4;
-const httpUtils = require('@f5devcentral/f5-fast-core').httpUtils;
+const axios = require('axios');
 
 const AS3DriverConstantsKey = 'fast';
 
 class AS3Driver {
     constructor(endPointUrl) {
         endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
-        const declareurl = url.parse(`${endPointUrl}/declare`);
-        const tasksUrl = url.parse(`${endPointUrl}/task`);
 
-        this._declareOpts = Object.assign({}, declareurl);
-        this._taskOopts = Object.assign({}, tasksUrl);
         this._static_id = '';
         this._task_ids = {};
+
+        this._endpoint = axios.create({
+            baseURL: endPointUrl,
+            auth: {
+                username: 'admin',
+                password: ''
+            }
+        });
 
         this._declCache = null;
     }
@@ -73,12 +76,9 @@ class AS3Driver {
         if (this._declCache) {
             return Promise.resolve(JSON.parse(JSON.stringify(this._declCache)));
         }
-        const opts = Object.assign({}, this._declareOpts, {
-            method: 'GET',
-            path: `${this._declareOpts.path}?showHash=true`
-        });
-        return httpUtils.makeRequest(opts)
-            .then(res => res.body.declaration || res.body)
+
+        return this._endpoint.get('/declare?showHash=true')
+            .then(res => res.data.declaration || res.data)
             .then((decl) => {
                 if (Object.keys(decl).length === 0) {
                     return {
@@ -95,13 +95,9 @@ class AS3Driver {
     }
 
     _postDecl(decl) {
-        const opts = Object.assign({}, this._declareOpts, {
-            method: 'POST',
-            path: `${this._declareOpts.path}?async=true`
-        });
-        this._declCache = null;
-        return httpUtils.makeRequest(opts, decl)
+        return this._endpoint.post('/declare?async=true', decl)
             .then((result) => {
+                result.body = result.data;
                 this._task_ids[result.body.id] = decl.id;
                 this._declCache = null;
                 return result;
@@ -238,9 +234,6 @@ class AS3Driver {
     }
 
     getTasks() {
-        const opts = Object.assign({}, this._taskOopts, {
-            method: 'GET'
-        });
         const itemMatch = item => (
             (item.declaration.id && item.declaration.id.startsWith(AS3DriverConstantsKey))
             || this._task_ids[item.id]
@@ -288,8 +281,8 @@ class AS3Driver {
                 operation
             };
         };
-        return httpUtils.makeRequest(opts)
-            .then(result => result.body.items.filter(itemMatch).map(as3ToFAST));
+        return this._endpoint.get('/task')
+            .then(result => result.data.items.filter(itemMatch).map(as3ToFAST));
     }
 }
 
