@@ -41,6 +41,7 @@ Previous buttons to explore the documentation.
    userguide/api-ref
    userguide/advanced-features
    userguide/template-list
+   userguide/endpoint-list
    
 
 
