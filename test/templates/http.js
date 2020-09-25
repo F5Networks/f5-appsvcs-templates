@@ -23,14 +23,21 @@ const view = {
     // pool spec
     enable_pool: true,
     make_pool: true,
-    pool_members: ['10.2.1.1', '10.2.1.2'],
-    pool_port: 4433,
+    pool_members: [
+        {
+            serverAddresses: ['10.2.1.1'], servicePort: 4433, connectionLimit: 0, priorityGroup: 0, shareNodes: true
+        },
+        {
+            serverAddresses: ['10.2.1.2'], servicePort: 4444, connectionLimit: 1000, priorityGroup: 0, shareNodes: true
+        }
+    ],
     load_balancing_mode: 'round-robin',
     slow_ramp_time: 300,
 
     // snat
     enable_snat: true,
     snat_automap: false,
+    make_snatpool: true,
     snat_addresses: ['10.3.1.1', '10.3.1.2'],
 
     // persistence
@@ -48,7 +55,10 @@ const view = {
     make_tls_client_profile: true,
 
     // http, xff, caching, compression, and oneconnect
+    common_tcp_profile: false,
     make_tcp_profile: true,
+    make_tcp_ingress_profile: true,
+    make_tcp_egress_profile: true,
     tcp_ingress_topology: 'wan',
     tcp_egress_topology: 'lan',
     make_http_profile: true,
@@ -61,17 +71,7 @@ const view = {
     make_multiplex_profile: true,
 
     // irules
-    irules: [],
-
-    // traffic policies
-    endpoint_policies: [],
-
-    // security policy
-    enable_security: false,
-    security_policy_name: undefined,
-
-    // request logging
-    request_logging_profile_name: undefined
+    irule_names: []
 };
 
 const expected = {
@@ -111,13 +111,17 @@ const expected = {
             app1_pool: {
                 class: 'Pool',
                 members: [{
-                    servicePort: view.pool_port,
+                    servicePort: 4433,
                     serverAddresses: ['10.2.1.1'],
+                    connectionLimit: 0,
+                    priorityGroup: 0,
                     shareNodes: true
                 },
                 {
-                    servicePort: view.pool_port,
+                    servicePort: 4444,
                     serverAddresses: ['10.2.1.2'],
+                    connectionLimit: 1000,
+                    priorityGroup: 0,
                     shareNodes: true
                 }],
                 loadBalancingMode: view.load_balancing_mode,
@@ -158,7 +162,7 @@ describe(template, function () {
     describe('tls bridging with default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
             // default https pool port and existing monitor
-            delete view.pool_port;
+            view.pool_members[0].servicePort = 80;
             expected.t1.app1.app1_pool.members[0].servicePort = 80;
             view.make_monitor = false;
             view.monitor_name = '/Common/monitor1';
@@ -196,7 +200,7 @@ describe(template, function () {
     describe('tls bridging with existing pool, snat automap and default profiles', function () {
         before(() => {
             // default https virtual port
-            delete view.virtual_port;
+            view.virtual_port = 443;
             expected.t1.app1.serviceMain.virtualPort = 443;
 
             // existing pool

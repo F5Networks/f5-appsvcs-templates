@@ -34,26 +34,13 @@ definitions:
   tcp_egress_topology: {}
   tcp_egress_profile_name: {}
   irule_names: {}
-  app_pool_member_def:
-    template: |
-      {
-        "serverAddresses": ["{{serverAddresses::array}}"],
-        "servicePort": {{servicePort::integer}},
-        "connectionLimit": {{connectionLimit::integer}},
-        "priorityGroup": {{priorityGroup::integer}},
-        "shareNodes": {{shareNodes::boolean}}
-      },
   app_pool_def:
     template: |
       {{#enable_pool:f5:enable_pool}}
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": [
-              {{#pool_members:f5:pool_members}}
-                { {{ . }} },
-              {{/pool_members:f5:pool_members}}
-            ],
+            "members": {{pool_members:f5:pool_members}},
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
@@ -179,11 +166,12 @@ template: |
           {{> service_snat_def}}
           {{> service_persistence_def}}
           {{> service_tcp_def}}
-          "iRules": [
-            {{#irule_names:f5:irule_names}}
-            { "bigip": {{ . }} },
-            {{/irule_names:f5:irule_names}}
-          ]
+          {{#irule_names:f5:irule_names}}
+            "iRules": {{irule_names:f5:irule_names}}
+          {{/irule_names:f5:irule_names}}
+          {{^irule_names:f5:irule_names}}
+            "iRules": []
+          {{/irule_names:f5:irule_names}}
         }
       }
     }

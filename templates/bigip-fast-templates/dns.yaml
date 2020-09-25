@@ -195,15 +195,9 @@ template: |
           {{> service_snat_def}}
           {{> service_tcp_def}}
           "iRules": [
-<<<<<<< HEAD
             {{#tcp_irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
             {{/tcp_irule_names:f5:irule_names}}
-=======
-            {{#irule_names:f5:irule_names}}
-            { "bigip": {{ . }} },
-            {{/irule_names:f5:irule_names}}
->>>>>>> origin/develop
           ]
         },
         "{{app_name:f5:app_name}}_UDP": {
@@ -212,11 +206,12 @@ template: |
           "virtualPort": {{virtual_port:f5:virtual_port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
-          "iRules": [
-            {{#udp_irule_names:f5:irule_names}}
-            { "bigip": {{ . }} },
-            {{/udp_irule_names:f5:irule_names}}
-          ]
+          {{#irule_names:f5:irule_names}}
+            "iRules": {{irule_names:f5:irule_names}}
+          {{/irule_names:f5:irule_names}}
+          {{^irule_names:f5:irule_names}}
+            "iRules": []
+          {{/irule_names:f5:irule_names}}
         }
       }
     }
