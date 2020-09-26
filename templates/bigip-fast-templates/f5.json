@@ -299,18 +299,11 @@
       "title": "Specify the name of one or more iRules to attach.",
       "type": "array",
       "uniqueItems": true,
-      "default": [],
       "items": {
-        "type": "object",
-        "properties": {
-          "bigip": {
-            "title": "iRule Name",
-            "type": "string",
-            "enumFromBigip": "ltm/rule",
-            "default": ""
-          }
-        }
-      }
+        "type": "string",
+        "enumFromBigip": "ltm/rule"
+      },
+      "default": []
     }
   }
 }

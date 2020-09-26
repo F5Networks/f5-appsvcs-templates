@@ -39,7 +39,10 @@ const view = {
     // persistence
     enable_persistence: true,
     persistence_type: 'source-address',
-    enable_fallback_persistence: false
+    enable_fallback_persistence: false,
+
+    // irule
+    irule_names: ['example_irule']
 };
 
 const expected = {
@@ -89,7 +92,12 @@ const expected = {
             app1_snatpool: {
                 class: 'SNAT_Pool',
                 snatAddresses: view.snat_addresses
-            }
+            },
+            iRules: [
+                {
+                    bigip: 'example_irule'
+                }
+            ]
         }
     }
 };

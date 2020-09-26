@@ -166,12 +166,11 @@ template: |
           {{> service_snat_def}}
           {{> service_persistence_def}}
           {{> service_tcp_def}}
-          {{#irule_names:f5:irule_names}}
-            "iRules": {{irule_names:f5:irule_names}}
-          {{/irule_names:f5:irule_names}}
-          {{^irule_names:f5:irule_names}}
-            "iRules": []
-          {{/irule_names:f5:irule_names}}
+          "iRules": [
+            {{#irule_names:f5:irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names:f5:irule_names}}
+          ]
         }
       }
     }

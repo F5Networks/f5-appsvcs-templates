@@ -206,12 +206,11 @@ template: |
           "virtualPort": {{virtual_port:f5:virtual_port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
-          {{#irule_names:f5:irule_names}}
-            "iRules": {{irule_names:f5:irule_names}}
-          {{/irule_names:f5:irule_names}}
-          {{^irule_names:f5:irule_names}}
-            "iRules": []
-          {{/irule_names:f5:irule_names}}
+          "iRules": [
+            {{#irule_names:f5:irule_names}}
+            { "bigip": {{ . }} },
+            {{/irule_names:f5:irule_names}}
+          ]
         }
       }
     }
