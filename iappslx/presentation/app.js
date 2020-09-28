@@ -5,8 +5,6 @@
 'use strict';
 
 
-const yaml = require('js-yaml');
-
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
@@ -250,7 +248,7 @@ const newEditor = (tmplid, view) => {
                 dispOutput(JSON.stringify(tmpl.getCombinedParameters(editor.getValue()), null, 2));
             };
             document.getElementById('view-render-btn').onclick = () => {
-                dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
+                dispOutput(tmpl.render(editor.getValue()));
             };
             document.getElementById('btn-form-submit').onclick = () => {
                 const parameters = editor.getValue();
