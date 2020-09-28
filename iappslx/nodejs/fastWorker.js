@@ -6,7 +6,6 @@ require('core-js');
 
 const fs = require('fs-extra');
 
-const yaml = require('js-yaml');
 const extract = require('extract-zip');
 const axios = require('axios');
 
@@ -850,7 +849,7 @@ class FASTWorker {
                             reqid, `rendering template (${x.name})`,
                             tmpl.fetchAndRender(x.parameters)
                         ))
-                        .then(rendered => yaml.safeLoad(rendered))
+                        .then(rendered => JSON.parse(rendered))
                         .catch((e) => {
                             if (restOperation.status >= 400) {
                                 return Promise.reject();
