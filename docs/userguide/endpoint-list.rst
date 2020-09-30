@@ -3,8 +3,6 @@
 Appendix D: Endpoint List
 =========================
 
-An endpoint is a device on the end of a network.  
-Servers, laptops, desktops, VE’s are all examples of endpoints.  
 On the BIG-IP, there are endpoints that look for the presence of a given file, as specified by a full path name. 
 
 | Below is a comprehensive list of BIG-IP endpoints.
@@ -230,33 +228,4 @@ On the BIG-IP, there are endpoints that look for the presence of a given file, a
 |            
 | "endpoint": "/security/bot-defense/profile"  
 | "modules": ["asm"]  
-| "minimumVersion": "14.1"
-|          
-| "referred":
-|   "authInfoReference"  
-|   "membersReference"  
-|   "policiesReference"  
-|   "profilesReference"  
-|   "rulesReference"  
-|   "operandsReference"  
-|   "networkReference"  
-|   "protocolDnsReference"  
-|   "protocolSipReference"  
-|   "devicesReference"  
-|   "virtualServersReference"  
-|   "applicationReference"  
-|   "dosNetworkReference"  
-|   "trafficCaptureReference"  
-|   "uriRulesReference"  
-|   "externalDomainsReference"  
-|   "signatureCategoryOverridesReference"  
-|   "signatureOverridesReference"  
-|   "siteDomainsReference"  
-|   "whitelistReference"  
-|   "classOverridesReference"  
-|   "certValidatorsReference"
 |
-| "subReferred": 
-|   "actionsReference"  
-|   "conditionsReference"  
-|     "flowInfoFiltersReference"

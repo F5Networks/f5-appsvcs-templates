@@ -35,9 +35,9 @@ In the following example, *base64var* will display as editable plain text but re
 Enumerated Type
 ----------------------
 
-An *Enumerated Type (enum)* is a data type enabling a variable to be set to predefined values (endpoint).
-The variable must be equal to one of the predefined values.  
-As it relates to BIG-IP, it is a mechanism to pull data from the BIG-IP presenting it as an *enum*.  
+An *Enumerated Type (enum)* is a list of constant values.  
+In order for the property to be valid, it must match an item in the list of values.
+As it relates to BIG-IP, it is a mechanism to pull data from the BIG-IP *(enumFromBigip)* presenting it as an *enum*.  
 
 An example usage would be to create drop-down lists.  
 The path on BIG-IP: ``/mgmt/tm/${enumFromBigip}?$select=fullPath``
@@ -82,8 +82,7 @@ An example for generating a multi-select list box for iRules would be:
 Schema-driven GUI
 -----------------
 
-Generating a GUI can be done from the schema. 
-FAST takes the generated parameters schema and passes it to the JSON editor to generate the GUI.
+Generating a GUI is done by passing data to a libary called *JSON Editor*. 
 JSON supports *formats* for schema of type *string*. 
 
 Example of a *password* object.

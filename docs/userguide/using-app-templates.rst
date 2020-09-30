@@ -167,10 +167,7 @@ FAST can be extended beyond the included templates. New templates can be self-au
 Template sets are templates packaged into a single .zip file that can be loaded into the system via the REST API. They may be provided by F5, sourced from the community, or custom written. 
 Template sets can be added or removed via the user interface by clicking either the **Add Template Set** or **Remove Template Set** buttons. 
 
-For information on authoring template sets and understanding the template set format, see :ref:`authoring`.
-
-For information on updating, adding and removing template sets, see :ref:`managing-templates`.
-
+.. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of FAST installed templates.
 
 .. _deploylogtab:
 
