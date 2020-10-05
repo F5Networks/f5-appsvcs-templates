@@ -73,15 +73,7 @@ definitions:
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": [
-              {{#pool_members:f5:pool_members}}
-                {
-                  "serverAddresses": [{{serverAddresses::array}}],
-                  "servicePort": {{servicePort::integer}},
-                  "connectionLimit": {{connectionLimit::integer}}
-                }
-              {{/pool_members:f5:pool_members}}
-            ],
+            "members": {{pool_members:f5:pool_members}},
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
@@ -207,9 +199,9 @@ template: |
           {{> service_pool_def}}
           {{> service_snat_def}}
           "iRules": [
-            {{#irule_names:f5:irule_names}}
+            {{#udp_irule_names:f5:irule_names}}
             { "bigip": {{ . }} },
-            {{/irule_names:f5:irule_names}}
+            {{/udp_irule_names:f5:irule_names}}
           ]
         }
       }
