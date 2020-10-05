@@ -5,8 +5,6 @@
 'use strict';
 
 
-const yaml = require('js-yaml');
-
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
@@ -201,12 +199,8 @@ const newEditor = (tmplid, view) => {
         .catch(e => Promise.reject(new Error(`Error loading template "${tmplid}":\n${e.message}`)))
         .then(data => Template.fromJson(data))
         .then((tmpl) => {
-            const schema = JSON.parse(JSON.stringify(tmpl.getParametersSchema())); // Deep copy schema before modifying
-            dispOutput(`Creating editor with schema:\n${JSON.stringify(schema, null, 2)}`);
-
-            // Prep the schema for JSON editor
-            guiUtils.modSchemaForJSONEditor(schema);
-            dispOutput(`Schema modified for the editor:\n${JSON.stringify(schema, null, 2)}`);
+            // Get schema and modify it work better with JSON Editor
+            const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
 
             // Create a new editor
             const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedParameters(view), schema);
@@ -250,7 +244,7 @@ const newEditor = (tmplid, view) => {
                 dispOutput(JSON.stringify(tmpl.getCombinedParameters(editor.getValue()), null, 2));
             };
             document.getElementById('view-render-btn').onclick = () => {
-                dispOutput(JSON.stringify(yaml.safeLoad(tmpl.render(editor.getValue())), null, 2));
+                dispOutput(tmpl.render(editor.getValue()));
             };
             document.getElementById('btn-form-submit').onclick = () => {
                 const parameters = editor.getValue();

@@ -11,7 +11,7 @@ FAST will auto generate a schema for each template based off the template and js
 Schema is generated from template text, combined with definitions, and used to validate template parameters.  
 
 Mustache
--------------
+--------
 Mustache is not the templating engine. Mustache is a specification for a templating language, and it specifies how the template file must look. 
 You write templates adhering to the Mustache specification, and it works by expanding tags in a template using values provided in a hash or object.  
 The template is then rendered to create an output.
@@ -25,7 +25,7 @@ A ``{{tenant}}`` tag in a template renders the value of the `tenant` key.
 
 
 Sections
-^^^^^^^
+^^^^^^^^
 For iterating over a list of data, we make use of Mustache sections. 
 Sections render block of text one or more times depending on the value of the key.  
 Sections begin with a pound (#) and end with a slash (/). 
@@ -39,7 +39,7 @@ Each of the signs are followed by the key whose value is the basis for rendering
 
 
 Partials
-^^^^^^
+^^^^^^^
 Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
 The syntax for including a partial uses curley braces and an angle bracket (>). 
 As an example we define a `node` partial as: ``{{> node}}`` written in `yaml` format.
@@ -80,12 +80,14 @@ For example, if we want a definition for virtuals, it may look like this:
 	            format: ipv4
         }
 
+.. seealso:: `JSON Editor: $ref and definitions <https://github.com/json-editor/json-editor#ref-and-definitions>`_ for additional code examples.
+
 | **Array**: Arrays are used for ordered elements. 
 In JSON, each element in an array may be of a different type.  
 Elements of the array may be ordered or unordered based on the API being templated.
 This section covers typical JSON schema definitions for common patterns.
-|
-| For example, *virtuals* is defined with a *type: array* having *items* defined with *type: string* and *format: ipv4* (more on formats later).
+
+For example, *virtuals* is defined with a *type: array* having *items* defined with *type: string* and *format: ipv4* (more on formats later).
 
 .. code-block:: yaml
 
@@ -188,6 +190,8 @@ It will also fail on 15 as it is a *multipleOf*  both 5 and 3 not *oneOf*.
         ]
     }
 
+.. NOTE::  When using *allOf*, be cautious of specifying multiple *types* such as ``{ type: string }`` and ``{ type: number }`` as a type cannot be a string and a number at the same time.
+
 When authoring templates using yaml, *allOf* takes on a special meaning by referencing another template in the set, known as *Template Merging*.
 
 * *allOf* will merge the schema of the merge templete with external template(s) just as JSON schema will when generating schema for the merged templates
@@ -204,10 +208,6 @@ When authoring templates using yaml, *allOf* takes on a special meaning by refer
         ...
     allOf:
         - $ref: "tcp.yaml#"
-
-.. NOTE::  When using *allOf*, be cautious of specifying multiple *types* such as ``{ type: string }`` and ``{ type: number }`` as a type cannot be a string and a number at the same time.
-
-
 
 
 .. seealso:: For detailed information, additional code examples and references, visit `Understanding JSON Schema <https://json-schema.org/understanding-json-schema/index.html>`_

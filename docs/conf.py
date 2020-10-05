@@ -225,6 +225,12 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+# -- Options for linkcheck ========----------------------------------------
+linkcheck_ignore = [
+    'https://github.com/json-editor/json-editor#format',
+    'https://github.com/json-editor/json-editor#ref-and-definitions',
+]
+
 
 # Generate API docs
 cwd = os.getcwd()

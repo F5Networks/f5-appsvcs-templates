@@ -3,6 +3,7 @@
 Appendix B: Advanced Features
 =============================
 
+.. _base64:
 
 Base64 Encoding
 ---------------
@@ -29,6 +30,21 @@ In the following example, *base64var* will display as editable plain text but re
 
 .. seealso:: `AS3 Schema Reference <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/schema-reference.html>`_ for a full list of **f5base64** fields.
 
+.. _enum:
+
+Enumerated Type
+----------------------
+
+An *Enumerated Type (enum)* is a list of constant values.  
+In order for the property to be valid, it must match an item in the list of values.
+As it relates to BIG-IP, it is a mechanism to pull data from the BIG-IP *(enumFromBigip)* presenting it as an *enum*.  
+
+An example usage would be to create drop-down lists.  
+The path on BIG-IP: ``/mgmt/tm/${enumFromBigip}?$select=fullPath``
+
+.. seealso:: BIG-IP :ref:`endpoint-list` for a list of BIG-IP endpoints.
+
+.. _multichoice:
 
 Multiple Choice Lists
 ---------------------
@@ -61,6 +77,35 @@ An example for generating a multi-select list box for iRules would be:
         "irules": {{irules::array}}                                                                   
        }   
 
+.. _schemagui:
+
+Schema-driven GUI
+-----------------
+
+Generating a GUI is done by passing data to a libary called *JSON Editor*. 
+JSON supports *formats* for schema of type *string*. 
+
+Example of a *password* object.
+
+.. code-block:: json
+
+  {
+    "type": "object",
+    "properties": {
+      "password": {
+        "type": "string",
+        "format": "password"
+      }
+    }
+  }
+
+
+.. NOTE::  If property *enum* is specified, type *format* is ignored.
+
+.. seealso::  `JSON Editor: format <https://github.com/json-editor/json-editor#format>`_ for additional information and input types.
+
+
+.. _httpcall:
 
 HTTP Calls to External Resources
 --------------------------------

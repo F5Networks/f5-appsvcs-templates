@@ -1,10 +1,12 @@
 # 1.4.0
 ## Added
 * Allow retrieving failed application submissions to modify and resubmit
+* bigipi-fast-templates: Add DNS template
 
 ## Fixed
 * Fix REST worker error when loading a template with schema that has no properties defined
 * Cleanup task messages on BIG-IPs with multiple tenants
+* Fix 404 error when attempting to load the GUI before restnoded is ready
 
 ## Changed
 * Use template merging to reduce duplication between TCP and HTTP templates

@@ -11,6 +11,12 @@ Document Revision History
         - Description
         - Date
 
+      * - 7.0
+        - Updated the documentation for FAST v1.4. This release contains the following changes: |br| * Allow retrieving failed application submissions to be modified and resubmitted |br| |br| Issues Resolved: |br| * Fixed REST worker error when loading a template with schema that has no properties defined |br| * Cleanup task messages on BIG-IPs with multiple tenants |br| * Fixed 404 error when attempting to load the GUI before restnoded is ready |br| |br| Changed: |br| * Use template merging to reduce duplication between TCP and HTTP templates |br| * Update style to better match BIG-IP GUI |br| * Make editor form titles more consistent in the Deploy tab
+
+
+        - 10-13-20
+
       * - 6.0
         - Updated the documentation for FAST v1.3. This release contains the following changes: |br| * Added support for enumFromBigip on array items |br| * GUI: Add textboxes that can output base64 strings when a template is rendered |br| * Templates: Add option to get variable values from HTTP requests |br| * GUI: Use JSON Editor 'select' format for arrays of unique enum items |br| * bigip-fast-templates: Support using the same TCP profile for both ingress and egress traffic |br| * Use AS3's optimistic locking to detect synchronization issues between FAST and AS3 |br| * Templates: Return an empty array instead of undefined when transforming an undefined array |br| |br| Issues Resolved: |br| * bigip-fast-templates/tcp: Fix enumFromBigip for monitor_name |br| * Fix 500 error when invalid template sets are used |br| * GUI: Improve filtering extra properties when using template merging |br| * GUI: Improve form render order when using allOf
         - 09-01-20
