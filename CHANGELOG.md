@@ -1,6 +1,7 @@
 # 1.4.0
 ## Added
 * Allow retrieving failed application submissions to modify and resubmit
+* bigipi-fast-templates: Add DNS template
 
 ## Fixed
 * Fix REST worker error when loading a template with schema that has no properties defined
