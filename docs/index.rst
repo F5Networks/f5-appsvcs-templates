@@ -33,7 +33,6 @@ Previous buttons to explore the documentation.
    userguide/using-app-templates
    userguide/faq
    userguide/template-authoring
-   userguide/json-schema
    userguide/managing-templates
    userguide/app-integration
    userguide/troubleshooting
@@ -42,7 +41,6 @@ Previous buttons to explore the documentation.
    userguide/advanced-features
    userguide/template-list
    userguide/endpoint-list
-   
 
 
 

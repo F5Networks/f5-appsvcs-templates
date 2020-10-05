@@ -25,6 +25,10 @@ The following table lists the template set, the corresponding template(s) and a 
         - tcp
         - A tcp template that can be used for tcp and udp deployments
 
+      * - bigip-fast-templates
+        - dns
+        - A dns template that can be used for dns deployments
+
       * - examples
         - simple_http
         - A simple HTTP application with load balancing
