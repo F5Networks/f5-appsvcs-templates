@@ -109,4 +109,13 @@ describe('Applications', function () {
             '10.0.0.2'
         ]
     }));
+    it('Deploy bigip-fast-templates/dns', () => deployApplication('bigip-fast-templates/dns', {
+        tenant_name: 'ten',
+        app_name: 'DNS-App',
+        virtual_address: '10.0.0.3',
+        pool_members: [
+            { serverAddresses: ['10.0.0.3'], servicePort: 80 }
+        ],
+        monitor_queryName: 'example.com'
+    }));
 });
