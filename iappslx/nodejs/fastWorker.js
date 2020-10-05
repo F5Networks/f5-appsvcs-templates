@@ -494,7 +494,8 @@ class FASTWorker {
             });
     }
 
-    hydrateSchema(schema, requestId) {
+    hydrateSchema(tmpl, requestId) {
+        const schema = tmpl._parametersSchema;
         if (!schema.properties) {
             return Promise.resolve();
         }
@@ -515,7 +516,14 @@ class FASTWorker {
             `FAST Worker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
         );
 
+        const subTemplates = [
+            ...tmpl._allOf || [],
+            ...tmpl._oneOf || [],
+            ...tmpl._anyOf || []
+        ];
+
         return Promise.resolve()
+            .then(() => Promise.all(subTemplates.map(x => this.hydrateSchema(x, requestId))))
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
                 const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
                 return Promise.resolve()
@@ -618,7 +626,7 @@ class FASTWorker {
                     tmpl.title = tmpl.title || tmplid;
                     return Promise.resolve()
                         .then(() => this.checkDependencies(tmpl, reqid))
-                        .then(() => this.hydrateSchema(tmpl._parametersSchema, reqid))
+                        .then(() => this.hydrateSchema(tmpl, reqid))
                         .then(() => {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);

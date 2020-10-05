@@ -1002,7 +1002,10 @@ describe('template worker tests', function () {
                 ]
             });
 
-        return worker.hydrateSchema(inputSchema, 0)
+        const tmpl = {
+            _parametersSchema: inputSchema
+        };
+        return worker.hydrateSchema(tmpl, 0)
             .then((schema) => {
                 assert.deepEqual(schema.properties.foo.enum, [
                     '/Common/httpcompression',
