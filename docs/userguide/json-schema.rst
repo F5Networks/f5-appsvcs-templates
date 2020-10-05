@@ -11,7 +11,7 @@ FAST will auto generate a schema for each template based off the template and js
 Schema is generated from template text, combined with definitions, and used to validate template parameters.  
 
 Mustache
--------------
+--------
 Mustache is not the templating engine. Mustache is a specification for a templating language, and it specifies how the template file must look. 
 You write templates adhering to the Mustache specification, and it works by expanding tags in a template using values provided in a hash or object.  
 The template is then rendered to create an output.
@@ -25,7 +25,7 @@ A ``{{tenant}}`` tag in a template renders the value of the `tenant` key.
 
 
 Sections
-^^^^^^^
+^^^^^^^^
 For iterating over a list of data, we make use of Mustache sections. 
 Sections render block of text one or more times depending on the value of the key.  
 Sections begin with a pound (#) and end with a slash (/). 
@@ -39,7 +39,7 @@ Each of the signs are followed by the key whose value is the basis for rendering
 
 
 Partials
-^^^^^^
+^^^^^^^
 Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
 The syntax for including a partial uses curley braces and an angle bracket (>). 
 As an example we define a `node` partial as: ``{{> node}}`` written in `yaml` format.

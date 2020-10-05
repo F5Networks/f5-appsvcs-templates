@@ -13,7 +13,7 @@ x-errors:
           schema:
             $ref: "#/components/schemas/Error"
 info:
-  version: 1.4.0-rc.6
+  version: 1.4.0-rc.7
   title: F5 Application Services Templates API
   license:
     name: Apache 2.0
