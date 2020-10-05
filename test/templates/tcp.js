@@ -67,7 +67,11 @@ const expected = {
                     ingress: 'wan',
                     egress: 'lan'
                 },
-                iRules: []
+                iRules: [
+                    {
+                        bigip: 'example_irule'
+                    }
+                ]
             },
             app1_pool: {
                 class: 'Pool',
@@ -92,12 +96,7 @@ const expected = {
             app1_snatpool: {
                 class: 'SNAT_Pool',
                 snatAddresses: view.snat_addresses
-            },
-            iRules: [
-                {
-                    bigip: 'example_irule'
-                }
-            ]
+            }
         }
     }
 };
