@@ -53,6 +53,7 @@ definitions:
   monitor_queryName:
     title: Specify the host name for the monitor to request.
     type: string
+    default: ''
   monitor_queryType:
     title: Specify the DNS record type.
     type: string
@@ -63,6 +64,7 @@ definitions:
   monitor_receive:
     title: Specify the IP address that is expected to be returned.
     type: string
+    default: ''
   enable_snat: {}
   snat_automap: {}
   make_snatpool: {}
@@ -118,6 +120,7 @@ definitions:
                 "class": "Monitor",
                 "monitorType": "dns",
                 "interval": {{monitor_interval}},
+                "timeout": 91,
                 "queryName": "{{monitor_queryName}}",
                 "queryType": "{{monitor_queryType}}",
                 "receive": "{{monitor_receive}}"

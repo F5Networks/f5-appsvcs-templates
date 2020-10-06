@@ -114,6 +114,7 @@ const expected = {
                 class: 'Monitor',
                 monitorType: 'dns',
                 interval: 30,
+                timeout: 91,
                 queryName: 'dns.example.com',
                 queryType: 'a',
                 receive: '10.3.3.3'
