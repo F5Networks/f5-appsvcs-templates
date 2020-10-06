@@ -78,7 +78,9 @@ definitions:
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
               {{#make_monitor:f5:make_monitor}}
-                "monitors": [ "tcp" ]
+                "monitors": [{
+                  "use": "{{app_name:f5:app_name}}_monitor"
+                }]
               {{/make_monitor:f5:make_monitor}}
               {{^make_monitor:f5:make_monitor}}
                 "monitors": [{
@@ -87,6 +89,20 @@ definitions:
               {{/make_monitor:f5:make_monitor}}
             {{/enable_monitor:f5:enable_monitor}}
           },
+        {{/make_pool:f5:make_pool}}
+      {{/enable_pool:f5:enable_pool}}
+  app_monitor_def:
+    template: |
+      {{#enable_pool:f5:enable_pool}}
+        {{#make_pool:f5:make_pool}}
+          {{#enable_monitor:f5:enable_monitor}}
+            {{#make_monitor:f5:make_monitor}}
+              "{{app_name:f5:app_name}}_monitor": {
+                "class": "Monitor",
+                "monitorType": "dns"
+              },
+            {{/make_monitor:f5:make_monitor}}
+          {{/enable_monitor:f5:enable_monitor}}
         {{/make_pool:f5:make_pool}}
       {{/enable_pool:f5:enable_pool}}
   app_snatpool_def:
@@ -178,6 +194,7 @@ template: |
         "class": "Application",
         "template": "generic",
         {{> app_pool_def}}
+        {{> app_monitor_def}}
         {{> app_snatpool_def}}
         "{{app_name:f5:app_name}}_TCP": {
           "class": "Service_TCP",

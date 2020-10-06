@@ -100,7 +100,13 @@ const expected = {
                 }],
                 loadBalancingMode: view.load_balancing_mode,
                 slowRampTime: 300,
-                monitors: ['tcp']
+                monitors: [{
+                    use: 'app1_monitor'
+                }]
+            },
+            app1_monitor: {
+                class: 'Monitor',
+                monitorType: 'dns'
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
@@ -123,6 +129,7 @@ describe(template, function () {
             expected.t1.app1.app1_pool.members[0].servicePort = 80;
             view.make_monitor = false;
             view.monitor_name = '/Common/monitor1';
+            delete expected.t1.app1.app1_monitor;
             expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
         });
         util.assertRendering(template, view, expected);
