@@ -12,7 +12,7 @@ Document Revision History
         - Date
 
       * - 7.0
-        - Updated the documentation for FAST v1.4. This release contains the following changes: |br| * Allow retrieving failed application submissions to be modified and resubmitted |br| *  Added a DNS template to bigipi-fast-templates |br| |br| Issues Resolved: |br| * Fixed REST worker error when loading a template with schema that has no properties defined |br| * Cleanup task messages on BIG-IPs with multiple tenants |br| * Fixed 404 error when attempting to load the GUI before restnoded is ready |br| |br| Changed: |br| * Use template merging to reduce duplication between TCP and HTTP templates |br| * Update style to better match BIG-IP GUI |br| * Make editor form titles more consistent in the Deploy tab
+        - Updated the documentation for FAST v1.4. This release contains the following changes: |br| * Allow retrieving failed application submissions to be modified and resubmitted |br| * Added a DNS template to bigipi-fast-templates |br| |br| Issues Resolved: |br| * Fixed REST worker error when loading a template with schema that has no properties defined |br| * Cleanup task messages on BIG-IPs with multiple tenants |br| * Fixed 404 error when attempting to load the GUI before restnoded is ready |br| |br| Changed: |br| * Use template merging to reduce duplication between TCP and HTTP templates |br| * Update style to better match BIG-IP GUI |br| * Make editor form titles more consistent in the Deploy tab
         - 10-13-20
 
       * - 6.0
