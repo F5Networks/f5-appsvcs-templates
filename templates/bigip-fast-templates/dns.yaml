@@ -46,6 +46,23 @@ definitions:
   make_monitor: {}
   monitor_name:
     enumFromBigip: 'ltm/monitor/dns'
+  monitor_interval:
+    title: Specify the number of seconds between monitor polls.
+    type: integer
+    default: 30
+  monitor_queryName:
+    title: Specify the host name for the monitor to request.
+    type: string
+  monitor_queryType:
+    title: Specify the DNS record type.
+    type: string
+    enum:
+      - 'a'
+      - 'aaaa'
+    default: 'a'
+  monitor_receive:
+    title: Specify the IP address that is expected to be returned.
+    type: string
   enable_snat: {}
   snat_automap: {}
   make_snatpool: {}
@@ -99,7 +116,11 @@ definitions:
             {{#make_monitor:f5:make_monitor}}
               "{{app_name:f5:app_name}}_monitor": {
                 "class": "Monitor",
-                "monitorType": "dns"
+                "monitorType": "dns",
+                "interval": {{monitor_interval}},
+                "queryName": "{{monitor_queryName}}",
+                "queryType": "{{monitor_queryType}}",
+                "receive": "{{monitor_receive}}"
               },
             {{/make_monitor:f5:make_monitor}}
           {{/enable_monitor:f5:enable_monitor}}

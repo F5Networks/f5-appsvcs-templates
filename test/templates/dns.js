@@ -31,6 +31,12 @@ const view = {
     load_balancing_mode: 'round-robin',
     slow_ramp_time: 300,
 
+    // monitor
+    monitor_interval: 30,
+    monitor_queryName: 'dns.example.com',
+    monitor_queryType: 'a',
+    monitor_receive: '10.3.3.3',
+
     // snat
     enable_snat: true,
     snat_automap: false,
@@ -106,7 +112,11 @@ const expected = {
             },
             app1_monitor: {
                 class: 'Monitor',
-                monitorType: 'dns'
+                monitorType: 'dns',
+                interval: 30,
+                queryName: 'dns.example.com',
+                queryType: 'a',
+                receive: '10.3.3.3'
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
