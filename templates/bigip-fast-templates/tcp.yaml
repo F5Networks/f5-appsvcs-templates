@@ -9,8 +9,11 @@ definitions:
   pool_name: {}
   pool_members:
     title: Server Addresses
-    description: Add the IP addresses of a pool member.
-  pool_port: {}
+    description: Add the IP address for each pool member.
+  pool_port:
+    title: Service port
+    description: Specify the server port number.
+    default: 80
   load_balancing_mode: {}
   slow_ramp_time: {}
   enable_monitor: {}
