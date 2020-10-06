@@ -7,7 +7,10 @@ definitions:
   enable_pool: {}
   make_pool: {}
   pool_name: {}
-  pool_members: {}
+  pool_members:
+    title: Server Addresses
+    description: Add the IP addresses of a pool member.
+  pool_port: {}
   load_balancing_mode: {}
   slow_ramp_time: {}
   enable_monitor: {}
@@ -40,7 +43,11 @@ definitions:
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": {{pool_members:f5:pool_members}},
+            "members": [{
+              "serverAddresses": {{pool_members:f5:ipv4_array}},
+              "servicePort": {{pool_port:f5:port}},
+              "shareNodes": true
+            }],
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
