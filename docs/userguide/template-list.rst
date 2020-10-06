@@ -19,15 +19,15 @@ The following table lists the template set, the corresponding template(s) and a 
 
       * - bigip-fast-templates
         - http
-        - An http template that can be used for http and https deployments
+        - A template that can be used to manage HTTP and HTTPS deployments
 
       * - bigip-fast-templates
         - tcp
-        - A tcp template that can be used for tcp and udp deployments
+        - A template that can be used to manage TCP deployments
 
       * - bigip-fast-templates
         - dns
-        - A dns template that can be used for dns deployments
+        - A template that can be used to load balance DNS servers
 
       * - examples
         - simple_http
