@@ -4,7 +4,8 @@
 
 'use strict';
 
-
+// eslint-disable-next-line import/no-extraneous-dependencies
+const marked = require('marked');
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
@@ -219,6 +220,18 @@ const newEditor = (tmplid, view) => {
             dispOutput('Editor loaded'); // Clear text on new editor load
 
             editor.on('ready', () => {
+                // Render Markdown in descriptions
+                const descElements = document.getElementsByClassName('je-desc');
+                Array.prototype.map.call(descElements, (elem) => {
+                    // Get raw schema description since the element text has newlines stripped
+                    const schemaPath = elem.parentElement.parentElement.getAttribute('data-schemapath');
+                    const propEd = editor.getEditor(schemaPath);
+                    const md = propEd.schema.description || '';
+
+                    let html = marked(md);
+                    html = html.substring(3, html.length - 5); // strip outer paragraph tag
+                    elem.innerHTML = html;
+                });
                 dispOutput('Editor ready');
 
                 // Enable form button now that the form is ready
