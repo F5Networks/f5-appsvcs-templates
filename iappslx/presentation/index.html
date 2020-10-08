@@ -31,7 +31,7 @@
                 <div id="app" v-cloak>
                     <component ref="page" :is="pageComponent" :data="data" :class="{ 'display-none': busy }"></component>
                     <pre id="output">{{debugOutput}}</pre>
-                    <div v-if="modal.message" class="modal active">
+                    <div v-if="modal.message && !busy" class="modal active">
                         <div class="modal-container">
                             <div class="modal-header">
                                 <a class="fas fa-times icon btn-icon modal-exit-icon float-right faded-active-border"

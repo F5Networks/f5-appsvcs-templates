@@ -23,14 +23,8 @@ const view = {
     // pool spec
     enable_pool: true,
     make_pool: true,
-    pool_members: [
-        {
-            serverAddresses: ['10.2.1.1'], servicePort: 4433, connectionLimit: 0, priorityGroup: 0, shareNodes: true
-        },
-        {
-            serverAddresses: ['10.2.1.2'], servicePort: 4444, connectionLimit: 1000, priorityGroup: 0, shareNodes: true
-        }
-    ],
+    pool_members: ['10.2.1.1', '10.2.1.2'],
+    pool_port: 4444,
     load_balancing_mode: 'round-robin',
     slow_ramp_time: 300,
 
@@ -111,17 +105,8 @@ const expected = {
             app1_pool: {
                 class: 'Pool',
                 members: [{
-                    servicePort: 4433,
-                    serverAddresses: ['10.2.1.1'],
-                    connectionLimit: 0,
-                    priorityGroup: 0,
-                    shareNodes: true
-                },
-                {
+                    serverAddresses: ['10.2.1.1', '10.2.1.2'],
                     servicePort: 4444,
-                    serverAddresses: ['10.2.1.2'],
-                    connectionLimit: 1000,
-                    priorityGroup: 0,
                     shareNodes: true
                 }],
                 loadBalancingMode: view.load_balancing_mode,
@@ -162,7 +147,7 @@ describe(template, function () {
     describe('tls bridging with default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
             // default https pool port and existing monitor
-            view.pool_members[0].servicePort = 80;
+            view.pool_port = 80;
             expected.t1.app1.app1_pool.members[0].servicePort = 80;
             view.make_monitor = false;
             view.monitor_name = '/Common/monitor1';
