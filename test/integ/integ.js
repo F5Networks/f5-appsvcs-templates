@@ -69,6 +69,12 @@ function deployApplication(templateName, parameters) {
             }
             assert.strictEqual(task.code, 200);
             assert.strictEqual(task.message, 'success');
+        })
+        .catch((e) => {
+            if (e.response) {
+                console.error(e.response.data);
+            }
+            return Promise.reject(e);
         });
 }
 
