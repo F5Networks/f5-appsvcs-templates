@@ -55,14 +55,18 @@ function waitForCompletedTask(taskid) {
 }
 
 function createApplication(id) {
-    const templateName = (id % 2 === 0) ? 'tcp' : 'http';
+    const templateNames = [
+        'tcp',
+        'http'
+    ];
+    const templateName = templateNames[id % templateNames.length];
     const template = `bigip-fast-templates/${templateName}`;
 
     const parameters = {
         tenant_name: `tenant-${id % MAX_TENANTS}`,
         app_name: `app-${id}`,
         virtual_address: `10.0.${Math.floor(id / 256)}.${id % 256}`,
-        server_addresses: [
+        pool_members: [
             `10.0.${Math.floor(id / 256)}.${id % 256}`
         ]
     };
