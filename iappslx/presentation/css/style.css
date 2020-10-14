@@ -230,6 +230,9 @@ button:disabled:hover {
 .clickable:hover { background-color: rgba(240, 243, 202, 0.1); }
 .clickable-darker { cursor: pointer; }
 .clickable-darker:hover { background-color: rgba(240, 243, 202, 0.25); }
+.clickable .icon {
+    cursor: inherit;
+}
 .red-hover:hover { background-color: rgba(243, 202, 211, 0.15); }
 .no-hover:hover { background-color: inherit; }
 

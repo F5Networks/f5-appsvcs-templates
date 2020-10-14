@@ -1,6 +1,7 @@
 # 1.5.0
 ## Added
 * GUI: Support Markdown in schema descriptions
+* GUI: Clicking on an application name in the Application List tab now modifies the application
 
 ## Fixed
 * GUI: Fix handling of undefined values in the base64 editor
