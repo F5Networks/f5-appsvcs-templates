@@ -1,3 +1,12 @@
+# 1.5.0
+## Added
+* GUI: Support Markdown in schema descriptions
+
+## Fixed
+* GUI: Fix handling of undefined values in the base64 editor
+
+## Changed
+
 # 1.4.0
 ## Added
 * Allow retrieving failed application submissions to modify and resubmit
