@@ -195,6 +195,21 @@ JSONEditor.defaults.resolvers.unshift((schema) => {
     return undefined;
 });
 
+class InfoEditor extends JSONEditor.defaults.editors.info {
+    build() {
+        // Modify build to use getFormInputDescription() so we get descriptions
+        // with the je-desc class. This allows our Markdown rendering to work with
+        // the info editor
+        this.options.compact = false;
+        // eslint-disable-next-line no-multi-assign
+        this.header = this.label = this.theme.getFormInputLabel(this.getTitle());
+        this.description = this.theme.getFormInputDescription(this.schema.description || '');
+        this.control = this.theme.getFormControl(this.label, this.description, null);
+        this.container.appendChild(this.control);
+    }
+}
+JSONEditor.defaults.editors.info = InfoEditor;
+
 const newEditor = (tmplid, view) => {
     const formElement = document.getElementById('form-div');
     if (editor) {
