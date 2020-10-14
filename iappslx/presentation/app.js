@@ -168,12 +168,18 @@ const getSubmissionData = () => {
 // eslint-disable-next-line no-undef
 class Base64Editor extends JSONEditor.defaults.editors.string {
     setValue(val) {
-        val = Buffer.from(val, 'base64').toString('utf8');
+        if (val) {
+            val = Buffer.from(val, 'base64').toString('utf8');
+        }
         super.setValue(val);
     }
 
     getValue() {
-        return Buffer.from(super.getValue()).toString('base64');
+        let retval = super.getValue();
+        if (retval) {
+            retval = Buffer.from(retval).toString('base64');
+        }
+        return retval;
     }
 }
 
