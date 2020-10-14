@@ -2,6 +2,7 @@
 
 const uuid4 = require('uuid').v4;
 const axios = require('axios');
+const http = require('http');
 
 const AS3DriverConstantsKey = 'fast';
 
@@ -17,7 +18,11 @@ class AS3Driver {
             auth: {
                 username: 'admin',
                 password: ''
-            }
+            },
+            maxBodyLength: 'Infinity',
+            httpAgent: new http.Agent({
+                keepAlive: false
+            })
         });
 
         this._declCache = null;
