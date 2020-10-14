@@ -68,10 +68,10 @@
                 </div>
                 <div class="tr" height="1px"></div>
                 <div class="tr" v-for="app in data.appsList">
-                    <div class="td tenant-app-td col1 clickable" @click="location.href='#modify/'+app.path">
-                        <span class="tenant-app-td tenant">{{app.tenant}}</span>
-                        <span class="fas fa-angle-double-right icon tenant-app-td"></span>
-                        <span class="tenant-app-td application">{{app.name}}</span>
+                    <div class="td col1 clickable" @click="location.href='#modify/'+app.path">
+                        <span class="tenant">{{app.tenant}}</span>
+                        <span class="fas fa-angle-double-right icon"></span>
+                        <span class="application">{{app.name}}</span>
                     </div>
                     <div class="td col2">{{app.template}}</div>
                     <div class="td col3">
@@ -238,10 +238,10 @@
                     <span class="tooltip tooltip-right td clickable-darker col1" data-tooltip="go to task">
                         <a :href="'/mgmt/shared/fast/tasks/' + task.id">{{task.id}}</a>
                     </span>
-                    <div class="td tenant-app-td col2">
-                        <span class="tenant-app-td tenant">{{task.tenant}}</span>
-                        <a class="fas fa-angle-double-right icon tenant-app-td"></a>
-                        <span class="tenant-app-td application">{{task.application}}</span>
+                    <div class="td col2">
+                        <span class="tenant">{{task.tenant}}</span>
+                        <a class="fas fa-angle-double-right icon"></a>
+                        <span class="application">{{task.application}}</span>
                     </div>
                     <div class="td col3">{{task.operation}}</div>
                     <div v-if="task.message === 'in progress'" class="td col4">
