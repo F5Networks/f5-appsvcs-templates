@@ -290,3 +290,9 @@ button:disabled:hover {
 	height: initial;
 	padding: 2px 5px 1px 5px;
 }
+
+/* Fixes for Markdown in descriptions */
+.je-desc a {
+    text-decoration: revert;
+    color: revert;
+}
