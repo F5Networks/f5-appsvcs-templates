@@ -128,7 +128,6 @@ describe('AS3 Driver tests', function () {
             .reply(200, as3stub);
 
         nock(host)
-            .persist()
             .post(as3ep, Object.assign({}, as3WithApp, { id: 'STATIC' }))
             .query(true)
             .reply(202, {});
@@ -234,6 +233,11 @@ describe('AS3 Driver tests', function () {
     });
     it('create_app_bad', function () {
         const driver = new AS3Driver();
+
+        nock(host)
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
 
         return assert.isRejected(driver.createApplication(appDef, { class: 'Application' }), /cannot contain the class key/)
             .then(() => assert.isRejected(driver.createApplication({

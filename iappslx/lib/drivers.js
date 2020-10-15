@@ -86,7 +86,7 @@ class AS3Driver {
             .then(res => res.data.declaration || res.data)
             .then((decl) => {
                 if (Object.keys(decl).length === 0) {
-                    return {
+                    decl = {
                         class: 'ADC',
                         schemaVersion: '3.0.0'
                     };
