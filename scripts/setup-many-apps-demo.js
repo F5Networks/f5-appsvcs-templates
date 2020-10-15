@@ -47,10 +47,22 @@ function waitForCompletedTask(taskid) {
         .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
         .then((response) => {
             if (response.data.code === 0) {
-                return promiseDelay(1000)
+                return promiseDelay(5000)
                     .then(() => waitForCompletedTask(taskid));
             }
             return response.data;
+        })
+        .catch((e) => {
+            if (e.response
+                && e.response.status === 400
+            ) {
+                // restjavad error, back off for a bit and try again later
+                console.log(JSON.stringify(e.response.data, null, 2));
+                console.log('restjavad error, backing off for a bit...');
+                return promiseDelay(50000)
+                    .then(() => waitForCompletedTask(taskid));
+            }
+            return Promise.reject(e);
         });
 }
 
@@ -96,10 +108,7 @@ function deleteApplications() {
             const taskid = response.data.id;
             return Promise.resolve()
                 .then(() => waitForCompletedTask(taskid))
-                .catch((e) => {
-                    console.log(response.data);
-                    return Promise.reject(e);
-                });
+                .catch(e => Promise.reject(e));
         })
         .then(() => {
             console.log('Applications deleted');
@@ -115,10 +124,7 @@ function deployApplications() {
             const taskid = response.data.message[0].id;
             return Promise.resolve()
                 .then(() => waitForCompletedTask(taskid))
-                .catch((e) => {
-                    console.log(response.data);
-                    return Promise.reject(e);
-                });
+                .catch(e => Promise.reject(e));
         })
         .then(() => {
             console.log('Applications deployed');
@@ -128,6 +134,10 @@ function deployApplications() {
 
 Promise.resolve()
     .then(() => deleteApplications())
+    .then(() => {
+        console.log('Refreshing declaration cache');
+        return endpoint.get('/mgmt/shared/fast/applications');
+    })
     .then(() => deployApplications())
     .catch((e) => {
         console.error(e.stack);
