@@ -9,8 +9,8 @@ const axios = require('axios');
 
 const bigipTarget = process.env.BIGIP_TARGET;
 const bigipCreds = process.env.BIGIP_CREDS;
-const MAX_TENANTS = process.env.MAX_TENANTS || 5;
-const NUM_APPS = process.env.NUM_APPS || 50;
+const MAX_TENANTS = process.env.MAX_TENANTS || 10;
+const NUM_APPS = process.env.NUM_APPS || 500;
 
 if (!bigipTarget) {
     throw new Error('BIGIP_TARGET env var needs to be defined');
