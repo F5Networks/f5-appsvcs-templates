@@ -25,10 +25,10 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.11.6",
-    "@babel/core": "^7.11.6",
-    "@babel/plugin-transform-runtime": "^7.11.5",
-    "@babel/preset-env": "^7.11.5",
+    "@babel/cli": "^7.12.1",
+    "@babel/core": "^7.12.1",
+    "@babel/plugin-transform-runtime": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "browserify": "^16.5.2",
     "chai": "^4.2.0",
@@ -55,7 +55,7 @@
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.11.2",
+    "@babel/runtime": "^7.12.1",
     "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#a445945d15e264acc10906904a4f098dc1ba5a76",
     "@f5devcentral/f5-teem": "^1.4.6",
     "axios": "^0.20.0",
