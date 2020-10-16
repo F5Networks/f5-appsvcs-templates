@@ -9,6 +9,8 @@ const util = require('./util');
 const template = 'templates/bigip-fast-templates/dns.yaml';
 
 const view = {
+    title: '',
+    tls_prereq: '',
     tenant_name: 't1',
     app_name: 'app1',
 
@@ -114,7 +116,7 @@ const expected = {
                 class: 'Monitor',
                 monitorType: 'dns',
                 interval: 30,
-                timeout: 91,
+                timeout: 181,
                 queryName: 'dns.example.com',
                 queryType: 'a',
                 receive: '10.3.3.3'

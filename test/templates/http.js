@@ -9,6 +9,8 @@ const util = require('./util');
 const template = 'templates/bigip-fast-templates/http.yaml';
 
 const view = {
+    title: '',
+    tls_prereq: '',
     tenant_name: 't1',
     app_name: 'app1',
 
@@ -111,7 +113,7 @@ const expected = {
                 }],
                 loadBalancingMode: view.load_balancing_mode,
                 slowRampTime: 300,
-                monitors: ['tcp', 'https']
+                monitors: ['https']
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
