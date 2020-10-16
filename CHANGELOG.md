@@ -2,6 +2,8 @@
 ## Added
 * GUI: Support Markdown in schema descriptions
 * GUI: Clicking on an application name in the Application List tab now modifies the application
+* bigip-fast-templates: Add Sharepoint template
+* bigip-fast-templates: Add Exchange template
 
 ## Fixed
 * GUI: Fix handling of undefined values in the base64 editor
