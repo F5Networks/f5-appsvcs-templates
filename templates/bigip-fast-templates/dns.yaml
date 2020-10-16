@@ -1,5 +1,9 @@
 contentType: application/json
 definitions:
+  title:
+    title: ''
+    description: '# DNS Application Template'
+    format: info
   tenant_name: {}
   app_name: {}
   virtual_address: {}
@@ -7,55 +11,20 @@ definitions:
   enable_pool: {}
   make_pool: {}
   pool_name: {}
-  pool_members:
-    items:
-      type: object
-      properties:
-        serverAddresses:
-          title: Server Address
-          type: array
-          uniqueItems: true
-          default: []
-          items:
-            type: string
-            format: ipv4
-            default: 10.0.0.1
-        servicePort:
-          title: Service Port
-          type: integer
-          minimum: 0
-          maximum: 65535
-          default: 53
-        connectionLimit:
-          title: Connection Limit
-          type: integer
-          minimum: 0
-          default: 0
-        priorityGroup:
-          title: Priority Group
-          type: integer
-          minimum: 0
-          default: 0
-        shareNodes:
-          title: Share Node
-          type: boolean
-          default: true
+  pool_members: {}
   load_balancing_mode: {}
   slow_ramp_time: {}
   enable_monitor: {}
   make_monitor: {}
   monitor_name:
     enumFromBigip: 'ltm/monitor/dns'
-  monitor_interval:
-    title: Specify the number of seconds between monitor polls.
-    type: integer
-    default: 30
+  monitor_interval: {}
   monitor_queryName:
-    title: Specify the host name for the monitor to request.
+    title: Specify the host name for the monitor to request (queryName).
     type: string
     default: ''
   monitor_queryType:
-    title: Specify the DNS record type.
+    title: Specify the DNS record type (queryType).
     type: string
     enum:
       - 'a'
@@ -92,7 +61,7 @@ definitions:
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": {{pool_members:f5:pool_members}},
+            "members": {{pool_members:f5_pool_members:pool_members_53}},
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
@@ -119,8 +88,8 @@ definitions:
               "{{app_name:f5:app_name}}_monitor": {
                 "class": "Monitor",
                 "monitorType": "dns",
-                "interval": {{monitor_interval}},
-                "timeout": 91,
+                "interval": {{monitor_interval:f5:monitor_interval}},
+                "timeout": 181,
                 "queryName": "{{monitor_queryName}}",
                 "queryType": "{{monitor_queryType}}",
                 "receive": "{{monitor_receive}}"
@@ -208,6 +177,7 @@ parameters:
   virtual_port: 53
   monitor_name: /Common/dns
 template: |
+  {{title}}
   {
     "class": "ADC",
     "schemaVersion": "3.0.0",

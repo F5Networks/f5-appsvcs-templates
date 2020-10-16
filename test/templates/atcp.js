@@ -9,6 +9,8 @@ const util = require('./util');
 const template = 'templates/bigip-fast-templates/tcp.yaml';
 
 const view = {
+    title: '',
+    tls_prereq: '',
     tenant_name: 't1',
     app_name: 'app1',
 

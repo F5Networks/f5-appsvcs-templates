@@ -1,17 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/hyper-schema",
   "definitions": {
-    "bigip_path": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^\\x2f[^\\x00-\\x19\\x22#'*<>?\\x5b-\\x5d\\x7b-\\x7d\\x7f]+$",
-      "maxLength": 255
-    },
     "bigip_name": {
       "type": "string",
       "minLength": 1,
       "maxLength": 255,
       "pattern": "^[A-Za-z][0-9A-Za-z_.-]*$"
+    },
+    "bigip_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\x2f[^\\x00-\\x19\\x22#'*<>?\\x5b-\\x5d\\x7b-\\x7d\\x7f]+$",
+      "maxLength": 255
     },
     "ipv4": {
       "type": "string",
@@ -26,9 +26,23 @@
         "$ref": "#/definitions/ipv4"
       }
     },
-    "non_empty_string": {
-      "type": "string",
-      "minLength": 1
+    "ipv4_ipv6": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "ipv4"
+        },
+        {
+          "type": "string",
+          "format": "ipv6"
+        }
+      ],
+      "default": "10.1.1.1"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
     },
     "persistence": {
       "type": "string",
@@ -40,11 +54,6 @@
         "tls-session-id"
       ]
     },
-    "port": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 65535
-    },
     "topology": {
       "type": "string",
       "enum": [
@@ -55,7 +64,7 @@
     },
     "tenant_name": {
       "title": "Specify the tenant name.",
-      "description": "The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.",
+      "description": "The *tenant* is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.",
       "type": "string",
       "minLength": 1,
       "maxLength": 255,
@@ -63,7 +72,7 @@
     },
     "app_name": {
       "title": "Specify the application name.",
-      "description": "The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.",
+      "description": "The *application* is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.",
       "type": "string",
       "minLength": 1,
       "maxLength": 255,
@@ -72,23 +81,26 @@
     "virtual_address": {
       "title": "Specify the IP address for the virtual server.",
       "description": "This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system uses this IP:Port for distributing requests to the web servers.",
-      "$ref": "#/definitions/ipv4",
-      "default": "10.1.1.1"
+      "$ref": "#/definitions/ipv4_ipv6"
     },
     "virtual_port": {
       "title": "Specify the TCP port for the virtual server.",
       "$ref": "#/definitions/port",
       "default": 443
     },
+    "enable_redirect": {
+      "title": "Redirect port 80 traffic to this virtual server",
+      "type": "boolean",
+      "default": true
+    },
     "enable_pool": {
       "title": "Create Pool",
-      "description": "A pool is a logical set of devices, such as web servers, that you group together to receive and process traffic.",
+      "description": "A *pool* is a logical set of devices, such as web servers, that you group together to receive and process traffic.",
       "type": "boolean",
       "default": true
     },
     "make_pool": {
       "title": "Automatically manage the pool",
-      "description": "A load balancing pool is a logical set of devices, such as web servers, grouped together to receive and process traffic. When clients attempt to access the application via the BIG-IP virtual server, the BIG-IP system distributes requests to any of the servers that are members of that pool.",
       "type": "boolean",
       "default": true
     },
@@ -98,47 +110,9 @@
       "enumFromBigip": "ltm/pool",
       "default": ""
     },
-    "pool_members": {
-      "title": "Pool Members",
-      "description": "Add the addresses of the servers in the pool. Use a connection limit of 0 for unlimited connections.",
-      "type": "array",
-      "uniqueItems": true,
-      "default": [],
-      "items": {
-        "type": "object",
-        "properties": {
-          "serverAddresses": {
-            "title": "Server Address",
-            "$ref": "#/definitions/ipv4_array"
-          },
-          "servicePort": {
-            "title": "Server Port",
-            "$ref": "#/definitions/port",
-            "default": 80
-          },
-          "connectionLimit": {
-            "title": "Connection Limit",
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-          },
-          "priorityGroup": {
-            "title": "Priority Group",
-            "type": "integer",
-            "minimum": 0,
-            "default": 0
-          },
-          "shareNodes": {
-            "title": "Share Node",
-            "type": "boolean",
-            "default": true
-          }
-        }
-      }
-    },
     "load_balancing_mode": {
       "title": "Specify the load balancing method.",
-      "description": "A load balancing method is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.",
+      "description": "A *load balancing method* is an algorithm that the BIG-IP system uses to select a pool member for processing a request. F5 recommends the Least Connections load balancing method, where new connections are routed to the node that has the least number of current connections. This is ideal for environments in which pool members have similar performance and capacity capabilities.",
       "type": "string",
       "default": "least-connections-member",
       "enum": [
@@ -188,15 +162,33 @@
       "type": "string",
       "default": ""
     },
+    "monitor_interval": {
+      "title": "Specify the number of seconds between monitor polls.",
+      "type": "integer",
+      "maximum": 60,
+      "default": 30
+    },
+    "monitor_username": {
+      "title": "Specify the user account to use for health checks.",
+      "type": "string",
+      "default": ""
+    },
+    "monitor_passphrase": {
+      "title": "Specify the password to use with the user account for health checks.",
+      "type": "string",
+      "format": "password",
+      "contentEncoding": "base64",
+      "default": ""
+    },
     "enable_snat": {
       "title": "SNAT",
-      "description": "Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.",
+      "description": "*Secure Network Address Translation* maps the source client IP address in a request to a translation address defined on the BIG-IP device.",
       "type": "boolean",
       "default": true
     },
     "snat_automap": {
       "title": "SNAT Automap",
-      "description": "SNAT automap uses BIG-IP self IP addresses as the translation address.",
+      "description": "SNAT automap uses BIG-IP self-IP addresses as the translation address.",
       "type": "boolean",
       "default": true
     },
@@ -217,7 +209,7 @@
       "uniqueItems": true,
       "default": [],
       "items": {
-        "$ref": "#/definitions/ipv4"
+        "$ref": "#/definitions/ipv4_ipv6"
       }
     },
     "enable_persistence": {
@@ -241,6 +233,112 @@
       "title": "Specify the type of fallback persistence.",
       "$ref": "#/definitions/persistence",
       "default": "source-address"
+    },
+    "enable_tls_server": {
+      "title": "TLS Server",
+      "description": "Enable TLS server to decrypt client-side connections.",
+      "type": "boolean",
+      "default": true
+    },
+    "make_tls_server_profile": {
+      "title": "Automatically manage the TLS server profile",
+      "type": "boolean",
+      "default": true
+    },
+    "tls_server_profile_name": {
+      "title": "Specify the name of an existing BIG-IP clientssl profile.",
+      "description": "TLS server profiles are of type \"ltm clientssl\" on BIG-IP.",
+      "enumFromBigip": "ltm/profile/client-ssl",
+      "default": "/Common/clientssl"
+    },
+    "tls_cert_name": {
+      "title": "Specify the name of an existing BIG-IP SSL certificate.",
+      "enumFromBigip": "sys/crypto/cert",
+      "default": "/Common/default.crt"
+    },
+    "tls_key_name": {
+      "title": "Specify the name of an existing BIG-IP SSL key.",
+      "enumFromBigip": "sys/crypto/key",
+      "default": "/Common/default.key"
+    },
+    "enable_tls_client": {
+      "title": "TLS Client",
+      "description": "Enable TLS client to encrypt server-side connections.",
+      "type": "boolean",
+      "default": false
+    },
+    "make_tls_client_profile": {
+      "title": "Automatically manage the TLS client profile",
+      "type": "boolean",
+      "default": true
+    },
+    "tls_client_profile_name": {
+      "title": "Specify the name of an existing BIG-IP serverssl profile.",
+      "description": "TLS client profiles are of type \"ltm serverssl\" on BIG-IP.",
+      "enumFromBigip": "ltm/profile/server-ssl",
+      "default": "/Common/serverssl"
+    },
+    "make_http_profile": {
+      "title": "Automatically manage the HTTP profile",
+      "type": "boolean",
+      "default": true
+    },
+    "http_profile_name": {
+      "title": "Specify the name of an existing BIG-IP HTTP profile.",
+      "enumFromBigip": "ltm/profile/http",
+      "default": "/Common/http"
+    },
+    "x_forwarded_for": {
+      "title": "Insert the x-forwarded-for header",
+      "description": "Inserts the original client IP address in an HTTP header and configures the web server receiving the request to log the client IP address instead of the SNAT address.",
+      "default": true
+    },
+    "enable_acceleration": {
+      "title": "Web Acceleration or Caching",
+      "description": "Web Acceleration or web caching will be enabled depending on the BIG-IP license.",
+      "type": "boolean",
+      "default": true
+    },
+    "make_acceleration_profile": {
+      "title": "Automatically manage the Web Acceleration profile",
+      "type": "boolean",
+      "default": true
+    },
+    "acceleration_profile_name": {
+      "title": "Specify the name of an existing BIG-IP web acceleration profile.",
+      "enumFromBigip": "ltm/profile/web-acceleration",
+      "default": "/Common/webacceleration"
+    },
+    "enable_compression": {
+      "title": "HTTP Compression",
+      "type": "boolean",
+      "default": true
+    },
+    "make_compression_profile": {
+      "title": "Automatically manage the HTTP Compression profile",
+      "type": "boolean",
+      "default": true
+    },
+    "compression_profile_name": {
+      "title": "Specify the name of an existing BIG-IP HTTP compression profile.",
+      "enumFromBigip": "ltm/profile/http-compression",
+      "default": "/Common/httpcompression"
+    },
+    "enable_multiplex": {
+      "title": "Connection Multiplexing",
+      "description": "Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.",
+      "type": "boolean",
+      "default": true
+    },
+    "make_multiplex_profile": {
+      "title": "Automatically manage the Multiplex (OneConnect) profile",
+      "type": "boolean",
+      "default": true
+    },
+    "multiplex_profile_name": {
+      "title": "Specify the name of an existing BIG-IP OneConnect profile",
+      "enumFromBigip": "ltm/profile/one-connect",
+      "default": "/Common/oneconnect"
     },
     "common_tcp_profile": {
       "title": "Use the same TCP profile for ingress and egress traffic.",
@@ -296,7 +394,7 @@
       "default": "/Common/f5-tcp-progressive"
     },
     "irule_names": {
-      "title": "Specify the name of one or more iRules to attach.",
+      "title": "Specify the name of one or more iRules to attach to the virtual server.",
       "type": "array",
       "uniqueItems": true,
       "items": {

@@ -2,7 +2,7 @@ contentType: application/json
 definitions:
   title:
     title: ''
-    description: '# TCP Application Template'
+    description: '# SMTP Application Template'
     format: info
   tls_prereq: {}
   tenant_name: {}
@@ -12,28 +12,25 @@ definitions:
   enable_pool: {}
   make_pool: {}
   pool_name: {}
-  pool_members:
-    title: Server Addresses
-    description: Add the IP address for each pool member.
-  pool_port:
-    title: Service port
-    description: Specify the server port number.
-    default: 80
+  pool_members: {}
   load_balancing_mode: {}
   slow_ramp_time: {}
   enable_monitor: {}
   make_monitor: {}
   monitor_name:
-    enumFromBigip: 'ltm/monitor/tcp'
+    enumFromBigip: 'ltm/monitor/smtp'
+  monitor_interval: {}
+  monitor_domain:
+    title: Specify the domain name for which the SMTP server will accept mail.
+    type: string
+    default: ''
+  monitor_username: {}
+  monitor_passphrase: {}
   enable_snat: {}
   snat_automap: {}
   make_snatpool: {}
   snatpool_name: {}
   snat_addresses: {}
-  enable_persistence: {}
-  persistence_type: {}
-  enable_fallback_persistence: {}
-  fallback_persistence_type: {}
   common_tcp_profile: {}
   make_tcp_profile: {}
   tcp_topology: {}
@@ -51,16 +48,14 @@ definitions:
         {{#make_pool:f5:make_pool}}
           "{{app_name:f5:app_name}}_pool": {
             "class": "Pool",
-            "members": [{
-              "serverAddresses": {{pool_members:f5_pool_members:ip_array}},
-              "servicePort": {{pool_port:f5:port}},
-              "shareNodes": true
-            }],
+            "members": {{pool_members:f5_pool_members:pool_members_25}},
             "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
             "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
             {{#enable_monitor:f5:enable_monitor}}
               {{#make_monitor:f5:make_monitor}}
-                "monitors": [ "tcp" ]
+                "monitors": [{
+                  "use": "{{app_name:f5:app_name}}_monitor"
+                }]
               {{/make_monitor:f5:make_monitor}}
               {{^make_monitor:f5:make_monitor}}
                 "monitors": [{
@@ -69,6 +64,28 @@ definitions:
               {{/make_monitor:f5:make_monitor}}
             {{/enable_monitor:f5:enable_monitor}}
           },
+        {{/make_pool:f5:make_pool}}
+      {{/enable_pool:f5:enable_pool}}
+  app_monitor_def:
+    template: |
+      {{#enable_pool:f5:enable_pool}}
+        {{#make_pool:f5:make_pool}}
+          {{#enable_monitor:f5:enable_monitor}}
+            {{#make_monitor:f5:make_monitor}}
+              "{{app_name:f5:app_name}}_monitor": {
+                "class": "Monitor",
+                "monitorType": "smtp",
+                "interval": {{monitor_interval:f5:monitor_interval}},
+                "timeout": 181,
+                "domain": "{{monitor_domain}}",
+                "username": "{{monitor_username:f5:monitor_username}}",
+                "passphrase": {
+                  "ciphertext": "{{monitor_passphrase:f5:monitor_passphrase}}",
+                  "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+                }
+              },
+            {{/make_monitor:f5:make_monitor}}
+          {{/enable_monitor:f5:enable_monitor}}
         {{/make_pool:f5:make_pool}}
       {{/enable_pool:f5:enable_pool}}
   app_snatpool_def:
@@ -114,17 +131,6 @@ definitions:
           {{/make_snatpool:f5:make_snatpool}}
         {{/snat_automap:f5:snat_automap}}
       {{/enable_snat:f5:enable_snat}}
-  service_persistence_def:
-    template: |
-      {{#enable_persistence:f5:enable_persistence}}
-        "persistenceMethods": ["{{persistence_type:f5:persistence_type}}"],
-        {{#enable_fallback_persistence:f5:enable_fallback_persistence}}
-          "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:fallback_persistence_type}}",
-        {{/enable_fallback_persistence:f5:enable_fallback_persistence}}
-      {{/enable_persistence:f5:enable_persistence}}
-      {{^enable_persistence:f5:enable_persistence}}
-        "persistenceMethods": [],
-      {{/enable_persistence:f5:enable_persistence}}
   service_tcp_def:
     template: |
       {{#common_tcp_profile:f5:common_tcp_profile}}
@@ -158,9 +164,8 @@ definitions:
        },
       {{/common_tcp_profile:f5:common_tcp_profile}}
 parameters:
-  monitor_name: /Common/tcp
-  persistence_type: source-address
-  enable_fallback_persistence: false
+  virtual_port: 25
+  monitor_name: /Common/smtp
 template: |
   {{title}}
   {{tls_prereq:f5_help_text:tls_prereq}}
@@ -172,16 +177,16 @@ template: |
       "class": "Tenant",
       "{{app_name:f5:app_name}}": {
         "class": "Application",
-        "template": "tcp",
+        "template": "generic",
         {{> app_pool_def}}
+        {{> app_monitor_def}}
         {{> app_snatpool_def}}
-        "serviceMain": {
-          "class": "Service_TCP",
+        "{{app_name:f5:app_name}}_SMTP": {
+          "class": "Service_Generic",
           "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
           "virtualPort": {{virtual_port:f5:virtual_port}},
           {{> service_pool_def}}
           {{> service_snat_def}}
-          {{> service_persistence_def}}
           {{> service_tcp_def}}
           "iRules": [
             {{#irule_names:f5:irule_names}}
