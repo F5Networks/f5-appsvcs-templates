@@ -124,4 +124,20 @@ describe('Applications', function () {
         ],
         monitor_queryName: 'example.com'
     }));
+    it('Deploy bigip-fast-templates/exchange', () => deployApplication('bigip-fast-templates/exchange', {
+        tenant_name: 't-5',
+        virtual_address: '10.0.0.4',
+        pool_members: [
+            '10.0.0.4'
+        ],
+        app_fqdn: 'example.com'
+    }));
+    it('Deploy bigip-fast-templates/sharepoint', () => deployApplication('bigip-fast-templates/sharepoint', {
+        tenant_name: 't-5',
+        virtual_address: '10.0.0.5',
+        pool_members: [
+            '10.0.0.5'
+        ],
+        app_fqdn: 'example.com'
+    }));
 });
