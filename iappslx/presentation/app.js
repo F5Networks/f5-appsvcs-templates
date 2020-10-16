@@ -250,7 +250,13 @@ const newEditor = (tmplid, view) => {
                     const md = propEd.schema.description || '';
 
                     let html = marked(md);
-                    html = html.substring(3, html.length - 5); // strip outer paragraph tag
+                    console.log(html);
+                    if (html.startsWith('<p>')) {
+                        html = html.substring(3, html.length);
+                    }
+                    if (html.endsWith('</p>')) {
+                        html = html.substring(0, html.length - 5);
+                    }
                     elem.innerHTML = html;
                 });
                 dispOutput('Editor ready');
