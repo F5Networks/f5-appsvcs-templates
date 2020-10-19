@@ -250,7 +250,6 @@ const newEditor = (tmplid, view) => {
                     const md = propEd.schema.description || '';
 
                     let html = marked(md);
-                    console.log(html);
                     if (html.startsWith('<p>')) {
                         html = html.substring(3, html.length);
                     }
