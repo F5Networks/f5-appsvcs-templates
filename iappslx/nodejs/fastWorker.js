@@ -497,11 +497,17 @@ class FASTWorker {
 
     hydrateSchema(tmpl, requestId) {
         const schema = tmpl._parametersSchema;
-        if (!schema.properties) {
+        const subTemplates = [
+            ...tmpl._allOf || [],
+            ...tmpl._oneOf || [],
+            ...tmpl._anyOf || []
+        ];
+
+        if (!schema.properties && subTemplates.length === 0) {
             return Promise.resolve();
         }
 
-        const enumFromBigipProps = Object.entries(schema.properties)
+        const enumFromBigipProps = Object.entries(schema.properties || {})
             .reduce((acc, curr) => {
                 const [key, value] = curr;
                 if (value.enumFromBigip) {
@@ -513,15 +519,11 @@ class FASTWorker {
                 return acc;
             }, {});
         const propNames = Object.keys(enumFromBigipProps);
-        this.logger.fine(
-            `FAST Worker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
-        );
-
-        const subTemplates = [
-            ...tmpl._allOf || [],
-            ...tmpl._oneOf || [],
-            ...tmpl._anyOf || []
-        ];
+        if (propNames.length > 0) {
+            this.logger.fine(
+                `FAST Worker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
+            );
+        }
 
         return Promise.resolve()
             .then(() => Promise.all(subTemplates.map(x => this.hydrateSchema(x, requestId))))
