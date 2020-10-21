@@ -1,0 +1,12 @@
+.git*
+node_modules
+docs
+scripts
+test
+coverage
+.nyc_output
+dist
+iappslx/rpmbuild
+iappslx/presentation/lib
+iappslx/presentation/app.js
+iappslx/presentation/bundle.js.tmp-*
