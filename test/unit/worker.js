@@ -139,9 +139,9 @@ function createWorker() {
 }
 
 describe('template worker tests', function () {
-    const host = 'http://localhost:8105';
-    const as3ep = '/shared/appsvcs/declare';
-    const as3TaskEp = '/shared/appsvcs/task';
+    const host = 'http://localhost:8100';
+    const as3ep = '/mgmt/shared/appsvcs/declare';
+    const as3TaskEp = '/mgmt/shared/appsvcs/task';
     const as3stub = {
         class: 'ADC',
         schemaVersion: '3.0.0'
@@ -378,8 +378,8 @@ describe('template worker tests', function () {
                 [AS3DriverConstantsKey]: appData
             }
         };
-        nock('http://localhost:8100')
-            .get('/mgmt/shared/appsvcs/declare')
+        nock(host)
+            .get(as3ep)
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
