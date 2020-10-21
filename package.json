@@ -6,7 +6,7 @@
   "description": "",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test scripts",
+    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
@@ -16,7 +16,8 @@
     "buildgui": "./scripts/build-presentation-layer.sh",
     "buildrpm": "./scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
-    "version": "./scripts/fix-version.sh"
+    "version": "./scripts/fix-version.sh",
+    "start": "node --unhandled-rejections=strict stand-alone/app.js"
   },
   "keywords": [
     "as3",
@@ -60,6 +61,7 @@
     "@f5devcentral/f5-teem": "^1.4.6",
     "axios": "^0.20.0",
     "core-js": "^3.6.5",
+    "express": "^4.17.1",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
     "uuid": "^7.0.3"
