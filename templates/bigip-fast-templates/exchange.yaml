@@ -1,3 +1,4 @@
+bigipMinimumAS3: 3.23
 definitions:
   tenant_name:
     title: What is the tenant name?

@@ -184,6 +184,12 @@ describe('template worker tests', function () {
                     }
                 ]
             });
+        nock('http://localhost:8100')
+            .persist()
+            .get('/mgmt/shared/appsvcs/info')
+            .reply(200, {
+                version: '3.16'
+            });
         return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 
@@ -1105,5 +1111,40 @@ describe('template worker tests', function () {
                 assert.strictEqual(tmpl._oneOf.length, 1);
                 assert.strictEqual(tmpl._oneOf[0].title, 'asm');
             });
+    });
+    it('as3_version_check', function () {
+        const worker = createWorker();
+
+        const checkVersion = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkVersion(`
+                title: no version
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkVersion(`
+                title: version met
+                bigipMinimumAS3: 3.16.0
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkVersion(`
+                title: version not met
+                bigipMinimumAS3: 3.23
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires AS3 >= 3.23/));
     });
 });

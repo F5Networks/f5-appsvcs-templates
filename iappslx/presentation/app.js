@@ -318,7 +318,14 @@ const newEditor = (tmplid, view) => {
                     .catch(e => dispOutput(`Failed to submit application:\n${e.message}`));
             };
         })
-        .catch(e => dispOutput(`Error loading editor:\n${e.message}`));
+        .catch((e) => {
+            const versionError = e.message.match(/^.*since it requires AS3.*$/m);
+            if (versionError) {
+                dispOutput(versionError[0].replace('&gt;', '>'));
+            } else {
+                dispOutput(`Error loading editor:\n${e.message}`);
+            }
+        });
 };
 
 // Setup basic routing

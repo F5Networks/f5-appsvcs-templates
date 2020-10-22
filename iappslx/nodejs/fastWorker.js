@@ -9,6 +9,8 @@ const fs = require('fs-extra');
 const extract = require('extract-zip');
 const axios = require('axios');
 
+const semver = require('semver');
+
 const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
@@ -44,7 +46,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        'eb4a35cf2ba684e964d90dc24a6c1445ff49717d771edc5d3f8e0f0b004741f7', // v1.5
+        'df2b246f166d60c9cfb219957777cf73d7d52d8e9bf1d9a047a0ea44551ce89a', // v1.5
         '99bf347ba5556df2e8c7100a97ea4c24171e436ed9f5dc9dfb446387f29e0bfe', // v1.4
         'e7eba47ac564fdc6d5ae8ae4c5eb6de3d9d22673a55a2e928ab59c8c8e16376b', // v1.3
         '316653656cfd60a256d9b92820b2f702819523496db8ca01ae3adec3bd05f08c', // v1.2
@@ -94,6 +96,7 @@ class FASTWorker {
         this.requestTimes = {};
         this.requestCounter = 1;
         this.provisionData = null;
+        this.as3Info = null;
     }
 
     hookCompleteRestOp() {
@@ -398,6 +401,7 @@ class FASTWorker {
             ))
             .then((as3response) => {
                 info.as3Info = as3response.data;
+                this.as3Info = info.as3Info;
             })
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
             .then(() => this.templateProvider.listSets())
@@ -410,32 +414,59 @@ class FASTWorker {
     }
 
     gatherProvisionData(requestId) {
-        if (this.provisionData !== null) {
-            return Promise.resolve(this.provisionData);
-        }
-
         return Promise.resolve()
-            .then(() => this.recordTransaction(
-                requestId, 'Fetching module provision information',
-                this.endpoint.get('/mgmt/tm/sys/provision')
-            ))
-            .catch(e => this.handleResponseError(e, 'to get module provision information'))
+            .then(() => {
+                if (this.provisionData !== null) {
+                    return Promise.resolve(this.provisionData);
+                }
+
+                return this.recordTransaction(
+                    requestId, 'Fetching module provision information',
+                    this.endpoint.get('/mgmt/tm/sys/provision')
+                )
+                    .then(response => response.data);
+            })
             .then((response) => {
-                this.provisionData = response.data;
-                return Promise.resolve(response.data);
-            });
+                this.provisionData = response;
+            })
+            .then(() => {
+                if (this.as3Info !== null) {
+                    return Promise.resolve(this.as3Info);
+                }
+                return this.recordTransaction(
+                    requestId, 'Fetching AS3 info',
+                    this.endpoint.get('/mgmt/shared/appsvcs/info')
+                )
+                    .then(response => response.data);
+            })
+            .then((response) => {
+                this.as3Info = response;
+            })
+            .then(() => Promise.all([
+                Promise.resolve(this.provisionData),
+                Promise.resolve(this.as3Info)
+            ]));
     }
 
     checkDependencies(tmpl, requestId) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId))
-            .then(provisionData => provisionData.items.filter(x => x.level !== 'none').map(x => x.name))
-            .then((provisionedModules) => {
+            .then(([provisionData, as3Info]) => {
+                const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
+                const as3Version = semver.coerce(as3Info.version || '0.0');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
                 const deps = tmpl.bigipDependencies || [];
                 const missingModules = deps.filter(x => !provisionedModules.includes(x));
                 if (missingModules.length > 0) {
                     return Promise.reject(new Error(
                         `could not load template (${tmpl.title}) due to missing modules: ${missingModules}`
+                    ));
+                }
+
+                if (!semver.gte(as3Version, tmplAs3Version)) {
+                    return Promise.reject(new Error(
+                        `could not load template (${tmpl.title}) since it requires`
+                        + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
                     ));
                 }
 
