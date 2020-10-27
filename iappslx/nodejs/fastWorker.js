@@ -349,6 +349,18 @@ class FASTWorker {
         return this.transactionLogger.enterPromise(`${reqid}@@${text}`, promise);
     }
 
+    filterTemplates(templateNames) {
+        if (!templateNames) {
+            return Promise.resolve([]);
+        }
+        return Promise.resolve(templateNames)
+            .then(tmplList => Promise.all(tmplList.map(
+                x => this.templateProvider.fetch(x.name || x).then(tmpl => [x, tmpl])
+            )))
+            .then(tmpls => tmpls.filter(x => !x[1].bigipHideTemplate))
+            .then(tmpls => tmpls.map(x => x[0]));
+    }
+
     gatherTemplateSet(tsid) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
@@ -372,8 +384,14 @@ class FASTWorker {
                     fs.existsSync(`${templatesPath}/${tsid}`)
                     && fsTsData && fsTsData.hash !== tsData.hash
                 );
+
                 return tsData;
             })
+            .then(tsData => this.filterTemplates(tsData.templates)
+                .then((templates) => {
+                    tsData.templates = templates;
+                    return tsData;
+                }))
             .catch(e => ({
                 name: tsid,
                 hash: '',
@@ -677,6 +695,7 @@ class FASTWorker {
             .then(() => this.recordTransaction(
                 reqid, 'fetching template list',
                 this.templateProvider.list()
+                    .then(tmplList => this.filterTemplates(tmplList))
             ))
             .then((templates) => {
                 restOperation.setBody(templates);
