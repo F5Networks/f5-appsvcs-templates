@@ -103,6 +103,7 @@ exclude_patterns = ['_build',
                     'requirements.txt',
                     'README.rst',
                     'node_modules',
+                    'formatting.rst',
                     ]
 
 # The name of the Pygments (syntax highlighting) style to use.
