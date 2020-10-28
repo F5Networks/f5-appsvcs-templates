@@ -102,6 +102,14 @@ Example of a *password* object.
 
 .. NOTE::  If property *enum* is specified, type *format* is ignored.
 
+Using type *format: info* allows for adding titles and descriptions.  For example:
+::
+
+    help_stuff:
+      title: This template configures BIG-IP devices.
+      description: A BIG-IP is an application proxy.
+      format: info
+
 .. seealso::  `JSON Editor: format <https://github.com/json-editor/json-editor#format>`_ for additional information and input types.
 
 

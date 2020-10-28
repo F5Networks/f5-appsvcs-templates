@@ -39,7 +39,7 @@ Each of the signs are followed by the key whose value is the basis for rendering
 
 
 Partials
-^^^^^^^
+^^^^^^^^
 Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
 The syntax for including a partial uses curley braces and an angle bracket (>). 
 As an example we define a `node` partial as: ``{{> node}}`` written in `yaml` format.
@@ -194,7 +194,7 @@ It will also fail on 15 as it is a *multipleOf*  both 5 and 3 not *oneOf*.
 
 When authoring templates using yaml, *allOf* takes on a special meaning by referencing another template in the set, known as *Template Merging*.
 
-* *allOf* will merge the schema of the merge templete with external template(s) just as JSON schema will when generating schema for the merged templates
+* *allOf* will merge the schema of the merge template with external template(s) just as JSON schema will when generating schema for the merged templates
 * When a merge template is rendered, the JSON output of the templates will be merged together
 * Merge can be used to add additional configuration to a template
 
