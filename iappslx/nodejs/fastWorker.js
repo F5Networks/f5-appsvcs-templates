@@ -448,7 +448,7 @@ class FASTWorker {
                 this.provisionData = response;
             })
             .then(() => {
-                if (this.as3Info !== null) {
+                if (this.as3Info !== null && this.as3Info.code < 300) {
                     return Promise.resolve(this.as3Info);
                 }
                 return this.recordTransaction(
