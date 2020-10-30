@@ -4,11 +4,14 @@
 * GUI: Clicking on an application name in the Application List tab now modifies the application
 * bigip-fast-templates: Add Sharepoint template
 * bigip-fast-templates: Add Exchange template
+* Allow hiding templates from REST/GUI with bigipHideTemplate template property
+* Allow specifying a minimum AS3 version for a given template (bigipMinimumAS3 template property)
 
 ## Fixed
 * GUI: Fix handling of undefined values in the base64 editor
 
 ## Changed
+* Improve performance when working with many FAST applications
 
 # 1.4.0
 ## Added
