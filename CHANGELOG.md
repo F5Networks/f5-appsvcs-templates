@@ -9,6 +9,7 @@
 
 ## Fixed
 * GUI: Fix handling of undefined values in the base64 editor
+* worker: Fix hydrating enumFromBigip on multiple properties with "items" sub-properties
 
 ## Changed
 * Improve performance when working with many FAST applications

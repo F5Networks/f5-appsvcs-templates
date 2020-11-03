@@ -563,7 +563,7 @@ class FASTWorker {
                     acc[key] = value;
                 }
                 if (value.items && value.items.enumFromBigip) {
-                    acc[`${key.items}`] = value.items;
+                    acc[`${key}.items`] = value.items;
                 }
                 return acc;
             }, {});
