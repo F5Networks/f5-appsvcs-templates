@@ -12,7 +12,7 @@ module.exports = {
         '@babel/plugin-transform-runtime'
     ],
     ignore: [
-        // Add whitelisted modules to sped up builds
+        // Add safelisted modules to sped up builds
         '**/ajv/**',
         '**/lodash/**',
         '**/mustache/**',

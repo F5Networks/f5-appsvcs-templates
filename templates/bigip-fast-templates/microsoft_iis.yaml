@@ -1,3 +1,5 @@
 contentType: application/json
+title: Microsoft IIS Application Template
+description: Configure high availability and optimization for HTTP and HTTPS implementations.
 allOf:
-    - $ref: "http.yaml#"
+  - $ref: "http.yaml#"

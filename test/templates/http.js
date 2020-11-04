@@ -9,8 +9,6 @@ const util = require('./util');
 const template = 'templates/bigip-fast-templates/http.yaml';
 
 const view = {
-    title: '',
-    tls_prereq: '',
     tenant_name: 't1',
     app_name: 'app1',
 
@@ -78,8 +76,8 @@ const expected = {
         class: 'Tenant',
         app1: {
             class: 'Application',
-            template: 'https',
-            serviceMain: {
+            template: 'generic',
+            app1: {
                 class: 'Service_HTTPS',
                 virtualAddresses: [view.virtual_address],
                 virtualPort: view.virtual_port,
@@ -160,26 +158,26 @@ describe(template, function () {
             view.tls_server_profile_name = '/Common/clientssl';
             delete expected.t1.app1.app1_tls_server;
             delete expected.t1.app1.app1_certificate;
-            expected.t1.app1.serviceMain.serverTLS = { bigip: '/Common/clientssl' };
+            expected.t1.app1.app1.serverTLS = { bigip: '/Common/clientssl' };
             view.make_tls_client_profile = false;
             view.tls_client_profile_name = '/Common/serverssl';
             delete expected.t1.app1.app1_tls_client;
-            expected.t1.app1.serviceMain.clientTLS = { bigip: '/Common/serverssl' };
+            expected.t1.app1.app1.clientTLS = { bigip: '/Common/serverssl' };
 
             // existing caching, compression, and multiplex profiles
             delete expected.t1.app1.app1_http;
             view.make_http_profile = false;
             view.http_profile_name = '/Common/http1';
-            expected.t1.app1.serviceMain.profileHTTP = { bigip: '/Common/http1' };
+            expected.t1.app1.app1.profileHTTP = { bigip: '/Common/http1' };
             view.make_acceleration_profile = false;
             view.acceleration_profile_name = '/Common/caching1';
-            expected.t1.app1.serviceMain.profileHTTPAcceleration = { bigip: '/Common/caching1' };
+            expected.t1.app1.app1.profileHTTPAcceleration = { bigip: '/Common/caching1' };
             view.make_compression_profile = false;
             view.compression_profile_name = '/Common/compression1';
-            expected.t1.app1.serviceMain.profileHTTPCompression = { bigip: '/Common/compression1' };
+            expected.t1.app1.app1.profileHTTPCompression = { bigip: '/Common/compression1' };
             view.make_multiplex_profile = false;
             view.multiplex_profile_name = '/Common/oneconnect1';
-            expected.t1.app1.serviceMain.profileMultiplex = { bigip: '/Common/oneconnect1' };
+            expected.t1.app1.app1.profileMultiplex = { bigip: '/Common/oneconnect1' };
         });
         util.assertRendering(template, view, expected);
     });
@@ -188,30 +186,30 @@ describe(template, function () {
         before(() => {
             // default https virtual port
             view.virtual_port = 443;
-            expected.t1.app1.serviceMain.virtualPort = 443;
+            expected.t1.app1.app1.virtualPort = 443;
 
             // existing pool
             delete view.pool_members;
             view.make_pool = false;
             view.pool_name = '/Common/pool1';
             delete expected.t1.app1.app1_pool;
-            expected.t1.app1.serviceMain.pool = { bigip: '/Common/pool1' };
+            expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
 
             // snat automap
             view.snat_automap = true;
             delete expected.t1.app1.app1_snatpool;
-            expected.t1.app1.serviceMain.snat = 'auto';
+            expected.t1.app1.app1.snat = 'auto';
 
             // default caching, compression, and multiplex profiles
             delete view.acceleration_profile_name;
             view.make_acceleration_profile = true;
-            expected.t1.app1.serviceMain.profileHTTPAcceleration = 'basic';
+            expected.t1.app1.app1.profileHTTPAcceleration = 'basic';
             delete view.compression_profile_name;
             view.make_compression_profile = true;
-            expected.t1.app1.serviceMain.profileHTTPCompression = 'basic';
+            expected.t1.app1.app1.profileHTTPCompression = 'basic';
             delete view.multiplex_profile_name;
             view.make_multiplex_profile = true;
-            expected.t1.app1.serviceMain.profileMultiplex = 'basic';
+            expected.t1.app1.app1.profileMultiplex = 'basic';
         });
         util.assertRendering(template, view, expected);
     });

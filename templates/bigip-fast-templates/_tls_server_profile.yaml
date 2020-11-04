@@ -1,0 +1,62 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_tls_server:
+    title: TLS Server
+    description: Enable TLS server to decrypt client-side connections.
+    type: boolean
+    default: true
+  make_tls_server_profile:
+    title: Automatically manage the TLS server profile
+    type: boolean
+    default: true
+  tls_server_profile_name:
+    title: Specify the name of an existing BIG-IP clientssl profile.
+    description: TLS server profiles are of type "ltm clientssl" on BIG-IP.
+    enumFromBigip: ltm/profile/client-ssl
+    default: "/Common/clientssl"
+  tls_cert_name:
+    title: Specify the name of an existing BIG-IP SSL certificate.
+    enumFromBigip: sys/crypto/cert
+    default: "/Common/default.crt"
+  tls_key_name:
+    title: Specify the name of an existing BIG-IP SSL key.
+    enumFromBigip: sys/crypto/key
+    default: "/Common/default.key"
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_tls_server}}
+          {{#make_tls_server_profile}}
+            "{{app_name}}_tls_server": {
+              "class": "TLS_Server",
+              "certificates": [{ "certificate": "{{app_name}}_certificate" }]
+            },
+            "{{app_name}}_certificate": {
+              "class": "Certificate",
+              "certificate": { "bigip": "{{tls_cert_name}}" },
+              "privateKey": { "bigip": "{{tls_key_name}}" }
+            },
+            "{{app_name}}": {
+              "class": "Service_HTTPS",
+              "serverTLS": "{{app_name}}_tls_server",
+            }
+          {{/make_tls_server_profile}}
+          {{^make_tls_server_profile}}
+            "{{app_name}}": {
+              "class": "Service_HTTPS",
+              "serverTLS": {
+                "bigip": "{{tls_server_profile_name}}"
+              }
+            }
+          {{/make_tls_server_profile}}
+        {{/enable_tls_server}}
+        {{^enable_tls_server}}
+          "{{app_name}}": {
+            "class": "Service_HTTP"
+          }
+        {{/enable_tls_server}}
+      }
+    }
+  }

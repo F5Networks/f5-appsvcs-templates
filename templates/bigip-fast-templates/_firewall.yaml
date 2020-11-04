@@ -1,0 +1,73 @@
+contentType: application/json
+bigipHideTemplate: true
+bigipDependencies:
+  - afm
+definitions:
+  enable_firewall:
+    title: Firewall
+    type: boolean
+    default: false
+  firewall_allow_list:
+    title: Specify IP addresses or networks that are allowed to access your application.
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+    default: []
+  log_profile_names:
+    title: Choose one or more security log profiles
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      enumFromBigip: security/log/profile
+    default: []
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_firewall}}
+          "{{app_name}}_fw_allow_list": {
+            "class": "Firewall_Address_List",
+            "addresses": {{firewall_allow_list}}
+          },
+          "{{app_name}}_fw_rules": {
+            "class": "Firewall_Rule_List",
+            "rules": [
+              {
+                "protocol": "tcp",
+                "name": "tcpAllow",
+                "loggingEnabled": true,
+                "source": {
+                  "addressLists": [
+                    {
+                      "use": "{{app_name}}_fw_allow_list"
+                    }
+                  ]
+                },
+                "action": "accept"
+              }
+            ]
+          },
+          "{{app_name}}_fw_policy": {
+            "class": "Firewall_Policy",
+            "rules": [
+                {
+                    "use": "{{app_name}}_fw_rules"
+                }
+            ]
+          },
+          "{{app_name}}": {
+            "policyFirewallEnforced": {
+              "use": "{{app_name}}_fw_policy"
+            },
+            "securityLogProfiles": [
+              {{#log_profile_names}}
+                { "use": {{ . }} },
+              {{/log_profile_names}}
+            ]
+          }
+        {{/enable_firewall}}
+      }
+    }
+  }

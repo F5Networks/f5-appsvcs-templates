@@ -9,8 +9,6 @@ const util = require('./util');
 const template = 'templates/bigip-fast-templates/dns.yaml';
 
 const view = {
-    title: '',
-    tls_prereq: '',
     tenant_name: 't1',
     app_name: 'app1',
 
@@ -58,7 +56,7 @@ const expected = {
         app1: {
             class: 'Application',
             template: 'generic',
-            app1_TCP: {
+            app1_tcp: {
                 class: 'Service_TCP',
                 virtualAddresses: [view.virtual_address],
                 virtualPort: view.virtual_port,
@@ -76,7 +74,7 @@ const expected = {
                     }
                 ]
             },
-            app1_UDP: {
+            app1_udp: {
                 class: 'Service_UDP',
                 virtualAddresses: [view.virtual_address],
                 virtualPort: view.virtual_port,
@@ -152,22 +150,22 @@ describe(template, function () {
         before(() => {
             // default https virtual port
             delete view.virtual_port;
-            expected.t1.app1.app1_TCP.virtualPort = 53;
-            expected.t1.app1.app1_UDP.virtualPort = 53;
+            expected.t1.app1.app1_tcp.virtualPort = 53;
+            expected.t1.app1.app1_udp.virtualPort = 53;
 
             // existing pool
             delete view.pool_members;
             view.make_pool = false;
             view.pool_name = '/Common/pool1';
             delete expected.t1.app1.app1_pool;
-            expected.t1.app1.app1_TCP.pool = { bigip: '/Common/pool1' };
-            expected.t1.app1.app1_UDP.pool = { bigip: '/Common/pool1' };
+            expected.t1.app1.app1_tcp.pool = { bigip: '/Common/pool1' };
+            expected.t1.app1.app1_udp.pool = { bigip: '/Common/pool1' };
 
             // snat automap
             view.snat_automap = true;
             delete expected.t1.app1.app1_snatpool;
-            expected.t1.app1.app1_TCP.snat = 'auto';
-            expected.t1.app1.app1_UDP.snat = 'auto';
+            expected.t1.app1.app1_tcp.snat = 'auto';
+            expected.t1.app1.app1_udp.snat = 'auto';
         });
         util.assertRendering(template, view, expected);
     });
