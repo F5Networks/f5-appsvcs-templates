@@ -202,7 +202,7 @@ const view = {
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
-    log_profile_names: ['log-local']
+    log_profile_names: ['log local']
 };
 
 const expected = {
@@ -237,7 +237,7 @@ const expected = {
                 },
                 securityLogProfiles: [
                     {
-                        use: 'log-local'
+                        bigip: 'log local'
                     }
                 ]
             },
@@ -263,12 +263,16 @@ const expected = {
                     '11.0.0.0/8'
                 ]
             },
+            default_fw_deny_list: {
+                class: 'Firewall_Address_List',
+                addresses: ['0.0.0.0/0']
+            },
             app1_fw_rules: {
                 class: 'Firewall_Rule_List',
                 rules: [
                     {
                         protocol: 'tcp',
-                        name: 'tcpAllow',
+                        name: 'acceptTcpPackets',
                         loggingEnabled: true,
                         source: {
                             addressLists: [
@@ -278,6 +282,19 @@ const expected = {
                             ]
                         },
                         action: 'accept'
+                    },
+                    {
+                        protocol: 'any',
+                        name: 'dropPackets',
+                        loggingEnabled: true,
+                        source: {
+                            addressLists: [
+                                {
+                                    use: 'default_fw_deny_list'
+                                }
+                            ]
+                        },
+                        action: 'drop'
                     }
                 ]
             },

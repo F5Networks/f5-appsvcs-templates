@@ -8,7 +8,7 @@ stages:
 coverage:
     stage: test_build
     tags:
-        - docker-executor
+        - cm-official-docker-executor
     script:
         - npm ci
         - npm run lint
@@ -34,7 +34,7 @@ audit_packages:
     stage: test_build
     allow_failure: true
     tags:
-        - docker-executor
+        - cm-official-docker-executor
     script:
         - npm ci && npm audit --production
 
