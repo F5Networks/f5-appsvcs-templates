@@ -1,4 +1,4 @@
-image: node:13-buster
+image: $ARTIFACTORY_URL/dockerhub-remote/node:13-buster
 
 stages:
     - test_build
