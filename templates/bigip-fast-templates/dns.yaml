@@ -8,6 +8,8 @@ allOf:
   - $ref: "_pool_dns.yaml#"
   - $ref: "_monitor_dns.yaml#"
   - $ref: "_irule_dns.yaml#"
+anyOf:
+  - $ref: "_firewall_dns.yaml#"
 template: |
   {
     "{{tenant_name}}": {

@@ -2,8 +2,12 @@
 ## Added
 * GUI: Support Markdown in schema descriptions
 * GUI: Clicking on an application name in the Application List tab now modifies the application
-* bigip-fast-templates: Add Sharepoint template
-* bigip-fast-templates: Add Exchange template
+* bigip-fast-templates: Add Microsoft Sharepoint template
+* bigip-fast-templates: Add Microsoft Exchange template
+* bigip-fast-templates: Add Microsoft IIS template
+* bigip-fast-templates: Add SMTP template
+* bigip-fast-templates: Add LDAP template
+* bigip-fast-templates: Add firewall feature to TCP and HTTP templates
 * Allow hiding templates from REST/GUI with bigipHideTemplate template property
 * Allow specifying a minimum AS3 version for a given template (bigipMinimumAS3 template property)
 

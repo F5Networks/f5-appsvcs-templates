@@ -44,7 +44,12 @@ const view = {
 
     // irule
     tcp_irule_names: ['example_tcp_irule'],
-    udp_irule_names: ['example_udp_irule']
+    udp_irule_names: ['example_udp_irule'],
+
+    // firewall
+    enable_firewall: true,
+    firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
+    log_profile_names: ['log local']
 };
 
 const expected = {
@@ -72,6 +77,14 @@ const expected = {
                     {
                         bigip: 'example_tcp_irule'
                     }
+                ],
+                policyFirewallEnforced: {
+                    use: 'app1_fw_policy'
+                },
+                securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    }
                 ]
             },
             app1_udp: {
@@ -85,6 +98,14 @@ const expected = {
                 iRules: [
                     {
                         bigip: 'example_udp_irule'
+                    }
+                ],
+                policyFirewallEnforced: {
+                    use: 'app1_fw_policy'
+                },
+                securityLogProfiles: [
+                    {
+                        bigip: 'log local'
                     }
                 ]
             },
@@ -122,6 +143,69 @@ const expected = {
             app1_snatpool: {
                 class: 'SNAT_Pool',
                 snatAddresses: view.snat_addresses
+            },
+            app1_fw_allow_list: {
+                class: 'Firewall_Address_List',
+                addresses: [
+                    '10.0.0.0/8',
+                    '11.0.0.0/8'
+                ]
+            },
+            default_fw_deny_list: {
+                class: 'Firewall_Address_List',
+                addresses: ['0.0.0.0/0']
+            },
+            app1_fw_rules: {
+                class: 'Firewall_Rule_List',
+                rules: [
+                    {
+                        protocol: 'udp',
+                        name: 'acceptUdpPackets',
+                        loggingEnabled: true,
+                        source: {
+                            addressLists: [
+                                {
+                                    use: 'app1_fw_allow_list'
+                                }
+                            ]
+                        },
+                        action: 'accept'
+                    },
+                    {
+                        protocol: 'tcp',
+                        name: 'acceptTcpPackets',
+                        loggingEnabled: true,
+                        source: {
+                            addressLists: [
+                                {
+                                    use: 'app1_fw_allow_list'
+                                }
+                            ]
+                        },
+                        action: 'accept'
+                    },
+                    {
+                        protocol: 'any',
+                        name: 'dropPackets',
+                        loggingEnabled: true,
+                        source: {
+                            addressLists: [
+                                {
+                                    use: 'default_fw_deny_list'
+                                }
+                            ]
+                        },
+                        action: 'drop'
+                    }
+                ]
+            },
+            app1_fw_policy: {
+                class: 'Firewall_Policy',
+                rules: [
+                    {
+                        use: 'app1_fw_rules'
+                    }
+                ]
             }
         }
     }

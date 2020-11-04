@@ -1,7 +1,5 @@
 contentType: application/json
 bigipHideTemplate: true
-bigipDependencies:
-  - afm
 definitions:
   enable_firewall:
     title: Firewall
@@ -39,6 +37,19 @@ template: |
             "class": "Firewall_Rule_List",
             "rules": [
               {
+                "protocol": "udp",
+                "name": "acceptUdpPackets",
+                "loggingEnabled": true,
+                "source": {
+                  "addressLists": [
+                    {
+                      "use": "{{app_name}}_fw_allow_list"
+                    }
+                  ]
+                },
+                "action": "accept"
+              },
+              {
                 "protocol": "tcp",
                 "name": "acceptTcpPackets",
                 "loggingEnabled": true,
@@ -74,7 +85,17 @@ template: |
                 }
             ]
           },
-          "{{app_name}}": {
+          "{{app_name}}_tcp": {
+            "policyFirewallEnforced": {
+              "use": "{{app_name}}_fw_policy"
+            },
+            "securityLogProfiles": [
+              {{#log_profile_names}}
+                { "bigip": {{ . }} },
+              {{/log_profile_names}}
+            ]
+          },
+          "{{app_name}}_udp": {
             "policyFirewallEnforced": {
               "use": "{{app_name}}_fw_policy"
             },
