@@ -2,11 +2,12 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   make_http_profile:
-    title: Automatically manage the HTTP profile
+    title: Generate an HTTP Profile
+    description: Uncheck to use an existing BIG-IP HTTP profile.
     type: boolean
     default: true
   http_profile_name:
-    title: Specify the name of an existing BIG-IP HTTP profile.
+    title: Select an existing BIG-IP HTTP profile.
     enumFromBigip: ltm/profile/http
     default: "/Common/http"
   x_forwarded_for:
@@ -23,11 +24,12 @@ definitions:
     type: boolean
     default: true
   make_acceleration_profile:
-    title: Automatically manage the Web Acceleration profile
+    title: Generate a Web Acceleration Profile
+    description: Uncheck to use an existing BIG-IP Web Acceleration profile.
     type: boolean
     default: true
   acceleration_profile_name:
-    title: Specify the name of an existing BIG-IP web acceleration profile.
+    title: Select an existing BIG-IP web acceleration profile
     enumFromBigip: ltm/profile/web-acceleration
     default: "/Common/webacceleration"
   enable_compression:
@@ -35,11 +37,12 @@ definitions:
     type: boolean
     default: true
   make_compression_profile:
-    title: Automatically manage the HTTP Compression profile
+    title: Generate an HTTP Compression Profile
+    description: Uncheck to use an existing BIG-IP HTTP Compression Profile.
     type: boolean
     default: true
   compression_profile_name:
-    title: Specify the name of an existing BIG-IP HTTP compression profile.
+    title: Select an existing BIG-IP HTTP compression profile
     enumFromBigip: ltm/profile/http-compression
     default: "/Common/httpcompression"
   enable_multiplex:
@@ -50,11 +53,12 @@ definitions:
     type: boolean
     default: true
   make_multiplex_profile:
-    title: Automatically manage the Multiplex (OneConnect) profile
+    title: Generate a Multiplex (OneConnect) profile
+    description: Uncheck to use an existing BIG-IP OneConnect profile.
     type: boolean
     default: true
   multiplex_profile_name:
-    title: Specify the name of an existing BIG-IP OneConnect profile
+    title: Select an existing BIG-IP OneConnect profile
     enumFromBigip: ltm/profile/one-connect
     default: "/Common/oneconnect"
 template: |

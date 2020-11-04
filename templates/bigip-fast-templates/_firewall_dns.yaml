@@ -6,7 +6,7 @@ definitions:
     type: boolean
     default: false
   firewall_allow_list:
-    title: Specify IP addresses or networks that are allowed to access your application.
+    title: IP addresses or networks that are allowed to access your application.
     type: array
     uniqueItems: true
     items:
