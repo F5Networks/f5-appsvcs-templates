@@ -1,0 +1,26 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_redirect:
+    title: HTTP Redirect
+    description: Redirect requests from port 80 to this virtual server
+    type: boolean
+    default: true
+  enable_tls_server:
+    type: boolean
+    default: true
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}": {
+          {{#enable_tls_server}}
+            "redirect80": {{enable_redirect}}
+          {{/enable_tls_server}}
+          {{^enable_tls_server}}
+            "redirect80": false
+          {{/enable_tls_server}}
+        }
+      }
+    }
+  }

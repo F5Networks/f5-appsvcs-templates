@@ -1,0 +1,52 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_pool:
+    type: boolean
+    default: true
+  make_pool:
+    type: boolean
+    default: true
+  enable_monitor:
+    title: Pool Monitor
+    description: Determine the availability and performance of devices, links, and services
+      on a network.
+    type: boolean
+    default: true
+  make_monitor:
+    title: Automatically manage the pool monitor.
+    type: boolean
+    default: true
+  monitor_name:
+    title: Specify the name of an existing BIG-IP monitor.
+    description: Monitors are used to determine the health of the application on each
+      server. If an application instance does not respond or responds incorrectly, the
+      system will cease to send client requests to that web server. The system will
+      continue to monitor the instance and will begin sending requests once the application
+      responds correctly.
+    type: string
+    enumFromBigip: ltm/monitor/tcp
+    default: /Common/tcp
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_pool}}
+          {{#make_pool}}
+            "{{app_name}}_pool": {
+              {{#enable_monitor}}
+                {{#make_monitor}}
+                  "monitors": [ "tcp" ]
+                {{/make_monitor}}
+                {{^make_monitor}}
+                  "monitors": [{
+                    "bigip": "{{monitor_name}}"
+                  }]
+                {{/make_monitor}}
+              {{/enable_monitor}}
+            }
+          {{/make_pool}}
+        {{/enable_pool}}
+      }
+    }
+  }

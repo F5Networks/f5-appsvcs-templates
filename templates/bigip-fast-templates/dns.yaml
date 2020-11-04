@@ -1,219 +1,26 @@
 contentType: application/json
-definitions:
-  title:
-    title: ''
-    description: '# DNS Application Template'
-    format: info
-  tenant_name: {}
-  app_name: {}
-  virtual_address: {}
-  virtual_port: {}
-  enable_pool: {}
-  make_pool: {}
-  pool_name: {}
-  pool_members: {}
-  load_balancing_mode: {}
-  slow_ramp_time: {}
-  enable_monitor: {}
-  make_monitor: {}
-  monitor_name:
-    enumFromBigip: 'ltm/monitor/dns'
-  monitor_interval: {}
-  monitor_queryName:
-    title: Specify the host name for the monitor to request (queryName).
-    type: string
-    default: ''
-  monitor_queryType:
-    title: Specify the DNS record type (queryType).
-    type: string
-    enum:
-      - 'a'
-      - 'aaaa'
-    default: 'a'
-  monitor_receive:
-    title: Specify the IP address that is expected to be returned.
-    type: string
-    default: ''
-  enable_snat: {}
-  snat_automap: {}
-  make_snatpool: {}
-  snatpool_name: {}
-  snat_addresses: {}
-  common_tcp_profile: {}
-  make_tcp_profile: {}
-  tcp_topology: {}
-  tcp_profile_name: {}
-  make_tcp_ingress_profile: {}
-  tcp_ingress_topology: {}
-  tcp_ingress_profile_name: {}
-  make_tcp_egress_profile: {}
-  tcp_egress_topology: {}
-  tcp_egress_profile_name: {}
-  tcp_irule_names:
-    title: TCP iRules
-    description: Specify the name of one or more iRules to attach to the TCP virtual server.
-  udp_irule_names:
-    title: UDP iRules
-    description: Specify the name of one or more iRules to attach to the UDP virtual server.
-  app_pool_def:
-    template: |
-      {{#enable_pool:f5:enable_pool}}
-        {{#make_pool:f5:make_pool}}
-          "{{app_name:f5:app_name}}_pool": {
-            "class": "Pool",
-            "members": {{pool_members:f5_pool_members:pool_members_53}},
-            "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
-            "slowRampTime": {{slow_ramp_time:f5:slow_ramp_time}},
-            {{#enable_monitor:f5:enable_monitor}}
-              {{#make_monitor:f5:make_monitor}}
-                "monitors": [{
-                  "use": "{{app_name:f5:app_name}}_monitor"
-                }]
-              {{/make_monitor:f5:make_monitor}}
-              {{^make_monitor:f5:make_monitor}}
-                "monitors": [{
-                  "bigip": "{{monitor_name:f5:monitor_name}}"
-                }]
-              {{/make_monitor:f5:make_monitor}}
-            {{/enable_monitor:f5:enable_monitor}}
-          },
-        {{/make_pool:f5:make_pool}}
-      {{/enable_pool:f5:enable_pool}}
-  app_monitor_def:
-    template: |
-      {{#enable_pool:f5:enable_pool}}
-        {{#make_pool:f5:make_pool}}
-          {{#enable_monitor:f5:enable_monitor}}
-            {{#make_monitor:f5:make_monitor}}
-              "{{app_name:f5:app_name}}_monitor": {
-                "class": "Monitor",
-                "monitorType": "dns",
-                "interval": {{monitor_interval:f5:monitor_interval}},
-                "timeout": 181,
-                "queryName": "{{monitor_queryName}}",
-                "queryType": "{{monitor_queryType}}",
-                "receive": "{{monitor_receive}}"
-              },
-            {{/make_monitor:f5:make_monitor}}
-          {{/enable_monitor:f5:enable_monitor}}
-        {{/make_pool:f5:make_pool}}
-      {{/enable_pool:f5:enable_pool}}
-  app_snatpool_def:
-    template: |
-      {{#enable_snat:f5:enable_snat}}
-        {{^snat_automap:f5:snat_automap}}
-          {{#make_snatpool:f5:make_snatpool}}
-            "{{app_name:f5:app_name}}_snatpool": {
-              "class": "SNAT_Pool",
-              "snatAddresses": {{snat_addresses:f5:snat_addresses}}
-            },
-          {{/make_snatpool:f5:make_snatpool}}
-        {{/snat_automap:f5:snat_automap}}
-      {{/enable_snat:f5:enable_snat}}
-  service_pool_def:
-    template: |
-      {{#enable_pool:f5:enable_pool}}
-        {{#make_pool:f5:make_pool}}
-          "pool": "{{app_name:f5:app_name}}_pool",
-        {{/make_pool:f5:make_pool}}
-        {{^make_pool:f5:make_pool}}
-          "pool": {
-            "bigip": "{{pool_name:f5:pool_name}}"
-          },
-        {{/make_pool:f5:make_pool}}
-      {{/enable_pool:f5:enable_pool}}
-  service_snat_def:
-    template: |
-      {{#enable_snat:f5:enable_snat}}
-        {{#snat_automap:f5:snat_automap}}
-          "snat": "auto",
-        {{/snat_automap:f5:snat_automap}}
-        {{^snat_automap:f5:snat_automap}}
-          {{#make_snatpool:f5:make_snatpool}}
-            "snat": {
-              "use": "{{app_name:f5:app_name}}_snatpool"
-            },
-          {{/make_snatpool:f5:make_snatpool}}
-          {{^make_snatpool:f5:make_snatpool}}
-            "snat": {
-              "bigip": "{{snatpool_name:f5:snatpool_name}}"
-            },
-          {{/make_snatpool:f5:make_snatpool}}
-        {{/snat_automap:f5:snat_automap}}
-      {{/enable_snat:f5:enable_snat}}
-  service_tcp_def:
-    template: |
-      {{#common_tcp_profile:f5:common_tcp_profile}}
-        {{#make_tcp_profile:f5:make_tcp_profile}}
-          "profileTCP": "{{tcp_topology:f5:tcp_topology}}",
-        {{/make_tcp_profile:f5:make_tcp_profile}}
-        {{^make_tcp_profile:f5:make_tcp_profile}}
-          "profileTCP": {
-            "bigip": "{{tcp_profile_name:f5:tcp_profile_name}}"
-          },
-        {{/make_tcp_profile:f5:make_tcp_profile}}
-      {{/common_tcp_profile:f5:common_tcp_profile}}
-      {{^common_tcp_profile:f5:common_tcp_profile}}
-      "profileTCP": {
-          {{#make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
-            "ingress": "{{tcp_ingress_topology:f5:tcp_ingress_topology}}",
-          {{/make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
-          {{^make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
-            "ingress": {
-              "bigip": "{{tcp_ingress_profile_name:f5:tcp_ingress_profile_name}}"
-            },
-          {{/make_tcp_ingress_profile:f5:make_tcp_ingress_profile}}
-          {{#make_tcp_egress_profile:f5:make_tcp_egress_profile}}
-            "egress": "{{tcp_egress_topology:f5:tcp_egress_topology}}"
-          {{/make_tcp_egress_profile:f5:make_tcp_egress_profile}}
-          {{^make_tcp_egress_profile:f5:make_tcp_egress_profile}}
-            "egress": {
-              "bigip": "{{tcp_egress_profile_name:f5:tcp_egress_profile_name}}"
-            }
-          {{/make_tcp_egress_profile:f5:make_tcp_egress_profile}}
-       },
-      {{/common_tcp_profile:f5:common_tcp_profile}}
-parameters:
-  virtual_port: 53
-  monitor_name: /Common/dns
+title: DNS Application Template
+description: Configure high availability and optimization for DNS implementations.
+allOf:
+  - $ref: "_as3.yaml#"
+  - $ref: "_virtual_dns.yaml#"
+  - $ref: "_snat_dns.yaml#"
+  - $ref: "_pool_dns.yaml#"
+  - $ref: "_monitor_dns.yaml#"
+  - $ref: "_irule_dns.yaml#"
 template: |
-  {{title}}
   {
-    "class": "ADC",
-    "schemaVersion": "3.0.0",
-    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
-    "{{tenant_name:f5:tenant_name}}": {
-      "class": "Tenant",
-      "{{app_name:f5:app_name}}": {
-        "class": "Application",
-        "template": "generic",
-        {{> app_pool_def}}
-        {{> app_monitor_def}}
-        {{> app_snatpool_def}}
-        "{{app_name:f5:app_name}}_TCP": {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}_tcp": {
           "class": "Service_TCP",
-          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
-          "virtualPort": {{virtual_port:f5:virtual_port}},
-          {{> service_pool_def}}
-          {{> service_snat_def}}
-          {{> service_tcp_def}}
-          "iRules": [
-            {{#tcp_irule_names:f5:irule_names}}
-            { "bigip": {{ . }} },
-            {{/tcp_irule_names:f5:irule_names}}
-          ]
+          "profileTCP": {
+            "ingress": "wan",
+            "egress": "lan"
+          }
         },
-        "{{app_name:f5:app_name}}_UDP": {
-          "class": "Service_UDP",
-          "virtualAddresses": ["{{virtual_address:f5:virtual_address}}"],
-          "virtualPort": {{virtual_port:f5:virtual_port}},
-          {{> service_pool_def}}
-          {{> service_snat_def}}
-          "iRules": [
-            {{#udp_irule_names:f5:irule_names}}
-            { "bigip": {{ . }} },
-            {{/udp_irule_names:f5:irule_names}}
-          ]
+        "{{app_name}}_udp": {
+          "class": "Service_UDP"
         }
       }
     }

@@ -1,0 +1,38 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_persistence:
+    title: Persistence
+    description: Ensures that client requests are directed to the same pool member throughout
+      the life of a session or during subsequent sessions.
+    type: boolean
+    default: true
+  persistence_type:
+    title: Specify the type of persistence.
+    default: cookie
+  enable_fallback_persistence:
+    title: Fallback Persistence
+    description: Create a secondary, or fallback, persistence record for each new client connection.
+    type: boolean
+    default: true
+  fallback_persistence_type:
+    title: Specify the type of fallback persistence.
+    default: source-address
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}": {
+          {{#enable_persistence}}
+            "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
+            {{#enable_fallback_persistence}}
+              "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
+            {{/enable_fallback_persistence}}
+          {{/enable_persistence}}
+          {{^enable_persistence}}
+            "persistenceMethods": [],
+          {{/enable_persistence}}
+        }
+      }
+    }
+  }

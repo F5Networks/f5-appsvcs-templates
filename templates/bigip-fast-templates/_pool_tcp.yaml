@@ -1,0 +1,82 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_pool:
+    title: Create Pool
+    description: A *pool* is a logical set of devices, such as web servers, that you
+      group together to receive and process traffic.
+    type: boolean
+    default: true
+  make_pool:
+    title: Automatically manage the pool
+    type: boolean
+    default: true
+  pool_name:
+    title: Specify the name of an existing BIG-IP pool.
+    type: string
+    enumFromBigip: ltm/pool
+    default: ''
+  pool_members:
+    title: Pool Members
+    description: Add the addresses of the servers in the pool.
+    type: array
+    uniqueItems: true
+    default: ['10.0.0.1']
+    items:
+      type: string
+      default: '10.0.0.2'
+  pool_port:
+    title: Specify the port number for the servers in the pool.
+    type: integer
+    minimum: 0
+    maximum: 65535
+    default: 80
+  load_balancing_mode:
+    title: Specify the load balancing method.
+    description: A *load balancing method* is an algorithm that the BIG-IP system uses
+      to select a pool member for processing a request. F5 recommends the Least Connections
+      load balancing method, where new connections are routed to the node that has the
+      least number of current connections. This is ideal for environments in which pool
+      members have similar performance and capacity capabilities.
+    type: string
+  slow_ramp_time:
+    title: Specify the slow ramp time. (recommended value is 300 seconds)
+    description: Slowly increases the number of connection requests that are load balanced
+      to a new pool member.
+    type: integer
+    minimum: 0
+    maximum: 65535
+    default: 300
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_pool}}
+          {{#make_pool}}
+            "{{app_name}}_pool": {
+              "class": "Pool",
+              "members": [
+                {
+                  "serverAddresses": {{pool_members}},
+                  "servicePort": {{pool_port}},
+                  "shareNodes": true
+                }
+              ],
+              "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+              "slowRampTime": {{slow_ramp_time}}
+            },
+            "{{app_name}}": {
+              "pool": "{{app_name}}_pool"
+            }
+          {{/make_pool}}
+          {{^make_pool}}
+            "{{app_name}}": {
+              "pool": {
+                "bigip": "{{pool_name}}"
+              }
+            }
+          {{/make_pool}}
+        {{/enable_pool}}
+      }
+    }
+  }

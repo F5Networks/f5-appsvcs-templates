@@ -1,0 +1,30 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  virtual_address:
+    title: Specify the IP address for the virtual server.
+    description: This IP address, combined with the port you specify below, becomes
+      the BIG-IP virtual server address and port, which clients use to access the application.
+      The system uses this IP:Port for distributing requests to the web servers.
+    type: string
+    oneOf:
+    - format: ipv4
+    - format: ipv6
+    default: '10.1.1.1'
+  virtual_port:
+    title: Specify the port for the virtual server.
+    type: integer
+    minimum: 0
+    maximum: 65535
+    default: 443
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}": {
+          "virtualAddresses": ["{{virtual_address}}"],
+          "virtualPort": {{virtual_port}}
+        }
+      }
+    }
+  }

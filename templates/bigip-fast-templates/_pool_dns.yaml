@@ -1,0 +1,109 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_pool:
+    title: Create Pool
+    description: A *pool* is a logical set of devices, such as web servers, that you
+      group together to receive and process traffic.
+    type: boolean
+    default: true
+  make_pool:
+    title: Automatically manage the pool
+    type: boolean
+    default: true
+  pool_name:
+    title: Specify the name of an existing BIG-IP pool.
+    type: string
+    enumFromBigip: ltm/pool
+    default: ''
+  pool_members:
+    title: Pool Members
+    description: Add the addresses of the servers in the pool. Use a connection limit
+      of 0 for unlimited connections.
+    type: array
+    uniqueItems: true
+    default: []
+    items:
+      type: object
+      properties:
+        serverAddresses:
+          title: Server Address
+          type: array
+          uniqueItems: true
+          default: ['10.0.0.1']
+          items:
+            type: string
+            default: '10.0.0.2'
+        servicePort:
+          title: Server Port
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 80
+        connectionLimit:
+          title: Connection Limit
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+        priorityGroup:
+          title: Priority Group
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+        shareNodes:
+          title: Share Node
+          type: boolean
+          default: true
+  load_balancing_mode:
+    title: Specify the load balancing method.
+    description: A *load balancing method* is an algorithm that the BIG-IP system uses
+      to select a pool member for processing a request. F5 recommends the Least Connections
+      load balancing method, where new connections are routed to the node that has the
+      least number of current connections. This is ideal for environments in which pool
+      members have similar performance and capacity capabilities.
+    type: string
+  slow_ramp_time:
+    title: Specify the slow ramp time. (recommended value is 300 seconds)
+    description: Slowly increases the number of connection requests that are load balanced
+      to a new pool member.
+    type: integer
+    minimum: 0
+    maximum: 65535
+    default: 300
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_pool}}
+          {{#make_pool}}
+            "{{app_name}}_pool": {
+              "class": "Pool",
+              "members": {{pool_members}},
+              "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+              "slowRampTime": {{slow_ramp_time}}
+            },
+            "{{app_name}}_tcp": {
+              "pool": "{{app_name}}_pool",
+            },
+            "{{app_name}}_udp": {
+              "pool": "{{app_name}}_pool",
+            }
+          {{/make_pool}}
+          {{^make_pool}}
+            "{{app_name}}_tcp": {
+              "pool": {
+                "bigip": "{{pool_name}}"
+              }
+            },
+            "{{app_name}}_udp": {
+              "pool": {
+                "bigip": "{{pool_name}}"
+              }
+            }
+          {{/make_pool}}
+        {{/enable_pool}}
+      }
+    }
+  }

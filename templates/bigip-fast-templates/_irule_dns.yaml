@@ -1,0 +1,40 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  tcp_irule_names:
+    title: Specify the name of one or more iRules to attach to the TCP virtual server.
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      enumFromBigip: ltm/rule
+    default: []
+  udp_irule_names:
+    title: Specify the name of one or more iRules to attach to the UDP virtual server.
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      enumFromBigip: ltm/rule
+    default: []
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}_tcp": {
+          "iRules": [
+            {{#tcp_irule_names}}
+            { "bigip": {{ . }} },
+            {{/tcp_irule_names}}
+          ]
+        },
+        "{{app_name}}_udp": {
+          "iRules": [
+            {{#udp_irule_names}}
+            { "bigip": {{ . }} },
+            {{/udp_irule_names}}
+          ]
+        }
+      }
+    }
+  }

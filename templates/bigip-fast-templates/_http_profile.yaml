@@ -1,0 +1,114 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  make_http_profile:
+    title: Automatically manage the HTTP profile
+    type: boolean
+    default: true
+  http_profile_name:
+    title: Specify the name of an existing BIG-IP HTTP profile.
+    enumFromBigip: ltm/profile/http
+    default: "/Common/http"
+  x_forwarded_for:
+    title: Insert the x-forwarded-for header
+    description: Inserts the original client IP address in an HTTP header and configures
+      the web server receiving the request to log the client IP address instead of the
+      SNAT address.
+    type: boolean
+    default: true
+  enable_acceleration:
+    title: Web Acceleration or Caching
+    description: Web Acceleration or web caching will be enabled depending on the BIG-IP
+      license.
+    type: boolean
+    default: true
+  make_acceleration_profile:
+    title: Automatically manage the Web Acceleration profile
+    type: boolean
+    default: true
+  acceleration_profile_name:
+    title: Specify the name of an existing BIG-IP web acceleration profile.
+    enumFromBigip: ltm/profile/web-acceleration
+    default: "/Common/webacceleration"
+  enable_compression:
+    title: HTTP Compression
+    type: boolean
+    default: true
+  make_compression_profile:
+    title: Automatically manage the HTTP Compression profile
+    type: boolean
+    default: true
+  compression_profile_name:
+    title: Specify the name of an existing BIG-IP HTTP compression profile.
+    enumFromBigip: ltm/profile/http-compression
+    default: "/Common/httpcompression"
+  enable_multiplex:
+    title: Connection Multiplexing
+    description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize
+      the number of server-side TCP connections by making existing connections available
+      for reuse by other clients.
+    type: boolean
+    default: true
+  make_multiplex_profile:
+    title: Automatically manage the Multiplex (OneConnect) profile
+    type: boolean
+    default: true
+  multiplex_profile_name:
+    title: Specify the name of an existing BIG-IP OneConnect profile
+    enumFromBigip: ltm/profile/one-connect
+    default: "/Common/oneconnect"
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#make_http_profile}}
+          "{{app_name}}_http": {
+            "class": "HTTP_Profile",
+            "xForwardedFor": {{x_forwarded_for}}
+          },
+        {{/make_http_profile}}
+        "{{app_name}}": {
+          {{#make_http_profile}}
+            "profileHTTP": {
+              "use": "{{app_name}}_http"
+            },
+          {{/make_http_profile}}
+          {{^make_http_profile}}
+            "profileHTTP": {
+              "bigip": "{{http_profile_name}}"
+            },
+          {{/make_http_profile}}
+          {{#enable_acceleration}}
+            {{#make_acceleration_profile}}
+              "profileHTTPAcceleration": "basic",
+            {{/make_acceleration_profile}}
+            {{^make_acceleration_profile}}
+              "profileHTTPAcceleration": {
+                "bigip": "{{acceleration_profile_name}}"
+              },
+            {{/make_acceleration_profile}}
+          {{/enable_acceleration}}
+          {{#enable_compression}}
+            {{#make_compression_profile}}
+              "profileHTTPCompression": "basic",
+            {{/make_compression_profile}}
+            {{^make_compression_profile}}
+              "profileHTTPCompression": {
+                "bigip": "{{compression_profile_name}}"
+              },
+            {{/make_compression_profile}}
+          {{/enable_compression}}
+          {{#enable_multiplex}}
+            {{#make_multiplex_profile}}
+              "profileMultiplex": "basic"
+            {{/make_multiplex_profile}}
+            {{^make_multiplex_profile}}
+              "profileMultiplex": {
+                "bigip": "{{multiplex_profile_name}}"
+              }
+            {{/make_multiplex_profile}}
+          {{/enable_multiplex}}
+        }
+      }
+    }
+  }

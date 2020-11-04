@@ -1,0 +1,41 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_tls_client:
+    title: TLS Client
+    description: Enable TLS client to encrypt server-side connections.
+    type: boolean
+    default: false
+  make_tls_client_profile:
+    title: Automatically manage the TLS client profile
+    type: boolean
+    default: true
+  tls_client_profile_name:
+    title: Specify the name of an existing BIG-IP serverssl profile.
+    description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+    enumFromBigip: ltm/profile/server-ssl
+    default: "/Common/serverssl"
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_tls_client}}
+          {{#make_tls_client_profile}}
+            "{{app_name}}_tls_client": {
+              "class": "TLS_Client"
+            },
+            "{{app_name}}": {
+              "clientTLS": "{{app_name}}_tls_client"
+            }
+          {{/make_tls_client_profile}}
+          {{^make_tls_client_profile}}
+            "{{app_name}}": {
+              "clientTLS": {
+                "bigip": "{{tls_client_profile_name}}"
+              }
+            }
+          {{/make_tls_client_profile}}
+        {{/enable_tls_client}}
+      }
+    }
+  }
