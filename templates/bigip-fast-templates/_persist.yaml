@@ -8,7 +8,7 @@ definitions:
     type: boolean
     default: true
   persistence_type:
-    title: Specify the type of persistence.
+    title: Select the type of persistence
     default: cookie
   enable_fallback_persistence:
     title: Fallback Persistence
@@ -16,7 +16,7 @@ definitions:
     type: boolean
     default: true
   fallback_persistence_type:
-    title: Specify the type of fallback persistence.
+    title: Select the type of fallback persistence
     default: source-address
 template: |
   {

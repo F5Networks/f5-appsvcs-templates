@@ -7,20 +7,21 @@ definitions:
     type: boolean
     default: true
   make_tls_server_profile:
-    title: Automatically manage the TLS server profile
+    title: Generate the TLS server profile
+    description: Uncheck to use an existing BIG-IP TLS server profile.
     type: boolean
     default: true
   tls_server_profile_name:
-    title: Specify the name of an existing BIG-IP clientssl profile.
+    title: Select an existing BIG-IP clientssl profile
     description: TLS server profiles are of type "ltm clientssl" on BIG-IP.
     enumFromBigip: ltm/profile/client-ssl
     default: "/Common/clientssl"
   tls_cert_name:
-    title: Specify the name of an existing BIG-IP SSL certificate.
+    title: Select an existing BIG-IP SSL certificate
     enumFromBigip: sys/crypto/cert
     default: "/Common/default.crt"
   tls_key_name:
-    title: Specify the name of an existing BIG-IP SSL key.
+    title: Select an existing BIG-IP SSL key
     enumFromBigip: sys/crypto/key
     default: "/Common/default.key"
 template: |

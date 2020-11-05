@@ -13,11 +13,12 @@ definitions:
     type: boolean
     default: true
   make_snatpool:
-    title: Automatically manage the SNAT pool.
+    title: Generate the SNAT pool
+    description: Uncheck to use an existing BIG-IP SNAT Pool.
     type: boolean
     default: true
   snatpool_name:
-    title: Specify the name of an existing BIG-IP SNAT pool.
+    title: Enter the name of an existing BIG-IP SNAT pool.
     type: string
     enumFromBigip: ltm/snatpool
     default: ''

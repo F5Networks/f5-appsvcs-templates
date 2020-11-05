@@ -14,7 +14,8 @@ definitions:
     type: boolean
     default: true
   make_monitor:
-    title: Automatically manage the pool monitor.
+    title: Generate the Pool Monitor
+    description: Uncheck to use an existing BIG-IP Pool Monitor.
     type: boolean
     default: true
   monitor_name:

@@ -14,7 +14,8 @@ definitions:
     type: boolean
     default: true
   make_monitor:
-    title: Automatically manage the pool monitor.
+    title: Generate the Pool Monitor
+    description: Uncheck to use an existing BIG-IP Pool Monitor.
     type: boolean
     default: true
   monitor_name:
@@ -28,19 +29,20 @@ definitions:
     enumFromBigip: ltm/monitor/smtp
     default: /Common/smtp
   monitor_interval:
-    title: Specify the interval between monitor polls (in seconds).
+    title: Interval between monitor polls (in seconds)
     type: integer
     default: 30
   monitor_domain:
-    title: Specify the domain name for which the SMTP server will accept mail.
+    title: Domain name for the SMTP server to accept mail
     type: string
     default: ''
   monitor_username:
-    title: Specify the user account to use for health checks.
+    title: User account for health checks
+    description: A list of user accounts can be found on the BIG-IP under **System > Users**.
     type: string
     default: ''
   monitor_passphrase:
-    title: Specify the password to use with the user account for health checks.
+    title: Password to use with the user account for health checks
     type: string
     format: password
     contentEncoding: base64

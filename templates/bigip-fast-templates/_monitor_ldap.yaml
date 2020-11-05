@@ -14,7 +14,8 @@ definitions:
     type: boolean
     default: true
   make_monitor:
-    title: Automatically manage the pool monitor.
+    title: Generate the Pool Monitor
+    description: Uncheck to use an existing BIG-IP Pool Monitor.
     type: boolean
     default: true
   monitor_name:
@@ -28,25 +29,26 @@ definitions:
     enumFromBigip: ltm/monitor/ldap
     default: /Common/ldap
   monitor_interval:
-    title: Specify the interval between monitor polls (in seconds).
+    title: Interval between monitor polls (in seconds)
     type: integer
     default: 30
   monitor_username:
-    title: Specify the user account to use for health checks.
+    title: User account for health checks
+    description: A list of user accounts can be found on the BIG-IP under **System > Users**.
     type: string
     default: ''
   monitor_passphrase:
-    title: Specify the password to use with the user account for health checks.
+    title: Password for the user account for health checks
     type: string
     format: password
     contentEncoding: base64
     default: ''
   monitor_base:
-    title: Specify the directory level for the health monitor to search.
+    title: Directory level for the health monitor to search
     type: string
     default: ''
   monitor_filter:
-    title: Specify the search query to be used in the health check.
+    title: Search query to be used in the health check
     type: string
     default: ''
 template: |

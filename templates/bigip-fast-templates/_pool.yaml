@@ -8,11 +8,12 @@ definitions:
     type: boolean
     default: true
   make_pool:
-    title: Automatically manage the pool
+    title: Generate the Pool 
+    description: Uncheck to use an existing BIG-IP Pool.
     type: boolean
     default: true
   pool_name:
-    title: Specify the name of an existing BIG-IP pool.
+    title: Select an existing BIG-IP pool
     type: string
     enumFromBigip: ltm/pool
     default: ''
@@ -57,7 +58,7 @@ definitions:
           type: boolean
           default: true
   load_balancing_mode:
-    title: Specify the load balancing method.
+    title: Select a load balancing method
     description: A *load balancing method* is an algorithm that the BIG-IP system uses
       to select a pool member for processing a request. F5 recommends the Least Connections
       load balancing method, where new connections are routed to the node that has the
@@ -65,7 +66,7 @@ definitions:
       members have similar performance and capacity capabilities.
     type: string
   slow_ramp_time:
-    title: Specify the slow ramp time. (recommended value is 300 seconds)
+    title: Slow ramp time in seconds (recommended value is 300 seconds)
     description: Slowly increases the number of connection requests that are load balanced
       to a new pool member.
     type: integer

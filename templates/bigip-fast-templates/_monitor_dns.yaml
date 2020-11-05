@@ -14,11 +14,12 @@ definitions:
     type: boolean
     default: true
   make_monitor:
-    title: Automatically manage the pool monitor.
+    title: Generate the Pool Monitor
+    description: Uncheck to use an existing BIG-IP Pool Monitor.
     type: boolean
     default: true
   monitor_name:
-    title: Specify the name of an existing BIG-IP monitor.
+    title: Select an existing BIG-IP monitor
     description: Monitors are used to determine the health of the application on each
       server. If an application instance does not respond or responds incorrectly, the
       system will cease to send client requests to that web server. The system will
@@ -28,22 +29,22 @@ definitions:
     enumFromBigip: ltm/monitor/dns
     default: /Common/dns
   monitor_interval:
-    title: Specify the interval between monitor polls (in seconds).
+    title: Interval between monitor polls (in seconds)
     type: integer
     default: 30
   monitor_queryName:
-    title: Specify the host name for the monitor to request (queryName).
+    title: Host name for the monitor to request (queryName)
     type: string
     default: ''
   monitor_queryType:
-    title: Specify the DNS record type (queryType).
+    title: Select the DNS record type (queryType)
     type: string
     enum:
       - 'a'
       - 'aaaa'
     default: 'a'
   monitor_receive:
-    title: Specify the IP address that is expected to be returned.
+    title: IP address that is expected to be returned
     type: string
     default: ''
 template: |
