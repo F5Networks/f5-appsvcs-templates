@@ -13,6 +13,12 @@ allOf:
 anyOf:
   - {}
   - $ref: "_firewall.yaml#"
+definitions:
+  persistence_type:
+    default: source-address
+  enable_fallback_persistence:
+    type: boolean
+    default: false
 template: |
   {
     "{{tenant_name}}": {

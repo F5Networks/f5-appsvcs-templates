@@ -2,14 +2,14 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   tenant_name:
-    title: Specify the tenant name.
+    title: Tenant Name
     description: The *tenant* is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
     type: string
     minLength: 1
     maxLength: 255
     pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
   app_name:
-    title: Specify the application name.
+    title: Application Name
     description: The *application* is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
     type: string
     minLength: 1
