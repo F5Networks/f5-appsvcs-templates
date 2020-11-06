@@ -9,6 +9,7 @@ allOf:
   - $ref: "_monitor_dns.yaml#"
   - $ref: "_irule_dns.yaml#"
 anyOf:
+  - {}
   - $ref: "_firewall_dns.yaml#"
 template: |
   {

@@ -9,6 +9,7 @@ allOf:
   - $ref: "_monitor_ldap.yaml#"
   - $ref: "_irule.yaml#"
 anyOf:
+  - {}
   - $ref: "_firewall.yaml#"
 definitions:
   virtual_port:

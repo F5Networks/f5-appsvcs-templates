@@ -15,5 +15,6 @@ allOf:
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_irule.yaml#"
 anyOf:
+  - {}
   - $ref: "_firewall.yaml#"
 template: ""
