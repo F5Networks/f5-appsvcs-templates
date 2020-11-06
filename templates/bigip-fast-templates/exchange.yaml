@@ -10,7 +10,7 @@ definitions:
     title: FQDN for HTTP-based client access services
     description: 	Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
   virtual_address:
-    title: Virtual server IP address.
+    title: Virtual server IP address
     description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the exchange servers.
   virtual_port:
     title: Virtual server TCP port
