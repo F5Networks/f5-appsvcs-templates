@@ -140,4 +140,13 @@ describe('Applications', function () {
         ],
         app_fqdn: 'example.com'
     }));
+    it('Deploy bigip-fast-templates/ldap', () => deployApplication('bigip-fast-templates/ldap', {
+        tenant_name: 'tenant',
+        app_name: 'LDAP-App',
+        virtual_address: '10.0.0.6',
+        pool_members: [
+            { serverAddresses: ['10.0.0.6'], servicePort: 80 }
+        ],
+        monitor_passphrase: 'aa'
+    }));
 });
