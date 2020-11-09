@@ -1,18 +1,18 @@
 definitions:
   tenant_name:
-    title: What is the tenant name?
+    title: Tenant Name
     description: The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
-    title: What is the application name?
+    title: Application Name
     description: The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   app_fqdn:
-    title: What is the Sharepoint application's FQDN?
+    title: Sharepoint application's FQDN
     description: Clients can use the FQDN (Fully Qualified Domain Name) you enter here to access the SharePoint servers. Your DNS administrator must configure a DNS entry that resolves to the IP address you entered for the BIG-IP virtual server.
   virtual_address:
-    title: What IP address do you want to use for the virtual server?
+    title: Virtual server IP address
     description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the SharePoint servers.
   virtual_port:
-    title: What TCP port do you want to use for the virtual server?
+    title: Virtual server TCP port 
   enable_redirect:
     title: Redirect port 80 traffic to this virtual server
     type: boolean
@@ -20,7 +20,7 @@ definitions:
     title: Pool Members
     description: Which SharePoint servers should be included in this pool?
   pool_port:
-    title: What TCP port do you want to use for the pool members?
+    title: TCP port for the pool members
   enable_snat:
     title: SNAT
     description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
@@ -30,11 +30,11 @@ definitions:
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
     type: boolean
   make_snatpool:
-    title: Automatically manage the SNAT pool.
+    title: Generate the SNAT pool
+    description: Uncheck to use an existing BIG-IP SNAT Pool. The pool must exist in the Common partition. NOTE The pool must exist in the Common partition.
     type: boolean
-    description: If selected the BIG-IP will create and manage a snatpool.  Otherwise, select an existing snatpool.  NOTE The pool must exist in the Common partition.
   snatpool_name:
-    title: Specify the name of an existing BIG-IP SNAT pool.
+    title: Select an existing BIG-IP SNAT pool.
     enumFromBigip: 'ltm/snatpool'
   snat_addresses:
     title: SNAT Pool Addresses
@@ -45,34 +45,36 @@ definitions:
     description: Enable TLS server to decrypt client-side connections.
     type: boolean
   tls_cert_name:
-    title: Specify the name of an existing BIG-IP SSL certificate.
+    title: Select an existing BIG-IP SSL certificate.
     enumFromBigip: 'sys/crypto/cert'
   tls_key_name:
-    title: Specify the name of an existing BIG-IP SSL key.
+    title: Select an existing BIG-IP SSL key.
     enumFromBigip: 'sys/crypto/key'
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
     type: boolean
   make_tls_client_profile:
-    title: Automatically manage the TLS client profile
+    title: Generate the TLS client profile
+    description: Uncheck to use an existing BIG-IP TLS client profile.
     type: boolean
   tls_client_profile_name:
-    title: Specify the name of an existing BIG-IP serverssl profile.
+    title: Select an existing BIG-IP serverssl profile.
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
     enumFromBigip: 'ltm/profile/server-ssl'
   tcp_ingress_topology:
-    title: Specify the type of network that connects clients to the BIG-IP system
+    title: Type of network connecting clients to the BIG-IP system
   tcp_egress_topology:
-    title: Specify the type of network that connects servers to the BIG-IP system
+    title: Type of network connecting servers to the BIG-IP system
   enable_compression:
     title: HTTP Compression
     type: boolean
   make_compression_profile:
-    title: Create a profile based on wan-optimized-compression? If not select an existing profile below.
+    title: Wan-optimized-compression profile
+    description: Uncheck to select an existing BIG-IP HTTP compression profile.
     type: boolean
   compression_profile_name:
-    title: Specify the name of an existing BIG-IP HTTP compression profile.
+    title: Select an existing BIG-IP HTTP compression profile
     enumFromBigip: 'ltm/profile/http-compression'
   enable_multiplex:
     title: Connection Multiplexing

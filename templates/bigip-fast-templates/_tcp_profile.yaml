@@ -2,15 +2,17 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   common_tcp_profile:
-    title: Use the same TCP profile for ingress and egress traffic.
+    title: Ingress and Egress TCP Profile
+    description: Use the same TCP profile for ingress and egress traffic.
     type: boolean
     default: false
   make_tcp_profile:
-    title: Automatically manage the TCP profile.
+    title: FAST-Generated TCP Profile
+    description: Uncheck to use an existing BIG-IP TCP profile.
     type: boolean
     default: true
   tcp_topology:
-    title: Specify the type of network that connects both clients and servers to the BIG-IP system.
+    title: Select the network type connecting both clients and servers to the BIG-IP system
     type: string
     enum:
       - lan
@@ -18,16 +20,18 @@ definitions:
       - mobile
     default: wan
   tcp_profile_name:
-    title: Specify the name of an existing BIG-IP TCP profile.
+    title: Select an existing BIG-IP TCP profile
     type: string
     enumFromBigip: ltm/profile/tcp
     default: "/Common/f5-tcp-progressive"
   make_tcp_ingress_profile:
-    title: Automatically manage the ingress TCP profile.
+    title: Ingress TCP Profile
+    description: Uncheck to use an existing BIG-IP TCP client-side context.
     type: boolean
     default: true
   tcp_ingress_topology:
-    title: Specify the type of network that connects clients to the BIG-IP system.
+    title: Client-Side Topology
+    description: Select the type of network connecting clients to the BIG-IP system.
     type: string
     enum:
       - lan
@@ -35,16 +39,19 @@ definitions:
       - mobile
     default: wan
   tcp_ingress_profile_name:
-    title: Specify the name of an existing BIG-IP TCP profile for client-side context.
+    title: Client-Side TCP Profile
+    description: Select an existing BIG-IP TCP profile for client-side context.
     type: string
     enumFromBigip: ltm/profile/tcp
     default: "/Common/f5-tcp-progressive"
   make_tcp_egress_profile:
-    title: Automatically manage the egress TCP profile.
+    title: Server-Side TCP profile
+    description: Uncheck to use an existing BIG-IP TCP server-side context.
     type: boolean
     default: true
   tcp_egress_topology:
-    title: Specify the type of network that connects servers to the BIG-IP system.
+    title: Server-Side Topology
+    description: Select the type of network connecting servers to the BIG-IP system.
     type: string
     enum:
       - lan
@@ -52,7 +59,7 @@ definitions:
       - mobile
     default: lan
   tcp_egress_profile_name:
-    title: Specify the name of an existing BIG-IP TCP profile for server-side context.
+    title: Select an existing BIG-IP TCP profile for server-side context
     type: string
     enumFromBigip: ltm/profile/tcp
     default: "/Common/f5-tcp-progressive"

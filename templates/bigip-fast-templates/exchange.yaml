@@ -1,37 +1,41 @@
 bigipMinimumAS3: 3.23
 definitions:
   tenant_name:
-    title: What is the tenant name?
+    title: Tenant Name
     description: The tenant is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
   app_name:
-    title: What is the application name?
+    title: Application Name
     description: The application is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
   app_fqdn:
-    title: What is the FQDN for your HTTP-based client access services?
+    title: FQDN for HTTP-based client access services
     description: 	Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
   virtual_address:
-    title: What IP address do you want to use for the virtual server?
+    title: Virtual server IP address
     description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the exchange servers.
   virtual_port:
-    title: What TCP port do you want to use for the virtual server?
+    title: Virtual server TCP port
   enable_redirect:
     title: Redirect port 80 traffic to this virtual server
     type: boolean
   pool_customize:
-    title: Do you want to customize your server pool settings?
-    description: If necessary, you can configure advanced pool settings (such as specifying the load balancing algorithm or configuring priority groups). If you do not have a need to modify these settings, use the recommended settings, which are a result of extensive testing with Microsoft Exchange Server.
+    title: Customize your server pool settings
+    description: Check to select *load balancing method* and *slow ramp time*.  Unchecked uses the recommended settings, which are a result of extensive testing with Microsoft Exchange Server.
     type: boolean
   load_balancing_mode:
-    title: Which load balancing method do you want to use?
-    description: 	Choose the load balancing method appropriate for your configuration. We recommend the default, Least Connections (member). For a description of each method, see the online help on the Pool creation page, or the BIG-IP system documentation.
+    title: Select a load balancing method
+    description: 	 A *load balancing method* is an algorithm that the BIG-IP system uses
+      to select a pool member for processing a request. F5 recommends the Least Connections
+      load balancing method, where new connections are routed to the node that has the
+      least number of current connections. This is ideal for environments in which pool
+      members have similar performance and capacity capabilities.
   slow_ramp_time:
-    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
-    description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
+    title: Slow ramp time in seconds (recommended value is 300 seconds)
+    description: Slowly increases the number of connection requests that are load balanced
   pool_members:
     title: Pool Members
     description: Which exchange servers should be included in this pool?
   pool_port:
-    title: What TCP port do you want to use for the pool members?
+    title: TCP port for the pool members
   enable_snat:
     title: SNAT
     description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
@@ -41,11 +45,11 @@ definitions:
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
     type: boolean
   make_snatpool:
-    title: Automatically manage the SNAT pool.
+    title: Generate the SNAT pool
+    description: Uncheck to use an existing BIG-IP SNAT Pool. The pool must exist in the Common partition.
     type: boolean
-    description: If selected the BIG-IP will create and manage a snatpool.  Otherwise, select an existing snatpool.  NOTE The pool must exist in the Common partition.
   snatpool_name:
-    title: Specify the name of an existing BIG-IP SNAT pool.
+    title: Select an existing BIG-IP SNAT pool
     enumFromBigip: 'ltm/snatpool'
   snat_addresses:
     title: SNAT Pool Addresses
@@ -56,20 +60,21 @@ definitions:
     description: Enable TLS server to decrypt client-side connections.
     type: boolean
   tls_cert_name:
-    title: Specify the name of an existing BIG-IP SSL certificate.
+    title: Select an existing BIG-IP SSL certificate
     enumFromBigip: 'sys/crypto/cert'
   tls_key_name:
-    title: Specify the name of an existing BIG-IP SSL key.
+    title: Select an existing BIG-IP SSL key
     enumFromBigip: 'sys/crypto/key'
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
     type: boolean
   make_tls_client_profile:
-    title: Automatically manage the TLS client profile
+    title: Generate the TLS client profile
+    description: Uncheck to use an existing BIG-IP TLS client profile.
     type: boolean
   tls_client_profile_name:
-    title: Specify the name of an existing BIG-IP serverssl profile.
+    title: Select an existing BIG-IP serverssl profile
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
     enumFromBigip: 'ltm/profile/server-ssl'
   enable_multiplex:
@@ -77,19 +82,20 @@ definitions:
     description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
     type: boolean
   tcp_ingress_topology:
-    title: Specify the type of network that connects clients to the BIG-IP system
+    title: Type of network connecting clients to the BIG-IP system
   tcp_egress_topology:
-    title: Specify the type of network that connects servers to the BIG-IP system
+    title: Type of network connecting servers to the BIG-IP system
   owa:
-    title: Are you deploying Outlook Web App (includes ECP)?
-    description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
+    title: Outlook Web App deployment (including ECP)
+    description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP). You can always reconfigure this template at another time to add/remove Outlook Web App from the configuration.
     type: boolean
   ews:
-    title: Are you deploying EWS?
+    title: EWS deployment
+    description: 	Select if you are deploying Exchange Web Services (EWS).
     type: boolean
   outlook:
-    title: Are you deploying Microsoft Outlook and OAB?
-    description: 	Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
+    title: Microsoft Outlook and OAB deployment
+    description: 	Select if you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If so, you must answer the following about the protocol Outlook uses to connect to Exchange.
     type: boolean
   outlookMAPI:
     title: Will Outlook clients use MAPI-over-HTTP to connect to Exchange?
@@ -100,20 +106,20 @@ definitions:
     description: 	The iApp needs to know if Microsoft Outlook clients use MAPI-over-HTTP, RPC-over-HTTP, or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects. Select the answer that best describes your implementation.
     type: boolean
   activesync:
-    title: Are you deploying ActiveSync?
-    description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
+    title: ActiveSync deployment
+    description: Select if you are deploying the BIG-IP system for ActiveSync. You can always reconfigure this template at another time to add/remove ActiveSync from the configuration.
     type: boolean
   autodiscover:
-    title: Are you deploying Autodiscover?
-    description: 	Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
+    title: Autodiscover deployment
+    description: 	Select if you are deploying the BIG-IP system for Autodiscover. To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. You can always reconfigure this template at another time to add/remove Autodiscover from the configuration. See Additional Steps at the bottom of this template for more information.
     type: boolean
   pop3:
-    title: Are you deploying POP3?
-    description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
+    title: POP3 deployment
+    description: Select if you are deploying the BIG-IP system for POP3. You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers. You can always reconfigure this template at another time to add/remove POP3 from the configuration.
     type: boolean
   imap4:
-    title: Are you deploying IMAP4?
-    description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable IMAP4 on each of your Exchange Mailbox Servers before that service will be available. IMAP4 is not enabled by default on Exchange Mailbox Servers.
+    title: IMAP4 deployment
+    description: Select whether you are deploying the BIG-IP system for POP3. You must enable IMAP4 on each of your Exchange Mailbox Servers before that service will be available. IMAP4 is not enabled by default on Exchange Mailbox Servers. You can always reconfigure this template at another time to add/remove POP3 from the configuration. 
     type: boolean
   app_type_def:
     template: |

@@ -8,14 +8,16 @@ definitions:
     type: boolean
     default: false
   firewall_allow_list:
-    title: IP addresses or networks that are allowed to access your application.
+    title: Allowed Networks
+    description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
     type: array
     uniqueItems: true
     items:
       type: string
     default: []
   log_profile_names:
-    title: Choose one or more security log profiles
+    title: Security Log Profiles
+    description: Hold the *control* key to select multiple log profiles.
     type: array
     uniqueItems: true
     items:
