@@ -9,42 +9,45 @@ definitions:
     default: true
   enable_monitor:
     title: Pool Monitor
-    description: Determine the availability and performance of devices, links, and services
+    description: Determine the availability and performance of devices, links, and services.
       on a network.
     type: boolean
     default: true
   make_monitor:
-    title: Generate the Pool Monitor
+    title: FAST-Generated Pool Monitor
     description: Uncheck to use an existing BIG-IP Pool Monitor.
     type: boolean
     default: true
   monitor_name:
-    title: Select an existing BIG-IP monitor
-    description: Monitors are used to determine the health of the application on each
+    title: Monitor
+    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine the health of the application on each
       server. If an application instance does not respond or responds incorrectly, the
       system will cease to send client requests to that web server. The system will
-      continue to monitor the instance and will begin sending requests once the application
-      responds correctly.
+      continue to monitor the instance and will begin sending requests once the application responds correctly.
     type: string
     enumFromBigip: ltm/monitor/dns
     default: /Common/dns
   monitor_interval:
-    title: Interval between monitor polls (in seconds)
+    title: Monitor Polls
+    description: Interval between monitor polls, in seconds.
     type: integer
     default: 30
   monitor_queryName:
-    title: Host name for the monitor to request (queryName)
+    title: Monitor Request Host Name (queryName)
+    description: Host name for the monitor to request (queryName).
     type: string
     default: ''
   monitor_queryType:
-    title: Select the DNS record type (queryType)
+    title: DNS Record Type (queryType)
+    description: Select the DNS record type (queryType).
     type: string
     enum:
       - 'a'
       - 'aaaa'
     default: 'a'
   monitor_receive:
-    title: IP address that is expected to be returned
+    title: Monitor IP Address
+    description: IP address that is expected to be returned.
     type: string
     default: ''
 template: |

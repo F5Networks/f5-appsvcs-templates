@@ -8,7 +8,8 @@ definitions:
     type: boolean
     default: false
   firewall_allow_list:
-    title: IP addresses or networks that are allowed to access your application.
+    title: title: Allowed Networks
+    description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
     type: array
     uniqueItems: true
     items:

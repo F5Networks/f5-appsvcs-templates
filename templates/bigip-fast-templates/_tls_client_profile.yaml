@@ -7,13 +7,13 @@ definitions:
     type: boolean
     default: false
   make_tls_client_profile:
-    title: Generate the TLS client profile
+    title: FAST-Generated TLS Client Profile
     description: Uncheck to use an existing BIG-IP TLS client profile.
     type: boolean
     default: true
   tls_client_profile_name:
-    title: Select an existing BIG-IP serverssl profile
-    description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+    title: Serverssl Profile
+    description: Select an existing BIG-IP serverssl profile. TLS client profiles are of type "ltm serverssl" on BIG-IP.
     enumFromBigip: ltm/profile/server-ssl
     default: "/Common/serverssl"
 template: |

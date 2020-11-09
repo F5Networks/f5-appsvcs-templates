@@ -2,7 +2,8 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   tcp_irule_names:
-    title: Select one or more iRules to attach to the TCP virtual server.
+    title: iRules
+    description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server.
     type: array
     uniqueItems: true
     items:
@@ -10,7 +11,8 @@ definitions:
       enumFromBigip: ltm/rule
     default: []
   udp_irule_names:
-    title: Select one or more iRules to attach to the UDP virtual server.
+    title: iRules
+    description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server.
     type: array
     uniqueItems: true
     items:

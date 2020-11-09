@@ -2,24 +2,25 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   enable_pool:
-    title: Create Pool
+    title: Pool
     description: A *pool* is a logical set of devices, such as web servers, that you
       group together to receive and process traffic.
     type: boolean
     default: true
   make_pool:
-    title: Generate the Pool 
+    title: FAST-Generated Pool 
     description: Uncheck to use an existing BIG-IP Pool.
     type: boolean
     default: true
   pool_name:
-    title: Select an existing BIG-IP pool
+    title: BIG-IP Pool
+    descriptiom: Select an existing BIG-IP pool.
     type: string
     enumFromBigip: ltm/pool
     default: ''
   pool_members:
     title: Pool Members
-    description: Add the addresses of the servers in the pool. Use a connection limit
+    description: Add the addresses of the servers in the pool. Use a connection limit.
       of 0 for unlimited connections.
     type: array
     uniqueItems: true
@@ -58,7 +59,7 @@ definitions:
           type: boolean
           default: true
   load_balancing_mode:
-    title: Select a load balancing method
+    title: Load Balancing Method
     description: A *load balancing method* is an algorithm that the BIG-IP system uses
       to select a pool member for processing a request. F5 recommends the Least Connections
       load balancing method, where new connections are routed to the node that has the

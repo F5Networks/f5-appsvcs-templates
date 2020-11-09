@@ -9,18 +9,18 @@ definitions:
     default: true
   enable_monitor:
     title: Pool Monitor
-    description: Determine the availability and performance of devices, links, and services
+    description: Determine the availability and performance of devices, links, and services.
       on a network.
     type: boolean
     default: true
   make_monitor:
-    title: Generate the Pool Monitor
+    title: FAST-Generated Pool Monitor
     description: Uncheck to use an existing BIG-IP Pool Monitor.
     type: boolean
     default: true
   monitor_name:
-    title: Specify the name of an existing BIG-IP monitor.
-    description: Monitors are used to determine the health of the application on each
+    title: Monitor
+    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine the health of the application on each
       server. If an application instance does not respond or responds incorrectly, the
       system will cease to send client requests to that web server. The system will
       continue to monitor the instance and will begin sending requests once the application

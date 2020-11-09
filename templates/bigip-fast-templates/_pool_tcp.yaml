@@ -2,18 +2,19 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   enable_pool:
-    title: Create Pool
+    title: Pool
     description: A *pool* is a logical set of devices, such as web servers, that you
       group together to receive and process traffic.
     type: boolean
     default: true
   make_pool:
-    title: Generate the Pool 
+    title: FAST-Generated Pool
     description: Uncheck to use an existing BIG-IP Pool.
     type: boolean
     default: true
   pool_name:
-    title: Select an existing BIG-IP pool
+    title: BIG-IP Pool
+    descriptiom: Select an existing BIG-IP pool.
     type: string
     enumFromBigip: ltm/pool
     default: ''
@@ -27,13 +28,14 @@ definitions:
       type: string
       default: '10.0.0.2'
   pool_port:
-    title: Port number for the servers in the pool
+    title: Pool Server Port Number
+    description: Port number for the servers in the pool.
     type: integer
     minimum: 0
     maximum: 65535
     default: 80
   load_balancing_mode:
-    title: Select the load balancing method
+    title: Load Balancing Method
     description: A *load balancing method* is an algorithm that the BIG-IP system uses
       to select a pool member for processing a request. F5 recommends the Least Connections
       load balancing method, where new connections are routed to the node that has the
@@ -41,9 +43,9 @@ definitions:
       members have similar performance and capacity capabilities.
     type: string
   slow_ramp_time:
-    title: Slow ramp time in seconds (recommended value is 300 seconds)
+    title: Slow Ramp Time
     description: Slowly increases the number of connection requests that are load balanced
-      to a new pool member.
+      to a new pool member. Recommended value is 300 seconds.
     type: integer
     minimum: 0
     maximum: 65535

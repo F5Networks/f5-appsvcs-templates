@@ -9,7 +9,7 @@ definitions:
     default: true
   enable_monitor:
     title: Pool Monitor
-    description: Determine the availability and performance of devices, links, and services
+    description: Determine the availability and performance of devices, links, and services.
       on a network.
     type: boolean
     default: true
