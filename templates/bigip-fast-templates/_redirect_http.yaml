@@ -3,7 +3,7 @@ bigipHideTemplate: true
 definitions:
   enable_redirect:
     title: HTTP Redirect
-    description: Redirect requests from port 80 to this virtual server
+    description: Redirect requests from port 80 to this virtual server.
     type: boolean
     default: true
   enable_tls_server:

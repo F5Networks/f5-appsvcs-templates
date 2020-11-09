@@ -2,16 +2,17 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   make_http_profile:
-    title: Generate an HTTP Profile
+    title: FAST-Generated HTTP Profile
     description: Uncheck to use an existing BIG-IP HTTP profile.
     type: boolean
     default: true
   http_profile_name:
-    title: Select an existing BIG-IP HTTP profile.
+    title: HTTP Profile
+    description: Select an existing BIG-IP HTTP profile.
     enumFromBigip: ltm/profile/http
     default: "/Common/http"
   x_forwarded_for:
-    title: Insert the x-forwarded-for header
+    title: X-forwarded-for Header
     description: Inserts the original client IP address in an HTTP header and configures
       the web server receiving the request to log the client IP address instead of the
       SNAT address.
@@ -24,12 +25,13 @@ definitions:
     type: boolean
     default: true
   make_acceleration_profile:
-    title: Generate a Web Acceleration Profile
+    title: FAST-Generated Web Acceleration Profile
     description: Uncheck to use an existing BIG-IP Web Acceleration profile.
     type: boolean
     default: true
   acceleration_profile_name:
-    title: Select an existing BIG-IP web acceleration profile
+    title: Web Acceleration Profile
+    description: Select an existing BIG-IP web acceleration profile.
     enumFromBigip: ltm/profile/web-acceleration
     default: "/Common/webacceleration"
   enable_compression:
@@ -37,12 +39,13 @@ definitions:
     type: boolean
     default: true
   make_compression_profile:
-    title: Generate an HTTP Compression Profile
+    title: FAST-Generated HTTP Compression Profile
     description: Uncheck to use an existing BIG-IP HTTP Compression Profile.
     type: boolean
     default: true
   compression_profile_name:
-    title: Select an existing BIG-IP HTTP compression profile
+    title: HTTP Compression Profile
+    description: Select an existing BIG-IP HTTP compression profile.
     enumFromBigip: ltm/profile/http-compression
     default: "/Common/httpcompression"
   enable_multiplex:
@@ -53,12 +56,13 @@ definitions:
     type: boolean
     default: true
   make_multiplex_profile:
-    title: Generate a Multiplex (OneConnect) profile
+    title: FAST-Generated Multiplex (OneConnect) Profile
     description: Uncheck to use an existing BIG-IP OneConnect profile.
     type: boolean
     default: true
   multiplex_profile_name:
-    title: Select an existing BIG-IP OneConnect profile
+    title: OneConnect Profile
+    description: Select an existing BIG-IP OneConnect profile.
     enumFromBigip: ltm/profile/one-connect
     default: "/Common/oneconnect"
 template: |

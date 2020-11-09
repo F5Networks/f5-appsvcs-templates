@@ -2,7 +2,8 @@ contentType: application/json
 bigipHideTemplate: true
 definitions:
   irule_names:
-    title: Specify the name of one or more iRules to attach to the virtual server.
+    title: iRules
+    description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server.
     type: array
     uniqueItems: true
     items:
