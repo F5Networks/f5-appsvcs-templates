@@ -149,4 +149,12 @@ describe('Applications', function () {
         ],
         monitor_passphrase: 'aa'
     }));
+    it('Deploy bigip-fast-templates/microsoft_iis', () => deployApplication('bigip-fast-templates/microsoft_iis', {
+        tenant_name: 'tenant',
+        app_name: 'IIS_App',
+        virtual_address: '10.0.0.7',
+        pool_members: [
+            '10.0.0.7'
+        ]
+    }));
 });
