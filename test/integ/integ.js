@@ -157,4 +157,13 @@ describe('Applications', function () {
             '10.0.0.7'
         ]
     }));
+    it('Deploy bigip-fast-templates/smtp', () => deployApplication('bigip-fast-templates/smtp', {
+        tenant_name: 'tenant',
+        app_name: 'SMTP-App',
+        virtual_address: '10.0.0.8',
+        pool_members: [
+            { serverAddresses: ['10.0.0.8'], servicePort: 80 }
+        ],
+        monitor_domain: 'example.com'
+    }));
 });
