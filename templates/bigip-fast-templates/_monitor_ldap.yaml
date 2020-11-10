@@ -41,7 +41,7 @@ definitions:
     type: string
     format: password
     contentEncoding: base64
-    default: ''
+    minLength: 2
   monitor_base:
     title: Directory Level
     description: Enter the directory level to be searched in the health check.

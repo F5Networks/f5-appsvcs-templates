@@ -36,7 +36,7 @@ definitions:
     title: Domain Name
     description: Specify the domain name for the SMTP server to accept mail.
     type: string
-    default: ''
+    format: hostname
   monitor_username:
     title: User Name
     description: Set the credentials to be used by the monitor during each health check.
