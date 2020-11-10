@@ -17,6 +17,7 @@ definitions:
     default: []
   log_profile_names:
     title: Security Log Profiles
+    description: Hold the *control* key to select multiple log profiles.
     type: array
     uniqueItems: true
     items:
