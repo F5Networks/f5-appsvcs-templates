@@ -578,8 +578,11 @@ route('templates', 'templates', () => {
             .then(() => {
                 dispOutput(`${tsName} installed successfully`);
             })
-            .catch(e => dispOutput(`Failed to install ${tsName}:\n${e.message}`))
-            .then(() => reloadTemplates());
+            .then(() => reloadTemplates())
+            .catch((e) => {
+                appState.busy = false;
+                dispOutput(`Failed to install ${tsName}:\n${e.message}`);
+            });
     };
     document.getElementById('btn-delete-all-ts').onclick = () => {
         vueApp.showModal(
@@ -594,8 +597,11 @@ route('templates', 'templates', () => {
                     .then(() => {
                         dispOutput('All Template Sets deleted successfully');
                     })
-                    .catch(e => dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`))
-                    .then(() => reloadTemplates());
+                    .then(() => reloadTemplates())
+                    .catch((e) => {
+                        appState.busy = false;
+                        dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`);
+                    });
             }
         );
     };
@@ -622,8 +628,11 @@ route('templates', 'templates', () => {
                     .then(() => {
                         dispOutput(`${setName} deleted successfully`);
                     })
-                    .catch(err => dispOutput(`Failed to delete ${setName}:\n${err.message}`))
-                    .then(() => reloadTemplates());
+                    .then(() => reloadTemplates())
+                    .catch((err) => {
+                        appState.busy = false;
+                        dispOutput(`Failed to delete ${setName}:\n${err.message}`);
+                    });
             }
         );
     };
@@ -648,8 +657,11 @@ route('templates', 'templates', () => {
                     .then(() => {
                         dispOutput(`${setName} enabled successfully`);
                     })
-                    .catch(err => dispOutput(`Failed to enable ${setName}:\n${err.message}`))
-                    .then(() => reloadTemplates());
+                    .then(() => reloadTemplates())
+                    .catch((err) => {
+                        appState.busy = false;
+                        dispOutput(`Failed to enable ${setName}:\n${err.message}`);
+                    });
             }
         );
     };
@@ -674,8 +686,11 @@ route('templates', 'templates', () => {
                     .then(() => {
                         dispOutput(`${setName} installed successfully`);
                     })
-                    .catch(err => dispOutput(`Failed to install ${setName}:\n${err.message}`))
-                    .then(() => reloadTemplates());
+                    .then(() => reloadTemplates())
+                    .catch((err) => {
+                        appState.busy = false;
+                        dispOutput(`Failed to install ${setName}:\n${err.message}`);
+                    });
             }
         );
     };
