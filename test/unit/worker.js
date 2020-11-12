@@ -1147,4 +1147,85 @@ describe('template worker tests', function () {
             .then(() => assert(false, 'expected template to fail'))
             .catch(e => assert.match(e.message, /since it requires AS3 >= 3.23/));
     });
+    it('convert_pool_members', function () {
+        const worker = createWorker();
+
+        const as3Scope = nock(host)
+            .get(as3ep)
+            .query(true)
+            .reply(200, Object.assign({}, as3stub, {
+                tenant: {
+                    class: 'Tenant',
+                    http: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'bigip-fast-templates/http',
+                                view: {
+                                    enable_pool: true,
+                                    make_pool: true,
+                                    pool_port: 80,
+                                    pool_members: [
+                                        '10.0.0.1'
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    tcp: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'bigip-fast-templates/tcp',
+                                view: {
+                                    enable_pool: true,
+                                    make_pool: true,
+                                    pool_members: [
+                                        '10.0.0.2'
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    tcpNew: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {
+                                template: 'bigip-fast-templates/tcp',
+                                view: {
+                                    enable_pool: true,
+                                    make_pool: true,
+                                    pool_members: [
+                                        {
+                                            serverAddresses: [
+                                                '10.0.0.1'
+                                            ],
+                                            servicePort: 389,
+                                            connectionLimit: 0,
+                                            priorityGroup: 0,
+                                            shareNodes: true
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }));
+        const postScope = nock('http://localhost:8100')
+            .log(console.log)
+            .post(`/mgmt/${worker.WORKER_URI_PATH}/applications/`)
+            .reply(202, {
+                "code": 202,
+                "message": [
+                    { "id": "0" }
+                ]
+            });
+
+        return worker.convertPoolMembers()
+            .then(() => {
+                assert(as3Scope.isDone());
+                assert(postScope.isDone(), 'failed to post new applications');
+            });
+    });
 });

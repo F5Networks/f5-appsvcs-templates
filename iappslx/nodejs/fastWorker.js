@@ -602,6 +602,62 @@ class FASTWorker {
             .then(() => schema);
     }
 
+    convertPoolMembers(reqid) {
+        reqid = reqid || 0;
+        const convertTemplateNames = [
+            'bigip-fast-templates/http',
+            'bigip-fast-templates/tcp',
+            'bigip-fast-templates/microsoft_iis'
+        ];
+
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'gathering a list of applications from the driver',
+                this.driver.listApplications()
+            ))
+            .then((appsList) => {
+                const newApps = [];
+
+                appsList.forEach((app) => {
+                    const convert = (
+                        convertTemplateNames.includes(app.template)
+                        && app.view.pool_members
+                        && app.view.pool_members.length > 0
+                        && typeof app.view.pool_members[0] === 'string'
+                    );
+                    if (convert) {
+                        app.view.pool_members = [{
+                            serverAddresses: app.view.pool_members,
+                            servicePort: app.view.pool_port || 80
+                        }];
+                        delete app.view.pool_port;
+                        newApps.push(app);
+                        this.logger.info(
+                            `FAST Worker [${reqid}]: updating pool_members on ${app.tenant}/${app.name}`
+                        );
+                    }
+                });
+
+                if (newApps.length === 0) {
+                    return Promise.resolve();
+                }
+
+                return Promise.resolve()
+                    .then(() => this.recordTransaction(
+                        reqid, 'Updating pool members',
+                        this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications/`, newApps.map(app => ({
+                            name: app.template,
+                            parameters: app.view
+                        })))
+                    ))
+                    .then((resp) => {
+                        this.logger.info(
+                            `FAST Worker [${reqid}]: task ${resp.data.message[0].id} submitted to update pool_members`
+                        );
+                    });
+            });
+    }
+
     /**
      * HTTP/REST handlers
      */
@@ -1037,6 +1093,17 @@ class FASTWorker {
                     return this.saveConfig(config, reqid);
                 }
                 return Promise.resolve();
+            })
+            // Automatically convert any apps using the old pool_members definition
+            .then(() => {
+                if (tsid !== 'bigip-fast-templates') {
+                    return Promise.resolve();
+                }
+
+                return this.recordTransaction(
+                    reqid, 'converting applications with old pool_members definition',
+                    this.convertPoolMembers(reqid)
+                );
             })
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
