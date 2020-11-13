@@ -1216,9 +1216,9 @@ describe('template worker tests', function () {
             .log(console.log)
             .post(`/mgmt/${worker.WORKER_URI_PATH}/applications/`)
             .reply(202, {
-                "code": 202,
-                "message": [
-                    { "id": "0" }
+                code: 202,
+                message: [
+                    { id: '0' }
                 ]
             });
 
