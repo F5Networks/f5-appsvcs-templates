@@ -104,7 +104,7 @@ describe('Applications', function () {
         app_name: 'HTTP_App',
         virtual_address: '10.0.0.1',
         pool_members: [
-            '10.0.0.1'
+            { serverAddresses: ['10.0.0.1'], servicePort: 80 }
         ]
     }));
     it('Deploy bigip-fast-templates/tcp', () => deployApplication('bigip-fast-templates/tcp', {
@@ -112,7 +112,7 @@ describe('Applications', function () {
         app_name: 'TCP-App',
         virtual_address: '10.0.0.2',
         pool_members: [
-            '10.0.0.2'
+            { serverAddresses: ['10.0.0.2'], servicePort: 80 }
         ]
     }));
     it('Deploy bigip-fast-templates/dns', () => deployApplication('bigip-fast-templates/dns', {
@@ -154,7 +154,7 @@ describe('Applications', function () {
         app_name: 'IIS_App',
         virtual_address: '10.0.0.7',
         pool_members: [
-            '10.0.0.7'
+            { serverAddresses: ['10.0.0.7'], servicePort: 80 }
         ]
     }));
     it('Deploy bigip-fast-templates/smtp', () => deployApplication('bigip-fast-templates/smtp', {
