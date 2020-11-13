@@ -38,12 +38,12 @@ definitions:
     type: string
     format: hostname
   monitor_username:
-    title: User Name
-    description: Set the credentials to be used by the monitor during each health check.
+    title: Username
     type: string
     default: ''
   monitor_passphrase:
     title: Password
+    description: This username and password will be sent as authentication during each health check.
     type: string
     format: password
     contentEncoding: base64

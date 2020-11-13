@@ -30,6 +30,22 @@ definitions:
     type: string
     enumFromBigip: ltm/monitor/https
     default: /Common/https
+  monitor_credentials:
+    title: Credentials
+    description: Check this box if the servers require login credentials for web access.
+    type: boolean
+    default: false
+  monitor_username:
+    title: Username
+    type: string
+    default: ''
+  monitor_passphrase:
+    title: Password
+    description: This username and password will be sent as Basic authentication during each health check.
+    type: string
+    format: password
+    contentEncoding: base64
+    default: ''
   monitor_interval:
     title: Interval
     description: Set the time between health checks, in seconds.
@@ -87,6 +103,13 @@ template: |
                     "monitorType": "https",
                     "interval": {{monitor_interval}},
                     "timeout": 181,
+                    {{#monitor_credentials}}
+                      "username": "{{monitor_username}}",
+                      "passphrase": {
+                        "ciphertext": "{{monitor_passphrase}}",
+                        "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+                      }
+                    {{/monitor_credentials}}
                     "send": "{{monitor_send_string}}",
                     "receive": "{{monitor_expected_response}}"
                   },
