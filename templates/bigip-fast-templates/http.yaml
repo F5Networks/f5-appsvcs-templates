@@ -7,7 +7,7 @@ allOf:
   - $ref: "_redirect_http.yaml#"
   - $ref: "_snat.yaml#"
   - $ref: "_persist.yaml#"
-  - $ref: "_pool_tcp.yaml#"
+  - $ref: "_pool.yaml#"
   - $ref: "_monitor_http.yaml#"
   - $ref: "_tls_server_profile.yaml#"
   - $ref: "_tls_client_profile.yaml#"

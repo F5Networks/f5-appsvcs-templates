@@ -7,6 +7,9 @@ allOf:
   - $ref: "_snat.yaml#"
   - $ref: "_pool.yaml#"
   - $ref: "_monitor_ldap.yaml#"
+  - $ref: "_tls_server_profile.yaml#"
+  - $ref: "_tls_client_profile.yaml#"
+  - $ref: "_tcp_profile.yaml#"
   - $ref: "_irule.yaml#"
 anyOf:
   - {}
@@ -30,7 +33,7 @@ template: |
     "{{tenant_name}}": {
       "{{app_name}}": {
         "{{app_name}}": {
-          "class": "Service_Generic"
+          "class": "Service_TCP"
         }
       }
     }

@@ -62,7 +62,7 @@ done
 
 #Upload new RPM to target
 echo "Uploading RPM to https://$TARGET/mgmt/shared/file-transfer/uploads/$RPM_NAME"
-LEN=$(wc -c $TARGET_RPM | cut -f 1 -d " ")
+LEN=$(wc -c $TARGET_RPM | sed -e 's/^[[:space:]]*//' | cut -f 1 -d " ")
 RANGE_SIZE=5000000
 CHUNKS=$(( $LEN / $RANGE_SIZE))
 for i in $(seq 0 $CHUNKS); do

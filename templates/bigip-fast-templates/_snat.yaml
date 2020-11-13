@@ -38,7 +38,7 @@ template: |
         {{#enable_snat}}
           {{#snat_automap}}
             "{{app_name}}": {
-              "snat": "auto",
+              "snat": "auto"
             }
           {{/snat_automap}}
           {{^snat_automap}}
@@ -61,6 +61,11 @@ template: |
               }
             {{/make_snatpool}}
           {{/snat_automap}}
+        {{/enable_snat}}
+        {{^enable_snat}}
+          "{{app_name}}": {
+            "snat": "none"
+          }
         {{/enable_snat}}
       }
     }

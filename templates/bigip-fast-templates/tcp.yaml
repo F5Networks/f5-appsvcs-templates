@@ -6,7 +6,7 @@ allOf:
   - $ref: "_virtual.yaml#"
   - $ref: "_snat.yaml#"
   - $ref: "_persist.yaml#"
-  - $ref: "_pool_tcp.yaml#"
+  - $ref: "_pool.yaml#"
   - $ref: "_monitor_tcp.yaml#"
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_irule.yaml#"

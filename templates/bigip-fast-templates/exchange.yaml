@@ -1,4 +1,9 @@
+contentType: application/json
+title: Microsoft Exchange Application Template
+description: Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations.
 bigipMinimumAS3: 3.23
+allOf:
+  - $ref: "_beta_warning.yaml#"
 definitions:
   tenant_name:
     title: Tenant Name
