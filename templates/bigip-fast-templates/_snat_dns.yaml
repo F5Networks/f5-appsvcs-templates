@@ -38,10 +38,10 @@ template: |
         {{#enable_snat}}
           {{#snat_automap}}
             "{{app_name}}_tcp": {
-              "snat": "auto",
+              "snat": "auto"
             },
             "{{app_name}}_udp": {
-              "snat": "auto",
+              "snat": "auto"
             }
           {{/snat_automap}}
           {{^snat_automap}}
@@ -74,6 +74,14 @@ template: |
               }
             {{/make_snatpool}}
           {{/snat_automap}}
+        {{/enable_snat}}
+        {{^enable_snat}}
+          "{{app_name}}_tcp": {
+            "snat": "none"
+          },
+          "{{app_name}}_udp": {
+            "snat": "none"
+          }
         {{/enable_snat}}
       }
     }

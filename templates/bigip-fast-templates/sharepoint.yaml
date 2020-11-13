@@ -1,3 +1,8 @@
+contentType: application/json
+title: Microsoft Sharepoint Application Template
+description: Configure high availability and optimization for Microsoft Sharepoint 2013 and 2016 implementations.
+allOf:
+  - $ref: "_beta_warning.yaml#"
 definitions:
   tenant_name:
     title: Tenant Name

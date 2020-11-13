@@ -23,7 +23,13 @@ template: |
           }
         },
         "{{app_name}}_udp": {
-          "class": "Service_UDP"
+          "class": "Service_UDP",
+          "profileUDP": {
+            "bigip": "/Common/udp_gtm_dns"
+          },
+          "profileDNS": {
+            "bigip": "/Common/dns"
+          }
         }
       }
     }

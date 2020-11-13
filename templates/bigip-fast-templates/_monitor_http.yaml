@@ -12,6 +12,11 @@ definitions:
     description: Determine the availability of servers in your pool.
     type: boolean
     default: true
+  monitor_https:
+    title: HTTPS Monitor
+    description: Uncheck to use an unencrypted HTTP monitor.
+    type: boolean
+    default: true
   make_monitor:
     title: FAST-Generated Pool Monitor
     description: Uncheck to use an existing BIG-IP Pool Monitor.
@@ -19,32 +24,111 @@ definitions:
     default: true
   monitor_name:
     title: Monitor
-    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine the health of the application on each
-      server. If an application instance does not respond or responds incorrectly, the
-      system will cease to send client requests to that web server. The system will
-      continue to monitor the instance and will begin sending requests once the application
-      responds correctly.
+    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
+      the health of the application on each server. If an application instance does not respond
+      system will block client requests to that web server.
     type: string
     enumFromBigip: ltm/monitor/https
     default: /Common/https
+  monitor_interval:
+    title: Interval
+    description: Set the time between health checks, in seconds.
+    type: integer
+    default: 30
+  monitor_send_string:
+    title: Send String
+    description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
+    type: string
+    default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
+  monitor_expected_response:
+    title: Expected Response
+    description: The presence of this string anywhere in the HTTP response implies availability.
+    type: string
+    default: ''
+  make_monitor_http:
+    title: FAST-Generated Pool Monitor
+    description: Uncheck to use an existing BIG-IP Pool Monitor.
+    type: boolean
+    default: true
+  monitor_name_http:
+    title: Monitor
+    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
+      the health of the application on each server. If an application instance does not respond
+      system will block client requests to that web server.
+    type: string
+    enumFromBigip: ltm/monitor/http
+    default: /Common/http
+  monitor_interval_http:
+    title: Interval
+    description: Set the time between health checks, in seconds.
+    type: integer
+    default: 30
+  monitor_send_string_http:
+    title: Send String
+    description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
+    type: string
+    default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
+  monitor_expected_response_http:
+    title: Expected Response
+    description: The presence of this string anywhere in the HTTP response implies availability.
+    type: string
+    default: ''
 template: |
   {
     "{{tenant_name}}": {
       "{{app_name}}": {
         {{#enable_pool}}
           {{#make_pool}}
-            "{{app_name}}_pool": {
-              {{#enable_monitor}}
+            {{#enable_monitor}}
+              {{#monitor_https}}
                 {{#make_monitor}}
-                  "monitors": [ "https" ]
+                  "{{app_name}}_monitor": {
+                    "class": "Monitor",
+                    "monitorType": "https",
+                    "interval": {{monitor_interval}},
+                    "timeout": 181,
+                    "send": "{{monitor_send_string}}",
+                    "receive": "{{monitor_expected_response}}"
+                  },
+                  "{{app_name}}_pool": {
+                    "monitors": [{
+                      "use": "{{app_name}}_monitor"
+                    }]
+                  }
                 {{/make_monitor}}
                 {{^make_monitor}}
-                  "monitors": [{
-                    "bigip": "{{monitor_name}}"
-                  }]
+                  "{{app_name}}_pool": {
+                    "monitors": [{
+                      "bigip": "{{monitor_name}}"
+                    }]
+                  }
                 {{/make_monitor}}
-              {{/enable_monitor}}
-            }
+              {{/monitor_https}}
+              {{^monitor_https}}
+                {{#make_monitor_http}}
+                  "{{app_name}}_monitor": {
+                    "class": "Monitor",
+                    "monitorType": "http",
+                    "interval": {{monitor_interval_http}},
+                    "timeout": 181,
+                    "send": "{{monitor_send_string_http}}",
+                    "receive": "{{monitor_expected_response_http}}"
+                  },
+                  "{{app_name}}_pool": {
+                    "monitors": [{
+                      "use": "{{app_name}}_monitor"
+                    }]
+                  }
+                {{/make_monitor_http}}
+                {{^make_monitor_http}}
+                  "{{app_name}}_pool": {
+                    "monitors": [{
+                      "bigip": "{{monitor_name_http}}"
+                    }]
+                  }
+                {{/make_monitor_http}}
+              {{/monitor_https}}
+            {{/enable_monitor}}
           {{/make_pool}}
         {{/enable_pool}}
       }

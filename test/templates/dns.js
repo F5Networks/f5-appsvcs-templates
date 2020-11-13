@@ -100,6 +100,12 @@ const expected = {
                         bigip: 'example_udp_irule'
                     }
                 ],
+                profileUDP: {
+                    bigip: '/Common/udp_gtm_dns'
+                },
+                profileDNS: {
+                    bigip: '/Common/dns'
+                },
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
