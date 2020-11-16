@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
-    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#314bd1e10dee5b29d21679524348eca29d6a7e2f",
+    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#0fc645cda7bb0f21e0b674c3f7a28d28dbb73d1f",
     "@f5devcentral/f5-teem": "^1.4.6",
     "axios": "^0.20.0",
     "core-js": "^3.6.5",
