@@ -315,7 +315,10 @@ const newEditor = (tmplid, view) => {
                     .then(() => {
                         window.location.href = '#tasks';
                     })
-                    .catch(e => dispOutput(`Failed to submit application:\n${e.message}`));
+                    .catch((e) => {
+                        appState.busy = false;
+                        dispOutput(`Failed to submit application:\n${e.message}`);
+                    });
             };
         })
         .catch((e) => {
