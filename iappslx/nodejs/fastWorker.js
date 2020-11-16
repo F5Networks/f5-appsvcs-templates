@@ -64,7 +64,7 @@ class FASTWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs');
+        this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs', `${pkg.name}/${pkg.version}`);
         this.storage = new StorageDataGroup(dataGroupPath);
         this.configStorage = new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);

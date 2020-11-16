@@ -22,6 +22,7 @@
 * GUI: Improve displaying errors when managing template sets
 * bigip-fast-templates: Update existing applications to use the new pool members definition
 * Update f5-fast-core from v0.8.0 to v0.9.0
+* driver: Add "f5-appsvcs-templates" userAgent string to AS3 declarations
 
 # 1.4.0
 ## Added

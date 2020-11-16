@@ -7,11 +7,12 @@ const http = require('http');
 const AS3DriverConstantsKey = 'fast';
 
 class AS3Driver {
-    constructor(endPointUrl) {
+    constructor(endPointUrl, userAgent) {
         endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
 
         this._static_id = '';
         this._task_ids = {};
+        this.userAgent = userAgent;
 
         this._endpoint = axios.create({
             baseURL: endPointUrl,
@@ -100,6 +101,12 @@ class AS3Driver {
     }
 
     _postDecl(decl) {
+        if (this.userAgent) {
+            decl.controls = {
+                class: 'Controls',
+                userAgent: this.userAgent
+            };
+        }
         return this._endpoint.post('/declare?async=true', decl)
             .then((result) => {
                 result.body = result.data;

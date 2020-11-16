@@ -134,6 +134,28 @@ describe('AS3 Driver tests', function () {
 
         return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
     });
+    it('create_app_user_agent', function () {
+        const driver = new AS3Driver(undefined, 'foo-bar/1.0');
+        driver._static_id = 'STATIC';
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
+
+        nock(host)
+            .post(as3ep, Object.assign({}, as3WithApp, {
+                id: 'STATIC',
+                controls: {
+                    class: 'Controls',
+                    userAgent: 'foo-bar/1.0'
+                }
+            }))
+            .query(true)
+            .reply(202, {});
+
+        return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
+    });
     it('create_multiple_apps', function () {
         const driver = new AS3Driver();
         driver._static_id = 'STATIC';
