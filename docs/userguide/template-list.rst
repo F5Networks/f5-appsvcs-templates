@@ -29,6 +29,26 @@ The following table lists the template set, the corresponding template(s) and a 
         - dns
         - A template that can be used to load balance DNS servers
 
+      * - bigip-fast-templates
+        - ldap
+        - A template that can be used to manage LDAP servers
+
+      * - bigip-fast-templates
+        - smtp
+        - A template that can be used to manage SMTP
+
+      * - bigip-fast-templates
+        - microsoft_iis
+        - A template that can be used to manage Microsoft IIS servers
+
+      * - bigip-fast-templates
+        - exchange (beta)
+        - A template that can be used to manage Exchange servers
+      
+      * - bigip-fast-templates
+        - sharepoint (beta)
+        - A template that can be used to manage Sharepoint servers
+
       * - examples
         - simple_http
         - A simple HTTP application with load balancing
@@ -52,3 +72,6 @@ The following table lists the template set, the corresponding template(s) and a 
       * - examples
         - simple_waf
         - Example of an HTTPS application using an ASM Policy
+
+.. NOTE:: Exchange and Sharepoint templates are Beta versions. 
+Please report any issues or an RFE on the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > **Issues tab**, click **New Issue**.

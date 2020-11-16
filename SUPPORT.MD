@@ -16,6 +16,7 @@ Currently supported versions:
 | ---------------- | ------------------- | -------------- |
 | 1.3              | 01-Sep-2020         | 01-Dec-2020    |
 | 1.4              | 13-Oct-2020         | 13-Jan-2021    |
+| 1.5              | 20-Nov-2020         | 20-Frb-2021    |
 
 
 Versions no longer supported:
