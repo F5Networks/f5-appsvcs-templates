@@ -10,6 +10,7 @@
 * bigip-fast-templates: Add firewall feature to TCP and HTTP templates
 * Allow hiding templates from REST/GUI with bigipHideTemplate template property
 * Allow specifying a minimum AS3 version for a given template (bigipMinimumAS3 template property)
+* bigip-fast-templates: Allow for more advanced pool member configurations
 
 ## Fixed
 * GUI: Fix handling of undefined values in the base64 editor
@@ -17,6 +18,10 @@
 
 ## Changed
 * Improve performance when working with many FAST applications
+* bigip-fast-templates: Improve prompts and descriptions of various parameters
+* GUI: Improve displaying errors when managing template sets
+* bigip-fast-templates: Update existing applications to use the new pool members definition
+* Update f5-fast-core from v0.8.0 to v0.9.0
 
 # 1.4.0
 ## Added
