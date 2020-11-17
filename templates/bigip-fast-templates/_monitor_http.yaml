@@ -1,6 +1,9 @@
 contentType: application/json
 bigipHideTemplate: true
 definitions:
+  enable_tls_client:
+    type: boolean
+    default: false
   enable_pool:
     type: boolean
     default: true
@@ -10,11 +13,6 @@ definitions:
   enable_monitor:
     title: Pool Monitor
     description: Determine the availability of servers in your pool.
-    type: boolean
-    default: true
-  monitor_https:
-    title: HTTPS Monitor
-    description: Uncheck to use an unencrypted HTTP monitor.
     type: boolean
     default: true
   make_monitor:
@@ -51,40 +49,15 @@ definitions:
     description: Set the time between health checks, in seconds.
     type: integer
     default: 30
+  monitor_timeout:
+    description: F5 recommends a timeout that is calculated based on the interval
+    mathExpression: 3*monitor_interval+1
   monitor_send_string:
     title: Send String
     description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
     type: string
     default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
   monitor_expected_response:
-    title: Expected Response
-    description: The presence of this string anywhere in the HTTP response implies availability.
-    type: string
-    default: ''
-  make_monitor_http:
-    title: FAST-Generated Pool Monitor
-    description: Uncheck to use an existing BIG-IP Pool Monitor.
-    type: boolean
-    default: true
-  monitor_name_http:
-    title: Monitor
-    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
-      the health of the application on each server. If an application instance does not respond
-      system will block client requests to that web server.
-    type: string
-    enumFromBigip: ltm/monitor/http
-    default: /Common/http
-  monitor_interval_http:
-    title: Interval
-    description: Set the time between health checks, in seconds.
-    type: integer
-    default: 30
-  monitor_send_string_http:
-    title: Send String
-    description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
-    type: string
-    default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
-  monitor_expected_response_http:
     title: Expected Response
     description: The presence of this string anywhere in the HTTP response implies availability.
     type: string
@@ -96,61 +69,40 @@ template: |
         {{#enable_pool}}
           {{#make_pool}}
             {{#enable_monitor}}
-              {{#monitor_https}}
-                {{#make_monitor}}
-                  "{{app_name}}_monitor": {
-                    "class": "Monitor",
+              {{#make_monitor}}
+                "{{app_name}}_monitor": {
+                  "class": "Monitor",
+                  {{#enable_tls_client}}
                     "monitorType": "https",
-                    "interval": {{monitor_interval}},
-                    "timeout": 181,
-                    {{#monitor_credentials}}
-                      "username": "{{monitor_username}}",
-                      "passphrase": {
-                        "ciphertext": "{{monitor_passphrase}}",
-                        "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
-                      }
-                    {{/monitor_credentials}}
-                    "send": "{{monitor_send_string}}",
-                    "receive": "{{monitor_expected_response}}"
-                  },
-                  "{{app_name}}_pool": {
-                    "monitors": [{
-                      "use": "{{app_name}}_monitor"
-                    }]
-                  }
-                {{/make_monitor}}
-                {{^make_monitor}}
-                  "{{app_name}}_pool": {
-                    "monitors": [{
-                      "bigip": "{{monitor_name}}"
-                    }]
-                  }
-                {{/make_monitor}}
-              {{/monitor_https}}
-              {{^monitor_https}}
-                {{#make_monitor_http}}
-                  "{{app_name}}_monitor": {
-                    "class": "Monitor",
+                  {{/enable_tls_client}}
+                  {{^enable_tls_client}}
                     "monitorType": "http",
-                    "interval": {{monitor_interval_http}},
-                    "timeout": 181,
-                    "send": "{{monitor_send_string_http}}",
-                    "receive": "{{monitor_expected_response_http}}"
-                  },
-                  "{{app_name}}_pool": {
-                    "monitors": [{
-                      "use": "{{app_name}}_monitor"
-                    }]
-                  }
-                {{/make_monitor_http}}
-                {{^make_monitor_http}}
-                  "{{app_name}}_pool": {
-                    "monitors": [{
-                      "bigip": "{{monitor_name_http}}"
-                    }]
-                  }
-                {{/make_monitor_http}}
-              {{/monitor_https}}
+                  {{/enable_tls_client}}
+                  "interval": {{monitor_interval}},
+                  "timeout": {{monitor_timeout}},
+                  {{#monitor_credentials}}
+                    "username": "{{monitor_username}}",
+                    "passphrase": {
+                      "ciphertext": "{{monitor_passphrase}}",
+                      "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+                    },
+                  {{/monitor_credentials}}
+                  "send": "{{monitor_send_string}}",
+                  "receive": "{{monitor_expected_response}}"
+                },
+                "{{app_name}}_pool": {
+                  "monitors": [{
+                    "use": "{{app_name}}_monitor"
+                  }]
+                }
+              {{/make_monitor}}
+              {{^make_monitor}}
+                "{{app_name}}_pool": {
+                  "monitors": [{
+                    "bigip": "{{monitor_name}}"
+                  }]
+                }
+              {{/make_monitor}}
             {{/enable_monitor}}
           {{/make_pool}}
         {{/enable_pool}}

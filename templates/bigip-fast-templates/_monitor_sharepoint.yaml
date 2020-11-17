@@ -1,0 +1,59 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_tls_client:
+    type: boolean
+    default: false
+  enable_pool:
+    type: boolean
+    default: true
+  make_pool:
+    type: boolean
+    default: true
+  monitor_interval:
+    title: Interval
+    description: Set the time between health checks, in seconds.
+    type: integer
+    default: 30
+  monitor_timeout:
+    description: F5 recommends a timeout that is calculated based on the interval
+    mathExpression: 3*monitor_interval+1
+  monitor_fqdn:
+    title: Application Domain Name
+    description: Specify the FQDN for this Sharepoint application.
+    type: string
+    default: ''
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_pool}}
+          {{#make_pool}}
+            "{{app_name}}_monitor": {
+              "class": "Monitor",
+              {{#enable_tls_client}}
+                "monitorType": "https",
+              {{/enable_tls_client}}
+              {{^enable_tls_client}}
+                "monitorType": "http",
+              {{/enable_tls_client}}
+              "adaptive": false,
+              "interval": 5,
+              "timeout": {{monitor_timeout}},
+              "dscp": 0,
+              "send": "GET / HTTP/1.1\r\nHost: {{monitor_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+              "receive": "X-{{app_name}}HealthScore: [0-5].",
+              "timeUntilUp": 0,
+              "targetAddress": "",
+              "targetPort": 0
+            },
+            "{{app_name}}_pool": {
+              "monitors": [{
+                "use": "{{app_name}}_monitor"
+              }]
+            }
+          {{/make_pool}}
+        {{/enable_pool}}
+      }
+    }
+  }

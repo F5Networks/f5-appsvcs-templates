@@ -15,7 +15,6 @@ const view = {
     // virtual server
     virtual_address: '10.1.1.1',
     virtual_port: 4430,
-    hostnames: ['www.example.com'],
 
     // http redirect
     enable_redirect: true,
@@ -35,7 +34,6 @@ const view = {
     slow_ramp_time: 300,
 
     // monitor spec
-    monitor_https: true,
     make_monitor: true,
     monitor_interval: 30,
     monitor_send_string: 'GET / HTTP/1.1\\r\\n\\r\\n',
@@ -78,7 +76,12 @@ const view = {
     make_multiplex_profile: true,
 
     // irules
-    irule_names: []
+    irule_names: [],
+
+    // firewall
+    enable_firewall: true,
+    firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
+    log_profile_names: ['log local']
 };
 
 const expected = {
@@ -113,6 +116,14 @@ const expected = {
                 profileHTTPAcceleration: 'basic',
                 profileHTTPCompression: 'basic',
                 profileMultiplex: 'basic',
+                policyFirewallEnforced: {
+                    use: 'app1_fw_policy'
+                },
+                securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    }
+                ],
                 iRules: []
             },
             app1_pool: {
@@ -141,7 +152,7 @@ const expected = {
                 class: 'Monitor',
                 monitorType: 'https',
                 interval: 30,
-                timeout: 181,
+                timeout: 91,
                 send: 'GET / HTTP/1.1\r\n\r\n',
                 receive: '200 OK'
             },
@@ -166,6 +177,56 @@ const expected = {
             app1_http: {
                 class: 'HTTP_Profile',
                 xForwardedFor: true
+            },
+            app1_fw_allow_list: {
+                class: 'Firewall_Address_List',
+                addresses: [
+                    '10.0.0.0/8',
+                    '11.0.0.0/8'
+                ]
+            },
+            default_fw_deny_list: {
+                class: 'Firewall_Address_List',
+                addresses: ['0.0.0.0/0']
+            },
+            app1_fw_rules: {
+                class: 'Firewall_Rule_List',
+                rules: [
+                    {
+                        protocol: 'tcp',
+                        name: 'acceptTcpPackets',
+                        loggingEnabled: true,
+                        source: {
+                            addressLists: [
+                                {
+                                    use: 'app1_fw_allow_list'
+                                }
+                            ]
+                        },
+                        action: 'accept'
+                    },
+                    {
+                        protocol: 'any',
+                        name: 'dropPackets',
+                        loggingEnabled: true,
+                        source: {
+                            addressLists: [
+                                {
+                                    use: 'default_fw_deny_list'
+                                }
+                            ]
+                        },
+                        action: 'drop'
+                    }
+                ]
+            },
+            app1_fw_policy: {
+                class: 'Firewall_Policy',
+                rules: [
+                    {
+                        use: 'app1_fw_rules'
+                    }
+                ]
             }
         }
     }
@@ -178,12 +239,6 @@ describe(template, function () {
 
     describe('tls bridging with existing monitor, snatpool, and profiles', function () {
         before(() => {
-            // existing monitor
-            view.make_monitor = false;
-            view.monitor_name = '/Common/monitor1';
-            expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
-            delete expected.t1.app1.app1_monitor;
-
             // existing TLS profiles
             view.make_tls_server_profile = false;
             view.tls_server_profile_name = '/Common/clientssl';
@@ -213,18 +268,16 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls bridging with existing pool, snat automap and default profiles', function () {
+    describe('tls offload with snat automap and default profiles', function () {
         before(() => {
             // default https virtual port
             view.virtual_port = 443;
             expected.t1.app1.app1.virtualPort = 443;
 
-            // existing pool
-            delete view.pool_members;
-            view.make_pool = false;
-            view.pool_name = '/Common/pool1';
-            delete expected.t1.app1.app1_pool;
-            expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
+            // remove TLS client
+            view.enable_tls_client = false;
+            delete expected.t1.app1.app1.clientTLS;
+            expected.t1.app1.app1_monitor.monitorType = 'http';
 
             // snat automap
             view.snat_automap = true;
@@ -241,6 +294,19 @@ describe(template, function () {
             delete view.multiplex_profile_name;
             view.make_multiplex_profile = true;
             expected.t1.app1.app1.profileMultiplex = 'basic';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('tls pass-thru with existing pool', function () {
+        before(() => {
+            // existing pool
+            delete view.pool_members;
+            view.make_pool = false;
+            view.pool_name = '/Common/pool1';
+            delete expected.t1.app1.app1_pool;
+            expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
+            delete expected.t1.app1.app1_monitor;
         });
         util.assertRendering(template, view, expected);
     });

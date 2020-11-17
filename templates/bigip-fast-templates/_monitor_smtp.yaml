@@ -32,6 +32,9 @@ definitions:
     description: Set the time between health checks, in seconds.
     type: integer
     default: 30
+  monitor_timeout:
+    description: F5 recommends a timeout that is calculated based on the interval
+    mathExpression: 3*monitor_interval+1
   monitor_domain:
     title: Domain Name
     description: Specify the domain name for the SMTP server to accept mail.
@@ -60,7 +63,7 @@ template: |
                   "class": "Monitor",
                   "monitorType": "smtp",
                   "interval": {{monitor_interval}},
-                  "timeout": 181,
+                  "timeout": {{monitor_timeout}},
                   "domain": "{{monitor_domain}}",
                   "username": "{{monitor_username}}",
                   "passphrase": {

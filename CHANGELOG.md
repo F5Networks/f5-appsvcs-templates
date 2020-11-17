@@ -7,10 +7,11 @@
 * bigip-fast-templates: Add Microsoft IIS template
 * bigip-fast-templates: Add SMTP template
 * bigip-fast-templates: Add LDAP template
-* bigip-fast-templates: Add firewall feature to TCP and HTTP templates
+* bigip-fast-templates: Add firewall feature to DNS, TCP, and HTTP templates
+* bigip-fast-templates: Add configurable monitors to TCP and HTTP templates
+* bigip-fast-templates: Allow for more advanced pool member configuration in TCP and HTTP templates
 * Allow hiding templates from REST/GUI with bigipHideTemplate template property
 * Allow specifying a minimum AS3 version for a given template (bigipMinimumAS3 template property)
-* bigip-fast-templates: Allow for more advanced pool member configurations
 
 ## Fixed
 * GUI: Fix handling of undefined values in the base64 editor
