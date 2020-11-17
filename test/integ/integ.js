@@ -167,4 +167,11 @@ describe('Applications', function () {
         ],
         monitor_domain: 'example.com'
     }));
+    it('Deploy bigip-fast-templates/microsoft_adfs', () => deployApplication('bigip-fast-templates/microsoft_adfs', {
+        tenant_name: 't-5',
+        virtual_address: '10.0.0.9',
+        pool_members: [
+            '10.0.0.9'
+        ]
+    }));
 });
