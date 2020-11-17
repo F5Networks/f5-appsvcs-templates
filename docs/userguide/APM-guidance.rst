@@ -15,7 +15,7 @@ In order to configure APM using the FAST Microsoft Exchange template, refer to t
 
 Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_
 
-`F5 Microsoft Exchange deployment guide’ <https://www.f5.com/pdf/deployment-guides/microsoft-exchange-2016-dg.pdf>_, beginning on page 98, has instructions and scenarios for configuring the BIG-IP APM module.
+`F5 Microsoft Exchange deployment guide <https://www.f5.com/pdf/deployment-guides/microsoft-exchange-2016-dg.pdf>`_, beginning on page 98, has instructions and scenarios for configuring the BIG-IP APM module.
 
 Sharepoint
 ^^^^^^^^^^
@@ -25,7 +25,7 @@ In order to configure APM using the FAST Microsoft SharePoint template, refer to
 
 Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_
 
-`F5 Microsoft SharePoint deployment guide’ <https://www.f5.com/content/dam/f5/corp/global/pdf/deployment-guides/microsoft-sharepoint-2016-dg.pdf>_, beginning on page 15, has instructions for configuring the BIG-IP APM module.
+`F5 Microsoft SharePoint deployment guide <https://www.f5.com/content/dam/f5/corp/global/pdf/deployment-guides/microsoft-sharepoint-2016-dg.pdf>`_, beginning on page 15, has instructions for configuring the BIG-IP APM module.
 
 .. seealso:: `BIG-IP APM Knowledge Center <https://support.f5.com/csp/knowledge-center/software/BIG-IP?module=BIG-IP%20APM&version=14.0.0>`_
 

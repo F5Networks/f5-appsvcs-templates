@@ -42,11 +42,11 @@ The following table lists the template set, the corresponding template(s) and a 
         - A template that can be used to manage Microsoft IIS servers
 
       * - bigip-fast-templates
-        - exchange (beta)
+        - microsoft_exchange (beta)
         - A template that can be used to manage Exchange servers
       
       * - bigip-fast-templates
-        - sharepoint (beta)
+        - microsoft_sharepoint (beta)
         - A template that can be used to manage Sharepoint servers
 
       * - examples
