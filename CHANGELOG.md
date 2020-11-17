@@ -2,8 +2,9 @@
 ## Added
 * GUI: Support Markdown in schema descriptions
 * GUI: Clicking on an application name in the Application List tab now modifies the application
-* bigip-fast-templates: Add Microsoft Sharepoint template
-* bigip-fast-templates: Add Microsoft Exchange template
+* bigip-fast-templates: Add Microsoft Sharepoint template (experimental/beta)
+* bigip-fast-templates: Add Microsoft Exchange template (experimental/beta)
+* bigip-fast-templates: Add Microsoft ADFS template (experimental/beta)
 * bigip-fast-templates: Add Microsoft IIS template
 * bigip-fast-templates: Add SMTP template
 * bigip-fast-templates: Add LDAP template
