@@ -1,0 +1,32 @@
+contentType: application/json
+bigipHideTemplate: true
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}_http": {
+          "class": "HTTP_Profile",
+          "xForwardedFor": true
+        },
+        "{{app_name}}_caching": {
+          "class": "HTTP_Acceleration_Profile",
+          "parentProfile": {
+            "bigip": "/Common/optimized-caching"
+          },
+          "cacheSize": 10,
+          "maximumObjectSize": 2000000
+        },
+        "{{app_name}}": {
+          "persistenceMethods": [],
+          "profileHTTP": {
+            "use": "{{app_name}}_http"
+          },
+          "profileHTTPAcceleration": {
+            "use": "{{app_name}}_caching"
+          },
+          "profileHTTPCompression": "basic",
+          "profileMultiplex": "basic"
+        }
+      }
+    }
+  }

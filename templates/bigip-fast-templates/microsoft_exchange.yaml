@@ -1,0 +1,1308 @@
+contentType: application/json
+title: Microsoft Exchange Application Template
+description: Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations.
+bigipMinimumAS3: 3.23
+allOf:
+  - contentType: application/json
+    definitions:
+      beta_warning:
+        title: 'Notice: Beta Test'
+        description: <span style="color:#d05000;font-size:125%">
+          This FAST template is a *Beta Version*. Please report any issues, or an RFE, on the 
+          [FAST GitHub repository](https://github.com/F5Networks/f5-appsvcs-templates) as appropriate.</span>
+        format: info
+    template: |
+      { {{beta_warning}}
+        "class": "ADC"
+      }
+  - $ref: "_as3.yaml#"
+definitions:
+  app_fqdn:
+    title: What is the FQDN for your HTTP-based client access services?
+    description: 	Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
+    type: string
+  single_vip:
+    title: Do you want to use a single IP address for all Mailbox Server connections?
+    description: This question determines the number of virtual servers the BIG-IP system creates for your Mailbox Server deployment. By choosing a single IP address, you can combine multiple functions (such as using a single FQDN and associated SSL certificate for all HTTP-based client access services) on the same virtual server. By choosing separate virtual servers for each client access service component, you can manage each service independently from the others. For detailed information, see the Deployment Guide.
+    type: boolean
+  virtual_address:
+    title: What IP address do you want to use for the virtual server?
+    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the exchange servers.
+  virtual_port:
+    title: What TCP port do you want to use for the virtual server?
+    default: 443
+  enable_redirect:
+    title: Redirect port 80 traffic to this virtual server
+    type: boolean
+  pool_customize:
+    title: Do you want to customize your server pool settings?
+    description: If necessary, you can configure advanced pool settings (such as specifying the load balancing algorithm or configuring priority groups). If you do not have a need to modify these settings, use the recommended settings, which are a result of extensive testing with Microsoft Exchange Server.
+    type: boolean
+  load_balancing_mode:
+    title: Which load balancing method do you want to use?
+    description: 	Choose the load balancing method appropriate for your configuration. We recommend the default, Least Connections (member). For a description of each method, see the online help on the Pool creation page, or the BIG-IP system documentation. 
+  slow_ramp_time:
+    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
+    description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
+  pool_members:
+    title: Pool Members
+    description: Which exchange servers should be included in this pool?
+  pool_port:
+    title: What TCP port do you want to use for the pool members?
+  eav:
+    title: Do you want to create external monitors for client access services? If not, standard monitors will be utilized.
+    description: 	By default, the iApp creates the Microsoft-recommended Managed Availability monitors. You can choose to have the iApp also create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange iApp deployment guide.
+    type: boolean
+  enable_snat:
+    title: SNAT
+    description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
+    type: boolean
+  snat_automap:
+    title: SNAT Automap
+    description: SNAT automap uses BIG-IP self IP addresses as the translation address.
+    type: boolean
+  make_snatpool:
+    title: Automatically manage the SNAT pool.
+    type: boolean
+    description: If selected the BIG-IP will create and manage a snatpool.  Otherwise, select an existing snatpool.  NOTE The pool must exist in the Common partition.
+  snatpool_name:
+    title: Specify the name of an existing BIG-IP SNAT pool.
+    enumFromBigip: 'ltm/snatpool'
+  snat_addresses:
+    title: SNAT Pool Addresses
+  tcp_topology:
+    title: Specify the type of network that connects both clients and servers to the BIG-IP system.
+  enable_tls_server:
+    title: TLS Server
+    description: Enable TLS server to decrypt client-side connections.
+    type: boolean
+  tls_cert_name:
+    title: Specify the name of an existing BIG-IP SSL certificate.
+    enumFromBigip: 'sys/crypto/cert'
+  tls_key_name:
+    title: Specify the name of an existing BIG-IP SSL key.
+    enumFromBigip: 'sys/crypto/key'
+  enable_tls_client:
+    title: TLS Client
+    description: Enable TLS client to encrypt server-side connections.
+    type: boolean
+  make_tls_client_profile:
+    title: Automatically manage the TLS client profile
+    type: boolean
+  tls_client_profile_name:
+    title: Specify the name of an existing BIG-IP serverssl profile.
+    description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+    enumFromBigip: 'ltm/profile/server-ssl'
+  enable_multiplex:
+    title: Connection Multiplexing
+    description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
+    type: boolean
+  tcp_ingress_topology:
+    title: Specify the type of network that connects clients to the BIG-IP system
+  tcp_egress_topology:
+    title: Specify the type of network that connects servers to the BIG-IP system
+  owa:
+    title: Are you deploying Outlook Web App (includes ECP)?
+    description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
+    type: boolean
+  owa_virtual_address:
+    title: What IP address do you want to use for the OWA virtual server?
+    description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
+  owa_fqdn: 
+    title: What is the FQDN for your OWA service?  
+  ews:
+    title: Are you deploying EWS?
+    description: 	Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
+    type: boolean
+  ews_virtual_address:
+    title: What IP address do you want to use for the EWS virtual server?
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the EWS virtual server.
+  ews_fqdn: 
+    title: What is the FQDN for your EWS service?  
+  outlook:
+    title: Are you deploying Microsoft Outlook and OAB?
+    description: 	Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
+    type: boolean
+  outlookMAPI:
+    title: Will Outlook clients use MAPI-over-HTTP to connect to Exchange?
+    description: 	The iApp needs to know if Microsoft Outlook clients use MAPI-over-HTTP, RPC-over-HTTP, or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects. Select the answer that best describes your implementation.     
+    type: boolean
+  mapi_virtual_address:
+    title: What IP address do you want to use for the MAPI virtual server?
+    description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
+  mapi_fqdn: 
+    title: What is the FQDN for your MAPI service?  
+  outlookRPC:
+    title: Will Outlook clients use RPC-over-HTTP to connect to Exchange?
+    description: 	The iApp needs to know if Microsoft Outlook clients use MAPI-over-HTTP, RPC-over-HTTP, or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects. Select the answer that best describes your implementation.     
+    type: boolean
+  oa_virtual_address:
+    title: What IP address do you want to use for the Outlook Anywhere virtual server?
+    description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
+  oa_fqdn: 
+    title: What is the FQDN for your Outlook Anywhere service?  
+  activesync: 
+    title: Are you deploying ActiveSync?
+    description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
+    type: boolean
+  as_virtual_address:
+    title: What IP address do you want to use for the ActiveSync virtual server?
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the ActiveSync virtual server.
+  as_fqdn: 
+    title: What is the FQDN for your ActiveSync service?  
+  autodiscover:
+    title: Are you deploying Autodiscover?
+    description: 	Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
+    type: boolean
+  ad_virtual_address:
+    title: What IP address do you want to use for the Autodiscover virtual server?
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Autodiscover virtual server.
+  ad_fqdn: 
+    title: What is the FQDN for your Autodiscover service?  
+  pop3:
+    title: Are you deploying POP3?
+    description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
+    type: boolean
+  pop3_virtual_address:
+    title: What IP address do you want to use for the POP3 virtual server?
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the POP3 virtual server.
+  imap4:
+    title: Are you deploying IMAP4?
+    description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable IMAP4 on each of your Exchange Mailbox Servers before that service will be available. IMAP4 is not enabled by default on Exchange Mailbox Servers.
+    type: boolean
+  imap4_virtual_address:
+    title: What IP address do you want to use for the IMAP4 virtual server?
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the IMAP4 virtual server.
+  app_type_def:
+    template: |
+        "template": "generic",
+  app_tls_server_def:
+    template: |
+      {{#enable_tls_server}}
+        "{{app_name}}_tls_server": {
+          "class": "TLS_Server",
+          "certificates": [{ "certificate": "{{app_name}}_certificate" }]
+        },
+        "{{app_name}}_certificate": {
+          "class": "Certificate",
+          "certificate": { "bigip": "{{tls_cert_name:f5:bigip_path}}" },
+          "privateKey": { "bigip": "{{tls_key_name:f5:bigip_path}}" }
+        },
+      {{/enable_tls_server}}
+  app_tls_client_def:
+    template: |
+      {{#enable_tls_client}}
+        {{#make_tls_client_profile}}
+          "{{app_name}}_tls_client": {
+            "class": "TLS_Client"
+          },
+        {{/make_tls_client_profile}}
+      {{/enable_tls_client}}
+  app_autodiscover_pool_def:
+    template: |
+     {{#autodiscover}}
+      "exchangeVS_ad_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": {{pool_port:f5:port}},
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+        "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+        "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+        "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        "monitors": [
+        {{#eav}}
+          {
+            "use": "exchangeVS_ad_https_monitor"
+          },
+          {
+            "use": "exchangeVS_ad_snmp_monitor"
+          }
+        {{/eav}}
+        {{^eav}}
+          {
+            "use": "exchangeVS_ad_https_monitor"
+          }
+        {{/eav}}
+        ]
+      },
+     {{/autodiscover}}
+  app_autodiscover_monitor_def:
+    template: |
+      {{#autodiscover}}
+        "exchangeVS_ad_https_monitor": {
+          "adaptive": false,
+          "interval": 10,
+          "dscp": 0,
+          {{#single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          {{^single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{ad_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          "receive": "200 OK",
+          "timeUntilUp": 0,
+          "timeout": 31,
+          "class": "Monitor",
+          {{#enable_tls_client}}
+            "monitorType": "https",
+          {{/enable_tls_client}}
+          {{^enable_tls_client}}
+            "monitorType": "http",
+          {{/enable_tls_client}}
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_ad_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/ad_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/autodiscover}}
+  app_activesync_pool_def:
+    template: |
+      {{#activesync}}
+        "exchangeVS_as_pool": {
+          "class": "Pool",
+          "members": [{
+            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "servicePort": {{pool_port:f5:port}},
+            "shareNodes": true
+          }],
+          {{#pool_customize}}
+          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+          "slowRampTime": {{slow_ramp_time::integer}},
+          {{/pool_customize}}
+          {{^pool_customize}}
+          "loadBalancingMode": "least-connections-member",
+          {{/pool_customize}}
+          "monitors": [
+            {{#eav}}
+              {
+                "use": "exchangeVS_as_https_monitor"
+              },
+              {
+                "use": "exchangeVS_as_snmp_monitor"
+              }
+            {{/eav}}
+            {{^eav}}
+              {
+                "use": "exchangeVS_as_https_monitor"
+              }
+            {{/eav}}
+          ]
+        },
+      {{/activesync}}
+  app_activesync_monitor_def:
+    template: |
+      {{#activesync}}
+        "exchangeVS_as_https_monitor": {
+          "adaptive": false,
+          "interval": 10,
+          "dscp": 0,
+          {{#single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          {{^single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{as_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          "receive": "200 OK",
+          "timeUntilUp": 0,
+          "timeout": 31,
+          "class": "Monitor",
+          {{#enable_tls_client}}
+            "monitorType": "https",
+          {{/enable_tls_client}}
+          {{^enable_tls_client}}
+            "monitorType": "http",
+          {{/enable_tls_client}}
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_as_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/as_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/activesync }}
+  app_ews_pool_def:
+    template: |
+      {{#ews}}
+        "exchangeVS_ews_pool": {
+          "class": "Pool",
+          "members": [{
+            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "servicePort": {{pool_port:f5:port}},
+            "shareNodes": true
+          }],
+          {{#pool_customize}}
+          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+          "slowRampTime": {{slow_ramp_time::integer}},
+          {{/pool_customize}}
+          {{^pool_customize}}
+          "loadBalancingMode": "least-connections-member",
+          {{/pool_customize}}
+          "monitors": [
+            {{#eav}}
+              {
+                "use": "exchangeVS_ews_https_monitor"
+              },
+              {
+                "use": "exchangeVS_ews_snmp_monitor"
+              }
+            {{/eav}}
+            {{^eav}}
+              {
+                "use": "exchangeVS_ews_https_monitor"
+              }
+            {{/eav}}
+          ]
+        },
+      {{/ews}}
+  app_ews_monitor_def:
+    template: |
+      {{#ews}}
+        "exchangeVS_ews_https_monitor": {
+          "adaptive": false,
+          "interval": 10,
+          "dscp": 0,
+          {{#single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          {{^single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{ews_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          "receive": "200 OK",
+          "timeUntilUp": 0,
+          "timeout": 31,
+          "class": "Monitor",
+          {{#enable_tls_client}}
+            "monitorType": "https",
+          {{/enable_tls_client}}
+          {{^enable_tls_client}}
+            "monitorType": "http",
+          {{/enable_tls_client}}
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_ews_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/ews_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/ews}}
+  app_imap4_pool_def:
+    template: |
+     {{#imap4}}
+      "exchangeVS_imap4_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": 993,
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+        "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+        "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+        "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        "monitors": [
+          {{#eav}}
+            {
+              "use": "exchangeVS_imap4_snmp_monitor"
+            },  
+            {
+              "use": "exchangeVS_imap4_{{mailbox:f5:bigip_name}}_eav_monitor"
+            }
+          {{/eav}}
+          {{^eav}}
+            {
+              "use": "exchangeVS_imap4_monitor"
+            }
+          {{/eav}}
+        ]
+      },
+     {{/imap4}}
+  app_imap4_monitor_def:
+    template: |
+      {{#imap4}}
+        "exchangeVS_imap4_monitor": {
+          "adaptive": false,
+          "interval": 30,
+          "dscp": 0,
+          "timeUntilUp": 0,
+          "send":"",
+          "receive":"",
+          "timeout": 91,
+          "class": "Monitor",
+          "monitorType": "tcp",
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_imap4_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/imap_eav.sh"
+            }
+          },
+          "exchangeVS_imap4_{{mailbox:f5:bigip_name}}_eav_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/imap_adv_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/imap4}}
+  app_pop3_pool_def:
+    template: |
+     {{#pop3}}
+      "exchangeVS_pop3_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": 995,
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+        "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+        "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+        "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        "monitors": [
+          {{#eav}}
+            {
+              "use": "exchangeVS_pop3_snmp_monitor"
+            },
+            {
+              "use": "exchangeVS_pop3_{{mailbox:f5:bigip_name}}_eav_monitor"
+            }
+          {{/eav}}
+          {{^eav}}
+            {
+              "use": "exchangeVS_pop3_monitor"
+            }           
+          {{/eav}}
+        ]
+      },
+     {{/pop3}}
+  app_pop3_monitor_def:
+    template: |
+      {{#pop3}}
+        "exchangeVS_pop3_monitor": {
+          "adaptive": false,
+          "interval": 30,
+          "dscp": 0,
+          "timeUntilUp": 0,
+          "send":"",
+          "receive":"",
+          "timeout": 91,
+          "class": "Monitor",
+          "monitorType": "tcp",
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_pop3_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/pop3_eav.sh"
+            }
+          },
+          "exchangeVS_pop3_{{mailbox:f5:bigip_name}}_eav_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/pop3_adv_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/pop3}}
+  app_mapi_pool_def:
+    template: |
+      {{#outlook}}     
+        {{#outlookMAPI}}
+        "exchangeVS_mapi_pool": {
+          "class": "Pool",
+          "members": [{
+            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "servicePort": {{pool_port:f5:port}},
+            "shareNodes": true
+          }],
+          {{#pool_customize}}
+          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+          "slowRampTime": {{slow_ramp_time::integer}},
+          {{/pool_customize}}
+          {{^pool_customize}}
+          "loadBalancingMode": "least-connections-member",
+          {{/pool_customize}}
+          "monitors": [
+          {{#eav}}
+            {
+              "use": "exchangeVS_mapi_https_monitor"
+            },
+            {
+              "use": "exchangeVS_mapi_snmp_monitor"
+            }
+          {{/eav}}
+          {{^eav}}
+            {
+              "use": "exchangeVS_mapi_https_monitor"
+            }
+          {{/eav}}
+          ]
+        },
+        {{/outlookMAPI}}
+      {{/outlook}}
+  app_mapi_monitor_def:
+    template: |
+      {{#outlook}}
+      {{#outlookMAPI}}
+        "exchangeVS_mapi_https_monitor": {
+          "adaptive": false,
+          "interval": 10,
+          "dscp": 0,
+          {{#single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          {{^single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{mapi_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          "receive": "200 OK",
+          "timeUntilUp": 0,
+          "timeout": 31,
+          "class": "Monitor",
+          {{#enable_tls_client}}
+            "monitorType": "https",
+          {{/enable_tls_client}}
+          {{^enable_tls_client}}
+            "monitorType": "http",
+          {{/enable_tls_client}}
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_mapi_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/mapi_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/outlookMAPI}}
+      {{/outlook}}
+  app_oa_pool_def:
+    template: |
+      {{#outlook}}
+      {{#outlookRPC}}
+      "exchangeVS_oa_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": {{pool_port:f5:port}},
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+        "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+        "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+        "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        "monitors": [
+          {{#eav}}
+            {
+              "use": "exchangeVS_oa_https_monitor"
+            },
+            {
+              "use": "exchangeVS_oa_snmp_monitor"
+            }
+          {{/eav}}
+          {{^eav}}
+            {
+              "use": "exchangeVS_oa_https_monitor"
+            }
+          {{/eav}}
+        ]
+      },
+      {{/outlookRPC}}
+      {{/outlook}}  
+  app_oa_monitor_def:
+    template: |
+      {{#outlook}}
+      {{#outlookRPC}}
+        "exchangeVS_oa_https_monitor": {
+          "adaptive": false,
+          "interval": 10,
+          "dscp": 0,
+          {{#single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          {{^single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{oa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          "receive": "200 OK",
+          "timeUntilUp": 0,
+          "timeout": 31,
+          "class": "Monitor",
+          {{#enable_tls_client}}
+            "monitorType": "https",
+          {{/enable_tls_client}}
+          {{^enable_tls_client}}
+            "monitorType": "http",
+          {{/enable_tls_client}}
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_oa_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/oa_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/outlookRPC}}
+      {{/outlook}}
+  app_owa_pool_def:
+    template: |
+     {{#owa}}
+      "exchangeVS_owa_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": {{pool_port:f5:port}},
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+        "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+        "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+        "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        "monitors": [
+          {{#eav}}
+            {
+              "use": "exchangeVS_owa_https_monitor"
+            },
+            {
+              "use": "exchangeVS_owa_snmp_monitor"
+            }
+          {{/eav}}
+          {{^eav}}
+            {
+              "use": "exchangeVS_owa_https_monitor"
+            }
+          {{/eav}}
+        ]
+      },
+     {{/owa}}
+  app_owa_monitor_def:
+    template: |
+      {{#owa}}
+        "exchangeVS_owa_https_monitor": {
+          "adaptive": false,
+          "interval": 10,
+          "dscp": 0,
+          {{#single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          {{^single_vip}}
+          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{owa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          {{/single_vip}}
+          "receive": "200 OK",
+          "timeUntilUp": 0,
+          "timeout": 31,
+          "class": "Monitor",
+          {{#enable_tls_client}}
+            "monitorType": "https",
+          {{/enable_tls_client}}
+          {{^enable_tls_client}}
+            "monitorType": "http",
+          {{/enable_tls_client}}
+          "targetAddress": "",
+          "targetPort": 0 
+        },
+        {{#eav}}
+          "exchangeVS_owa_snmp_monitor": {
+            "adaptive": false,
+            "interval": 30,
+            "dscp": 0,
+            "timeUntilUp": 0,
+            "timeout": 91,
+            "class": "Monitor",
+            "monitorType": "external",
+            "script": {
+            "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/Exchange/eav_scripts/owa_eav.sh"
+            }
+          },
+        {{/eav}}
+      {{/owa}}
+  app_http_def:
+    template: |
+        "{{app_name}}_http": {
+          "class": "HTTP_Profile",
+          "xForwardedFor": true
+        },
+  app_snatpool_def:
+    template: |
+      {{#enable_snat}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "{{app_name}}_snatpool": {
+              "class": "SNAT_Pool",
+              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
+  app_accelerate_def:
+    template: |
+      "{{app_name}}_cache-optimize": {
+        "parentProfile": {
+          "bigip": "/Common/optimized-caching"
+        },
+        "class": "HTTP_Acceleration_Profile",
+        "uriIncludeList": [
+          ".*"
+        ],
+        "uriExcludeList": [
+          "/owa/ev.owa",
+          "oab.xml"
+        ]
+      },
+  app_compression_def:
+    template: |
+     "{{app_name}}_wan-optimized-compression": {
+        "class": "HTTP_Compress",
+        "contentTypeIncludes": [
+          "text/(css | html | javascript | json | plain | postscript | richtext | rtf | vnd.wap.wml | vnd.wap.wmlscript | wap | wml | x-component | x-vcalendar | x-vcard | xml) ",
+          "application/(css | css-stylesheet | doc | excel | javascript | json | lotus123 | mdb | mpp | ms-excel | ms-powerpoint | ms-word | msaccess | msexcel | mspowerpoint | msproject | msword | photoshop | postscript | powerpoint | ps | psd | quarkexpress | rtf | txt | visio | vnd.excel | vnd.ms-access | vnd.ms-excel | vnd.ms-powerpoint | vnd.ms-pps | vnd.ms-project | vnd.msword | vnd.ms-works | vnd.ms-works-db | vnd.msaccess | vnd.msexcel | vnd.mspowerpoint | vnd.msword | vnd.powerpoint | vnd.visio | vnd.wap.cmlscriptc | vnd.wap.wmlc | vnd.wap.xhtml+xml | vnd.word | vsd | winword | wks | word | x-excel | x-java-jnlp-file | x-javascript | x-json | x-lotus123 | x-mdb | x-ms-excel | x-ms-project | x-mscardfile | x-msclip | x-msexcel | x-mspowerpoint | x-msproject | x-msword | x-msworks-db | x-msworks-wps | x-photoshop | x-postscript | x-powerpoint | x-ps | x-quark-express | x-rtf | x-vermeer-rpc | x-visio | x-vsd | x-wks | x-word | x-xls | x-xml | xhtml+xml | xls | xml) ",
+          "image/(photoshop | psd | x-photoshop | x-vsd)"
+        ]
+      },
+  app_irule_as_def:
+    template: >-
+      {{#activesync}}
+      \n        \"/microsoft-server-activesync*\" {\n            TCP::idletime 1800\n            pool exchangeVS_as_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }
+      {{/activesync}}
+  app_irule_owa2_def:
+    template: >-
+      {{#owa}}
+      \n        \"/owa*\" {\n            \n            pool exchangeVS_owa_pool\n            return\n        }\n        \"/ecp*\" {\n            \n            pool exchangeVS_owa_pool\n            return\n        }
+      {{/owa}}
+  app_irule_ews_def:
+    template: >-
+      {{#ews}}
+      \n        \"/ews*\" {\n            pool exchangeVS_ews_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }\n        \"/oab*\" {\n            pool exchangeVS_ews_pool\n            persist none\n            return\n        }
+      {{/ews}}
+  app_irule_mapi_def:
+    template: >-
+      {{#outlook}}
+      {{#outlookMAPI}}
+      \n        \"/mapi*\" {\n            pool exchangeVS_mapi_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n         }
+      {{/outlookMAPI}}
+      {{/outlook}}
+  app_irule_rpc_def:
+    template: >-
+      {{#outlook}}
+      {{#outlookRPC}}
+      \n        \"/rpc/rpcproxy.dll*\" {\n            \n            COMPRESS::disable\n            CACHE::disable\n            return\n        }
+      {{/outlookRPC}}
+      {{/outlook}}
+  app_irule_ad_def:
+    template: >-
+      {{#autodiscover}}
+      \n        \"/autodiscover*\" {\n            pool exchangeVS_ad_pool\n            persist none\n            return\n        }
+      {{/autodiscover}}
+  app_irule_combined_def:
+    template: >-
+      when HTTP_REQUEST {\n    switch -glob -- [string tolower [HTTP::path]] {
+      {{> app_irule_as_def}}
+      {{> app_irule_owa2_def}}
+      {{> app_irule_ews_def}}
+      {{> app_irule_mapi_def}}
+      {{> app_irule_rpc_def}} 
+      {{> app_irule_ad_def}}
+      \n        default {\n            pool exchangeVS_owa_pool\n        }\n    }\n}\nwhen HTTP_RESPONSE {\n    if { ( [HTTP::header exists \"WWW-Authenticate\"] &&\n        [string tolower [HTTP::header values \"WWW-Authenticate\"]] contains \"negotiate\" ) ||\n        ( [HTTP::header exists \"Persistent-Auth\"] &&\n        [string tolower [HTTP::header \"Persistent-Auth\"]] contains \"true\" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }\n   if {[HTTP::header exists \"Transfer-Encoding\"]} {\n        HTTP::payload rechunk\n   }\n}
+  app_irule_owa_def:
+    template: |
+        "{{app_name}}_owa_redirect_irule3": {
+          "class": "iRule",
+          "iRule": "priority 900\nwhen HTTP_REQUEST {\n    if { ([HTTP::uri] == \"/\") } {\n        HTTP::redirect https://[HTTP::host]/owa/\n    }\n}"
+        },
+  app_irule_oneconnect_def:
+    template: |
+        "{{app_name}}_oneconnect_irule3": {
+          "class": "iRule",
+          "iRule": "when HTTP_RESPONSE {\n    if { ( [HTTP::header exists \"WWW-Authenticate\"] &&\n        [string tolower [HTTP::header values \"WWW-Authenticate\"]] contains \"negotiate\" ) ||\n        ( [HTTP::header exists \"Persistent-Auth\"] &&\n        [string tolower [HTTP::header \"Persistent-Auth\"]] contains \"true\" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }\n   if {[HTTP::header exists \"Transfer-Encoding\"]} {\n        HTTP::payload rechunk\n   }\n}"
+        },    
+  service_type_def:
+    template: |
+      {{#enable_tls_server}}
+        "class": "Service_HTTPS",
+      {{/enable_tls_server}}
+      {{^enable_tls_server}}
+        "class": "Service_TCP",
+      {{/enable_tls_server}}
+  service_tls_server_def:
+    template: |
+      {{#enable_tls_server}}
+        "serverTLS": "{{app_name}}_tls_server",
+      {{/enable_tls_server}}
+  service_tls_client_def:
+    template: |
+      {{#enable_tls_client}}
+        {{#make_tls_client_profile}}
+          "clientTLS": "{{app_name}}_tls_client",
+        {{/make_tls_client_profile}}
+        {{^make_tls_client_profile}}
+          "clientTLS": {
+            "bigip": "{{tls_client_profile_name:f5:bigip_path}}"
+          },
+        {{/make_tls_client_profile}}
+      {{/enable_tls_client}}
+  service_http_def:
+    template: |
+        "profileHTTP": {
+          "use": "{{app_name}}_http"
+        },
+  service_persist:
+    template: |
+      "persistenceMethods": [],
+  service_snat_def:
+    template: |
+      {{#enable_snat}}
+        {{#snat_automap}}
+          "snat": "auto",
+        {{/snat_automap}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "snat": {
+              "use": "{{app_name}}_snatpool"
+            },
+          {{/make_snatpool}}
+          {{^make_snatpool}}
+            "snat": {
+              "bigip": { "bigip": "{{snatpool_name:f5:bigip_path}}" }
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
+      {{^enable_snat}}
+        "snat": "none",
+      {{/enable_snat}}
+  service_accelerate_def:
+    template: |
+      "profileHTTPAcceleration": {
+        "use": "{{app_name}}_cache-optimize"
+      },
+  service_compression_def:
+    template: |
+      "profileHTTPCompression":{
+        "use":"{{app_name}}_wan-optimized-compression"
+      },
+  service_multiplex_def:
+    template: |
+      {{#enable_multiplex}}
+        "profileMultiplex": "basic",
+        "profileNTLM": {
+          "bigip": "/Common/ntlm"
+        },
+      {{/enable_multiplex}} 
+  service_redirect80_def:
+    template: |
+      {{#enable_tls_server}}
+        "redirect80": {{enable_redirect::boolean}},
+      {{/enable_tls_server}}
+      {{^enable_tls_server}}
+        "redirect80": false,
+      {{/enable_tls_server}}
+  service_tcp_def:
+    template: |
+      "ingress": "{{tcp_ingress_topology:f5:topology}}",
+      "egress": "{{tcp_egress_topology:f5:topology}}"
+  service_irules_def:
+    template: |
+      "iRules": [
+      {{#owa}}
+      {
+        "use": "{{app_name}}_owa_redirect_irule3"
+      },
+      {{/owa}}
+      {
+        "use": "{{app_name}}_combined_pool_irule3"
+      }
+      ],
+  service_owa_irules_def:
+    template: |
+      "iRules": [
+        {
+          "use": "{{app_name}}_owa_redirect_irule3"
+        }
+      ],
+  service_oneconnect_irules_def:
+    template: |
+      "iRules": [
+        {
+          "use": "{{app_name}}_oneconnect_irule3"
+        }
+      ],
+  service_pop3VS:
+      template: |
+        {{#pop3}}
+          "{{app_name}}_pop3_vs": {
+          {{#single_vip}}
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          {{/single_vip}}
+          {{^single_vip}}
+          "virtualAddresses": ["{{pop3_virtual_address:f5:ipv4}}"],
+          {{/single_vip}}
+          "pool": "exchangeVS_pop3_pool",
+          "virtualPort": 995,
+          "class": "Service_TCP",
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_snat_def}}
+          {{> service_tcp_def}}
+          },
+        {{/pop3}}
+  service_imap4VS:
+      template: |
+        {{#imap4}}
+          "{{app_name}}_imap4_vs": {
+          {{#single_vip}}
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          {{/single_vip}}
+          {{^single_vip}}
+          "virtualAddresses": ["{{imap4_virtual_address:f5:ipv4}}"],
+          {{/single_vip}}
+          "pool": "exchangeVS_imap4_pool",
+          "virtualPort": 993,
+          "class": "Service_TCP",
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_snat_def}}
+          {{> service_tcp_def}}
+          },
+        {{/imap4}}
+  service_owaVS:
+    template: |
+        {{#single_vip}}
+        {{/single_vip}}
+        {{^single_vip}}
+        {{#owa}}  
+          "{{app_name}}_owa_vs": {
+          "virtualAddresses": ["{{owa_virtual_address:f5:ipv4}}"],
+          "pool": "exchangeVS_owa_pool",
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_accelerate_def}}
+          {{> service_compression_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_owa_irules_def}}
+          {{> service_tcp_def}}
+          },
+        {{/owa}}
+        {{/single_vip}}
+  service_ewsVS:
+    template: |
+        {{#single_vip}}
+        {{/single_vip}}
+        {{^single_vip}}
+        {{#ews}}  
+          "{{app_name}}_ews_vs": {
+          "virtualAddresses": ["{{ews_virtual_address:f5:ipv4}}"],
+          "pool": "exchangeVS_ews_pool",
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_oneconnect_irules_def}}
+          {{> service_tcp_def}}
+          },
+        {{/ews}}
+        {{/single_vip}}
+  service_mapiVS:
+    template: |
+        {{#single_vip}}
+        {{/single_vip}}
+        {{^single_vip}}
+        {{#outlookMAPI}}  
+          "{{app_name}}_mapi_vs": {
+          "virtualAddresses": ["{{mapi_virtual_address:f5:ipv4}}"],
+          "pool": "exchangeVS_mapi_pool",
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_oneconnect_irules_def}}
+          {{> service_tcp_def}}
+          },
+        {{/outlookMAPI}}
+        {{/single_vip}}
+  service_oaVS:
+    template: |
+        {{#single_vip}}
+        {{/single_vip}}
+        {{^single_vip}}
+        {{#outlookRPC}}  
+          "{{app_name}}_oa_vs": {
+          "virtualAddresses": ["{{oa_virtual_address:f5:ipv4}}"],
+          "pool": "exchangeVS_oa_pool",
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_oneconnect_irules_def}}
+          {{> service_tcp_def}}
+          },
+        {{/outlookRPC}}
+        {{/single_vip}}
+  service_asVS:
+    template: |
+        {{#single_vip}}
+        {{/single_vip}}
+        {{^single_vip}}
+        {{#activesync}}  
+          "{{app_name}}_as_vs": {
+          "virtualAddresses": ["{{as_virtual_address:f5:ipv4}}"],
+          "pool": "exchangeVS_as_pool",
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_tcp_def}}
+          },
+        {{/activesync}}
+        {{/single_vip}} 
+  service_adVS:
+    template: |
+        {{#single_vip}}
+        {{/single_vip}}
+        {{^single_vip}}
+        {{#autodiscover}}  
+          "{{app_name}}_ad_vs": {
+          "virtualAddresses": ["{{ad_virtual_address:f5:ipv4}}"],
+          "pool": "exchangeVS_ad_pool",
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_accelerate_def}}
+          {{> service_compression_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_tcp_def}}
+          },
+        {{/autodiscover}}
+        {{/single_vip}} 
+  service_singleVS:
+    template: |
+        {{#single_vip}}
+          "{{app_name}}_vs": {
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_type_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_http_def}}
+          {{> service_persist}}
+          {{> service_snat_def}}
+          {{> service_accelerate_def}}
+          {{> service_compression_def}}
+          {{> service_multiplex_def}}
+          {{> service_redirect80_def}}
+          {{> service_irules_def}}
+          {{> service_tcp_def}}
+          },
+        {{/single_vip}}
+parameters:
+  app_name: 'Exchange2016'
+  owa_fqdn: 'example.mycompany.com'
+  ews_fqdn: 'example.mycompany.com'
+  mapi_fqdn: 'example.mycompany.com'
+  oa_fqdn: 'example.mycompany.com'
+  as _fqdn: 'example.mycompany.com'
+  ad_fqdn: 'example.mycompany.com'
+  eav: false
+  single_vip: true
+  enable_snat: true
+  snat_automap: true
+  make_snatpool: true
+  tcp_topology: lan
+  enable_multiplex: true
+  enable_tls_server: true
+  enable_tls_client: false
+  make_tls_client_profile: true
+  tls_cert_name: /Common/default.crt
+  tls_key_name: /Common/default.key
+  tls_client_profile_name: /Common/serverssl
+  snatpool_name: /Common
+  tcp_ingress_topology: wan
+  tcp_egress_topology: lan
+  pool_port: 80
+  pool_customize: false
+  enable_redirect: true
+  slow_ramp_time: 300
+  pop3: false
+  imap4: false
+  owa: true
+  outlook: true
+  ews: true
+  outlookMAPI: true
+  outlookRPC: false
+  activesync: true
+  autodiscover: true
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{app_name}}": {
+        {{> app_type_def}}
+        {{> app_autodiscover_pool_def}}
+        {{> app_activesync_pool_def}}
+        {{> app_ews_pool_def}}
+        {{> app_imap4_pool_def}}
+        {{> app_mapi_pool_def}}
+        {{> app_oa_pool_def}}
+        {{> app_pop3_pool_def}}
+        {{> app_owa_pool_def}}
+        {{> app_autodiscover_monitor_def}}
+        {{> app_activesync_monitor_def}}
+        {{> app_ews_monitor_def}}
+        {{> app_imap4_monitor_def}}
+        {{> app_pop3_monitor_def}}
+        {{> app_oa_monitor_def}}
+        {{> app_owa_monitor_def}}
+        {{> app_mapi_monitor_def}}
+        {{> app_tls_server_def}}
+        {{> app_tls_client_def}}
+        {{> app_http_def}}
+        {{> app_snatpool_def}}
+        {{> app_accelerate_def}}
+        {{> app_compression_def}}
+        "{{app_name}}_combined_pool_irule3": {
+          "class": "iRule",
+          "iRule": "{{> app_irule_combined_def}}"
+        },
+        {{> app_irule_owa_def}}
+        {{> app_irule_oneconnect_def}}
+        {{> service_owaVS}}
+        {{> service_ewsVS}}
+        {{> service_mapiVS}}
+        {{> service_oaVS}}
+        {{> service_asVS}}
+        {{> service_adVS}}
+        {{> service_pop3VS}}
+        {{> service_imap4VS}}
+        {{> service_singleVS}}
+        "class": "Application"
+      }
+    }
+  }
+

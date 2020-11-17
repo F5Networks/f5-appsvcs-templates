@@ -31,6 +31,9 @@ definitions:
     description: Set the time between health checks, in seconds.
     type: integer
     default: 30
+  monitor_timeout:
+    description: F5 recommends a timeout that is calculated based on the interval
+    mathExpression: 3*monitor_interval+1
   monitor_username:
     title: User Name
     description: Set the credentials to be used by the monitor during each health check.
@@ -64,7 +67,7 @@ template: |
                   "class": "Monitor",
                   "monitorType": "ldap",
                   "interval": {{monitor_interval}},
-                  "timeout": 181,
+                  "timeout": {{monitor_timeout}},
                   "username": "{{monitor_username}}",
                   "passphrase": {
                     "ciphertext": "{{monitor_passphrase}}",

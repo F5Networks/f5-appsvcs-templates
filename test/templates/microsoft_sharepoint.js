@@ -6,7 +6,7 @@
 
 const util = require('./util');
 
-const template = 'templates/bigip-fast-templates/dns.yaml';
+const template = 'templates/bigip-fast-templates/microsoft_sharepoint.yaml';
 
 const view = {
     tenant_name: 't1',
@@ -15,6 +15,9 @@ const view = {
     // virtual server
     virtual_address: '10.1.1.1',
     virtual_port: 4430,
+
+    // http redirect
+    enable_redirect: true,
 
     // pool spec
     enable_pool: true,
@@ -30,20 +33,31 @@ const view = {
     load_balancing_mode: 'round-robin',
     slow_ramp_time: 300,
 
-    // monitor
-    monitor_interval: 30,
-    monitor_queryName: 'dns.example.com',
-    monitor_queryType: 'a',
-    monitor_receive: '10.3.3.3',
+    // monitor spec
+    monitor_fqdn: 'example.f5net.com',
+    monitor_interval: 5,
 
     // snat
     enable_snat: true,
     snat_automap: false,
+    make_snatpool: true,
     snat_addresses: ['10.3.1.1', '10.3.1.2'],
 
-    // irule
-    tcp_irule_names: ['example_tcp_irule'],
-    udp_irule_names: ['example_udp_irule'],
+    // tls encryption profile spec
+    enable_tls_server: true,
+    make_tls_server_profile: true,
+    tls_server_certificate: '/Common/default.crt',
+    tls_server_key: '/Common/default.key',
+    enable_tls_client: true,
+    make_tls_client_profile: true,
+
+    // http, xff, caching, compression, and oneconnect
+    common_tcp_profile: false,
+    make_tcp_profile: true,
+    make_tcp_ingress_profile: true,
+    make_tcp_egress_profile: true,
+    tcp_ingress_topology: 'wan',
+    tcp_egress_topology: 'lan',
 
     // firewall
     enable_firewall: true,
@@ -60,51 +74,30 @@ const expected = {
         app1: {
             class: 'Application',
             template: 'generic',
-            app1_tcp: {
-                class: 'Service_TCP',
+            app1: {
+                class: 'Service_HTTPS',
                 virtualAddresses: [view.virtual_address],
                 virtualPort: view.virtual_port,
+                redirect80: true,
                 pool: 'app1_pool',
                 snat: {
                     use: 'app1_snatpool'
                 },
+                persistenceMethods: [],
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
                 profileTCP: {
-                    ingress: 'wan',
-                    egress: 'lan'
+                    ingress: view.tcp_ingress_topology,
+                    egress: view.tcp_egress_topology
                 },
-                iRules: [
-                    {
-                        bigip: 'example_tcp_irule'
-                    }
-                ],
-                policyFirewallEnforced: {
-                    use: 'app1_fw_policy'
+                profileHTTP: {
+                    use: 'app1_http'
                 },
-                securityLogProfiles: [
-                    {
-                        bigip: 'log local'
-                    }
-                ]
-            },
-            app1_udp: {
-                class: 'Service_UDP',
-                virtualAddresses: [view.virtual_address],
-                virtualPort: view.virtual_port,
-                pool: 'app1_pool',
-                snat: {
-                    use: 'app1_snatpool'
+                profileHTTPAcceleration: {
+                    use: 'app1_caching'
                 },
-                iRules: [
-                    {
-                        bigip: 'example_udp_irule'
-                    }
-                ],
-                profileUDP: {
-                    bigip: '/Common/udp_gtm_dns'
-                },
-                profileDNS: {
-                    bigip: '/Common/dns'
-                },
+                profileHTTPCompression: 'basic',
+                profileMultiplex: 'basic',
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
@@ -138,16 +131,46 @@ const expected = {
             },
             app1_monitor: {
                 class: 'Monitor',
-                monitorType: 'dns',
-                interval: 30,
-                timeout: 91,
-                queryName: 'dns.example.com',
-                queryType: 'a',
-                receive: '10.3.3.3'
+                monitorType: 'https',
+                interval: 5,
+                timeout: 16,
+                send: 'GET / HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                receive: 'X-app1HealthScore: [0-5].',
+                adaptive: false,
+                dscp: 0,
+                timeUntilUp: 0,
+                targetAddress: '',
+                targetPort: 0
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
                 snatAddresses: view.snat_addresses
+            },
+            app1_tls_server: {
+                class: 'TLS_Server',
+                certificates: [{
+                    certificate: 'app1_certificate'
+                }]
+            },
+            app1_certificate: {
+                class: 'Certificate',
+                certificate: { bigip: view.tls_server_certificate },
+                privateKey: { bigip: view.tls_server_key }
+            },
+            app1_tls_client: {
+                class: 'TLS_Client'
+            },
+            app1_http: {
+                class: 'HTTP_Profile',
+                xForwardedFor: true
+            },
+            app1_caching: {
+                class: 'HTTP_Acceleration_Profile',
+                parentProfile: {
+                    bigip: '/Common/optimized-caching'
+                },
+                cacheSize: 10,
+                maximumObjectSize: 2000000
             },
             app1_fw_allow_list: {
                 class: 'Firewall_Address_List',
@@ -163,19 +186,6 @@ const expected = {
             app1_fw_rules: {
                 class: 'Firewall_Rule_List',
                 rules: [
-                    {
-                        protocol: 'udp',
-                        name: 'acceptUdpPackets',
-                        loggingEnabled: true,
-                        source: {
-                            addressLists: [
-                                {
-                                    use: 'app1_fw_allow_list'
-                                }
-                            ]
-                        },
-                        action: 'accept'
-                    },
                     {
                         protocol: 'tcp',
                         name: 'acceptTcpPackets',
@@ -217,45 +227,7 @@ const expected = {
 };
 
 describe(template, function () {
-    describe('new pool, snatpool, and profiles', function () {
-        util.assertRendering(template, view, expected);
-    });
-
-    describe('default pool port, existing monitor, snatpool, and profiles', function () {
-        before(() => {
-            // default https pool port and existing monitor
-            console.log(JSON.stringify(view.pool_members));
-            view.pool_members[0].servicePort = 80;
-            expected.t1.app1.app1_pool.members[0].servicePort = 80;
-            view.make_monitor = false;
-            view.monitor_name = '/Common/monitor1';
-            delete expected.t1.app1.app1_monitor;
-            expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
-        });
-        util.assertRendering(template, view, expected);
-    });
-
-    describe('existing pool, snat automap and default profiles', function () {
-        before(() => {
-            // default https virtual port
-            delete view.virtual_port;
-            expected.t1.app1.app1_tcp.virtualPort = 53;
-            expected.t1.app1.app1_udp.virtualPort = 53;
-
-            // existing pool
-            delete view.pool_members;
-            view.make_pool = false;
-            view.pool_name = '/Common/pool1';
-            delete expected.t1.app1.app1_pool;
-            expected.t1.app1.app1_tcp.pool = { bigip: '/Common/pool1' };
-            expected.t1.app1.app1_udp.pool = { bigip: '/Common/pool1' };
-
-            // snat automap
-            view.snat_automap = true;
-            delete expected.t1.app1.app1_snatpool;
-            expected.t1.app1.app1_tcp.snat = 'auto';
-            expected.t1.app1.app1_udp.snat = 'auto';
-        });
+    describe('tls bridging with new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
     });
 
