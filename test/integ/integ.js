@@ -128,7 +128,7 @@ describe('Applications', function () {
         tenant_name: 't-5',
         virtual_address: '10.0.0.4',
         pool_members: [
-            { serverAddresses: ['10.0.0.4'], servicePort: 80 }
+            '10.0.0.4'
         ],
         app_fqdn: 'example.com'
     }));
