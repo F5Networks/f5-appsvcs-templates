@@ -138,7 +138,8 @@ describe('Applications', function () {
         pool_members: [
             { serverAddresses: ['10.0.0.5'], servicePort: 80 }
         ],
-        app_fqdn: 'example.com'
+        app_fqdn: 'example.com',
+        monitor_fqdn: 'example.com'
     }));
     it('Deploy bigip-fast-templates/ldap', () => deployApplication('bigip-fast-templates/ldap', {
         tenant_name: 'tenant',
