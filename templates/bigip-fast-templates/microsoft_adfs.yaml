@@ -1,0 +1,372 @@
+contentType: application/json
+title: Microsoft ADFS Application Template
+description: Configure high availability and optimization for Microsoft ADFS implementations.
+bigipMinimumAS3: 3.23
+allOf:
+  - contentType: application/json
+    definitions:
+      beta_warning:
+        title: 'Notice: Beta Test'
+        description: <span style="color:#d05000;font-size:125%">
+          This FAST template is a *Beta Version*. Please report any issues, or an RFE, on the 
+          [FAST GitHub repository](https://github.com/F5Networks/f5-appsvcs-templates) as appropriate.</span>
+        format: info
+    template: |
+      { {{beta_warning}}
+        "class": "ADC"
+      }
+  - $ref: "_as3.yaml#"
+definitions:
+  app_fqdn:
+    title: Which FQDN will clients use to access AD FS?
+    description: Specify the FQDN (Fully Qualified Domain Name) clients will use to access the AD FS implementation.
+  tls_mode: 
+    title: Would you like to decrypt and re-encrypt SSL traffic (SSL Bridging)? 
+    description: Select for SSL bridging if you need to inspect or optimize encrypted client traffic before forwarding it to AD FS server(s). A standard BIG-IP virtual server will be created. \nDo not select if SSL pass-though, (best performance) is preferred or when SSL decryption is disallowed. A Performance (Layer 4) BIG-IP virtual server will be created.
+    type: boolean
+  make_tls_client_profile:
+    title: Create a new Client SSL pofile?
+    description: 	If selected, a new Client SSL will be created using provided certificate and key.  Otherwise, if you have already created an Client SSL profile that includes the appropriate certificate and key, you can select it from the list.
+    type: boolean
+  tls_client_profile_name:
+    title: Specify the name of an existing BIG-IP clientssl profile.
+    description: TLS client profiles are of type "ltm clientssl" on BIG-IP.
+    enumFromBigip: 'ltm/profile/client-ssl'
+  tls_client_cert_name:
+    title: Specify the name of an existing BIG-IP SSL certificate.
+    description: 	Select the SSL certificate you imported for this deployment. Importing certificates and keys is not a part of this template, see System > File Management > SSL Certificate List. To select any new certificates and keys you import, you need to restart or reconfigure this template.
+    enumFromBigip: 'sys/crypto/cert'
+  tls_client_key_name:
+    title: Specify the name of an existing BIG-IP SSL key.
+    description: Select the associated SSL key you imported. 
+    enumFromBigip: 'sys/crypto/key'
+  make_tls_server_profile:
+    title: Create a new Server SSL pofile?
+    description: 	Select to create a new Server SSL profile.  Otherwise, you may select a Server SSL profile previously created  on this BIG-IP system.
+    type: boolean
+  tls_server_profile_name:
+    title: Specify the name of an existing BIG-IP serverssl profile.
+    description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+    enumFromBigip: 'ltm/profile/server-ssl'
+  virtual_address:
+    title: What IP address do you want to use for the virtual server?
+    description: This IP and port combination become the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the AD FS servers.
+  virtual_port:
+    title: What TCP port do you want to use for the virtual server?
+    desciption: Specify the service port you want to use for the virtual server. The default port for AD FS is 443.
+  enable_snat:
+    title: SNAT
+    description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
+    type: boolean
+  snat_automap:
+    title: SNAT Automap
+    description: SNAT automap uses BIG-IP self IP addresses as the translation address.
+    type: boolean
+  snatpool_name:
+    title: Specify the name of an existing BIG-IP SNAT pool.
+    enumFromBigip: 'ltm/snatpool'
+  pool_members:
+    title: Pool Members
+    description: Specify the IP address(es) of your AD FS servers. If you have existing nodes on this BIG-IP system, you can select them from the list, otherwise type the addresses. Click Add to include additional servers.
+  pool_port:
+    title: What TCP port do you want to use for the pool members?
+  pool_customize:
+    title: Do you want to customize your server pool settings?
+    description: If necessary, you can configure advanced pool settings (such as specifying the load balancing algorithm or configuring priority groups). If you do not have a need to modify these settings, use the recommended settings, which are a result of extensive testing with Microsoft Exchange Server.
+    type: boolean
+  load_balancing_mode:
+    title: Which load balancing method do you want to use?
+    description: 	Choose the load balancing method appropriate for your configuration. We recommend the default, Least Connections (member). For a description of each method, see the online help on the Pool creation page, or the BIG-IP system documentation. 
+  slow_ramp_time:
+    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
+    description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
+  create_monitor:
+    title: Create a new health monitor?
+    description: Select to create custom health monitor or select an existing monitor below. Monitors are used to determine the health of the endpoint on each AD FS server. If an endpoint does not respond or responds incorrectly the system will cease to send client requests to that AD FS server. The system will continue to monitor the instance and will begin sending requests once the endpoint responds correctly.
+    type: boolean
+  existing_monitor:
+    title: Select existing health monitor.
+    enumFromBigip: 'ltm/monitor/https'
+  monitor_uri:
+    title: What HTTP URI should be sent to the server(s)
+    description: The HTTP URI is used to specify the resource on the AD FS server for a given request. This parameter can be customized to request a specific federation endpoint.
+    type: string
+  monitor_receive:
+    title: What is the expected response to the HTTP request?
+    description: When the HTTP response arrives for a monitor request, its contents are searched for the value specified here. If it is not found, the monitoring attempt fails.
+    type: string 
+  client_cert:
+    title: Do you want to configure support for client certificate authentication?
+    description: Choose whether you want to configure BIG-IP to support client certificate authentication. If you select Yes, the iApp creates the objects needed for client certificate authentication. This uses port 49443, which is based on Microsoft's alternate port configuration.
+    type: boolean
+  app_type_def:
+    template: |
+      "template": "generic",
+  app_tls_server_def:
+    template: |
+      {{#tls_mode}}
+        {{#make_tls_client_profile}}
+          "{{app_name}}_tls_server": {
+            "class": "TLS_Server",
+            "certificates": [{ "certificate": "{{app_name}}_certificate" }]
+          },
+          "{{app_name}}_certificate": {
+            "class": "Certificate",
+            "certificate": { "bigip": "{{tls_client_cert_name:f5:bigip_path}}" },
+            "privateKey": { "bigip": "{{tls_client_key_name:f5:bigip_path}}" }
+          },
+        {{/make_tls_client_profile}}
+      {{/tls_mode}}
+  app_tls_client_def:
+    template: |
+      {{#tls_mode}}
+        {{#make_tls_server_profile}}
+          "{{app_name}}_tls_client": {
+          "class": "TLS_Client"
+          },
+        {{/make_tls_server_profile}}
+      {{/tls_mode}}
+  app_monitor_def:
+    template: |
+      {{#create_monitor}}
+        "{{app_name}}_monitor": {
+          "adaptive": false,
+          "interval": 30,
+          "dscp": 0,
+          "send": "{{monitor_uri:f5:bigip_path}}",
+          "receive": "{{monitor_receive}}",
+          "timeUntilUp": 0,
+          "timeout": 91,
+          "class": "Monitor",
+          "monitorType": "https",
+          "targetAddress": "",
+          "targetPort": 0
+        },
+        "{{app_name}}_eav_monitor": {
+          "adaptive": false,
+          "interval": 30,
+          "dscp": 0,
+          "timeUntilUp": 0,
+          "timeout": 91,
+          "class": "Monitor",
+          "monitorType": "external",
+          "script": {
+          "url": "https://raw.githubusercontent.com/f5devcentral/f5-bd-FASTexample/master/ADFS/eav_scripts/adfs_eav.sh"
+            }
+          },
+      {{/create_monitor}}
+  app_pool_def:
+    template: |
+      "{{app_name}}_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": {{pool_port:f5:port}},
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+          "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+          "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        {{#create_monitor}}
+            "monitors": [
+              {"use": "{{app_name}}_monitor"},
+              {"use": "{{app_name}}_eav_monitor"}
+            ]
+        {{/create_monitor}}
+        {{^create_monitor}}
+          "monitors": [{
+            "bigip":  "{{existing_monitor}}"  
+          }]
+        {{/create_monitor}}
+        },
+  app_http_def:
+    template: |
+        "{{app_name}}_http": {
+          "class": "HTTP_Profile",
+          "xForwardedFor": true
+        },
+  app_snatpool_def:
+    template: |
+      {{#enable_snat}}
+        {{^snat_automap}}
+          {{#make_snatpool}}
+            "{{app_name}}_snatpool": {
+              "class": "SNAT_Pool",
+              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
+            },
+          {{/make_snatpool}}
+        {{/snat_automap}}
+      {{/enable_snat}}
+  app_tcp_monitor_def:
+    template: |
+      {{#client_cert}}
+        "{{app_name}}_tcp_monitor": {
+          "adaptive": false,
+          "interval": 30,
+          "dscp": 0,
+          "send": "",
+          "receive": "",
+          "timeUntilUp": 0,
+          "timeout": 91,
+          "class": "Monitor",
+          "monitorType": "tcp",
+          "targetAddress": "",
+          "targetPort": 0
+        },
+      {{/client_cert}}
+  app_tcp_pool_def:
+    template: |
+      {{#client_cert}}
+      "{{app_name}}_tcp_pool": {
+        "class": "Pool",
+        "members": [{
+          "serverAddresses": {{pool_members:f5:ipv4_array}},
+          "servicePort": 49443,
+          "shareNodes": true
+        }],
+        {{#pool_customize}}
+          "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
+          "slowRampTime": {{slow_ramp_time::integer}},
+        {{/pool_customize}}
+        {{^pool_customize}}
+          "loadBalancingMode": "least-connections-member",
+        {{/pool_customize}}
+        "monitors": [{
+          "use": "{{app_name}}_tcp_monitor"
+        }]
+      },
+      {{/client_cert}}
+  service_tcp_server_def:
+    template: |
+      {{#client_cert}}
+        "{{app_name}}_tcp_vs": {
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualPort": 49443,
+          "pool": "{{app_name}}_tcp_pool",
+          "class": "Service_L4"
+        },
+      {{/client_cert}}
+  service_snat_def:
+    template: |
+      {{#enable_snat}}
+        {{#snat_automap}}
+          "snat": "auto",
+        {{/snat_automap}}
+        {{^snat_automap}}
+          "snat": {
+            "bigip": "{{snatpool_name}}"
+          },
+        {{/snat_automap}}
+      {{/enable_snat}}
+      {{^enable_snat}}
+        "snat": "none",
+      {{/enable_snat}}
+  service_pool_def:
+    template: |
+      "pool": "{{app_name}}_pool",
+  service_http_def:
+    template: |
+      {{#tls_mode}}
+        "profileHTTP": {
+          "use": "{{app_name}}_http"
+        },
+      {{/tls_mode}}
+  service_tls_server_def:
+    template: |
+      {{#tls_mode}}
+        {{#make_tls_client_profile}}
+          "serverTLS": "{{app_name}}_tls_server",
+        {{/make_tls_client_profile}}
+        {{^make_tls_client_profile}}
+          "serverTLS": {
+            "bigip": "{{tls_client_profile_name:f5:bigip_path}}"
+          },
+        {{/make_tls_client_profile}}
+      {{/tls_mode}}
+  service_tls_client_def:
+    template: |
+      {{#tls_mode}}
+        {{#make_tls_server_profile}}
+          "clientTLS": "{{app_name}}_tls_client",
+        {{/make_tls_server_profile}}
+        {{^make_tls_server_profile}}
+          "clientTLS": {
+            "bigip": "{{tls_server_profile_name:f5:bigip_path}}"
+          },
+        {{/make_tls_server_profile}}
+      {{/tls_mode}}
+  service_tcp_def:
+    template: |
+      {{#tls_mode}}
+        "profileTCP": {
+          "ingress": 'wan',
+          "egress": 'lan'
+        },
+      {{/tls_mode}}
+  service_type_def:
+    template: |
+      {{#tls_mode}}
+        "class": "Service_HTTPS",
+        "redirect80": false,
+      {{/tls_mode}}
+      {{^tls_mode}}
+        "class": "Service_L4"
+      {{/tls_mode}}
+parameters:
+  app_name: "ADFS"
+  app_fqdn: 'adfs.mycompany.com'
+  tls_mode: true
+  enable_snat: true
+  snat_automap: true
+  snatpool_name: 'ltm/snatpool'
+  tcp_topology: lan
+  create_monitor: true
+  existing_monitor: 'ltm/monitor/https'
+  monitor_uri: '/adfs/fs/federationserverservice.asmx'
+  monitor_receive: '200 OK'
+  slow_ramp_time: 300
+  make_tls_client_profile: true
+  make_tls_server_profile: true
+  tls_client_cert_name: /Common/default.crt
+  tls_client_key_name: /Common/default.key
+  tls_client_profile_name: /Common/serverssl
+  tls_server_profile_name: /Common/clientssl
+  virtual_port: 443
+  pool_port: 443
+  pool_customize: false
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{app_name}}": {
+        "class": "Application",
+        {{> app_type_def}}
+        {{> app_monitor_def}}
+        {{> app_tcp_monitor_def}}
+        {{> app_pool_def}}
+        {{> app_tcp_pool_def}}
+        {{> app_http_def}}
+        {{> app_tls_server_def}}
+        {{> app_tls_client_def}}
+        {{> service_tcp_server_def}}
+        "{{app_name}}_vs": {
+          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualPort": {{virtual_port:f5:port}},
+          {{> service_snat_def}}
+          {{> service_pool_def}}
+          {{> service_http_def}}
+          {{> service_tls_server_def}}
+          {{> service_tls_client_def}}
+          {{> service_tcp_def}}
+          {{> service_type_def}}
+        }        
+      }
+    }
+  }
