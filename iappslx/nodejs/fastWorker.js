@@ -241,15 +241,15 @@ class FASTWorker {
             .catch(e => this.handleResponseError(e, 'to set block state'))
             .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'))
             // Done
+            .then(() => {
+                const dt = Date.now() - startTime;
+                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
+            })
             .then(() => success())
             // Errors
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
                 error();
-            })
-            .finally(() => {
-                const dt = Date.now() - startTime;
-                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
             });
     }
 
