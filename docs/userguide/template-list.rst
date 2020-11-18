@@ -47,7 +47,11 @@ The following table lists the template set, the corresponding template(s) and a 
       
       * - bigip-fast-templates
         - microsoft_sharepoint (beta)
-        - A template that can be used to manage Sharepoint servers
+        - A template that can be used to manage SharePoint servers
+
+      * - bigip-fast-templates
+        - microsoft_adfs (beta)
+        - A template that can be used to manage Active Directory
 
       * - examples
         - simple_http
