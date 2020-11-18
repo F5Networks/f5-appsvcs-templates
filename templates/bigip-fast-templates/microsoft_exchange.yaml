@@ -240,10 +240,10 @@ definitions:
           "interval": 10,
           "dscp": 0,
           {{#single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           {{^single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{ad_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: {{ad_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           "receive": "200 OK",
           "timeUntilUp": 0,
@@ -315,10 +315,10 @@ definitions:
           "interval": 10,
           "dscp": 0,
           {{#single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           {{^single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{as_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: {{as_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           "receive": "200 OK",
           "timeUntilUp": 0,
@@ -390,10 +390,10 @@ definitions:
           "interval": 10,
           "dscp": 0,
           {{#single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           {{^single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{ews_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: {{ews_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           "receive": "200 OK",
           "timeUntilUp": 0,
@@ -622,10 +622,10 @@ definitions:
           "interval": 10,
           "dscp": 0,
           {{#single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           {{^single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{mapi_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: {{mapi_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           "receive": "200 OK",
           "timeUntilUp": 0,
@@ -777,10 +777,10 @@ definitions:
           "interval": 10,
           "dscp": 0,
           {{#single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /owa/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           {{^single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{owa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+          "send": "GET /owa/healthcheck.htm HTTP/1.1\r\nHost: {{owa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
           {{/single_vip}}
           "receive": "200 OK",
           "timeUntilUp": 0,
