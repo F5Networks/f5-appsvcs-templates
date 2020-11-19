@@ -270,7 +270,7 @@ allOf:
         type: integer
         default: 30
       monitor_timeout:
-        description: F5 recommends a timeout that is calculated based on the interval
+        title: '-'
         mathExpression: 3*monitor_interval+1
       monitor_queryName:
         title: Host Name
