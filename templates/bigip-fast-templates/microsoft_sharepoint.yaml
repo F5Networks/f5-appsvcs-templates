@@ -2,6 +2,18 @@ contentType: application/json
 title: Microsoft Sharepoint Application Template
 description: Configure high availability and optimization for Microsoft Sharepoint 2013 and 2016 implementations.
 allOf:
+  - contentType: application/json
+    definitions:
+      beta_warning:
+        title: 'Notice: Beta Test'
+        description: <span style="color:#d05000;font-size:125%">
+          This FAST template is a *Beta Version*. Please report any issues, or an RFE, on the 
+          [FAST GitHub repository](https://github.com/F5Networks/f5-appsvcs-templates) as appropriate.</span>
+        format: info
+    template: |
+      { {{beta_warning}}
+        "class": "ADC"
+      }
   - $ref: "_as3.yaml#"
   - $ref: "_virtual.yaml#"
   - $ref: "_redirect_http.yaml#"
