@@ -992,8 +992,10 @@ definitions:
       {{/enable_tls_server}}
   service_tcp_def:
     template: |
-      "ingress": "{{tcp_ingress_topology:f5:topology}}",
-      "egress": "{{tcp_egress_topology:f5:topology}}"
+      "profileTCP": {
+        "ingress": "{{tcp_ingress_topology:f5:topology}}",
+        "egress": "{{tcp_egress_topology:f5:topology}}"
+      }
   service_irules_def:
     template: |
       "iRules": [

@@ -324,8 +324,10 @@ const expected = {
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
                 snat: 'auto',
-                ingress: 'wan',
-                egress: 'lan'
+                profileTCP: {
+                    ingress: 'wan',
+                    egress: 'lan'
+                }
             },
             app1_imap4_vs: {
                 virtualAddresses: [
@@ -337,8 +339,10 @@ const expected = {
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
                 snat: 'auto',
-                ingress: 'wan',
-                egress: 'lan'
+                profileTCP: {
+                    ingress: 'wan',
+                    egress: 'lan'
+                }
             },
             app1_vs: {
                 virtualAddresses: [
@@ -372,8 +376,10 @@ const expected = {
                         use: 'app1_combined_pool_irule3'
                     }
                 ],
-                ingress: 'wan',
-                egress: 'lan'
+                profileTCP: {
+                    ingress: 'wan',
+                    egress: 'lan'
+                }
             }
         }
     }
