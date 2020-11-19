@@ -22,7 +22,7 @@ Adding New Template Sets
 ------------------------
 
 FAST allows for the addition of custom template sets.
-For authoring these custom template sets, see :ref:`Creatin New Templates<authoring>`.
+For authoring these custom template sets, see :ref:`Creating New Templates<authoring>`.
 
 To install a custom template set from the GUI, navigate to the :ref:`Templates tab <templatetab>`, and click the **Add Template Set** button.
 Navigate to the location of the template set .zip file, and click **Open**.

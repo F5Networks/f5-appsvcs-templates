@@ -42,6 +42,7 @@ Previous buttons to explore the documentation.
    userguide/advanced-features
    userguide/template-list
    userguide/endpoint-list
+   userguide/APM-guidance
 
 
 
