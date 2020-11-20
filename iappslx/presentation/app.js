@@ -283,7 +283,14 @@ const newEditor = (tmplid, view) => {
                 dispOutput(JSON.stringify(tmpl.getCombinedParameters(editor.getValue()), null, 2));
             };
             document.getElementById('view-render-btn').onclick = () => {
-                dispOutput(tmpl.render(editor.getValue()));
+                const rendered = tmpl.render(editor.getValue());
+                const msg = [
+                    'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
+                    'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
+                    'submit this declaration through FAST.\n\n',
+                    rendered
+                ].join('');
+                dispOutput(msg);
             };
             document.getElementById('btn-form-submit').onclick = () => {
                 const parameters = editor.getValue();
