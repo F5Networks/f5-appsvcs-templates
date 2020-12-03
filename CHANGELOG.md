@@ -1,3 +1,11 @@
+# 1.6.0
+## Added
+
+## Fixed
+
+## Changed
+* GUI: Display an error if AS3 is not available
+
 # 1.5.0
 ## Added
 * GUI: Support Markdown in schema descriptions
