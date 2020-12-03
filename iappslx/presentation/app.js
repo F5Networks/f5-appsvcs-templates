@@ -340,7 +340,7 @@ const newEditor = (tmplid, view) => {
 };
 
 // Check that AS3 is available
-safeFetch('/mgmt/shared/as3/info')
+safeFetch('/mgmt/shared/appsvcs/info')
     .catch((e) => {
         appState.foundAS3 = false;
         appState.busy = false;
