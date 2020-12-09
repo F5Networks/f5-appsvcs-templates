@@ -563,6 +563,14 @@ route('templates', 'templates', () => {
                     console.error('enabled === false && updateAvailable is illegal. Critical Error');
                 }
             });
+
+            appState.data.errors = disabledTemplateSets.reduce((acc, curr) => {
+                if (curr.error) {
+                    acc.push(curr.error);
+                }
+                return acc;
+            }, []);
+            console.log(appState.data.errors);
         })
         .then(() => dispOutput(''));
 
@@ -718,7 +726,8 @@ route('templates', 'templates', () => {
         filters,
         currentFilter,
         sets: [],
-        apps: {}
+        apps: {},
+        errors: []
     };
 
     return renderTemplates();

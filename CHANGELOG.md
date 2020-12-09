@@ -5,6 +5,7 @@
 
 ## Changed
 * GUI: Display an error if AS3 is not available
+* GUI: Report template errors in the Template tab
 
 # 1.5.0
 ## Added
