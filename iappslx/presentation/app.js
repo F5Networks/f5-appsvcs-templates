@@ -570,7 +570,6 @@ route('templates', 'templates', () => {
                 }
                 return acc;
             }, []);
-            console.log(appState.data.errors);
         })
         .then(() => dispOutput(''));
 
