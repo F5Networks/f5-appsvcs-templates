@@ -237,7 +237,7 @@ class FASTWorker {
             .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
             // Automatically add a block
             .then(() => {
-                const hosturl = new url.URL(bigipHost);
+                const hosturl = url.parse(bigipHost);
                 if (hosturl.host !== 'localhost') {
                     return Promise.resolve();
                 }
