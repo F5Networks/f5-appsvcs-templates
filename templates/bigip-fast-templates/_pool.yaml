@@ -24,7 +24,9 @@ definitions:
       of 0 for unlimited connections.
     type: array
     uniqueItems: true
-    default: []
+    default: [
+        {}
+    ]
     items:
       type: object
       properties:

@@ -29,6 +29,9 @@
             <div id="content-wrapper">
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
                 <div id="app" v-cloak>
+                    <h1 v-if="!foundAS3" class="text-error">
+                        Failed to reach AS3, which is required by FAST. Please check that AS3 is properly installed
+                    </h1>
                     <component ref="page" :is="pageComponent" :data="data" :class="{ 'display-none': busy }"></component>
                     <pre id="output">{{debugOutput}}</pre>
                     <div v-if="modal.message && !busy" class="modal active">
@@ -127,6 +130,14 @@
 
         <template id="page-templates">
             <div id="page-templates">
+                <div v-if="data.errors && data.errors.length > 0" class="text-error">
+                    <h3>Template errors were found:</h3>
+                    <ul>
+                        <li v-for="error in data.errors">
+                            {{error}}
+                        </li>
+                    </ul>
+                </div>
                 <div class="button-row-deploy">
                     <button type="button" id="btn-delete-all-ts" class="btn btn-red">Delete All</button>
                     <button type="button" id="btn-add-ts" class="btn btn-green">Add Template Set</button>

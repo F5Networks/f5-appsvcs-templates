@@ -3,12 +3,18 @@
 const uuid4 = require('uuid').v4;
 const axios = require('axios');
 const http = require('http');
+const https = require('https');
 
 const AS3DriverConstantsKey = 'fast';
 
 class AS3Driver {
-    constructor(endPointUrl, userAgent) {
+    constructor(endPointUrl, userAgent, bigipUser, bigipPassword, strictCerts) {
         endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
+        bigipUser = bigipUser || 'admin';
+        bigipPassword = bigipPassword || '';
+        if (strictCerts === undefined) {
+            strictCerts = true;
+        }
 
         this._static_id = '';
         this._task_ids = {};
@@ -17,11 +23,15 @@ class AS3Driver {
         this._endpoint = axios.create({
             baseURL: endPointUrl,
             auth: {
-                username: 'admin',
-                password: ''
+                username: bigipUser,
+                password: bigipPassword
             },
             maxBodyLength: 'Infinity',
             httpAgent: new http.Agent({
+                keepAlive: false
+            }),
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: strictCerts,
                 keepAlive: false
             })
         });

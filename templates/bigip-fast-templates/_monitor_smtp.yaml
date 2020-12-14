@@ -33,7 +33,6 @@ definitions:
     type: integer
     default: 30
   monitor_timeout:
-    title: '-'
     mathExpression: 3*monitor_interval+1
   monitor_domain:
     title: Domain Name

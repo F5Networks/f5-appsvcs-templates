@@ -5,6 +5,8 @@
 require('core-js');
 
 const fs = require('fs-extra');
+const https = require('https');
+const url = require('url');
 
 const extract = require('extract-zip');
 const axios = require('axios');
@@ -35,6 +37,17 @@ const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
 
+const bigipHost = (process.env.FAST_BIGIP_HOST && `${process.env.FAST_BIGIP_HOST}`) || 'http://localhost:8100';
+const bigipUser = process.env.FAST_BIGIP_USER || 'admin';
+const bigipPass = process.env.FAST_BIGIP_PASSWORD || '';
+let bigipStrictCert = process.env.FAST_BIGIP_STRICT_CERT || true;
+if (typeof bigipStrictCert === 'string') {
+    bigipStrictCert = (
+        bigipStrictCert.toLowerCase() === 'true'
+        || bigipStrictCert === '1'
+    );
+}
+
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
 const scratchPath = `${configPath}/scratch`;
@@ -46,6 +59,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '9b65c17982fd5f83a36576c1a55f2771a0011283db8221704925ee803b8dbd13', // v1.6
         '48316eb5f20c6f3bc4e78ad50b0d82fae46fc3c7fa615fe438ff8f84b3a3c2ea', // v1.5
         '99bf347ba5556df2e8c7100a97ea4c24171e436ed9f5dc9dfb446387f29e0bfe', // v1.4
         'e7eba47ac564fdc6d5ae8ae4c5eb6de3d9d22673a55a2e928ab59c8c8e16376b', // v1.3
@@ -64,7 +78,11 @@ class FASTWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.driver = new AS3Driver('http://localhost:8105/shared/appsvcs', `${pkg.name}/${pkg.version}`);
+        this.driver = new AS3Driver(
+            `${bigipHost}/mgmt/shared/appsvcs`,
+            `${pkg.name}/${pkg.version}`,
+            bigipUser, bigipPass, bigipStrictCert
+        );
         this.storage = new StorageDataGroup(dataGroupPath);
         this.configStorage = new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
@@ -86,11 +104,14 @@ class FASTWorker {
         );
 
         this.endpoint = axios.create({
-            baseURL: 'http://localhost:8100',
+            baseURL: bigipHost,
             auth: {
-                username: 'admin',
-                password: ''
-            }
+                username: bigipUser,
+                password: bigipPass
+            },
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: bigipStrictCert
+            })
         });
 
         this.requestTimes = {};
@@ -169,6 +190,7 @@ class FASTWorker {
     onStart(success, error) {
         this.hookCompleteRestOp();
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
+        this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
 
         // Find any template sets on disk (e.g., from the RPM) and add them to
@@ -214,32 +236,40 @@ class FASTWorker {
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
             // Automatically add a block
-            .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-            .then(() => this.endpoint.get('/shared/iapp/blocks'))
-            .catch(e => this.handleResponseError(e, 'to get blocks'))
-            .then((results) => {
-                const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
-                const blockData = {
-                    name: mainBlockName,
-                    state: 'BOUND',
-                    configurationProcessorReference: {
-                        link: 'https://localhost/mgmt/shared/iapp/processors/noop'
-                    },
-                    presentationHtmlReference: {
-                        link: `https://localhost/iapps/${projectName}/index.html`
-                    }
-                };
-
-                if (matchingBlocks.length === 0) {
-                    // No existing block, make a new one
-                    return this.endpoint.post('/shared/iapp/blocks', blockData);
+            .then(() => {
+                const hosturl = url.parse(bigipHost);
+                if (hosturl.host !== 'localhost') {
+                    return Promise.resolve();
                 }
 
-                // Found a block, do nothing
-                return Promise.resolve({ status: 200 });
+                return Promise.resolve()
+                    .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
+                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
+                    .catch(e => this.handleResponseError(e, 'to get blocks'))
+                    .then((results) => {
+                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
+                        const blockData = {
+                            name: mainBlockName,
+                            state: 'BOUND',
+                            configurationProcessorReference: {
+                                link: 'https://localhost/mgmt/shared/iapp/processors/noop'
+                            },
+                            presentationHtmlReference: {
+                                link: `https://localhost/iapps/${projectName}/index.html`
+                            }
+                        };
+
+                        if (matchingBlocks.length === 0) {
+                            // No existing block, make a new one
+                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
+                        }
+
+                        // Found a block, do nothing
+                        return Promise.resolve({ status: 200 });
+                    })
+                    .catch(e => this.handleResponseError(e, 'to set block state'))
+                    .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
             })
-            .catch(e => this.handleResponseError(e, 'to set block state'))
-            .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'))
             // Done
             .then(() => {
                 const dt = Date.now() - startTime;
@@ -891,7 +921,7 @@ class FASTWorker {
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
         } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.statck);
+            return this.genRestResponse(restOperation, 500, e.stack);
         }
     }
 
