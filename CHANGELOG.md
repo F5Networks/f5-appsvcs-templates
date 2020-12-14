@@ -1,3 +1,8 @@
+# 1.6.0
+## Added
+## Fixed
+## Changed
+
 # 1.5.0
 ## Added
 * GUI: Support Markdown in schema descriptions
