@@ -80,6 +80,18 @@ Increase the memory allocated for the restjavad daemon (e.g. 2 GB), by running t
 ``tmsh modify sys db provision.extramb value 2048`` |br|
 ``bigstart restart restjavad``
 
+Module Provision Dependencies
+-----------------------------
+
+FAST templates depend on module provisioning, and the deployed configuration will become invalid if the module is de-provisioned.  
+In addition, if other applications use the tenant in the invalid module, the tenant will fail to deploy.
+
+To correct this condition:
+
+* Re-provision the module
+* Delete the affected FAST applications 
+* Re-deploy the FAST template
+
 Known Issues
 ------------
 

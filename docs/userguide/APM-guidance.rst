@@ -4,7 +4,7 @@ Appendix E: APM Guidance
 ========================
 
 Microsoft Exchange and Sharepoint templates are Beta versions. 
-Please report any issues or an RFE on the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > **Issues tab**, click **New Issue**.
+Please report any issues or an RFE on the `FAST GitHub page <https://github.com/F5Networks/f5-appsvcs-templates>`_ > **Issues tab**, click **New Issue**.
 
 
 Exchange

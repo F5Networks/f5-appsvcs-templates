@@ -44,6 +44,20 @@ The path on BIG-IP: ``/mgmt/tm/${enumFromBigip}?$select=fullPath``
 
 .. seealso:: BIG-IP :ref:`endpoint-list` for a list of BIG-IP endpoints.
 
+.. _conttype:
+
+ContentTypes
+------------
+When FAST renders it is doing string replacement via Mustache, which is agnostic to the output type. 
+However, specifying a *contentType* in the template can enable some additional features:
+
+*	Post-processing steps (e.g., strip dangling commas for JSON)
+*	Smarter merges
+*	Smarter handling of some data types
+
+    .. NOTE:: Since FAST relies on AS3 for templating, a *contentType* of *application/json* should be declared indicating that the body format is JSON. 
+        See `What is the correct JSON Content Type <https://stackoverflow.com/questions/477816/what-is-the-correct-json-content-type>`_ for additional information.
+
 .. _multichoice:
 
 Multiple Choice Lists

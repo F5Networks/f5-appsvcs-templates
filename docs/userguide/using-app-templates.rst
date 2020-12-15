@@ -87,6 +87,8 @@ On this tab, there are two Action buttons for each application: **Modify Applica
 
 .. WARNING:: Once you delete an application, there is no easy way to recall an application's deployment parameters
 
+Selecting either the Tenant or Application name loads the template with the values last used to deploy.
+
 .. _deploytab:
 
 Deploy
