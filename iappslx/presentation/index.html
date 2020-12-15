@@ -30,7 +30,9 @@
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
                 <div id="app" v-cloak>
                     <h1 v-if="!foundAS3" class="text-error">
-                        Failed to reach AS3, which is required by FAST. Please check that AS3 is properly installed
+                        Failed to reach AS3, which is required by FAST.
+                        Please check that AS3 is properly installed.
+                        AS3 can be downloaded <a href="https://f5.com/getas3">here</a>.
                     </h1>
                     <component ref="page" :is="pageComponent" :data="data" :class="{ 'display-none': busy }"></component>
                     <pre id="output">{{debugOutput}}</pre>
