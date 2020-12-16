@@ -197,6 +197,11 @@
                                 </span>
 
                             </span>
+                            <div v-if="setData.expanded">
+                                <div v-for="template in setData.templates">
+                                    {{template.name}}
+                                </div>
+                            </div>
                         </div>
                         <div class="td col2">
                             <div v-if="setData.expanded">

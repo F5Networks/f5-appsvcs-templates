@@ -550,9 +550,11 @@ route('templates', 'templates', () => {
 
             const setMap = allTemplates.reduce((acc, curr) => {
                 const apps = appDict[curr.name] || [];
+                const templates = curr.templates;
                 acc[curr.name] = Object.assign(curr, {
-                    expanded: apps.length < 3,
-                    apps
+                    expanded: false,
+                    apps,
+                    templates
                 });
                 return acc;
             }, {});
