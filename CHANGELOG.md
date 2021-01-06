@@ -8,7 +8,7 @@
 * GUI: Display an error if AS3 is not available
 * GUI: Report template errors in the Template tab
 * bigip-fast-templates: Add a default pool member
-* Update f5-fast-core from v0.8.0 to v0.9.0
+* Update f5-fast-core from v0.9.0 to v0.10.0
 
 # 1.5.0
 ## Added
