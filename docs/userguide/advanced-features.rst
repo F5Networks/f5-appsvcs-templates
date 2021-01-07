@@ -150,3 +150,24 @@ HTTP Calls to External Resources
      pathQuery:
        type: string
        description: JSONPath of data to be fetched, must match schema
+
+
+.. _schemamd:
+
+Markdown in Schema Descriptions
+-------------------------------
+
+Using Markdown code in the description for a parameter will be rendered in the GUI.
+An example would be using an asterisk on each side of a word to make it italic. 
+
+description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server. Would be written as:
+:: 
+
+  description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server.
+
+Rendering in the GUI as the descriptor for the iRule list.
+
+.. image:: SNAT.png
+   :width: 500
+
+.. seealso::  `Markdown Syntax <https://guides.github.com/pdfs/markdown-cheatsheet-online.pdf>`_ and `Mastering Markdown <https://guides.github.com/features/mastering-markdown/>`_ for additional information.
