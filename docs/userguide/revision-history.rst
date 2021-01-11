@@ -11,9 +11,9 @@ Document Revision History
         - Description
         - Date
 
-       * - 9.0
-         - 
-         - 01-12-21
+      * - 9.0
+        - Updated the documentation for FAST v1.6. This release contains the following changes: |br| * bigip-fast-templates: Remove titles from monitor_timeout parameters |br| * GUI: Display an error if AS3 is not available |br| * GUI: Report template errors in the Template tab |br| * bigip-fast-templates: Add a default pool member |br| * Update f5-fast-core from v0.9.0 to v0.10.0
+        - 01-12-21
 
       * - 8.0
         - Updated the documentation for FAST v1.5. This release contains the following changes: |br| * GUI: Support Markdown in schema descriptions |br| * GUI: Clicking on an application name in the Application List tab now modifies the application |br| * bigip-fast-templates: Add Microsoft SharePoint template (experimental/beta) |br| * bigip-fast-templates: Add Microsoft Exchange template (experimental/beta) |br| * bigip-fast-templates: Add Microsoft ADFS template (experimental/beta) |br| * bigip-fast-templates: Add Microsoft IIS template |br| * bigip-fast-templates: Add SMTP template |br| * bigip-fast-templates: Add LDAP template |br| * bigip-fast-templates:   Add firewall feature to TCP and HTTP templates |br| * bigip-fast-templates: Add configurable monitors to TCP and HTTP templates |br| * Allow hiding templates from REST/GUI with bigipHideTemplate template property |br| * Allow specifying a minimum AS3 version for a given template (bigipMinimumAS3 template property) |br| * bigip-fast-templates: Allow for more advanced pool member configurations in TCP and HTTP templates |br| |br| Issues Resolved: |br| * GUI: Fix handling of undefined values in the base64 editor |br| * worker: Fix hydrating enumFromBigip on multiple properties with "items" sub-properties |br| |br| Changed: |br| * Improved performance when working with many FAST applications |br| * bigip-fast-templates: Improve prompts and descriptions of various parameters |br| * GUI: Improve displaying errors when managing template sets |br| * bigip-fast-templates: Update existing applications to use the new pool members definition |br| * Updated f5-fast-core from v0.8.0 to v0.9.0 |br| * driver: Add "f5-appsvcs-templates" userAgent string to AS3 declarations
