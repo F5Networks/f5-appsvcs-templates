@@ -8,6 +8,9 @@ let output = '';
 beforeEach(function() {
     output = '';
     console.log = (msg) => {
+        if (typeof(msg) === 'object') {
+            msg = JSON.stringify(msg, null, 2);
+        }
         output += `${msg}\n`;
     };
 });
