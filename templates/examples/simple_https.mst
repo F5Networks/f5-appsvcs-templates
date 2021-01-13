@@ -1,7 +1,9 @@
 {{!
-  An HTTPS application with load balancing. Provide a Virtual IP address and port
-  along with a list of HTTP server IP addresses, server port, and the HTTPS
-  certificate and private key.
+  ** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION **
+  This template is an example of how one might build a simple HTTPS application with load balancing.
+  It allows the user to provide a virtual IP address and port, a list of HTTP server addresses,
+  and the name of a pre-loaded TLS certificate. The user-supplied values are inserted when the
+  template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP.
 }}
 {
   "class": "ADC",
