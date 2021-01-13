@@ -8,17 +8,22 @@ const https = require('https');
 const AS3DriverConstantsKey = 'fast';
 
 class AS3Driver {
-    constructor(endPointUrl, userAgent, bigipUser, bigipPassword, strictCerts) {
-        endPointUrl = endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
-        bigipUser = bigipUser || 'admin';
-        bigipPassword = bigipPassword || '';
-        if (strictCerts === undefined) {
-            strictCerts = true;
+    constructor(options) {
+        options = options || {};
+        const endPointUrl = options.endPointUrl || 'http://localhost:8100/mgmt/shared/appsvcs';
+        const bigipUser = options.bigipUser || 'admin';
+        const bigipPassword = options.bigipPassword || '';
+        if (typeof options.strictCerts === 'undefined') {
+            options.strictCerts = true;
         }
 
         this._static_id = '';
         this._task_ids = {};
-        this.userAgent = userAgent;
+        this._declStub = {
+            class: 'ADC',
+            schemaVersion: '3.0.0'
+        };
+        this.userAgent = options.userAgent;
 
         this._endpoint = axios.create({
             baseURL: endPointUrl,
@@ -31,7 +36,7 @@ class AS3Driver {
                 keepAlive: false
             }),
             httpsAgent: new https.Agent({
-                rejectUnauthorized: strictCerts,
+                rejectUnauthorized: options.strictCerts,
                 keepAlive: false
             })
         });
@@ -97,10 +102,7 @@ class AS3Driver {
             .then(res => res.data.declaration || res.data)
             .then((decl) => {
                 if (Object.keys(decl).length === 0) {
-                    decl = {
-                        class: 'ADC',
-                        schemaVersion: '3.0.0'
-                    };
+                    decl = Object.assign({}, this._declStub);
                 }
                 if (decl.Common && decl.Common.optimisticLockKey) {
                     delete decl.Common.optimisticLockKey;

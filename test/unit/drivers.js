@@ -135,7 +135,7 @@ describe('AS3 Driver tests', function () {
         return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
     });
     it('create_app_user_agent', function () {
-        const driver = new AS3Driver(undefined, 'foo-bar/1.0');
+        const driver = new AS3Driver({ userAgent: 'foo-bar/1.0' });
         driver._static_id = 'STATIC';
         nock(host)
             .persist()

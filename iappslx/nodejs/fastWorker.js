@@ -39,7 +39,7 @@ const mainBlockName = 'F5 Application Services Templates';
 
 const bigipHost = (process.env.FAST_BIGIP_HOST && `${process.env.FAST_BIGIP_HOST}`) || 'http://localhost:8100';
 const bigipUser = process.env.FAST_BIGIP_USER || 'admin';
-const bigipPass = process.env.FAST_BIGIP_PASSWORD || '';
+const bigipPassword = process.env.FAST_BIGIP_PASSWORD || '';
 let bigipStrictCert = process.env.FAST_BIGIP_STRICT_CERT || true;
 if (typeof bigipStrictCert === 'string') {
     bigipStrictCert = (
@@ -76,11 +76,13 @@ class FASTWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.driver = new AS3Driver(
-            `${bigipHost}/mgmt/shared/appsvcs`,
-            `${pkg.name}/${pkg.version}`,
-            bigipUser, bigipPass, bigipStrictCert
-        );
+        this.driver = new AS3Driver({
+            endPointUrl: `${bigipHost}/mgmt/shared/appsvcs`,
+            userAgent: `${pkg.name}/${pkg.version}`,
+            bigipUser,
+            bigipPassword,
+            strictCerts: bigipStrictCert
+        });
         this.storage = new StorageDataGroup(dataGroupPath);
         this.configStorage = new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
@@ -105,7 +107,7 @@ class FASTWorker {
             baseURL: bigipHost,
             auth: {
                 username: bigipUser,
-                password: bigipPass
+                password: bigipPassword
             },
             httpsAgent: new https.Agent({
                 rejectUnauthorized: bigipStrictCert
