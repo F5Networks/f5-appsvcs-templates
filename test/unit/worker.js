@@ -225,7 +225,7 @@ describe('template worker tests', function () {
                 const exampleTS = info.installedTemplates.filter(
                     x => x.name === 'examples'
                 )[0];
-                assert(exampleTS.supported, `${exampleTS.name} has an unsupported hash: ${exampleTS.hash}`);
+                assert(!exampleTS.supported, `${exampleTS.name} should not be marked as officially supported`);
                 assert(exampleTS.enabled, `${exampleTS.name} should be marked as enabled`);
                 // assert(!exampleTS.updateAvailable, `${exampleTS.name} should not have an update available`);
 
