@@ -1,0 +1,28 @@
+contentType: application/json
+bigipHideTemplate: true
+bigipDependencies:
+  - afm
+definitions:
+  enable_dos:
+    title: Denial of Service
+    type: boolean
+    default: false
+  dos_profile:
+    title: DoS Profile
+    description: Select an existing BIG-IP DoS profile.
+    type: string
+    enumFromBigip: security/dos/profile
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_dos}}
+          "{{app_name}}": {
+            "profileDOS": {
+              "bigip": "{{dos_profile}}"
+            }
+          }
+        {{/enable_dos}}
+      }
+    }
+  }

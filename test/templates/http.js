@@ -81,7 +81,11 @@ const view = {
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
-    log_profile_names: ['log local']
+    log_profile_names: ['log local'],
+
+    // firewall
+    enable_dos: false,
+    enable_firewall_staging_policy: false
 };
 
 const expected = {
@@ -264,6 +268,14 @@ describe(template, function () {
             view.make_multiplex_profile = false;
             view.multiplex_profile_name = '/Common/oneconnect1';
             expected.t1.app1.app1.profileMultiplex = { bigip: '/Common/oneconnect1' };
+
+            // existing DOS & staging profiles
+            view.enable_dos = true;
+            view.dos_profile = '/Common/dos1';
+            expected.t1.app1.app1.profileDOS = { bigip: '/Common/dos1' };
+            view.enable_firewall_staging_policy = true;
+            view.firewall_staging_policy = '/Common/staging1';
+            expected.t1.app1.app1.policyFirewallStaged = { bigip: '/Common/staging1' };
         });
         util.assertRendering(template, view, expected);
     });

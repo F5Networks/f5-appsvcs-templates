@@ -26,7 +26,8 @@ allOf:
   - $ref: "_tcp_profile.yaml#"
 anyOf:
   - {}
-  - $ref: "_firewall.yaml#"
+  - $ref: "_security_firewall.yaml#"
+  - $ref: "_security_dos.yaml#"
 parameters:
   app_name: "Sharepoint"
 template: ""
