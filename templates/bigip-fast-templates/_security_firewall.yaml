@@ -14,7 +14,16 @@ definitions:
     uniqueItems: true
     items:
       type: string
-    default: []
+    default: ['0.0.0.0/0']
+  enable_firewall_staging_policy:
+    title: Staging Policy
+    type: boolean
+    default: false
+  firewall_staging_policy:
+    title: Staging Policy
+    description: Select an AFM Staging Policy.
+    type: string
+    enumFromBigip: security/firewall/policy
   log_profile_names:
     title: Security Log Profiles
     description: Hold the *control* key to select multiple log profiles.
@@ -80,6 +89,11 @@ template: |
             "policyFirewallEnforced": {
               "use": "{{app_name}}_fw_policy"
             },
+            {{#enable_firewall_staging_policy}}
+              "policyFirewallStaged": {
+                "bigip": "{{firewall_staging_policy}}"
+              },
+            {{/enable_firewall_staging_policy}}
             "securityLogProfiles": [
               {{#log_profile_names}}
                 { "bigip": {{ . }} },

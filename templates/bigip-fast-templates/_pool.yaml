@@ -14,7 +14,7 @@ definitions:
     default: true
   pool_name:
     title: BIG-IP Pool
-    descriptiom: Select an existing BIG-IP pool.
+    description: Select an existing BIG-IP pool.
     type: string
     enumFromBigip: ltm/pool
     default: ''

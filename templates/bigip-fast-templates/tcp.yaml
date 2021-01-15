@@ -12,7 +12,7 @@ allOf:
   - $ref: "_irule.yaml#"
 anyOf:
   - {}
-  - $ref: "_firewall.yaml#"
+  - $ref: "_security_firewall.yaml#"
 definitions:
   persistence_type:
     default: source-address
