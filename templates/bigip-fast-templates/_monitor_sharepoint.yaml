@@ -10,6 +10,35 @@ definitions:
   make_pool:
     type: boolean
     default: true
+  make_monitor:
+    title: FAST-Generated Pool Monitor
+    description: Uncheck to use an existing BIG-IP Pool Monitor.
+    type: boolean
+    default: true
+  monitor_name:
+    title: Monitor
+    description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
+      the health of the application on each server. If an application instance does not respond
+      system will block client requests to that web server.
+    type: string
+    enumFromBigip: ltm/monitor/https
+    default: /Common/https
+  monitor_credentials:
+    title: Credentials
+    description: Check this box if the servers require login credentials for web access.
+    type: boolean
+    default: false
+  monitor_username:
+    title: Username
+    type: string
+    default: ''
+  monitor_passphrase:
+    title: Password
+    description: This username and password will be sent as Basic authentication during each health check.
+    type: string
+    format: password
+    contentEncoding: base64
+    default: ''
   monitor_interval:
     title: Interval
     description: Set the time between health checks, in seconds.
@@ -28,29 +57,45 @@ template: |
       "{{app_name}}": {
         {{#enable_pool}}
           {{#make_pool}}
-            "{{app_name}}_monitor": {
-              "class": "Monitor",
-              {{#enable_tls_client}}
-                "monitorType": "https",
-              {{/enable_tls_client}}
-              {{^enable_tls_client}}
-                "monitorType": "http",
-              {{/enable_tls_client}}
-              "adaptive": false,
-              "interval": 5,
-              "timeout": {{monitor_timeout}},
-              "dscp": 0,
-              "send": "GET / HTTP/1.1\r\nHost: {{monitor_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-              "receive": "X-{{app_name}}HealthScore: [0-5].",
-              "timeUntilUp": 0,
-              "targetAddress": "",
-              "targetPort": 0
-            },
-            "{{app_name}}_pool": {
-              "monitors": [{
-                "use": "{{app_name}}_monitor"
-              }]
-            }
+            {{#make_monitor}}
+              "{{app_name}}_monitor": {
+                "class": "Monitor",
+                {{#enable_tls_client}}
+                  "monitorType": "https",
+                {{/enable_tls_client}}
+                {{^enable_tls_client}}
+                  "monitorType": "http",
+                {{/enable_tls_client}}
+                "adaptive": false,
+                "interval": {{monitor_interval}},
+                "timeout": {{monitor_timeout}},
+                {{#monitor_credentials}}
+                  "username": "{{monitor_username}}",
+                  "passphrase": {
+                    "ciphertext": "{{monitor_passphrase}}",
+                    "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+                  },
+                {{/monitor_credentials}}
+                "send": "GET / HTTP/1.1\r\nHost: {{monitor_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+                "receive": "X-{{app_name}}HealthScore: [0-5].",
+                "dscp": 0,
+                "timeUntilUp": 0,
+                "targetAddress": "",
+                "targetPort": 0
+              },
+              "{{app_name}}_pool": {
+                "monitors": [{
+                  "use": "{{app_name}}_monitor"
+                }]
+              }
+            {{/make_monitor}}
+            {{^make_monitor}}
+              "{{app_name}}_pool": {
+                "monitors": [{
+                  "bigip": "{{monitor_name}}"
+                }]
+              }
+            {{/make_monitor}}
           {{/make_pool}}
         {{/enable_pool}}
       }
