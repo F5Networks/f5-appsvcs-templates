@@ -257,6 +257,8 @@ const newEditor = (tmplid, view) => {
                     if (html.endsWith('</p>')) {
                         html = html.substring(0, html.length - 5);
                     }
+
+                    html = html.replaceAll('<a href', '<a target="_blank" href');
                     elem.innerHTML = html;
                 });
                 dispOutput('Editor ready');

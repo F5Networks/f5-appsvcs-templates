@@ -4,6 +4,7 @@
 ## Fixed
 
 ## Changed
+* GUI: Open links from Markdown descriptions in new tabs
 
 # 1.6.0
 ## Changed
