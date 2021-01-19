@@ -1,8 +1,11 @@
-# 1.6.0
+# 1.7.0
 ## Added
 
 ## Fixed
 
+## Changed
+
+# 1.6.0
 ## Changed
 * bigip-fast-templates: Remove titles from monitor_timeout parameters
 * GUI: Display an error if AS3 is not available
