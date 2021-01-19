@@ -555,7 +555,7 @@ route('settings', 'settings', () => {
                 };
                 appState.busy = true;
                 dispOutput('Saving settings...');
-                Promise.resolve()
+                return Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/settings`, data))
                     .then(() => dispOutput('Settings saved successfully'))
                     .catch(e => dispOutput(`Failed to save settings:\n${e.message}`))

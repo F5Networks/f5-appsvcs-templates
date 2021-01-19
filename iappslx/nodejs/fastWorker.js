@@ -49,8 +49,9 @@ if (typeof bigipStrictCert === 'string') {
     );
 }
 
-const ajv = new Ajv();
-ajv.addKeyword('options');
+const ajv = new Ajv({
+    strict: false
+});
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
@@ -143,7 +144,12 @@ class FASTWorker {
             .then(() => this.configStorage.getItem(configKey))
             .then((config) => {
                 if (config) {
-                    return Promise.resolve(Object.assign({}, defaultConfig, config));
+                    return Promise.resolve(Object.assign(
+                        {},
+                        defaultConfig,
+                        this.driver.getSettings(),
+                        config
+                    ));
                 }
                 return Promise.resolve()
                     .then(() => {
@@ -164,9 +170,8 @@ class FASTWorker {
     }
 
     getConfigSchema() {
-        return {
+        const baseSchema = {
             $schema: 'http://json-schema.org/schema#',
-            title: 'FAST Settings',
             type: 'object',
             properties: {
                 deletedTemplateSets: {
@@ -184,6 +189,10 @@ class FASTWorker {
                 'deletedTemplateSets'
             ]
         };
+
+        return Object.assign({}, baseSchema, this.driver.getSettingsSchema(), {
+            title: 'FAST Settings'
+        });
     }
 
     saveConfig(config, reqid) {
@@ -297,6 +306,11 @@ class FASTWorker {
                     .catch(e => this.handleResponseError(e, 'to set block state'))
                     .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
             })
+            // Get the AS3 driver ready
+            .then(() => this.recordTransaction(
+                0, 'ready AS3 driver',
+                this.driver.loadMixins()
+            ))
             // Done
             .then(() => {
                 const dt = Date.now() - startTime;
@@ -991,6 +1005,10 @@ class FASTWorker {
         // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
 
         return Promise.resolve()
+            .then(() => this.getConfig(reqid))
+            .then((config) => {
+                this.driver.setSettings(config);
+            })
             .then(() => {
                 const appsData = [];
                 let promiseChain = Promise.resolve();
@@ -1459,7 +1477,7 @@ class FASTWorker {
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
-                if (restOperation.status < 400) {
+                if (!restOperation.status || restOperation.status < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });

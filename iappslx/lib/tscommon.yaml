@@ -1,0 +1,145 @@
+contentType: application/json
+definitions:
+    enable_telemetry:
+        title: Enable Telemetry Streaming log forwarding
+        description: |
+            Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.
+            More information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)
+        type: boolean
+    log_afm:
+        title: Forward AFM logs to Telemetry Streaming
+        description: Requires AFM and ASM to be provisioned
+        type: boolean
+    log_asm:
+        title: Forward ASM logs to Telemetry Streaming
+        description: Requires ASM to be provisioned
+        type: boolean
+parameters:
+    enable_telemetry: false
+    log_afm: false
+    log_asm: false
+template: |
+  {
+    {{#enable_telemetry}}
+    "Common": {
+        "class": "Tenant",
+        "Shared": {
+            "class": "Application",
+            "template": "shared",
+            "telemetry_local_rule": {
+                "class": "iRule",
+                "iRule": "when CLIENT_ACCEPTED {\n  node 127.0.0.1 6514\n}"
+            },
+            "telemetry_local": {
+                "class": "Service_TCP",
+                "virtualAddresses": [
+                    "255.255.255.254"
+                ],
+                "virtualPort": 6514,
+                "iRules": [
+                    "telemetry_local_rule"
+                ]
+            },
+            "telemetry": {
+                "class": "Pool",
+                "members": [
+                    {
+                        "enable": true,
+                        "serverAddresses": [
+                            "255.255.255.254"
+                        ],
+                        "servicePort": 6514
+                    }
+                ],
+                "monitors": [
+                    {
+                        "bigip": "/Common/tcp"
+                    }
+                ]
+            },
+            "telemetry_hsl": {
+                "class": "Log_Destination",
+                "type": "remote-high-speed-log",
+                "protocol": "tcp",
+                "pool": {
+                    "use": "telemetry"
+                }
+            },
+            "telemetry_formatted": {
+                "class": "Log_Destination",
+                "type": "splunk",
+                "forwardTo": {
+                    "use": "telemetry_hsl"
+                }
+            },
+            "telemetry_publisher": {
+                "class": "Log_Publisher",
+                "destinations": [
+                    {
+                        "use": "telemetry_formatted"
+                    }
+                ]
+            },
+            "telemetry_traffic_log_profile": {
+                "class": "Traffic_Log_Profile",
+                "requestSettings": {
+                    "requestEnabled": true,
+                    "requestProtocol": "mds-tcp",
+                    "requestPool": {
+                        "use": "telemetry"
+                    },
+                    "requestTemplate": "event_source=\"request_logging\",hostname=\"$BIGIP_HOSTNAME\",client_ip=\"$CLIENT_IP\",server_ip=\"$SERVER_IP\",http_method=\"$HTTP_METHOD\",http_uri=\"$HTTP_URI\",virtual_name=\"$VIRTUAL_NAME\",event_timestamp=\"$DATE_HTTP\""
+                }
+            },
+            {{#log_afm}}
+            "telemetry_afm_security_log_profile": {
+                "class": "Security_Log_Profile",
+                "application": {
+                    "localStorage": false,
+                    "remoteStorage": "splunk",
+                    "protocol": "tcp",
+                    "servers": [
+                        {
+                            "address": "255.255.255.254",
+                            "port": "6514"
+                        }
+                    ],
+                    "storageFilter": {
+                        "requestType": "illegal-including-staged-signatures"
+                    }
+                },
+                "network": {
+                    "publisher": {
+                        "use": "telemetry_publisher"
+                    },
+                    "logRuleMatchAccepts": false,
+                    "logRuleMatchRejects": true,
+                    "logRuleMatchDrops": true,
+                    "logIpErrors": true,
+                    "logTcpErrors": true,
+                    "logTcpEvents": true
+                }
+            },
+            {{/log_afm}}
+            {{#log_asm}}
+            "telemetry_asm_security_log_profile": {
+                "class": "Security_Log_Profile",
+                "application": {
+                    "localStorage": false,
+                    "remoteStorage": "splunk",
+                    "servers": [
+                        {
+                            "address": "255.255.255.254",
+                            "port": "6514"
+                        }
+                    ],
+                    "storageFilter": {
+                        "requestType": "all"
+                    }
+                }
+            }
+            {{/log_asm}}
+        }
+    }
+    {{/enable_telemetry}}
+  }

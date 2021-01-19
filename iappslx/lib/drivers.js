@@ -4,6 +4,11 @@ const uuid4 = require('uuid').v4;
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
+const path = require('path');
+const fs = require('fs');
+
+const fast = require('@f5devcentral/f5-fast-core');
+const deepmerge = require('deepmerge');
 
 const AS3DriverConstantsKey = 'fast';
 
@@ -23,6 +28,8 @@ class AS3Driver {
             class: 'ADC',
             schemaVersion: '3.0.0'
         };
+        this._tsMixin = null;
+        this._tsOptions = {};
         this.userAgent = options.userAgent;
 
         this._endpoint = axios.create({
@@ -42,6 +49,45 @@ class AS3Driver {
         });
 
         this._declCache = null;
+    }
+
+    loadMixins() {
+        return Promise.resolve()
+            .then(() => {
+                const tmplData = fs.readFileSync(path.join(__dirname, 'tscommon.yaml'), 'utf8');
+                return fast.Template.loadYaml(tmplData);
+            })
+            .then((tmpl) => {
+                this._tsMixin = tmpl;
+            });
+    }
+
+    getSettings() {
+        if (!this._tsMixin) {
+            return {};
+        }
+        return Object.assign(
+            {},
+            this._tsMixin.getCombinedParameters({}),
+            this._tsOptions
+        );
+    }
+
+    setSettings(settings) {
+        this._tsOptions = Object.assign(
+            {},
+            this._tsOptions,
+            settings
+        );
+    }
+
+    getSettingsSchema() {
+        if (!this._tsMixin) {
+            return {};
+        }
+
+        const tsOptSchema = this._tsMixin.getParametersSchema();
+        return fast.guiUtils.modSchemaForJSONEditor(tsOptSchema);
     }
 
     _getKeysByClass(obj, className) {
@@ -181,7 +227,17 @@ class AS3Driver {
             .then(([appDefs, decl]) => Promise.all(
                 appDefs.map(appDef => this._stitchDecl(decl, appDef))
             ))
-            .then(declList => this._postDecl(declList[0]));
+            .then((declList) => {
+                const decl = declList[0];
+                const tsDeclText = (
+                    (this._tsMixin && this._tsMixin.render(this._tsOptions)) || '{}'
+                );
+                const tsDecl = JSON.parse(tsDeclText);
+                return deepmerge(decl, tsDecl, {
+                    arrayMerge: (dst, src) => src
+                });
+            })
+            .then(decl => this._postDecl(decl));
     }
 
     _validateTenantApp(decl, tenant, app) {

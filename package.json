@@ -62,6 +62,7 @@
     "ajv": "^7.0.3",
     "axios": "^0.21.0",
     "core-js": "^3.8.2",
+    "deepmerge": "^4.2.2",
     "express": "^4.17.1",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",

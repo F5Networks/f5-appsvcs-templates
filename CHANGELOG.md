@@ -3,6 +3,7 @@
 * Add /settings endpoint
 * Add config information to /info endpoint
 * Add GUI front-end (Settings tab) for settings endpoint
+* driver: Allow automatically setting up log forwarding for Telemetry Streaming
 
 ## Fixed
 
