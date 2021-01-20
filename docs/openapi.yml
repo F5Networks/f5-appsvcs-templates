@@ -463,6 +463,16 @@ paths:
           description: supplied configuration was invalid
         '500': *serverError
         default: *defaultResponse
+  /settings-schema:
+    get:
+      tags:
+        - FAST Extension
+      summary: JSON schema for the /settings endpoing
+      responses:
+        '200':
+          description: success
+        '500': *serverError
+        default: *defaultResponse
   /info:
     get:
       summary: Information about the FAST Extension

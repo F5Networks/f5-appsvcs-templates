@@ -966,7 +966,7 @@ class FASTWorker {
                 return this.getTemplateSets(restOperation, itemid);
             case 'settings':
                 return this.getSettings(restOperation);
-            case 'settingsSchema':
+            case 'settings-schema':
                 return this.getSettingsSchema(restOperation);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
