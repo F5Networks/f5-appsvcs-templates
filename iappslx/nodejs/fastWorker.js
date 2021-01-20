@@ -50,6 +50,7 @@ if (typeof bigipStrictCert === 'string') {
 }
 
 const ajv = new Ajv();
+ajv.addKeyword('options');
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
@@ -165,6 +166,7 @@ class FASTWorker {
     getConfigSchema() {
         return {
             $schema: 'http://json-schema.org/schema#',
+            title: 'FAST Settings',
             type: 'object',
             properties: {
                 deletedTemplateSets: {
@@ -172,7 +174,10 @@ class FASTWorker {
                     items: {
                         type: 'string'
                     },
-                    uniqueItems: true
+                    uniqueItems: true,
+                    options: {
+                        hidden: true
+                    }
                 }
             },
             required: [
