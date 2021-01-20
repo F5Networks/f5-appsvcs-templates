@@ -450,7 +450,7 @@ paths:
       responses:
         '200':
           description: success
-        '400':
+        '422':
           description: supplied configuration was invalid
         '500': *serverError
         default: *defaultResponse
@@ -459,7 +459,7 @@ paths:
       responses:
         '200':
           description: success
-        '400':
+        '422':
           description: supplied configuration was invalid
         '500': *serverError
         default: *defaultResponse

@@ -639,7 +639,7 @@ describe('template worker tests', function () {
         return worker.onPost(op)
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 400);
+                assert.equal(op.status, 422);
             });
     });
     it('delete_app_bad', function () {
@@ -800,7 +800,7 @@ describe('template worker tests', function () {
         return worker.onPatch(op)
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 400);
+                assert.equal(op.status, 422);
             });
     });
     it('delete_bad_end_point', function () {

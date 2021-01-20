@@ -1205,8 +1205,8 @@ class FASTWorker {
                 const valid = validate(config);
                 if (!valid) {
                     return Promise.reject(this.genRestResponse(
-                        restOperation, 400,
-                        `supplied settings was not valid:\n${validate.errors}`
+                        restOperation, 422,
+                        `supplied settings were not valid:\n${validate.errors}`
                     ));
                 }
 
@@ -1444,8 +1444,8 @@ class FASTWorker {
                 const valid = validate(combinedConfig);
                 if (!valid) {
                     return Promise.reject(this.genRestResponse(
-                        restOperation, 400,
-                        `supplied settings was not valid:\n${validate.errors}`
+                        restOperation, 422,
+                        `supplied settings were not valid:\n${validate.errors}`
                     ));
                 }
 
