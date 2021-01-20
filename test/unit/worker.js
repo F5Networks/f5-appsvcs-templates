@@ -613,6 +613,35 @@ describe('template worker tests', function () {
                 assert.equal(op.status, 202);
             });
     });
+    it('post_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: [
+                'foo'
+            ]
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 200);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+            });
+    });
+    it('post_settings_bad', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+            });
+    });
     it('delete_app_bad', function () {
         const worker = createWorker();
         const op = new RestOp('applications/foobar');
@@ -742,6 +771,36 @@ describe('template worker tests', function () {
         return worker.onPatch(op)
             .then(() => {
                 assert.equal(op.status, 404);
+            });
+    });
+    it('patch_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: [
+                'foo'
+            ]
+        });
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 200);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+            });
+    });
+    it('patch_settings_bad', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: 5
+        });
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
             });
     });
     it('delete_bad_end_point', function () {

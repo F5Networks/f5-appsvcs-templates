@@ -445,6 +445,24 @@ paths:
           description: success
         '500': *serverError
         default: *defaultResponse
+    post:
+      summary: Replace the full configuration of the FAST iApps LX with the supplied body
+      responses:
+        '200':
+          description: success
+        '400':
+          description: supplied configuration was invalid
+        '500': *serverError
+        default: *defaultResponse
+    patch:
+      summary: Update the configuration of the FAST iApps LX with the supplied body
+      responses:
+        '200':
+          description: success
+        '400':
+          description: supplied configuration was invalid
+        '500': *serverError
+        default: *defaultResponse
   /info:
     get:
       summary: Information about the FAST Extension
