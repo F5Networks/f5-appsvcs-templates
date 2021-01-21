@@ -288,7 +288,7 @@ const newEditor = (tmplid, view) => {
 
             // Hook up buttons
             document.getElementById('view-tmpl-btn').onclick = () => {
-                dispOutput(tmpl.templateText);
+                dispOutput(tmpl.sourceText);
             };
             document.getElementById('view-schema-btn').onclick = () => {
                 dispOutput(JSON.stringify(schema, null, 2));
