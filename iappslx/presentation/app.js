@@ -120,6 +120,10 @@ const vueApp = new Vue({
 });
 
 const dispOutput = (output) => {
+    if (typeof output === 'object') {
+        output = JSON.stringify(output, null, 2);
+    }
+
     if (output.length > 0) {
         console.log(output);
     }
