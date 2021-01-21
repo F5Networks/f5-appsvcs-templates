@@ -139,6 +139,7 @@ class FASTWorker {
         this.provisionData = null;
         this.as3Info = null;
         this._hydrateCache = null;
+        this._provisionConfigCache = null;
     }
 
     hookCompleteRestOp() {
@@ -525,7 +526,11 @@ class FASTWorker {
             .then(() => info);
     }
 
-    gatherProvisionData(requestId) {
+    gatherProvisionData(requestId, clearCache) {
+        if (clearCache) {
+            this.provisionData = null;
+            this._provisionConfigCache = null;
+        }
         return Promise.resolve()
             .then(() => {
                 if (this.provisionData !== null) {
@@ -540,6 +545,36 @@ class FASTWorker {
             })
             .then((response) => {
                 this.provisionData = response;
+            })
+            .then(() => {
+                if (this._provisionConfigCache !== null) {
+                    return Promise.resolve(this._provisionConfigCache);
+                }
+
+                return this.getConfig(requestId);
+            })
+            .then((config) => {
+                this._provisionConfigCache = config;
+            })
+            .then(() => {
+                const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
+                if (tsInfo) {
+                    return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
+                }
+
+                return this.recordTransaction(
+                    requestId, 'Fetching TS module information',
+                    this.endpoint.get('/mgmt/shared/telemetry/info', {
+                        validateStatus: () => true // ignore failure status codes
+                    })
+                );
+            })
+            .then((response) => {
+                const config = this._provisionConfigCache;
+                this.provisionData.items.push({
+                    name: 'ts',
+                    level: (response.status === 200 && config.enable_telemetry) ? 'nominal' : 'none'
+                });
             })
             .then(() => {
                 if (this.as3Info !== null && this.as3Info.version) {
@@ -560,9 +595,9 @@ class FASTWorker {
             ]));
     }
 
-    checkDependencies(tmpl, requestId) {
+    checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
-            .then(() => this.gatherProvisionData(requestId))
+            .then(() => this.gatherProvisionData(requestId, clearCache))
             .then(([provisionData, as3Info]) => {
                 const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
                 const as3Version = semver.coerce(as3Info.version || '0.0');
@@ -635,13 +670,17 @@ class FASTWorker {
             });
     }
 
-    hydrateSchema(tmpl, requestId) {
+    hydrateSchema(tmpl, requestId, clearCache) {
         const schema = tmpl._parametersSchema;
         const subTemplates = [
             ...tmpl._allOf || [],
             ...tmpl._oneOf || [],
             ...tmpl._anyOf || []
         ];
+
+        if (clearCache) {
+            this._hydrateCache = null;
+        }
 
         if (!schema.properties && subTemplates.length === 0) {
             return Promise.resolve();
@@ -839,12 +878,8 @@ class FASTWorker {
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
                     return Promise.resolve()
-                        .then(() => {
-                            this.provisionData = null;
-                            this._hydrateCache = null;
-                        })
-                        .then(() => this.checkDependencies(tmpl, reqid))
-                        .then(() => this.hydrateSchema(tmpl, reqid))
+                        .then(() => this.checkDependencies(tmpl, reqid, true))
+                        .then(() => this.hydrateSchema(tmpl, reqid, true))
                         .then(() => {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);

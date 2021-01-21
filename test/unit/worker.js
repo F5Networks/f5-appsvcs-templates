@@ -206,6 +206,11 @@ describe('template worker tests', function () {
             .reply(200, {
                 version: '3.16'
             });
+        nock('http://localhost:8100')
+            .persist()
+            .get('/mgmt/shared/telemetry/info')
+            .reply(200, {
+            });
         return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 

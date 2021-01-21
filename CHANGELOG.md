@@ -4,6 +4,7 @@
 * Add config information to /info endpoint
 * Add GUI front-end (Settings tab) for settings endpoint
 * driver: Allow automatically setting up log forwarding for Telemetry Streaming
+* Add 'ts' as a valid bigipDependencies keyword
 
 ## Fixed
 * Improve load times of templates with many sub-templates
