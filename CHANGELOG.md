@@ -1,12 +1,14 @@
 # 1.7.0
 ## Added
-* Add /settings endpoint to view (GET) and reset (DELETE) config (modifications are not currently supported)
+* Add /settings endpoint
 * Add config information to /info endpoint
+* Add GUI front-end (Settings tab) for settings endpoint
 
 ## Fixed
 
 ## Changed
 * GUI: Open links from Markdown descriptions in new tabs
+* GUI: Display full template text when using View Template button
 
 # 1.6.0
 ## Changed
