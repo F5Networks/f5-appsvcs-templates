@@ -523,7 +523,7 @@ class FASTWorker {
                 this.provisionData = response;
             })
             .then(() => {
-                if (this.as3Info !== null && this.as3Info.code < 300) {
+                if (this.as3Info !== null && this.as3Info.version) {
                     return Promise.resolve(this.as3Info);
                 }
                 return this.recordTransaction(
@@ -613,9 +613,6 @@ class FASTWorker {
                         tmpl._anyOf = validAnyOf;
                     });
                 return promiseChain;
-            })
-            .then(() => {
-                this.provisionData = null;
             });
     }
 
@@ -808,6 +805,9 @@ class FASTWorker {
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
                     return Promise.resolve()
+                        .then(() => {
+                            this.provisionData = null;
+                        })
                         .then(() => this.checkDependencies(tmpl, reqid))
                         .then(() => this.hydrateSchema(tmpl, reqid))
                         .then(() => {
