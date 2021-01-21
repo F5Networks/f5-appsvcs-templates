@@ -10,6 +10,7 @@ const url = require('url');
 
 const extract = require('extract-zip');
 const axios = require('axios');
+const Ajv = require('ajv').default;
 
 const semver = require('semver');
 
@@ -47,6 +48,9 @@ if (typeof bigipStrictCert === 'string') {
         || bigipStrictCert === '1'
     );
 }
+
+const ajv = new Ajv();
+ajv.addKeyword('options');
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
@@ -157,6 +161,29 @@ class FASTWorker {
                 this.logger.severe(`FAST Worker: Failed to load config: ${e.stack}`);
                 return Promise.resolve(defaultConfig);
             });
+    }
+
+    getConfigSchema() {
+        return {
+            $schema: 'http://json-schema.org/schema#',
+            title: 'FAST Settings',
+            type: 'object',
+            properties: {
+                deletedTemplateSets: {
+                    type: 'array',
+                    items: {
+                        type: 'string'
+                    },
+                    uniqueItems: true,
+                    options: {
+                        hidden: true
+                    }
+                }
+            },
+            required: [
+                'deletedTemplateSets'
+            ]
+        };
     }
 
     saveConfig(config, reqid) {
@@ -458,6 +485,10 @@ class FASTWorker {
                 info.installedTemplates = tmplSets;
             })
             .then(() => this.exitTransaction(requestId, 'gathering template set data'))
+            .then(() => this.getConfig(requestId))
+            .then((config) => {
+                info.config = config;
+            })
             .then(() => info);
     }
 
@@ -896,6 +927,27 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    getSettings(restOperation) {
+        const reqid = restOperation.requestId;
+        return Promise.resolve()
+            .then(() => this.getConfig(reqid))
+            .then((config) => {
+                restOperation.setBody(config);
+                this.completeRestOperation(restOperation);
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
+    getSettingsSchema(restOperation) {
+        return Promise.resolve()
+            .then(() => {
+                const schema = this.getConfigSchema();
+                restOperation.setBody(schema);
+                this.completeRestOperation(restOperation);
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -917,6 +969,10 @@ class FASTWorker {
                 return this.getTasks(restOperation, itemid);
             case 'templatesets':
                 return this.getTemplateSets(restOperation, itemid);
+            case 'settings':
+                return this.getSettings(restOperation);
+            case 'settings-schema':
+                return this.getSettingsSchema(restOperation);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
@@ -1145,6 +1201,31 @@ class FASTWorker {
             .finally(() => fs.removeSync(scratch));
     }
 
+    postSettings(restOperation, config) {
+        const reqid = restOperation.requestId;
+
+        return Promise.resolve()
+            .then(() => ajv.compile(this.getConfigSchema()))
+            .then((validate) => {
+                const valid = validate(config);
+                if (!valid) {
+                    return Promise.reject(this.genRestResponse(
+                        restOperation, 422,
+                        `supplied settings were not valid:\n${validate.errors}`
+                    ));
+                }
+
+                return Promise.resolve();
+            })
+            .then(() => this.saveConfig(config, reqid))
+            .then(() => this.genRestResponse(restOperation, 200, ''))
+            .catch((e) => {
+                if (restOperation.status < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
+    }
+
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -1161,6 +1242,8 @@ class FASTWorker {
                 return this.postApplications(restOperation, body);
             case 'templatesets':
                 return this.postTemplateSets(restOperation, body);
+            case 'settings':
+                return this.postSettings(restOperation, body);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
@@ -1288,6 +1371,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    deleteSettings(restOperation) {
+        return Promise.resolve()
+            .then(() => this.configStorage.deleteItem(configKey))
+            .then(() => this.genRestResponse(restOperation, 200, 'success'))
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+    }
+
     onDelete(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -1304,6 +1394,8 @@ class FASTWorker {
                 return this.deleteApplications(restOperation, itemid);
             case 'templatesets':
                 return this.deleteTemplateSets(restOperation, itemid);
+            case 'settings':
+                return this.deleteSettings(restOperation);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
@@ -1343,6 +1435,36 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
+    patchSettings(restOperation, config) {
+        const reqid = restOperation.requestId;
+        let combinedConfig = {};
+
+        return Promise.resolve()
+            .then(() => this.getConfig(reqid))
+            .then((prevConfig) => {
+                combinedConfig = Object.assign({}, prevConfig, config);
+            })
+            .then(() => ajv.compile(this.getConfigSchema()))
+            .then((validate) => {
+                const valid = validate(combinedConfig);
+                if (!valid) {
+                    return Promise.reject(this.genRestResponse(
+                        restOperation, 422,
+                        `supplied settings were not valid:\n${validate.errors}`
+                    ));
+                }
+
+                return Promise.resolve();
+            })
+            .then(() => this.saveConfig(combinedConfig, reqid))
+            .then(() => this.genRestResponse(restOperation, 200, ''))
+            .catch((e) => {
+                if (restOperation.status < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
+    }
+
     onPatch(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -1358,6 +1480,8 @@ class FASTWorker {
             switch (collection) {
             case 'applications':
                 return this.patchApplications(restOperation, itemid, body);
+            case 'settings':
+                return this.patchSettings(restOperation, body);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }

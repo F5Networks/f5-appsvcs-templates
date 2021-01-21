@@ -428,6 +428,51 @@ paths:
                 $ref: "#/components/schemas/Error"
         '500': *serverError
         default: *defaultResponse
+  /settings:
+    tags:
+      - FAST Extension
+    get:
+      summary: Get an object that represents the current configuration of the FAST iApps LX.
+      responses:
+        '200':
+          description: success
+        '500': *serverError
+        default: *defaultResponse
+    delete:
+      summary: Reset the configuration of the FAST iApps LX back to defaults
+      responses:
+        '200':
+          description: success
+        '500': *serverError
+        default: *defaultResponse
+    post:
+      summary: Replace the full configuration of the FAST iApps LX with the supplied body
+      responses:
+        '200':
+          description: success
+        '422':
+          description: supplied configuration was invalid
+        '500': *serverError
+        default: *defaultResponse
+    patch:
+      summary: Update the configuration of the FAST iApps LX with the supplied body
+      responses:
+        '200':
+          description: success
+        '422':
+          description: supplied configuration was invalid
+        '500': *serverError
+        default: *defaultResponse
+  /settings-schema:
+    get:
+      tags:
+        - FAST Extension
+      summary: JSON schema for the /settings endpoing
+      responses:
+        '200':
+          description: success
+        '500': *serverError
+        default: *defaultResponse
   /info:
     get:
       summary: Information about the FAST Extension
@@ -618,3 +663,6 @@ components:
           description: list of TemplateSets
           items:
             $ref: "#/components/schemas/TemplateSet"
+        config:
+          type: object
+          description: current config for the FAST iApps LX

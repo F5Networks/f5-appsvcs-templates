@@ -204,7 +204,7 @@ describe('template worker tests', function () {
         }
     });
 
-    it('info', function () {
+    it('get_info', function () {
         const worker = createWorker();
         const op = new RestOp('info');
         nock('http://localhost:8100')
@@ -235,9 +235,13 @@ describe('template worker tests', function () {
                 assert(bigipTS.supported, `${bigipTS.name} has an unsupported hash: ${bigipTS.hash}`);
                 assert(bigipTS.enabled, `${bigipTS.name} should be marked as enabled`);
                 // assert(!bigipTS.updateAvailable, `${bigipTS.name} should not have an update available`);
+
+                const config = info.config;
+                assert.ok(config);
+                assert.ok(config.deletedTemplateSets);
             });
     });
-    it('info_without_as3', function () {
+    it('get_info_without_as3', function () {
         const worker = createWorker();
         const op = new RestOp('info');
         nock('http://localhost:8100')
@@ -609,6 +613,35 @@ describe('template worker tests', function () {
                 assert.equal(op.status, 202);
             });
     });
+    it('post_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: [
+                'foo'
+            ]
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 200);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+            });
+    });
+    it('post_settings_bad', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 422);
+            });
+    });
     it('delete_app_bad', function () {
         const worker = createWorker();
         const op = new RestOp('applications/foobar');
@@ -738,6 +771,36 @@ describe('template worker tests', function () {
         return worker.onPatch(op)
             .then(() => {
                 assert.equal(op.status, 404);
+            });
+    });
+    it('patch_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: [
+                'foo'
+            ]
+        });
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 200);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+            });
+    });
+    it('patch_settings_bad', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: 5
+        });
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 422);
             });
     });
     it('delete_bad_end_point', function () {
@@ -937,6 +1000,40 @@ describe('template worker tests', function () {
             .then(() => assert.equal(op.status, 200))
             .then(() => worker.templateProvider.listSets())
             .then(setNames => assert.strictEqual(setNames.length, 0));
+    });
+    it('get_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+
+                const config = op.getBody();
+                console.log(JSON.stringify(config, null, 2));
+                assert.ok(config.deletedTemplateSets);
+            });
+    });
+    it('delete_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+
+        return worker.getConfig(0)
+            .then((config) => {
+                config.foo = 'bar';
+            })
+            .then(() => worker.onGet(op))
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.ok(op.body.foo);
+            })
+            .then(() => worker.onDelete(op))
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.strictEqual(op.body.foo, undefined);
+            });
     });
     it('on_start', function () {
         const worker = createWorker();

@@ -215,8 +215,47 @@ class InfoEditor extends JSONEditor.defaults.editors.info {
 }
 JSONEditor.defaults.editors.info = InfoEditor;
 
-const newEditor = (tmplid, view) => {
+const createCommonEditor = (schema, defaults) => {
     const formElement = document.getElementById('form-div');
+    const newEd = new JSONEditor(formElement, {
+        schema,
+        startval: guiUtils.filterExtraProperties(defaults, schema),
+        compact: true,
+        show_errors: 'always',
+        disable_edit_json: true,
+        disable_properties: true,
+        disable_collapse: true,
+        array_controls_top: true,
+        theme: 'spectre',
+        iconlib: 'fontawesome5'
+    });
+
+    newEd.on('ready', () => {
+        // Render Markdown in descriptions
+        const descElements = document.getElementsByClassName('je-desc');
+        Array.prototype.map.call(descElements, (elem) => {
+            // Get raw schema description since the element text has newlines stripped
+            const schemaPath = elem.parentElement.parentElement.getAttribute('data-schemapath');
+            const propEd = newEd.getEditor(schemaPath);
+            const md = propEd.schema.description || '';
+
+            let html = marked(md);
+            if (html.startsWith('<p>')) {
+                html = html.substring(3, html.length);
+            }
+            if (html.endsWith('</p>')) {
+                html = html.substring(0, html.length - 5);
+            }
+
+            html = html.replaceAll('<a href', '<a target="_blank" href');
+            elem.innerHTML = html;
+        });
+    });
+
+    return newEd;
+};
+
+const newEditor = (tmplid, view) => {
     if (editor) {
         editor.destroy();
     }
@@ -230,41 +269,9 @@ const newEditor = (tmplid, view) => {
             const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
 
             // Create a new editor
-            const defaults = guiUtils.filterExtraProperties(tmpl.getCombinedParameters(view), schema);
-            editor = new JSONEditor(formElement, {
-                schema,
-                startval: defaults,
-                compact: true,
-                show_errors: 'always',
-                disable_edit_json: true,
-                disable_properties: true,
-                disable_collapse: true,
-                array_controls_top: true,
-                theme: 'spectre',
-                iconlib: 'fontawesome5'
-            });
-            dispOutput('Editor loaded'); // Clear text on new editor load
+            editor = createCommonEditor(schema, tmpl.getCombinedParameters(view));
 
             editor.on('ready', () => {
-                // Render Markdown in descriptions
-                const descElements = document.getElementsByClassName('je-desc');
-                Array.prototype.map.call(descElements, (elem) => {
-                    // Get raw schema description since the element text has newlines stripped
-                    const schemaPath = elem.parentElement.parentElement.getAttribute('data-schemapath');
-                    const propEd = editor.getEditor(schemaPath);
-                    const md = propEd.schema.description || '';
-
-                    let html = marked(md);
-                    if (html.startsWith('<p>')) {
-                        html = html.substring(3, html.length);
-                    }
-                    if (html.endsWith('</p>')) {
-                        html = html.substring(0, html.length - 5);
-                    }
-
-                    html = html.replaceAll('<a href', '<a target="_blank" href');
-                    elem.innerHTML = html;
-                });
                 dispOutput('Editor ready');
 
                 // Enable form button now that the form is ready
@@ -334,6 +341,8 @@ const newEditor = (tmplid, view) => {
                         dispOutput(`Failed to submit application:\n${e.message}`);
                     });
             };
+
+            dispOutput('Editor loaded'); // Clear text on new editor load
         })
         .catch((e) => {
             const versionError = e.message.match(/^.*since it requires AS3.*$/m);
@@ -513,6 +522,49 @@ route('tasks', 'tasks', () => {
         tasks: []
     };
     return renderTaskList();
+});
+route('settings', 'settings', () => {
+    if (editor) {
+        editor.destroy();
+    }
+
+    return Promise.resolve()
+        .then(() => Promise.all([
+            getJSON('settings-schema'),
+            getJSON('settings')
+        ]))
+        .then(([schema, defaults]) => {
+            editor = createCommonEditor(schema, defaults);
+
+            editor.on('ready', () => {
+                document.getElementById('btn-form-submit').disabled = false;
+            });
+
+            editor.on('change', () => {
+                document.getElementById('btn-form-submit').disabled = editor.validation_results.length !== 0;
+            });
+
+            document.getElementById('btn-form-submit').onclick = () => {
+                const config = editor.getValue();
+                const data = {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                };
+                appState.busy = true;
+                dispOutput('Saving settings...');
+                Promise.resolve()
+                    .then(() => safeFetch(`${endPointUrl}/settings`, data))
+                    .then(() => dispOutput('Settings saved successfully'))
+                    .catch(e => dispOutput(`Failed to save settings:\n${e.message}`))
+                    .finally(() => {
+                        appState.busy = false;
+                    });
+            };
+        })
+        .catch(e => dispOutput(e.message));
 });
 route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {

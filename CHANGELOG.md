@@ -1,5 +1,7 @@
 # 1.7.0
 ## Added
+* Add /settings endpoint to view (GET) and reset (DELETE) config (modifications are not currently supported)
+* Add config information to /info endpoint
 
 ## Fixed
 
