@@ -19,7 +19,8 @@ function restOpFromRequest(req) {
         uri.query = {};
     }
     restOp.setUri(url.parse(uri))
-        .setBody(req.body);
+        .setBody(req.body)
+        .setMethod(RestOperation.Methods[req.method]);
 
     Object.keys(req.headers).forEach((headerName) => {
         restOp.setHeader(headerName, req.headers[headerName]);
