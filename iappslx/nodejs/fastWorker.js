@@ -123,6 +123,7 @@ class FASTWorker {
         this.requestCounter = 1;
         this.provisionData = null;
         this.as3Info = null;
+        this._hydrateCache = null;
     }
 
     hookCompleteRestOp() {
@@ -646,17 +647,31 @@ class FASTWorker {
             );
         }
 
+        if (!this._hydrateCache) {
+            this._hydrateCache = {};
+        }
+
         return Promise.resolve()
             .then(() => Promise.all(subTemplates.map(x => this.hydrateSchema(x, requestId))))
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
                 const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
                 return Promise.resolve()
-                    .then(() => this.recordTransaction(
-                        requestId, `fetching data from ${endPoint}`,
-                        this.endpoint.get(endPoint)
-                    ))
-                    .then((response) => {
-                        const items = response.data.items;
+                    .then(() => {
+                        if (this._hydrateCache[endPoint]) {
+                            return this._hydrateCache[endPoint];
+                        }
+
+                        return this.recordTransaction(
+                            requestId, `fetching data from ${endPoint}`,
+                            this.endpoint.get(endPoint)
+                        )
+                            .then((response) => {
+                                const items = response.data.items;
+                                this._hydrateCache[endPoint] = items;
+                                return items;
+                            });
+                    })
+                    .then((items) => {
                         if (items) {
                             return Promise.resolve(items.map(x => x.fullPath));
                         }
@@ -667,7 +682,6 @@ class FASTWorker {
                         if (items.length !== 0) {
                             prop.enum = items;
                         }
-                        delete prop.enumFromBigip;
                     })
                     .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`)));
             })))
@@ -807,6 +821,7 @@ class FASTWorker {
                     return Promise.resolve()
                         .then(() => {
                             this.provisionData = null;
+                            this._hydrateCache = null;
                         })
                         .then(() => this.checkDependencies(tmpl, reqid))
                         .then(() => this.hydrateSchema(tmpl, reqid))

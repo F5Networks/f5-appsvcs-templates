@@ -6,6 +6,7 @@
 * driver: Allow automatically setting up log forwarding for Telemetry Streaming
 
 ## Fixed
+* Improve load times of templates with many sub-templates
 
 ## Changed
 * GUI: Open links from Markdown descriptions in new tabs
