@@ -5,6 +5,7 @@
 * Add GUI front-end (Settings tab) for settings endpoint
 * driver: Allow automatically setting up log forwarding for Telemetry Streaming
 * Add 'ts' as a valid bigipDependencies keyword
+* bigip-fast-templates: Add Telemetry Streaming option
 
 ## Fixed
 * Improve load times of templates with many sub-templates

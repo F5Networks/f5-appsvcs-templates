@@ -28,6 +28,7 @@ anyOf:
   - {}
   - $ref: "_security_firewall.yaml#"
   - $ref: "_security_dos.yaml#"
+  - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "Sharepoint"
 template: ""
