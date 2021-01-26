@@ -831,6 +831,8 @@ class FASTWorker {
                     reqid, 'fetching template',
                     this.templateProvider.fetch(tmplid)
                 ))
+                // Copy the template to avoid modifying the stored template
+                .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
                 .then((tmpl) => {
                     tmpl.title = tmpl.title || tmplid;
                     return Promise.resolve()
@@ -844,7 +846,8 @@ class FASTWorker {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);
                         });
-                }).catch((e) => {
+                })
+                .catch((e) => {
                     if (e.message.match(/Could not find template/)) {
                         return this.genRestResponse(restOperation, 404, e.stack);
                     }

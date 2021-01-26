@@ -7,6 +7,7 @@
 
 ## Fixed
 * Improve load times of templates with many sub-templates
+* Fix template dependency checking not working on subsequent template loads
 
 ## Changed
 * GUI: Open links from Markdown descriptions in new tabs
