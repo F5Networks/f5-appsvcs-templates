@@ -157,13 +157,16 @@ class FASTWorker {
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => this.configStorage.getItem(configKey))
-            .then((config) => {
+            .then(() => Promise.all([
+                this.configStorage.getItem(configKey),
+                this.driver.getSettings()
+            ]))
+            .then(([config, driverSettings]) => {
                 if (config) {
                     return Promise.resolve(Object.assign(
                         {},
                         defaultConfig,
-                        this.driver.getSettings(),
+                        driverSettings,
                         config
                     ));
                 }
@@ -1039,9 +1042,13 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.getConfig(reqid))
-            .then((config) => {
-                this.driver.setSettings(config);
-            })
+            .then(config => Promise.all([
+                Promise.resolve(config),
+                this.gatherProvisionData(reqid, false)
+            ]))
+            .then(([config, provisionData]) => Promise.resolve()
+                .then(() => this.driver.setSettings(config, provisionData))
+                .then(() => this.saveConfig(config, reqid)))
             .then(() => {
                 const appsData = [];
                 let promiseChain = Promise.resolve();
@@ -1268,6 +1275,8 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
@@ -1507,6 +1516,8 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {

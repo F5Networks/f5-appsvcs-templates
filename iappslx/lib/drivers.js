@@ -81,19 +81,31 @@ class AS3Driver {
         if (!this._tsMixin) {
             return {};
         }
-        return Object.assign(
+        return Promise.resolve(Object.assign(
             {},
             this._tsMixin.getCombinedParameters({}),
             this._tsOptions
-        );
+        ));
     }
 
-    setSettings(settings) {
+    setSettings(settings, provisionData) {
+        const provisionedModules = provisionData[0].items.filter(x => x.level !== 'none').map(x => x.name);
+        settings.log_afm = (
+            settings.enable_telemetry
+            && provisionedModules.includes('afm')
+            && provisionedModules.includes('asm')
+        );
+        settings.log_asm = (
+            settings.enable_telemetry
+            && provisionedModules.includes('asm')
+        );
         this._tsOptions = Object.assign(
             {},
             this._tsOptions,
             settings
         );
+
+        return Promise.resolve();
     }
 
     getSettingsSchema() {
