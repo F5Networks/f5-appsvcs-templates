@@ -3,78 +3,98 @@ title: Microsoft Exchange Application Template
 description: Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations.
 bigipMinimumAS3: 3.23
 allOf:
-  - contentType: application/json
-    definitions:
-      beta_warning:
-        title: 'Notice: Beta Test'
-        description: <span style="color:#d05000;font-size:125%">
-          This FAST template is a *Beta Version*. Please report any issues, or an RFE, on the 
-          [FAST GitHub repository](https://github.com/F5Networks/f5-appsvcs-templates) as appropriate.</span>
-        format: info
-    template: |
-      { {{beta_warning}}
-        "class": "ADC"
-      }
   - $ref: "_as3.yaml#"
 definitions:
   app_fqdn:
-    title: What is the FQDN for your HTTP-based client access services?
+    title: Exchange Domain Name
     description: 	Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
     type: string
   single_vip:
-    title: Do you want to use a single IP address for all Mailbox Server connections?
-    description: This question determines the number of virtual servers the BIG-IP system creates for your Mailbox Server deployment. By choosing a single IP address, you can combine multiple functions (such as using a single FQDN and associated SSL certificate for all HTTP-based client access services) on the same virtual server. By choosing separate virtual servers for each client access service component, you can manage each service independently from the others. For detailed information, see the Deployment Guide.
+    title: Common VIP
+    description: This checkbox determines the number of virtual servers the BIG-IP system creates for your Mailbox Server deployment. By choosing a single IP address, you can combine multiple functions (such as using a single FQDN and associated SSL certificate for all HTTP-based client access services) on the same virtual server. By choosing separate virtual servers for each client access service component, you can manage each service independently from the others. For detailed information, see the Deployment Guide.
     type: boolean
   virtual_address:
-    title: What IP address do you want to use for the virtual server?
-    description: This IP address, combined with the port you specify below, becomes the BIG-IP virtual server address and port, which clients use to access the application. The system intercepts requests to this IP:Port and distributes them to the exchange servers.
+    title: Virtual Server IP Address
+    description: This IP address, combined with the port you specify below, becomes
+      the BIG-IP virtual server address and port, which clients use to access the application.
+      The system uses this IP:Port for distributing requests to the web servers.
+    oneOf:
+    - format: ipv4
+    - format: ipv6
   virtual_port:
-    title: What TCP port do you want to use for the virtual server?
+    title: Virtual Server Port
+    type: integer
+    minimum: 0
+    maximum: 65535
     default: 443
   enable_redirect:
-    title: Redirect port 80 traffic to this virtual server
+    title: HTTP Redirect
+    description: Redirect requests from port 80 to this virtual server.
     type: boolean
+    default: true
   pool_customize:
-    title: Do you want to customize your server pool settings?
-    description: If necessary, you can configure advanced pool settings (such as specifying the load balancing algorithm or configuring priority groups). If you do not have a need to modify these settings, use the recommended settings, which are a result of extensive testing with Microsoft Exchange Server.
+    title: Advanced Pool Options
+    description: Configure advanced pool settings, such as specifying the load balancing algorithm or configuring priority groups. If you do not have a need to modify these settings, use the recommended settings, which are a result of extensive testing with Microsoft Exchange Server.
     type: boolean
   load_balancing_mode:
-    title: Which load balancing method do you want to use?
-    description: 	Choose the load balancing method appropriate for your configuration. We recommend the default, Least Connections (member). For a description of each method, see the online help on the Pool creation page, or the BIG-IP system documentation. 
+    title: Load Balancing Method
+    description: A *load balancing method* is an algorithm that the BIG-IP system uses
+      to select a pool member for processing a request. F5 recommends the Least Connections
+      load balancing method, where new connections are routed to the node that has the
+      least number of current connections. This is ideal for environments in which pool
+      members have similar performance and capacity capabilities.
+    type: string
   slow_ramp_time:
-    title: What slow ramp time do you want to use? (recommended value is 300 seconds)
-    description:  Slowly increases the number of connection requests that are load balanced to a new pool member.
+    title: Slow Ramp 
+    description: Slow ramp temporarily throttles the number of connections to a new pool member.
+      The recommended value is 300 seconds.
+    type: integer
+    minimum: 0
+    maximum: 65535
+    default: 300
   pool_members:
     title: Pool Members
-    description: Which exchange servers should be included in this pool?
+    description: Add the addresses of the Exchange servers in the pool.
   pool_port:
-    title: What TCP port do you want to use for the pool members?
+    title: Port for Exchange Services
+    description: Specify the port to use for all services except POP & IMAP.
+    default: 80
   eav:
-    title: Do you want to create external monitors for client access services? If not, standard monitors will be utilized.
-    description: 	By default, the iApp creates the Microsoft-recommended Managed Availability monitors. You can choose to have the iApp also create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange iApp deployment guide.
+    title: SNMP-Based External Monitoring
+    description: 	By default, FAST creates Microsoft-recommended Managed Availability monitors. You can choose to have FAST create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange deployment guide.
     type: boolean
   enable_snat:
     title: SNAT
-    description: Secure Network Address Translation maps the source client IP address in a request to a translation address defined on the BIG-IP device.
+    description: "*Secure Network Address Translation* maps the source client IP address
+      in a request to a translation address defined on the BIG-IP device."
     type: boolean
   snat_automap:
     title: SNAT Automap
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
     type: boolean
+    default: true
   make_snatpool:
-    title: Automatically manage the SNAT pool.
+    title: FAST-Generated SNAT Pool
+    description: Uncheck to use an existing BIG-IP SNAT Pool.
     type: boolean
-    description: If selected the BIG-IP will create and manage a snatpool.  Otherwise, select an existing snatpool.  NOTE The pool must exist in the Common partition.
+    default: true
   snatpool_name:
-    title: Specify the name of an existing BIG-IP SNAT pool.
-    enumFromBigip: 'ltm/snatpool'
+    title: BIG-IP SNAT Pool
+    description: Enter the name of an existing BIG-IP SNAT pool.
+    type: string
+    enumFromBigip: ltm/snatpool
+    default: ''
   snat_addresses:
     title: SNAT Pool Addresses
-  tcp_topology:
-    title: Specify the type of network that connects both clients and servers to the BIG-IP system.
+    type: array
+    uniqueItems: true
+    default: ['10.0.1.1']
+    items:
+      type: string
+      default: '10.0.1.2'
   enable_tls_server:
     title: TLS Server
-    description: Enable TLS server to decrypt client-side connections.
+    description: Select an existing TLS server profile. TLS server profiles are of type "ltm clientssl" on BIG-IP.
     type: boolean
   tls_cert_name:
     title: Specify the name of an existing BIG-IP SSL certificate.
@@ -102,80 +122,76 @@ definitions:
   tcp_egress_topology:
     title: Specify the type of network that connects servers to the BIG-IP system
   owa:
-    title: Are you deploying Outlook Web App (includes ECP)?
+    title: Outlook Web App
     description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
     type: boolean
   owa_virtual_address:
-    title: What IP address do you want to use for the OWA virtual server?
+    title: OWA Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
   owa_fqdn: 
-    title: What is the FQDN for your OWA service?  
+    title: OWA Domain Name
   ews:
-    title: Are you deploying EWS?
+    title: EWS
     description: 	Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
   ews_virtual_address:
-    title: What IP address do you want to use for the EWS virtual server?
+    title: EWS Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the EWS virtual server.
   ews_fqdn: 
-    title: What is the FQDN for your EWS service?  
+    title: EWS Domain Name
   outlook:
-    title: Are you deploying Microsoft Outlook and OAB?
+    title: Microsoft Outlook and OAB
     description: 	Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
   outlookMAPI:
-    title: Will Outlook clients use MAPI-over-HTTP to connect to Exchange?
-    description: 	The iApp needs to know if Microsoft Outlook clients use MAPI-over-HTTP, RPC-over-HTTP, or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects. Select the answer that best describes your implementation.     
+    title: MAPI-over-HTTP
     type: boolean
   mapi_virtual_address:
-    title: What IP address do you want to use for the MAPI virtual server?
+    title: MAPI Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
   mapi_fqdn: 
-    title: What is the FQDN for your MAPI service?  
+    title: MAPI Domain Name
   outlookRPC:
-    title: Will Outlook clients use RPC-over-HTTP to connect to Exchange?
-    description: 	The iApp needs to know if Microsoft Outlook clients use MAPI-over-HTTP, RPC-over-HTTP, or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects. Select the answer that best describes your implementation.     
+    title: RPC-over-HTTP
+    description: 	Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
     type: boolean
   oa_virtual_address:
-    title: What IP address do you want to use for the Outlook Anywhere virtual server?
+    title: Outlook Anywhere Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
   oa_fqdn: 
-    title: What is the FQDN for your Outlook Anywhere service?  
+    title: Outlook Anywhere Domain Name
   activesync: 
-    title: Are you deploying ActiveSync?
+    title: ActiveSync
     description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
     type: boolean
   as_virtual_address:
-    title: What IP address do you want to use for the ActiveSync virtual server?
+    title: ActiveSync Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the ActiveSync virtual server.
   as_fqdn: 
-    title: What is the FQDN for your ActiveSync service?  
+    title: ActiveSync Domain Name
   autodiscover:
-    title: Are you deploying Autodiscover?
+    title: Autodiscover
     description: 	Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
     type: boolean
   ad_virtual_address:
-    title: What IP address do you want to use for the Autodiscover virtual server?
+    title: Autodiscover Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Autodiscover virtual server.
   ad_fqdn: 
-    title: What is the FQDN for your Autodiscover service?  
+    title: Autodiscover Domain Name
   pop3:
-    title: Are you deploying POP3?
+    title: POP3
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
     type: boolean
   pop3_virtual_address:
-    title: What IP address do you want to use for the POP3 virtual server?
+    title: POP3 Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the POP3 virtual server.
   imap4:
-    title: Are you deploying IMAP4?
+    title: IMAP4
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable IMAP4 on each of your Exchange Mailbox Servers before that service will be available. IMAP4 is not enabled by default on Exchange Mailbox Servers.
     type: boolean
   imap4_virtual_address:
-    title: What IP address do you want to use for the IMAP4 virtual server?
+    title: IMAP4 Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the IMAP4 virtual server.
-  app_type_def:
-    template: |
-        "template": "generic",
   app_tls_server_def:
     template: |
       {{#enable_tls_server}}
@@ -1230,10 +1246,6 @@ parameters:
   ad_fqdn: 'example.mycompany.com'
   eav: false
   single_vip: true
-  enable_snat: true
-  snat_automap: true
-  make_snatpool: true
-  tcp_topology: lan
   enable_multiplex: true
   enable_tls_server: true
   enable_tls_client: false
@@ -1244,10 +1256,7 @@ parameters:
   snatpool_name: /Common
   tcp_ingress_topology: wan
   tcp_egress_topology: lan
-  pool_port: 80
   pool_customize: false
-  enable_redirect: true
-  slow_ramp_time: 300
   pop3: false
   imap4: false
   owa: true
@@ -1265,7 +1274,7 @@ template: |
     "{{tenant_name}}": {
       "class": "Tenant",
       "{{app_name}}": {
-        {{> app_type_def}}
+        "class": "Application",
         {{> app_autodiscover_pool_def}}
         {{> app_activesync_pool_def}}
         {{> app_ews_pool_def}}
@@ -1303,7 +1312,7 @@ template: |
         {{> service_pop3VS}}
         {{> service_imap4VS}}
         {{> service_singleVS}}
-        "class": "Application"
+        "template": "generic"
       }
     }
   }
