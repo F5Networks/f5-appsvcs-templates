@@ -1,3 +1,7 @@
+# 1.6.1
+## Fixed
+* Fix "F5 Application Services Templates" not appearing in iApps LX applications list
+
 # 1.6.0
 ## Added
 

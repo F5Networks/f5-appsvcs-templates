@@ -951,16 +951,17 @@ describe('template worker tests', function () {
             templates: {}
         };
 
-        nock('http://localhost:8100')
-            .get('/shared/iapp/blocks')
+        const scope = nock('http://localhost:8100')
+            .get('/mgmt/shared/iapp/blocks')
             .reply(200, { items: [] })
-            .post('/shared/iapp/blocks')
+            .post('/mgmt/shared/iapp/blocks')
             .reply(200, {});
 
         return worker.onStart(
             () => {}, // success callback
             () => assert(false) // error callback
         )
+            .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
             .then(() => worker.templateProvider.list())
             .then((tmplList) => {
                 assert(tmplList.includes('examples/simple_http'));
