@@ -185,14 +185,26 @@ class AS3Driver {
             });
     }
 
-    _postDecl(decl) {
+    _postDecl(decl, tenants) {
+        tenants = tenants || [];
+        if (Array.isArray(tenants)) {
+            if (tenants.length === 0) {
+                tenants = '';
+            } else {
+                tenants = Array.from(new Set(tenants));
+                tenants = `/${tenants.join(',')}`;
+            }
+        } else {
+            tenants = `/${tenants}`;
+        }
+
         if (this.userAgent) {
             decl.controls = {
                 class: 'Controls',
                 userAgent: this.userAgent
             };
         }
-        return this._endpoint.post('/declare?async=true', decl)
+        return this._endpoint.post(`/declare${tenants}?async=true`, decl)
             .then((result) => {
                 result.body = result.data;
                 this._task_ids[result.body.id] = decl.id;
@@ -246,14 +258,20 @@ class AS3Driver {
     }
 
     createApplications(appsData) {
+        const tenants = [];
         return Promise.resolve()
             .then(() => Promise.all([
                 Promise.all(appsData.map(data => this._prepareAppDef(data.appDef, data.metaData))),
                 this._getDecl()
             ]))
-            .then(([appDefs, decl]) => Promise.all(
-                appDefs.map(appDef => this._stitchDecl(decl, appDef))
-            ))
+            .then(([appDefs, decl]) => {
+                appDefs.forEach((appDef) => {
+                    tenants.push(this._getDeclTenants(appDef)[0]);
+                });
+                return Promise.all(
+                    appDefs.map(appDef => this._stitchDecl(decl, appDef))
+                );
+            })
             .then((declList) => {
                 const decl = declList[0];
                 const tsDeclText = (
@@ -264,7 +282,7 @@ class AS3Driver {
                     arrayMerge: (dst, src) => src
                 });
             })
-            .then(decl => this._postDecl(decl));
+            .then(decl => this._postDecl(decl, tenants));
     }
 
     _validateTenantApp(decl, tenant, app) {
@@ -287,6 +305,7 @@ class AS3Driver {
 
     deleteApplications(appNames) {
         const doDeleteAll = !appNames || appNames.length === 0;
+        const tenants = [];
         return Promise.resolve()
             .then(() => this._getDecl())
             .then((decl) => {
@@ -308,6 +327,7 @@ class AS3Driver {
             })
             .then((decl) => {
                 appNames.forEach(([tenant, app]) => {
+                    tenants.push(tenant);
                     delete decl[tenant][app];
                 });
                 if (appNames.length === 1) {
@@ -317,7 +337,7 @@ class AS3Driver {
                 }
                 return Promise.resolve(decl);
             })
-            .then(decl => this._postDecl(decl));
+            .then(decl => this._postDecl(decl, tenants));
     }
 
 

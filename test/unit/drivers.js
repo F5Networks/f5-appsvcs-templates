@@ -143,7 +143,7 @@ describe('AS3 Driver tests', function () {
             .reply(200, as3stub);
 
         nock(host)
-            .post(as3ep, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
             .query(true)
             .reply(202, {});
 
@@ -159,7 +159,7 @@ describe('AS3 Driver tests', function () {
             .reply(200, as3stub);
 
         nock(host)
-            .post(as3ep, Object.assign({}, as3WithApp, {
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, {
                 id: 'STATIC',
                 controls: {
                     class: 'Controls',
@@ -183,12 +183,31 @@ describe('AS3 Driver tests', function () {
                 }
             }
         };
+        const thirdAppDef = {
+            otherTenant: {
+                class: 'Tenant',
+                thirdApp: {
+                    class: 'Application'
+                }
+            }
+        };
+
         const as3WithMultipleApps = Object.assign({}, as3WithApp, { id: 'STATIC' });
         as3WithMultipleApps.tenantName.secondApp = {
             class: 'Application',
             constants: {
                 class: 'Constants',
                 [AS3DriverConstantsKey]: appMetadata
+            }
+        };
+        as3WithMultipleApps.otherTenant = {
+            class: 'Tenant',
+            thirdApp: {
+                class: 'Application',
+                constants: {
+                    class: 'Constants',
+                    [AS3DriverConstantsKey]: appMetadata
+                }
             }
         };
         nock(host)
@@ -198,7 +217,7 @@ describe('AS3 Driver tests', function () {
             .reply(200, as3stub);
 
         nock(host)
-            .post(as3ep, as3WithMultipleApps)
+            .post(`${as3ep}/tenantName,otherTenant`, as3WithMultipleApps)
             .query(true)
             .reply(202, {});
 
@@ -209,6 +228,10 @@ describe('AS3 Driver tests', function () {
             },
             {
                 appDef: secondAppDef,
+                metaData: appMetadata
+            },
+            {
+                appDef: thirdAppDef,
                 metaData: appMetadata
             }
         ])
@@ -246,7 +269,7 @@ describe('AS3 Driver tests', function () {
 
         nock(host)
             .persist()
-            .post(as3ep)
+            .post(`${as3ep}/tenantName`)
             .query(true)
             .reply(202, {});
 
@@ -262,7 +285,7 @@ describe('AS3 Driver tests', function () {
 
         nock(host)
             .persist()
-            .post(as3ep)
+            .post(`${as3ep}/tenantName`)
             .query(true)
             .reply(202, {});
 

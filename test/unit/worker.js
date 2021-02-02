@@ -625,7 +625,7 @@ describe('template worker tests', function () {
             .reply(200, as3stub);
         nock(host)
             .persist()
-            .post(`${as3ep}?async=true`)
+            .post(`${as3ep}/foo?async=true`)
             .reply(202, {});
         return worker.onPost(op)
             .then(() => {
@@ -700,7 +700,7 @@ describe('template worker tests', function () {
             }));
         nock(host)
             .persist()
-            .post(`${as3ep}?async=true`)
+            .post(`${as3ep}/tenant?async=true`)
             .reply(202, {});
         return worker.onDelete(op)
             .then(() => {
@@ -727,7 +727,7 @@ describe('template worker tests', function () {
             .persist();
         nock(host)
             .persist()
-            .post(`${as3ep}?async=true`)
+            .post(`${as3ep}/tenant?async=true`)
             .reply(202, {});
         return worker.onDelete(op)
             .then(() => {
