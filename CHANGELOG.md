@@ -13,6 +13,10 @@
 * GUI: Open links from Markdown descriptions in new tabs
 * GUI: Display full template text when using View Template button
 
+# 1.6.1
+## Fixed
+* Fix "F5 Application Services Templates" not appearing in iApps LX applications list
+
 # 1.6.0
 ## Changed
 * bigip-fast-templates: Remove titles from monitor_timeout parameters

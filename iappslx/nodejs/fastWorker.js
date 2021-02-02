@@ -293,7 +293,7 @@ class FASTWorker {
             // Automatically add a block
             .then(() => {
                 const hosturl = url.parse(bigipHost);
-                if (hosturl.host !== 'localhost') {
+                if (hosturl.hostname !== 'localhost') {
                     return Promise.resolve();
                 }
 
