@@ -13,6 +13,7 @@ allOf:
 anyOf:
   - {}
   - $ref: "_security_firewall.yaml#"
+  - $ref: "_telemetry.yaml#"
 definitions:
   persistence_type:
     default: source-address

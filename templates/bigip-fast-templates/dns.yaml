@@ -484,6 +484,90 @@ anyOf:
           }
         }
       }
+  - title: Telemetry
+    contentType: application/json
+    bigipHideTemplate: true
+    bigipDependencies:
+      - ts
+    definitions:
+      enable_telemetry:
+        title: Forward logs to Telemetry Streaming
+        type: boolean
+        default: false
+    anyOf:
+      - {}
+      - title: ASM Logging
+        contentType: application/json
+        bigipDependencies:
+          - asm
+        definitions:
+            enable_telemetry:
+                type: boolean
+        template: |
+          {
+            "{{tenant_name}}": {
+              "{{app_name}}": {
+                {{#enable_telemetry}}
+                "{{app_name}}_tcp": {
+                  "securityLogProfiles": [
+                    { "use": "telemetry_asm_security_log_profile" },
+                  ]
+                },
+                "{{app_name}}_udp": {
+                  "securityLogProfiles": [
+                    { "use": "telemetry_asm_security_log_profile" },
+                  ]
+                }
+                {{/enable_telemetry}}
+              }
+            }
+          }
+      - title: AFM Logging
+        contentType: application/json
+        bigipDependencies:
+          - afm
+          - asm
+        definitions:
+            enable_telemetry:
+                type: boolean
+        template: |
+          {
+            "{{tenant_name}}": {
+              "{{app_name}}": {
+                {{#enable_telemetry}}
+                "{{app_name}}_tcp": {
+                  "securityLogProfiles": [
+                    { "use": "telemetry_afm_security_log_profile" },
+                  ]
+                },
+                "{{app_name}}_udp": {
+                  "securityLogProfiles": [
+                    { "use": "telemetry_afm_security_log_profile" },
+                  ]
+                }
+                {{/enable_telemetry}}
+              }
+            }
+          }
+    template: |
+      {
+        "{{tenant_name}}": {
+          "{{app_name}}": {
+            {{#enable_telemetry}}
+            "{{app_name}}_tcp": {
+              "profileTrafficLog": {
+                "use": "telemetry_traffic_log_profile"
+              }
+            },
+            "{{app_name}}_udp": {
+              "profileTrafficLog": {
+                "use": "telemetry_traffic_log_profile"
+              }
+            }
+            {{/enable_telemetry}}
+          }
+        }
+      }
 template: |
   {
     "{{tenant_name}}": {
