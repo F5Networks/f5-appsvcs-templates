@@ -13,7 +13,6 @@ module.exports = {
     ],
     ignore: [
         // Add safelisted modules to sped up builds
-        '**/ajv/**',
         '**/lodash/**',
         '**/mustache/**',
         '**/mkdirp/**',
