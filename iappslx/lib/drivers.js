@@ -23,7 +23,6 @@ const path = require('path');
 const fs = require('fs');
 
 const fast = require('@f5devcentral/f5-fast-core');
-const deepmerge = require('deepmerge');
 
 const AS3DriverConstantsKey = 'fast';
 
@@ -79,7 +78,7 @@ class AS3Driver {
 
     getSettings() {
         if (!this._tsMixin) {
-            return {};
+            return Promise.resolve({});
         }
         return Promise.resolve(Object.assign(
             {},
@@ -99,13 +98,28 @@ class AS3Driver {
             settings.enable_telemetry
             && provisionedModules.includes('asm')
         );
-        this._tsOptions = Object.assign(
+
+        const newOpts = Object.assign(
             {},
             this._tsOptions,
             settings
         );
 
-        return Promise.resolve();
+        const saveOpts = JSON.stringify(this._tsOptions) !== JSON.stringify(newOpts);
+
+        if (!this._tsMixin || !saveOpts) {
+            return Promise.resolve();
+        }
+
+        this._tsOptions = newOpts;
+
+        this._declCache = null;
+        return Promise.resolve()
+            .then(() => JSON.parse(this._tsMixin.render(this._tsOptions)))
+            .then(decl => this._postDecl(decl, 'Common'))
+            .then(() => {
+                this._declCache = null;
+            });
     }
 
     getSettingsSchema() {
@@ -272,18 +286,10 @@ class AS3Driver {
                     appDefs.map(appDef => this._stitchDecl(decl, appDef))
                 );
             })
-            .then((declList) => {
-                const decl = declList[0];
-                const tsDeclText = (
-                    (this._tsMixin && this._tsMixin.render(this._tsOptions)) || '{}'
-                );
-                const tsDecl = JSON.parse(tsDeclText);
-                return deepmerge(decl, tsDecl, {
-                    arrayMerge: (dst, src) => src
-                });
-            })
+            .then(declList => declList[0])
             .then(decl => this._postDecl(decl, tenants));
     }
+
 
     _validateTenantApp(decl, tenant, app) {
         if (!decl[tenant]) {
