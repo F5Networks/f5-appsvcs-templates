@@ -87,6 +87,42 @@ class AS3Driver {
         ));
     }
 
+    _getSettingsDecl() {
+        const combDecl = Object.assign({}, this._declStub);
+        combDecl.Common = {
+            class: 'Tenant',
+            Shared: {
+                class: 'Application',
+                template: 'shared'
+            }
+        };
+
+        if (!this._tsMixin) {
+            return Promise.resolve(combDecl);
+        }
+
+        const settingsDecl = (!this._tsMixin) ? {} : JSON.parse(this._tsMixin.render(this._tsOptions));
+
+        return Promise.resolve()
+            .then(() => this._getDecl())
+            .then((decl) => {
+                if (decl.Common && decl.Common.Shared) {
+                    Object.assign(combDecl.Common.Shared, decl.Common.Shared);
+                }
+                combDecl.Common.Shared.forEach((item) => {
+                    if (item.startsWith('_fast_telemetry')) {
+                        delete combDecl.Common.Shared[item];
+                    }
+                });
+
+                if (settingsDecl.Common && settingsDecl.Common.Shared) {
+                    Object.assign(combDecl.Common.Shared, settingsDecl.Common.Shared);
+                }
+
+                return combDecl;
+            });
+    }
+
     setSettings(settings, provisionData) {
         const provisionedModules = provisionData[0].items.filter(x => x.level !== 'none').map(x => x.name);
         settings.log_afm = (
@@ -113,13 +149,9 @@ class AS3Driver {
 
         this._tsOptions = newOpts;
 
-        this._declCache = null;
         return Promise.resolve()
-            .then(() => JSON.parse(this._tsMixin.render(this._tsOptions)))
-            .then(decl => this._postDecl(decl, 'Common'))
-            .then(() => {
-                this._declCache = null;
-            });
+            .then(() => this._getSettingsDecl())
+            .then(decl => this._postDecl(decl, 'Common'));
     }
 
     getSettingsSchema() {

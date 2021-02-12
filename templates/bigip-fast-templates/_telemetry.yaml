@@ -24,7 +24,7 @@ anyOf:
             {{#enable_telemetry}}
             "{{app_name}}": {
               "securityLogProfiles": [
-                { "use": "/Common/Shared/telemetry_asm_security_log_profile" },
+                { "use": "/Common/Shared/_fast_telemetry_asm_security_log_profile" },
               ]
             }
             {{/enable_telemetry}}
@@ -46,7 +46,7 @@ anyOf:
             {{#enable_telemetry}}
             "{{app_name}}": {
               "securityLogProfiles": [
-                { "use": "/Common/Shared/telemetry_afm_security_log_profile" },
+                { "use": "/Common/Shared/_fast_telemetry_afm_security_log_profile" },
               ]
             }
             {{/enable_telemetry}}
@@ -60,7 +60,7 @@ template: |
         {{#enable_telemetry}}
         "{{app_name}}": {
           "profileTrafficLog": {
-            "use": "/Common/Shared/telemetry_traffic_log_profile"
+            "use": "/Common/Shared/_fast_telemetry_traffic_log_profile"
           }
         }
         {{/enable_telemetry}}
