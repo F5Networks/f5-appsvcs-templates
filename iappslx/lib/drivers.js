@@ -243,6 +243,9 @@ class AS3Driver {
         if (tenantList.length > 1) {
             return Promise.reject(new Error('Only one tenant class is supported for application declarations'));
         }
+        if (tenantList[0] === 'Common') {
+            return Promise.reject(new Error('FAST applications cannot modify the /Common tenant'));
+        }
         const appList = this._getDeclApps(appDef);
         if (appList.length === 0) {
             return Promise.reject(new Error('Did not find an application class in the application declaration'));
