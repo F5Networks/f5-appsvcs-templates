@@ -1070,7 +1070,13 @@ describe('template worker tests', function () {
 
         nock(host)
             .persist()
-            .post(`${as3ep}/tenant?async=true`)
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
+
+        nock(host)
+            .persist()
+            .post(`${as3ep}/Common?async=true`)
             .reply(202, {});
 
         const scope = nock('http://localhost:8100')
