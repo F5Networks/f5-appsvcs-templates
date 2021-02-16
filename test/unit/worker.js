@@ -1068,6 +1068,11 @@ describe('template worker tests', function () {
             templates: {}
         };
 
+        nock(host)
+            .persist()
+            .post(`${as3ep}/tenant?async=true`)
+            .reply(202, {});
+
         const scope = nock('http://localhost:8100')
             .get('/mgmt/shared/iapp/blocks')
             .reply(200, { items: [] })

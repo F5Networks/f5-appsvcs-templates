@@ -109,7 +109,7 @@ class AS3Driver {
                 if (decl.Common && decl.Common.Shared) {
                     Object.assign(combDecl.Common.Shared, decl.Common.Shared);
                 }
-                combDecl.Common.Shared.forEach((item) => {
+                Object.keys(combDecl.Common.Shared).forEach((item) => {
                     if (item.startsWith('_fast_telemetry')) {
                         delete combDecl.Common.Shared[item];
                     }

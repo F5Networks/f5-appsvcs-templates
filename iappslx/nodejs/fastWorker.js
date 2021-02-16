@@ -248,11 +248,28 @@ class FASTWorker {
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
+        let config;
 
         // Find any template sets on disk (e.g., from the RPM) and add them to
         // the data store. Do not overwrite template sets already in the data store.
         let saveState = true;
         return Promise.resolve()
+            .then(() => this.getConfig(0))
+            .then((cfg) => {
+                config = cfg;
+            })
+            // Get the AS3 driver ready
+            .then(() => this.recordTransaction(
+                0, 'ready AS3 driver',
+                this.driver.loadMixins()
+            ))
+            .then(() => this.recordTransaction(
+                0, 'sync AS3 driver settings',
+                Promise.resolve()
+                    .then(() => this.gatherProvisionData(0, false))
+                    .then(provisionData => this.driver.setSettings(config, provisionData))
+                    .then(() => this.saveConfig(config, 0))
+            ))
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
             .then(() => Promise.all([
@@ -263,10 +280,9 @@ class FASTWorker {
                 this.recordTransaction(
                     0, 'gather list of loaded templates',
                     this.templateProvider.listSets()
-                ),
-                this.getConfig(0)
+                )
             ]))
-            .then(([fsSets, knownSets, config]) => {
+            .then(([fsSets, knownSets]) => {
                 const deletedSets = config.deletedTemplateSets;
                 const ignoredSets = [];
                 const sets = [];
@@ -326,11 +342,6 @@ class FASTWorker {
                     .catch(e => this.handleResponseError(e, 'to set block state'))
                     .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
             })
-            // Get the AS3 driver ready
-            .then(() => this.recordTransaction(
-                0, 'ready AS3 driver',
-                this.driver.loadMixins()
-            ))
             // Done
             .then(() => {
                 const dt = Date.now() - startTime;
@@ -1076,14 +1087,6 @@ class FASTWorker {
         // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
 
         return Promise.resolve()
-            .then(() => this.getConfig(reqid))
-            .then(config => Promise.all([
-                Promise.resolve(config),
-                this.gatherProvisionData(reqid, false)
-            ]))
-            .then(([config, provisionData]) => Promise.resolve()
-                .then(() => this.driver.setSettings(config, provisionData))
-                .then(() => this.saveConfig(config, reqid)))
             .then(() => {
                 const appsData = [];
                 let promiseChain = Promise.resolve();
