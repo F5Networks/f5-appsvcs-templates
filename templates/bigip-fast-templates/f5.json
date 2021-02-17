@@ -23,7 +23,9 @@
       "uniqueItems": true,
       "default": [],
       "items": {
-        "$ref": "#/definitions/ipv4"
+        "type": "string",
+        "format": "ipv4",
+        "default": "10.0.0.1"
       }
     },
     "ipv4_ipv6": {
