@@ -228,6 +228,9 @@ allOf:
           }
         }
       }
+anyOf:
+  - {}
+  - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "ADFS"
 template: ""

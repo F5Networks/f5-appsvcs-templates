@@ -4,6 +4,9 @@ description: Configure high availability and optimization for Microsoft Exchange
 bigipMinimumAS3: 3.23
 allOf:
   - $ref: "_as3.yaml#"
+anyOf:
+  - {}
+  - $ref: "_telemetry.yaml#"
 definitions:
   app_fqdn:
     title: Exchange Domain Name
