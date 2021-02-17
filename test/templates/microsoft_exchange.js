@@ -33,7 +33,6 @@ const view = {
     virtual_port: 443,
 
     // pool spec
-    pool_customize: false,
     pool_members: ['10.0.0.1', '10.0.0.2'],
     pool_port: 80,
     load_balancing_mode: 'least-connections-member',
@@ -54,10 +53,6 @@ const view = {
     tls_key_name: '/Common/default.key',
     enable_tls_client: true,
     make_tls_client_profile: true,
-
-    // http, xff, caching, compression, and oneconnect
-    tcp_ingress_topology: 'wan',
-    tcp_egress_topology: 'lan',
 
     // services
     owa: true,
@@ -93,6 +88,8 @@ const expected = {
                     }
                 ],
                 loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                minimumMonitors: 1,
                 monitors: [
                     {
                         use: 'exchangeVS_ad_https_monitor'
@@ -112,6 +109,8 @@ const expected = {
                     }
                 ],
                 loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                minimumMonitors: 1,
                 monitors: [
                     {
                         use: 'exchangeVS_as_https_monitor'
@@ -131,6 +130,8 @@ const expected = {
                     }
                 ],
                 loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                minimumMonitors: 1,
                 monitors: [
                     {
                         use: 'exchangeVS_ews_https_monitor'
@@ -150,9 +151,11 @@ const expected = {
                     }
                 ],
                 loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                minimumMonitors: 1,
                 monitors: [
                     {
-                        use: 'exchangeVS_imap4_monitor'
+                        use: 'exchangeVS_imap4_tcp_monitor'
                     }
                 ]
             },
@@ -169,9 +172,11 @@ const expected = {
                     }
                 ],
                 loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                minimumMonitors: 1,
                 monitors: [
                     {
-                        use: 'exchangeVS_pop3_monitor'
+                        use: 'exchangeVS_pop3_tcp_monitor'
                     }
                 ]
             },
@@ -188,6 +193,8 @@ const expected = {
                     }
                 ],
                 loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                minimumMonitors: 1,
                 monitors: [
                     {
                         use: 'exchangeVS_owa_https_monitor'
@@ -195,82 +202,52 @@ const expected = {
                 ]
             },
             exchangeVS_ad_https_monitor: {
-                adaptive: false,
                 interval: 10,
-                dscp: 0,
                 send: 'GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
-                timeUntilUp: 0,
                 timeout: 31,
                 class: 'Monitor',
-                monitorType: 'https',
-                targetAddress: '',
-                targetPort: 0
+                monitorType: 'https'
             },
             exchangeVS_as_https_monitor: {
-                adaptive: false,
                 interval: 10,
-                dscp: 0,
                 send: 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
-                timeUntilUp: 0,
                 timeout: 31,
                 class: 'Monitor',
-                monitorType: 'https',
-                targetAddress: '',
-                targetPort: 0
+                monitorType: 'https'
             },
             exchangeVS_ews_https_monitor: {
-                adaptive: false,
                 interval: 10,
-                dscp: 0,
                 send: 'GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
-                timeUntilUp: 0,
                 timeout: 31,
                 class: 'Monitor',
-                monitorType: 'https',
-                targetAddress: '',
-                targetPort: 0
+                monitorType: 'https'
             },
-            exchangeVS_imap4_monitor: {
-                adaptive: false,
-                interval: 30,
-                dscp: 0,
-                timeUntilUp: 0,
+            exchangeVS_imap4_tcp_monitor: {
                 send: '',
                 receive: '',
+                interval: 30,
                 timeout: 91,
                 class: 'Monitor',
-                monitorType: 'tcp',
-                targetAddress: '',
-                targetPort: 0
+                monitorType: 'tcp'
             },
-            exchangeVS_pop3_monitor: {
-                adaptive: false,
-                interval: 30,
-                dscp: 0,
-                timeUntilUp: 0,
+            exchangeVS_pop3_tcp_monitor: {
                 send: '',
                 receive: '',
+                interval: 30,
                 timeout: 91,
                 class: 'Monitor',
-                monitorType: 'tcp',
-                targetAddress: '',
-                targetPort: 0
+                monitorType: 'tcp'
             },
             exchangeVS_owa_https_monitor: {
-                adaptive: false,
                 interval: 10,
-                dscp: 0,
                 send: 'GET /owa/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
-                timeUntilUp: 0,
                 timeout: 31,
                 class: 'Monitor',
-                monitorType: 'https',
-                targetAddress: '',
-                targetPort: 0
+                monitorType: 'https'
             },
             app1_tls_server: {
                 class: 'TLS_Server',
@@ -339,10 +316,7 @@ const expected = {
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
                 snat: 'auto',
-                profileTCP: {
-                    ingress: 'wan',
-                    egress: 'lan'
-                }
+                profileTCP: 'normal'
             },
             app1_imap4_vs: {
                 virtualAddresses: [
@@ -354,10 +328,7 @@ const expected = {
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
                 snat: 'auto',
-                profileTCP: {
-                    ingress: 'wan',
-                    egress: 'lan'
-                }
+                profileTCP: 'normal'
             },
             app1_vs: {
                 virtualAddresses: [
@@ -391,10 +362,7 @@ const expected = {
                         use: 'app1_combined_pool_irule3'
                     }
                 ],
-                profileTCP: {
-                    ingress: 'wan',
-                    egress: 'lan'
-                }
+                profileTCP: 'normal'
             }
         }
     }
