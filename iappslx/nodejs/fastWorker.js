@@ -593,7 +593,9 @@ class FASTWorker {
                 }
                 return this.recordTransaction(
                     requestId, 'Fetching AS3 info',
-                    this.endpoint.get('/mgmt/shared/appsvcs/info')
+                    this.endpoint.get('/mgmt/shared/appsvcs/info', {
+                        validateStatus: () => true // ignore failure status codes
+                    })
                 )
                     .then(response => response.data);
             })
