@@ -1077,23 +1077,25 @@ definitions:
       {{#single_vip}}
       {{/single_vip}}
       {{^single_vip}}
-        {{#outlookRPC}}  
-          "{{app_name}}_oa_vs": {
-          "virtualAddresses": ["{{oa_virtual_address:f5:ipv4}}"],
-          "pool": "exchangeVS_oa_pool",
-          "virtualPort": {{virtual_port:f5:port}},
-          {{> service_type_def}}
-          {{> service_tls_server_def}}
-          {{> service_tls_client_def}}
-          {{> service_http_def}}
-          {{> service_persist}}
-          {{> service_snat_def}}
-          {{> service_multiplex_def}}
-          {{> service_redirect80_def}}
-          {{> service_oneconnect_irules_def}}
-          {{> service_tcp_def}}
-          },
-        {{/outlookRPC}}
+        {{#outlook}}     
+          {{#outlookRPC}}  
+            "{{app_name}}_oa_vs": {
+              "virtualAddresses": ["{{oa_virtual_address:f5:ipv4}}"],
+              "pool": "exchangeVS_oa_pool",
+              "virtualPort": {{virtual_port:f5:port}},
+              {{> service_type_def}}
+              {{> service_tls_server_def}}
+              {{> service_tls_client_def}}
+              {{> service_http_def}}
+              {{> service_persist}}
+              {{> service_snat_def}}
+              {{> service_multiplex_def}}
+              {{> service_redirect80_def}}
+              {{> service_oneconnect_irules_def}}
+              {{> service_tcp_def}}
+            },
+          {{/outlookRPC}}
+        {{/outlook}}     
       {{/single_vip}}
   service_asVS:
     template: |
