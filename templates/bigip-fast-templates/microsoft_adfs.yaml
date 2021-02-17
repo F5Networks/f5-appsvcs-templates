@@ -85,9 +85,11 @@ allOf:
               }
             {{/enable_tls_client}}
             {{^enable_tls_client}}
+            {{^enable_tls_server}}
               "{{app_name}}": {
                 "class": "Service_L4"
               }
+            {{/enable_tls_server}}
             {{/enable_tls_client}}
           }
         }
