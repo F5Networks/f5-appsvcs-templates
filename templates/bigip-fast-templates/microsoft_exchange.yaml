@@ -144,6 +144,7 @@ definitions:
   outlookMAPI:
     title: MAPI-over-HTTP
     type: boolean
+    dependencies: ['outlook']
   mapi_virtual_address:
     title: MAPI Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
@@ -153,6 +154,7 @@ definitions:
     title: RPC-over-HTTP
     description: 	Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
     type: boolean
+    dependencies: ['outlook']
   oa_virtual_address:
     title: Outlook Anywhere Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
