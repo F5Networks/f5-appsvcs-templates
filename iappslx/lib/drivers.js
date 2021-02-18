@@ -228,7 +228,10 @@ class AS3Driver {
                 }
                 this._declCache = JSON.parse(JSON.stringify(decl));
                 return decl;
-            });
+            })
+            .catch(e => Promise.reject(new Error(
+                `AS3 Driver failed to GET declaration:\n${e.stack}`
+            )));
     }
 
     _postDecl(decl, tenants) {
@@ -256,7 +259,10 @@ class AS3Driver {
                 this._task_ids[result.body.id] = decl.id;
                 this._declCache = null;
                 return result;
-            });
+            })
+            .catch(e => Promise.reject(new Error(
+                `AS3 Driver failed to POST declaration:\n${e.stack}`
+            )));
     }
 
     _prepareAppDef(appDef, metaData) {
@@ -450,7 +456,10 @@ class AS3Driver {
             };
         };
         return this._endpoint.get('/task')
-            .then(result => result.data.items.filter(itemMatch).map(as3ToFAST));
+            .then(result => result.data.items.filter(itemMatch).map(as3ToFAST))
+            .catch(e => Promise.reject(new Error(
+                `AS3 Driver failed to GET tasks:\n${e.stack}`
+            )));
     }
 }
 
