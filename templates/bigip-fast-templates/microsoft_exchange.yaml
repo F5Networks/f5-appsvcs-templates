@@ -67,7 +67,8 @@ definitions:
     dependencies: []
   snmp_community_string:
     title: SNMP Community String
-    dependencies: ['eav']
+    dependencies:
+    - eav
   enable_snat:
     title: SNAT
     description: "*Secure Network Address Translation* maps the source client IP address
@@ -79,18 +80,30 @@ definitions:
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
     type: boolean
     default: true
-    dependencies: ['enable_snat']
+    dependencies:
+    - enable_snat
   make_snatpool:
     title: FAST-Generated SNAT Pool
     description: Uncheck to use an existing BIG-IP SNAT Pool.
     type: boolean
     default: true
+    dependencies:
+    - enable_snat
+    - snat_automap
+    invertDependency:
+    - snat_automap
   snatpool_name:
     title: BIG-IP SNAT Pool
     description: Enter the name of an existing BIG-IP SNAT pool.
     type: string
     enumFromBigip: ltm/snatpool
     default: ''
+    dependencies:
+    - enable_snat
+    - snat_automap
+    - make_snatpool
+    invertDependency:
+    - snat_automap
   snat_addresses:
     title: SNAT Pool Addresses
     type: array
@@ -99,6 +112,12 @@ definitions:
     items:
       type: string
       default: '10.0.1.2'
+    dependencies:
+    - enable_snat
+    - snat_automap
+    - make_snatpool
+    invertDependency:
+    - snat_automap
   enable_tls_server:
     title: TLS Server
     description: Select an existing TLS server profile. TLS server profiles are of type "ltm clientssl" on BIG-IP.
@@ -149,7 +168,8 @@ definitions:
   outlookMAPI:
     title: MAPI-over-HTTP
     type: boolean
-    dependencies: ['outlook']
+    dependencies:
+    - outlook
   mapi_virtual_address:
     title: MAPI Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
@@ -159,7 +179,8 @@ definitions:
     title: RPC-over-HTTP
     description: 	Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
     type: boolean
-    dependencies: ['outlook']
+    dependencies:
+    - outlook
   oa_virtual_address:
     title: Outlook Anywhere Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
