@@ -30,21 +30,21 @@ template: |
             "class": "Application",
             "template": "shared",
             {{#enable_telemetry}}
-            "_fast_telemetry_local_rule": {
+            "fast_telemetry_local_rule": {
                 "class": "iRule",
                 "iRule": "when CLIENT_ACCEPTED {\n  node 127.0.0.1 6514\n}"
             },
-            "_fast_telemetry_local": {
+            "fast_telemetry_local": {
                 "class": "Service_TCP",
                 "virtualAddresses": [
                     "255.255.255.254"
                 ],
                 "virtualPort": 6514,
                 "iRules": [
-                    "_fast_telemetry_local_rule"
+                    "fast_telemetry_local_rule"
                 ]
             },
-            "_fast_telemetry": {
+            "fast_telemetry": {
                 "class": "Pool",
                 "members": [
                     {
@@ -61,42 +61,42 @@ template: |
                     }
                 ]
             },
-            "_fast_telemetry_hsl": {
+            "fast_telemetry_hsl": {
                 "class": "Log_Destination",
                 "type": "remote-high-speed-log",
                 "protocol": "tcp",
                 "pool": {
-                    "use": "_fast_telemetry"
+                    "use": "fast_telemetry"
                 }
             },
-            "_fast_telemetry_formatted": {
+            "fast_telemetry_formatted": {
                 "class": "Log_Destination",
                 "type": "splunk",
                 "forwardTo": {
-                    "use": "_fast_telemetry_hsl"
+                    "use": "fast_telemetry_hsl"
                 }
             },
-            "_fast_telemetry_publisher": {
+            "fast_telemetry_publisher": {
                 "class": "Log_Publisher",
                 "destinations": [
                     {
-                        "use": "_fast_telemetry_formatted"
+                        "use": "fast_telemetry_formatted"
                     }
                 ]
             },
-            "_fast_telemetry_traffic_log_profile": {
+            "fast_telemetry_traffic_log_profile": {
                 "class": "Traffic_Log_Profile",
                 "requestSettings": {
                     "requestEnabled": true,
                     "requestProtocol": "mds-tcp",
                     "requestPool": {
-                        "use": "telemetry"
+                        "use": "fast_telemetry"
                     },
                     "requestTemplate": "event_source=\"request_logging\",hostname=\"$BIGIP_HOSTNAME\",client_ip=\"$CLIENT_IP\",server_ip=\"$SERVER_IP\",http_method=\"$HTTP_METHOD\",http_uri=\"$HTTP_URI\",virtual_name=\"$VIRTUAL_NAME\",event_timestamp=\"$DATE_HTTP\""
                 }
             },
             {{#log_afm}}
-            "_fast_telemetry_afm_security_log_profile": {
+            "fast_telemetry_afm_security_log_profile": {
                 "class": "Security_Log_Profile",
                 "application": {
                     "localStorage": false,
@@ -114,7 +114,7 @@ template: |
                 },
                 "network": {
                     "publisher": {
-                        "use": "_fast_telemetry_publisher"
+                        "use": "fast_telemetry_publisher"
                     },
                     "logRuleMatchAccepts": false,
                     "logRuleMatchRejects": true,
@@ -126,7 +126,7 @@ template: |
             },
             {{/log_afm}}
             {{#log_asm}}
-            "_fast_telemetry_asm_security_log_profile": {
+            "fast_telemetry_asm_security_log_profile": {
                 "class": "Security_Log_Profile",
                 "application": {
                     "localStorage": false,
