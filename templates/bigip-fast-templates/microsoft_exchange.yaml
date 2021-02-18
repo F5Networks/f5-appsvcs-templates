@@ -104,6 +104,7 @@ definitions:
     - make_snatpool
     invertDependency:
     - snat_automap
+    - make_snatpool
   snat_addresses:
     title: SNAT Pool Addresses
     type: array
