@@ -66,6 +66,10 @@ allOf:
     definitions:
       enable_tls_client:
         type: boolean
+        dependencies: []
+      enable_tls_server:
+        type: boolean
+        dependencies: []
     template: |
       {
         "{{tenant_name}}": {

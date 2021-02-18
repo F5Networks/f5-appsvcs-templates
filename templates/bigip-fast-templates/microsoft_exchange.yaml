@@ -38,6 +38,7 @@ definitions:
   pool_members:
     title: Pool Members
     description: Add the addresses of the Exchange servers in the pool.
+    dependencies: []
   pool_port:
     title: Port for Exchange Services
     description: Specify the port to use for all services except POP & IMAP.
