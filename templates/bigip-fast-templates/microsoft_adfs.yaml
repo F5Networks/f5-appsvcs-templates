@@ -66,6 +66,10 @@ allOf:
     definitions:
       enable_tls_client:
         type: boolean
+        dependencies: []
+      enable_tls_server:
+        type: boolean
+        dependencies: []
     template: |
       {
         "{{tenant_name}}": {
@@ -85,9 +89,11 @@ allOf:
               }
             {{/enable_tls_client}}
             {{^enable_tls_client}}
+            {{^enable_tls_server}}
               "{{app_name}}": {
                 "class": "Service_L4"
               }
+            {{/enable_tls_server}}
             {{/enable_tls_client}}
           }
         }
@@ -228,6 +234,9 @@ allOf:
           }
         }
       }
+anyOf:
+  - {}
+  - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "ADFS"
 template: ""

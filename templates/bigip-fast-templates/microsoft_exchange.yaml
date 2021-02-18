@@ -4,6 +4,9 @@ description: Configure high availability and optimization for Microsoft Exchange
 bigipMinimumAS3: 3.23
 allOf:
   - $ref: "_as3.yaml#"
+anyOf:
+  - {}
+  - $ref: "_telemetry.yaml#"
 definitions:
   app_fqdn:
     title: Exchange Domain Name
@@ -35,10 +38,12 @@ definitions:
   pool_members:
     title: Pool Members
     description: Add the addresses of the Exchange servers in the pool.
+    dependencies: []
   pool_port:
     title: Port for Exchange Services
     description: Specify the port to use for all services except POP & IMAP.
     default: 80
+    dependencies: []
   load_balancing_mode:
     title: Load Balancing Method
     description: A *load balancing method* is an algorithm that the BIG-IP system uses
@@ -140,6 +145,7 @@ definitions:
   outlookMAPI:
     title: MAPI-over-HTTP
     type: boolean
+    dependencies: ['outlook']
   mapi_virtual_address:
     title: MAPI Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
@@ -149,6 +155,7 @@ definitions:
     title: RPC-over-HTTP
     description: 	Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
     type: boolean
+    dependencies: ['outlook']
   oa_virtual_address:
     title: Outlook Anywhere Virtual IP
     description: 	Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
@@ -825,6 +832,16 @@ definitions:
       {{#autodiscover}}
       \n        \"/autodiscover*\" {\n            pool exchangeVS_ad_pool\n            persist none\n            return\n        }
       {{/autodiscover}}
+  app_irule_combined_default:
+    template: >-
+      {{#owa}}
+      \n        default {\n            pool exchangeVS_owa_pool\n        }
+      {{/owa}}
+  app_irule_combined_oneconnect:
+    template: >-
+      {{#enable_multiplex}}
+      if { ( [HTTP::header exists \"WWW-Authenticate\"] &&\n        [string tolower [HTTP::header values \"WWW-Authenticate\"]] contains \"negotiate\" ) ||\n        ( [HTTP::header exists \"Persistent-Auth\"] &&\n        [string tolower [HTTP::header \"Persistent-Auth\"]] contains \"true\" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }
+      {{/enable_multiplex}}
   app_irule_combined_def:
     template: >-
       when HTTP_REQUEST {\n    switch -glob -- [string tolower [HTTP::path]] {
@@ -834,7 +851,8 @@ definitions:
       {{> app_irule_mapi_def}}
       {{> app_irule_rpc_def}} 
       {{> app_irule_ad_def}}
-      \n        default {\n            pool exchangeVS_owa_pool\n        }\n    }\n}\nwhen HTTP_RESPONSE {\n    if { ( [HTTP::header exists \"WWW-Authenticate\"] &&\n        [string tolower [HTTP::header values \"WWW-Authenticate\"]] contains \"negotiate\" ) ||\n        ( [HTTP::header exists \"Persistent-Auth\"] &&\n        [string tolower [HTTP::header \"Persistent-Auth\"]] contains \"true\" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }\n   if {[HTTP::header exists \"Transfer-Encoding\"]} {\n        HTTP::payload rechunk\n   }\n}
+      {{> app_irule_combined_default}}
+      \n    }\n}\nwhen HTTP_RESPONSE {\n   {{> app_irule_combined_oneconnect}}\n   if {[HTTP::header exists \"Transfer-Encoding\"]} {\n        HTTP::payload rechunk\n   }\n}
   app_irule_owa_def:
     template: |
         "{{app_name}}_owa_redirect_irule3": {
