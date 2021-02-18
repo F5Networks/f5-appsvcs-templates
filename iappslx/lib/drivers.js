@@ -123,7 +123,7 @@ class AS3Driver {
             });
     }
 
-    setSettings(settings, provisionData) {
+    setSettings(settings, provisionData, skipPost) {
         const provisionedModules = provisionData[0].items.filter(x => x.level !== 'none').map(x => x.name);
         settings.log_afm = (
             settings.enable_telemetry
@@ -141,13 +141,11 @@ class AS3Driver {
             settings
         );
 
-        const saveOpts = JSON.stringify(this._tsOptions) !== JSON.stringify(newOpts);
+        this._tsOptions = newOpts;
 
-        if (!this._tsMixin || !saveOpts) {
+        if (!this._tsMixin || skipPost) {
             return Promise.resolve();
         }
-
-        this._tsOptions = newOpts;
 
         return Promise.resolve()
             .then(() => this._getSettingsDecl())

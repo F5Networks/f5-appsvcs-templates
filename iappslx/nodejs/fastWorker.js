@@ -267,7 +267,7 @@ class FASTWorker {
                 0, 'sync AS3 driver settings',
                 Promise.resolve()
                     .then(() => this.gatherProvisionData(0, false))
-                    .then(provisionData => this.driver.setSettings(config, provisionData))
+                    .then(provisionData => this.driver.setSettings(config, provisionData, true))
                     .then(() => this.saveConfig(config, 0))
             ))
             // Load template sets from disk (i.e., those from the RPM)
