@@ -64,18 +64,22 @@ definitions:
     title: SNMP-Based External Monitoring
     description: 	By default, FAST creates Microsoft-recommended Managed Availability monitors. You can choose to have FAST create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange deployment guide.
     type: boolean
+    dependencies: []
   snmp_community_string:
     title: SNMP Community String
+    dependencies: ['eav']
   enable_snat:
     title: SNAT
     description: "*Secure Network Address Translation* maps the source client IP address
       in a request to a translation address defined on the BIG-IP device."
     type: boolean
+    dependencies: []
   snat_automap:
     title: SNAT Automap
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
     type: boolean
     default: true
+    dependencies: ['enable_snat']
   make_snatpool:
     title: FAST-Generated SNAT Pool
     description: Uncheck to use an existing BIG-IP SNAT Pool.
