@@ -14,6 +14,7 @@
 ## Changed
 * GUI: Open links from Markdown descriptions in new tabs
 * GUI: Display full template text when using View Template button
+* Update f5-fast-core from v0.10.0 to v0.11.0
 
 # 1.6.1
 ## Fixed
