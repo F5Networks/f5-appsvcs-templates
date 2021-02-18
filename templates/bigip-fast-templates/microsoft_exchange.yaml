@@ -831,6 +831,11 @@ definitions:
       {{#autodiscover}}
       \n        \"/autodiscover*\" {\n            pool exchangeVS_ad_pool\n            persist none\n            return\n        }
       {{/autodiscover}}
+  app_irule_default_def:
+    template: >-
+      {{#owa}}
+      \n        default {\n            pool exchangeVS_owa_pool\n        }\n
+      {{/owa}}
   app_irule_combined_def:
     template: >-
       when HTTP_REQUEST {\n    switch -glob -- [string tolower [HTTP::path]] {
@@ -840,7 +845,8 @@ definitions:
       {{> app_irule_mapi_def}}
       {{> app_irule_rpc_def}} 
       {{> app_irule_ad_def}}
-      \n        default {\n            pool exchangeVS_owa_pool\n        }\n    }\n}\nwhen HTTP_RESPONSE {\n    if { ( [HTTP::header exists \"WWW-Authenticate\"] &&\n        [string tolower [HTTP::header values \"WWW-Authenticate\"]] contains \"negotiate\" ) ||\n        ( [HTTP::header exists \"Persistent-Auth\"] &&\n        [string tolower [HTTP::header \"Persistent-Auth\"]] contains \"true\" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }\n   if {[HTTP::header exists \"Transfer-Encoding\"]} {\n        HTTP::payload rechunk\n   }\n}
+      {{> app_irule_default_def}}
+      }\n    }\n}\nwhen HTTP_RESPONSE {\n    if { ( [HTTP::header exists \"WWW-Authenticate\"] &&\n        [string tolower [HTTP::header values \"WWW-Authenticate\"]] contains \"negotiate\" ) ||\n        ( [HTTP::header exists \"Persistent-Auth\"] &&\n        [string tolower [HTTP::header \"Persistent-Auth\"]] contains \"true\" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }\n   if {[HTTP::header exists \"Transfer-Encoding\"]} {\n        HTTP::payload rechunk\n   }\n}
   app_irule_owa_def:
     template: |
         "{{app_name}}_owa_redirect_irule3": {
