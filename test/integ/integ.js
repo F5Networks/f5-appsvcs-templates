@@ -23,6 +23,8 @@ const https = require('https');
 const axios = require('axios');
 const assert = require('assert');
 
+const pkg = require('../../package.json');
+
 const bigipTarget = process.env.BIGIP_TARGET;
 const bigipCreds = process.env.BIGIP_CREDS;
 
@@ -51,13 +53,15 @@ function promiseDelay(timems) {
     });
 }
 
-function waitForCompletedTask(taskid) {
+function waitForCompletedTask(taskid, path, check) {
+    path = path || '/mgmt/shared/fast/tasks';
+    check = check || (data => data.code !== 0);
     return Promise.resolve()
-        .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
+        .then(() => endpoint.get(`${path}/${taskid}`))
         .then((response) => {
-            if (response.data.code === 0) {
+            if (!check(response.data)) {
                 return promiseDelay(1000)
-                    .then(() => waitForCompletedTask(taskid));
+                    .then(() => waitForCompletedTask(taskid, path, check));
             }
             return response.data;
         });
@@ -189,4 +193,47 @@ describe('Applications', function () {
             '10.0.0.9'
         ]
     }));
+});
+
+describe('Other', () => {
+    it('Check build-package timeout', function () {
+        this.timeout(120000);
+        const ucsSaveTimeout = 30000;
+        return Promise.resolve()
+            .then(() => endpoint.post('/mgmt/shared/iapp/build-package', {
+                packageDirectory: `/var/config/rest/iapps/${pkg.name}`,
+                appName: pkg.name,
+                packageVersion: pkg.version.replace('-', ''),
+                packageRelease: '1',
+                rpmDescription: 'Default exported iApp description.',
+                rpmSummary: 'Default exported iApp summary.'
+            }))
+            .then((response) => {
+                const taskid = response.data.id;
+                if (!taskid) {
+                    console.log(response.data);
+                    assert(false, 'failed to get a taskid');
+                }
+                return waitForCompletedTask(taskid, '/mgmt/shared/iapp/build-package', data => (
+                    data.step === 'COMPLETE_TASK'
+                    || data.status === 'FAILED'
+                ));
+            })
+            .then((data) => {
+                if (data.errorMessage) {
+                    console.error(data.errorMessage);
+                }
+                assert.strictEqual(data.status, 'FINISHED');
+
+                const start = Date.parse(data.startTime);
+                const end = Date.parse(data.endTime);
+                const dt = end - start;
+                if (dt >= ucsSaveTimeout) {
+                    assert(
+                        false,
+                        `build-packge took ${dt}ms which is longer than the allowed time of ${ucsSaveTimeout}ms`
+                    );
+                }
+            });
+    });
 });
