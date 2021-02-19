@@ -1,0 +1,25 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  enable_local_traffic_policy:
+    title: Local Traffic Policy
+    description: Enable Local Traffic Policy to enforce appropriate access controls
+    type: boolean
+    default: true
+  local_traffic_policy_name:
+    title: Local Traffic Policy
+    description: Select an existing Local Traffic Policy. *Draft* policies are not permitted.
+    enumFromBigip: ltm/policy
+    default: ""
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_local_traffic_policy}}
+        "{{app_name}}": {
+          "policyEndpoint": { "bigip": "{{local_traffic_policy_name}}" }
+        }
+        {{/enable_local_traffic_policy}}
+      }
+    }
+  }
