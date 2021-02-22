@@ -48,6 +48,9 @@ The tabs in the FAST interface:
       * - :ref:`deploylogtab`
         - The deploy log is a summary of AS3's async task results.
 
+      * - :ref:`settingstab`
+        - Settings is where optional deployment parameters are set.
+
       * - :ref:`apitab`
         - This tab contains documentation on how to use FAST's REST API.
 
@@ -176,6 +179,13 @@ Template sets can be added or removed via the user interface by clicking either 
 Deploy Log
 ----------
 The deploy log is a summary of AS3's async task results, newer jobs are nearer to the top. The output includes the Task ID, the Tenant (BIG-IP partition), and the result.
+
+.. _settingstab:
+
+Settings
+--------
+Settings is where optional deployment parameters are set.  For example, setting up log forwarding for Telemetry Streaming when deploying FAST Applications. 
+See the `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for configuring logging.
 
 .. _apitab:
 

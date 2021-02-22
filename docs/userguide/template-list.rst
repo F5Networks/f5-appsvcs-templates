@@ -42,11 +42,11 @@ The following table lists the template set, the corresponding template(s) and a 
         - A template that can be used to manage Microsoft IIS servers
 
       * - bigip-fast-templates
-        - microsoft_exchange (beta)
+        - microsoft_exchange
         - A template that can be used to manage Exchange servers
       
       * - bigip-fast-templates
-        - microsoft_sharepoint (beta)
+        - microsoft_sharepoint
         - A template that can be used to manage SharePoint servers
 
       * - bigip-fast-templates
@@ -77,5 +77,7 @@ The following table lists the template set, the corresponding template(s) and a 
         - simple_waf
         - Example of an HTTPS application using an ASM Policy
 
-.. NOTE:: Exchange, ADFS and Sharepoint templates are Beta versions. 
-Please report any issues or an RFE on the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > **Issues tab**, click **New Issue**.
+
+.. NOTE:: The ADFS template is a Beta version.
+
+Please report any issues or an RFE on the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > Issues tab, click New Issue.

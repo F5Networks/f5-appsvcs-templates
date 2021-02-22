@@ -11,6 +11,10 @@ Document Revision History
         - Description
         - Date
 
+      * - 10.0
+        - Updated the documentation for FAST v1.7. This release contains the following changes: |br| * Added /settings endpoint |br| * Added config information to /info endpoint |br| * Added GUI front-end (Settings tab) for settings endpoint |br| * driver: Allow automatically setting up log forwarding for Telemetry Streaming |br| * Added 'ts' as a valid bigipDependencies keyword |br| * bigip-fast-templates: Add supported version of the Microsoft Exchange template |br| * bigip-fast-templates: Add option to use log forwarding traffic logs for Telemetry Streaming |br| |br| Fixed: |br| * Improved load times of templates with many sub-templates |br| * Fixed template dependency checking not working on subsequent template loads |br| |br| Changed: |br| * GUI: Open links from Markdown descriptions in new tabs |br| * GUI: Display full template text when using View Template button |br| * Update f5-fast-core from v0.10.0 to v0.11.0
+        - 02-23-21
+
       * - 9.0
         - Updated the documentation for FAST v1.6. This release contains the following changes: |br| * bigip-fast-templates: Remove titles from monitor_timeout parameters |br| * GUI: Display an error if AS3 is not available |br| * GUI: Report template errors in the Template tab |br| * bigip-fast-templates: Add a default pool member |br| * Update f5-fast-core from v0.9.0 to v0.10.0
         - 01-12-21
