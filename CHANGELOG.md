@@ -1,3 +1,10 @@
+# 1.8.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.7.0
 ## Added
 * Add /settings endpoint
