@@ -7,6 +7,7 @@
 * Add 'ts' as a valid bigipDependencies keyword
 * bigip-fast-templates: Add Telemetry Streaming option
 * bigip-fast-templates: Add supported version of the Microsoft Exchange template
+* bigip-fast-templates: Add option to use log forwarding traffic logs for Telemetry Streaming
 
 ## Fixed
 * Improve load times of templates with many sub-templates

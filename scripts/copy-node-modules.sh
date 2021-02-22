@@ -21,7 +21,7 @@ for file_module in "${file_modules[@]}"; do
     module_pkg=${module_pkg_name}-${module_pkg_ver}.tgz
     sed -i'.bu' "s%file:${file_module}%file:${module_pkg}%" package.json
 done
-npm install --prod --no-optional
+npm ci --only=production --no-optional --no-audit
 popd
 
 if [[ $skip_babel == 1 ]]; then
