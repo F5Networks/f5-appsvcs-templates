@@ -26,16 +26,16 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.12.17",
-    "@babel/core": "^7.12.17",
-    "@babel/plugin-transform-runtime": "^7.12.17",
-    "@babel/preset-env": "^7.12.17",
+    "@babel/cli": "^7.13.0",
+    "@babel/core": "^7.13.1",
+    "@babel/plugin-transform-runtime": "^7.13.6",
+    "@babel/preset-env": "^7.13.5",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "browserify": "^16.5.2",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
-    "express": "^4.17.1",
     "eslint": "^6.8.0",
+    "express": "^4.17.1",
     "marked": "^1.2.9",
     "mocha": "^8.3.0",
     "mock-fs": "^4.13.0",
@@ -57,7 +57,7 @@
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.12.13",
+    "@babel/runtime": "^7.13.6",
     "@f5devcentral/f5-fast-core": "^0.11.0",
     "@f5devcentral/f5-teem": "^1.4.6",
     "ajv": "^7.1.0",
