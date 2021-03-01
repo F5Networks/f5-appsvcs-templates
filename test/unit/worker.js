@@ -155,6 +155,7 @@ function createWorker() {
 }
 
 describe('template worker tests', function () {
+    this.timeout(5000);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
@@ -163,12 +164,16 @@ describe('template worker tests', function () {
         schemaVersion: '3.0.0'
     };
 
-    beforeEach(function () {
-        testStorage = new fast.dataStores.StorageMemory();
+    before(function () {
         const tsNames = [
             'bigip-fast-templates',
             'examples'
         ];
+        testStorage = new fast.dataStores.StorageMemory();
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
+    });
+
+    beforeEach(function () {
         nock('http://localhost:8100')
             .persist()
             .get('/mgmt/tm/sys/provision')
@@ -211,7 +216,6 @@ describe('template worker tests', function () {
             .get('/mgmt/shared/telemetry/info')
             .reply(200, {
             });
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 
     afterEach(function () {
