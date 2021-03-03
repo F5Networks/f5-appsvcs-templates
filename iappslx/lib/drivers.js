@@ -15,7 +15,6 @@
 
 'use strict';
 
-const uuid4 = require('uuid').v4;
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
@@ -36,6 +35,7 @@ class AS3Driver {
             options.strictCerts = true;
         }
 
+        this._nextId = 0;
         this._static_id = '';
         this._task_ids = {};
         this._declStub = {
@@ -184,7 +184,9 @@ class AS3Driver {
 
     _createUuid(tenantName, appName, operation) {
         operation = operation || 'unknown';
-        return this._static_id || `${AS3DriverConstantsKey}%${operation}%${tenantName}%${appName}%${uuid4()}`;
+        const id = this._nextId;
+        this._nextId += 1;
+        return this._static_id || `${AS3DriverConstantsKey}%${operation}%${tenantName}%${appName}%${id}`;
     }
 
     _stitchDecl(declaration, appDef) {
