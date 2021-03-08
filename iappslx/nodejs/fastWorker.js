@@ -751,6 +751,8 @@ class FASTWorker {
                     .then((items) => {
                         if (items.length !== 0) {
                             prop.enum = items;
+                        } else {
+                            prop.enum = [null];
                         }
                     })
                     .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`)));

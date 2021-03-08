@@ -6,6 +6,7 @@
 
 ## Changed
 * Reduce the install size of f5-appsvcs-templates
+* Use a value of [null] for enum when hydrating enumFromBigip with 0 items
 
 # 1.7.0
 ## Added
