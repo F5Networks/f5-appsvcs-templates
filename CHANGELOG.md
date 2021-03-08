@@ -2,8 +2,10 @@
 ## Added
 
 ## Fixed
+* Fix f5-appsvcs-templates missing after a UCS save/restore
 
 ## Changed
+* Reduce the install size of f5-appsvcs-templates
 
 # 1.7.0
 ## Added
