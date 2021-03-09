@@ -458,8 +458,14 @@ class FASTWorker {
         return Promise.resolve(templateNames)
             .then(tmplList => Promise.all(tmplList.map(
                 x => this.templateProvider.fetch(x.name || x).then(tmpl => [x, tmpl])
+                    .catch((e) => {
+                        if (e.message.match(/Could not find template set/)) {
+                            return Promise.resolve(undefined);
+                        }
+                        return Promise.reject(e);
+                    })
             )))
-            .then(tmpls => tmpls.filter(x => !x[1].bigipHideTemplate))
+            .then(tmpls => tmpls.filter(x => x && !x[1].bigipHideTemplate))
             .then(tmpls => tmpls.map(x => x[0]));
     }
 
