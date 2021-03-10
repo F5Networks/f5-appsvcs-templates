@@ -1347,7 +1347,6 @@ describe('template worker tests', function () {
                 }
             }));
         const postScope = nock('http://localhost:8100')
-            .log(console.log)
             .post(`/mgmt/${worker.WORKER_URI_PATH}/applications/`)
             .reply(202, {
                 code: 202,
