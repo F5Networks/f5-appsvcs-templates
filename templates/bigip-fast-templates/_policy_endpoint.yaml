@@ -1,0 +1,26 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  endpoint_policy_names:
+    title: Endpoint Policies
+    description: Hold the *control* key to select multiple policies to attach to the virtual server.
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      enumFromBigip: ltm/policy
+    default: []
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}": {
+          "policyEndpoint": [
+            {{#endpoint_policy_names}}
+            { "bigip": {{ . }} },
+            {{/endpoint_policy_names}}
+          ]
+        }
+      }
+    }
+  }
