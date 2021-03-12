@@ -155,7 +155,7 @@ function createWorker() {
 }
 
 describe('template worker tests', function () {
-    this.timeout(8000);
+    this.timeout(2500);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
