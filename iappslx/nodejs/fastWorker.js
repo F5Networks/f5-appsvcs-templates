@@ -25,7 +25,7 @@ const url = require('url');
 
 const extract = require('extract-zip');
 const axios = require('axios');
-const Ajv = require('ajv').default;
+const Ajv = require('ajv');
 
 const semver = require('semver');
 
@@ -64,9 +64,7 @@ if (typeof bigipStrictCert === 'string') {
     );
 }
 
-const ajv = new Ajv({
-    strict: false
-});
+const ajv = new Ajv();
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
