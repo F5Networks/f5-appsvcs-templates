@@ -1,3 +1,7 @@
+# 1.7.1
+# Fixed
+* Fix error when saving settings on BIG-IP 13.1
+
 # 1.7.0
 ## Added
 * Add /settings endpoint
