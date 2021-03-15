@@ -1,4 +1,4 @@
-image: $DOCKERHUB_URL/node:12-buster
+image: $DOCKERHUB_URL/node:14-buster
 
 stages:
     - test_build
