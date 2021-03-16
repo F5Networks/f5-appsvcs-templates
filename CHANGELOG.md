@@ -9,6 +9,10 @@
 * Reduce the install size of f5-appsvcs-templates
 * Use a value of [null] for enum when hydrating enumFromBigip with 0 items
 
+# 1.7.1
+## Fixed
+* Fix error when saving settings on BIG-IP 13.1
+
 # 1.7.0
 ## Added
 * Add /settings endpoint
