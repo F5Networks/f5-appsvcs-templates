@@ -94,7 +94,7 @@ function createApplication(id) {
         app_name: `app-${id}`,
         virtual_address: `10.0.${Math.floor(id / 256)}.${id % 256}`,
         pool_members: [
-            `10.0.${Math.floor(id / 256)}.${id % 256}`
+            { serverAddresses: [`10.0.${Math.floor(id / 256)}.${id % 256}`], servicePort: 80 }
         ]
     };
 
