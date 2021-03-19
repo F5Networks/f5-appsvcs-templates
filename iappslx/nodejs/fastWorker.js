@@ -65,6 +65,7 @@ if (typeof bigipStrictCert === 'string') {
 }
 
 const ajv = new Ajv();
+ajv.addFormat('checkbox', /.*/);
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
