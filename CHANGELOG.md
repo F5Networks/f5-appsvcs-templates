@@ -4,6 +4,7 @@
 ## Fixed
 * Fix f5-appsvcs-templates missing after a UCS save/restore
 * Fix erroneous template errors on deleted template sets
+* Fix error loading templates when template data group gets too large
 
 ## Changed
 * Reduce the install size of f5-appsvcs-templates
