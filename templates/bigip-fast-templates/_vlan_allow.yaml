@@ -14,24 +14,24 @@ definitions:
     title: VLAN Names
     description: List of BIG-IP VLANs.
     type: array
-    template: |
-{
-    "{{tenant_name}}": {
-      "{{app_name}}": {
-        "{{app_name}}": {
-          {{#vlans_enable}}
-            {{#vlans_allow}}
-              "allowVlans": [
-            {{/vlans_allow}}
-            {{^vlans_allow}}
-              "rejectVlans": [
-            {{/vlans_allow}}
-            {{#vlan_names}}
-            { "bigip": {{ . }} },
-            {{/vlan_names}}
-            ]
-          {{/vlans_enable}}
+template: |
+    {
+        "{{tenant_name}}": {
+          "{{app_name}}": {
+            "{{app_name}}": {
+              {{#vlans_enable}}
+                {{#vlans_allow}}
+                  "allowVlans": [
+                {{/vlans_allow}}
+                {{^vlans_allow}}
+                  "rejectVlans": [
+                {{/vlans_allow}}
+                {{#vlan_names}}
+                { "bigip": {{ . }} },
+                {{/vlan_names}}
+                ]
+              {{/vlans_enable}}
+            }
+          }
         }
-      }
     }
-  }
