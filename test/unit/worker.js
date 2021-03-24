@@ -1361,4 +1361,69 @@ describe('template worker tests', function () {
                 assert(postScope.isDone(), 'failed to post new applications');
             });
     });
+    it('post_render_bad_tmplid', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'foobar/does_not_exist',
+            parameters: {}
+        });
+        return worker.onPost(op)
+            .then(() => {
+                assert.equal(op.status, 404);
+                assert.match(op.body.message, /Could not find template/);
+            });
+    });
+    it('post_render_bad_params', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {
+                virtual_port: 'foobar'
+            }
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /Parameters failed validation/);
+            });
+    });
+    it('post_render_bad_properties', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+        });
+
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /name property is missing/);
+            })
+            .then(() => op.setBody({
+                name: 'examples/simple_udp_defaults'
+            }))
+            .then(() => worker.onPost(op))
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /parameters property is missing/);
+            });
+    });
+    it('post_render', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {}
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 3));
+                assert.equal(op.status, 200);
+                assert(Array.isArray(op.body.message));
+            });
+    });
 });
