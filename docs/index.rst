@@ -32,6 +32,7 @@ Previous buttons to explore the documentation.
    userguide/getting-started
    userguide/using-app-templates
    userguide/faq
+   userguide/application-deployment
    userguide/template-authoring
    userguide/json-schema
    userguide/managing-templates
