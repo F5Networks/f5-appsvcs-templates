@@ -247,6 +247,42 @@ class FASTWorker {
         // the data store. Do not overwrite template sets already in the data store.
         let saveState = true;
         return Promise.resolve()
+            // Automatically add a block
+            .then(() => {
+                const hosturl = url.parse(bigipHost);
+                if (hosturl.hostname !== 'localhost') {
+                    return Promise.resolve();
+                }
+
+                return Promise.resolve()
+                    .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
+                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
+                    .catch(e => this.handleResponseError(e, 'to get blocks'))
+                    .then((results) => {
+                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
+                        const blockData = {
+                            name: mainBlockName,
+                            state: 'BOUND',
+                            configurationProcessorReference: {
+                                link: 'https://localhost/mgmt/shared/iapp/processors/noop'
+                            },
+                            presentationHtmlReference: {
+                                link: `https://localhost/iapps/${projectName}/index.html`
+                            }
+                        };
+
+                        if (matchingBlocks.length === 0) {
+                            // No existing block, make a new one
+                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
+                        }
+
+                        // Found a block, do nothing
+                        return Promise.resolve({ status: 200 });
+                    })
+                    .catch(e => this.handleResponseError(e, 'to set block state'))
+                    .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
+            })
+            // Load config
             .then(() => this.getConfig(0))
             .then((cfg) => {
                 config = cfg;
@@ -300,41 +336,6 @@ class FASTWorker {
             .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
-            // Automatically add a block
-            .then(() => {
-                const hosturl = url.parse(bigipHost);
-                if (hosturl.hostname !== 'localhost') {
-                    return Promise.resolve();
-                }
-
-                return Promise.resolve()
-                    .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
-                    .catch(e => this.handleResponseError(e, 'to get blocks'))
-                    .then((results) => {
-                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
-                        const blockData = {
-                            name: mainBlockName,
-                            state: 'BOUND',
-                            configurationProcessorReference: {
-                                link: 'https://localhost/mgmt/shared/iapp/processors/noop'
-                            },
-                            presentationHtmlReference: {
-                                link: `https://localhost/iapps/${projectName}/index.html`
-                            }
-                        };
-
-                        if (matchingBlocks.length === 0) {
-                            // No existing block, make a new one
-                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
-                        }
-
-                        // Found a block, do nothing
-                        return Promise.resolve({ status: 200 });
-                    })
-                    .catch(e => this.handleResponseError(e, 'to set block state'))
-                    .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
-            })
             // Done
             .then(() => {
                 const dt = Date.now() - startTime;
