@@ -13,16 +13,6 @@ For more information about FAST, including installation and usage information, s
 If you come across a bug or other issue, please use [GitHub Issues](https://github.com/F5networks/f5-appsvcs-templates/issues) to submit an issue for our team.
 You can also see current known issues on that page.
 
-## Repository Overview
-
-This repo is broken into subprojects
-
-* An NPM package in [core](https://github.com/f5devcentral/f5-fast-core)
-* An iApps LX package in [iappslx](iappslx)
-* A set of default templates in [templates](templates)
-
-Each subproject maintains its own package.json and associated files.
-In other words, run `npm` commands for a given subproject in that subproject's directory.
 
 ## Installing the RPM
 
@@ -47,11 +37,12 @@ In other words, run `npm` commands for a given subproject in that subproject's d
 
 ## Development
 
-`npm` commands should be run in the iappslx subdirectory, not at the top-level.
+Various script used during development are accessed through `npm`:
+
 * To check for lint errors run `npm run lint`
 * To run unit tests use `npm test`
 
-Both of these are run as part of the CI pipeline for this repo.
+Both of these are also run as part of the CI pipeline for this project.
 
 ### Building
 
@@ -78,7 +69,7 @@ npm run buildrpm
 
 The built RPM package and associated sha256 hash will be placed in the `dist` directory.
 The package can be installed on a BIG-IP using the usual mechanisms for installing iApp LX packages.
-There is also an `install-rpm` script provided in `../scripts` that installs the latest RPM found in `dist` to a target BIG-IP via the REST API.
+There is also an `install-rpm` script provided in `scripts` that installs the latest RPM found in `dist` to a target BIG-IP via the REST API.
 
 ### Logging
 
@@ -95,8 +86,6 @@ A `finest` is also available, but already gets spammed with a lot of socket info
 
 All requests and responses are logged at a `fine` log level by default.
 Any response that contains an error status code (>=400) will default to an `error`.
-
-
 
 
 ## License
