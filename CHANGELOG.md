@@ -1,5 +1,6 @@
 # 1.8.0
 ## Added
+* Add /render endpoint
 
 ## Fixed
 * Fix f5-appsvcs-templates missing after a UCS save/restore

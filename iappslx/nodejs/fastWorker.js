@@ -822,6 +822,67 @@ class FASTWorker {
             });
     }
 
+    renderTemplates(reqid, data) {
+        const appsData = [];
+        const lastModified = new Date().toISOString();
+        let promiseChain = Promise.resolve();
+        data.forEach((x) => {
+            if (!x.name) {
+                promiseChain = promiseChain
+                    .then(() => Promise.reject(new Error('name property is missing')));
+                return;
+            }
+            if (!x.parameters) {
+                promiseChain = promiseChain
+                    .then(() => Promise.reject(new Error('parameters property is missing')));
+                return;
+            }
+            const tsData = {};
+            const [setName, templateName] = x.name.split('/');
+            promiseChain = promiseChain
+                .then(() => {
+                    if (!setName || !templateName) {
+                        return Promise.reject(new Error(
+                            `expected name to be of the form "setName/templateName", but got ${x.name}`
+                        ));
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => this.recordTransaction(
+                    reqid, `fetching template set data for ${setName}`,
+                    this.templateProvider.getSetData(setName)
+                ))
+                .then(setData => Object.assign(tsData, setData))
+                .then(() => this.recordTransaction(
+                    reqid, `loading template (${x.name})`,
+                    this.templateProvider.fetch(x.name)
+                ))
+                .catch(e => Promise.reject(new Error(`unable to load template: ${x.name}\n${e.stack}`)))
+                .then(tmpl => this.recordTransaction(
+                    reqid, `rendering template (${x.name})`,
+                    tmpl.fetchAndRender(x.parameters)
+                ))
+                .then(rendered => JSON.parse(rendered))
+                .catch(e => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.message}`)))
+                .then((decl) => {
+                    appsData.push({
+                        appDef: decl,
+                        metaData: {
+                            template: x.name,
+                            setHash: tsData.hash,
+                            view: x.parameters,
+                            lastModified
+                        }
+                    });
+                });
+        });
+
+        promiseChain = promiseChain
+            .then(() => appsData);
+
+        return promiseChain;
+    }
+
     /**
      * HTTP/REST handlers
      */
@@ -1089,7 +1150,6 @@ class FASTWorker {
 
     postApplications(restOperation, data) {
         const reqid = restOperation.requestId;
-        const lastModified = new Date().toISOString();
         if (!Array.isArray(data)) {
             data = [data];
         }
@@ -1097,91 +1157,20 @@ class FASTWorker {
         // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
 
         return Promise.resolve()
-            .then(() => {
-                const appsData = [];
-                let promiseChain = Promise.resolve();
-                data.forEach((x) => {
-                    if (!x.name) {
-                        promiseChain = promiseChain
-                            .then(() => Promise.reject(this.genRestResponse(
-                                restOperation,
-                                400,
-                                'name property is missing'
-                            )));
-                        return;
-                    }
-                    if (!x.parameters) {
-                        promiseChain = promiseChain
-                            .then(() => Promise.reject(this.genRestResponse(
-                                restOperation,
-                                400,
-                                'parameters property is missing'
-                            )));
-                        return;
-                    }
-                    const tsData = {};
-                    const [setName, templateName] = x.name.split('/');
-                    promiseChain = promiseChain
-                        .then(() => {
-                            this.generateTeemReportApplication('modify', x.name);
-                        })
-                        .then(() => {
-                            if (!setName || !templateName) {
-                                return Promise.reject(this.genRestResponse(
-                                    restOperation,
-                                    400,
-                                    `expected name to be of the form "setName/templateName", but got ${x.name}`
-                                ));
-                            }
-                            return Promise.resolve();
-                        })
-                        .then(() => this.recordTransaction(
-                            reqid, `fetching template set data for ${setName}`,
-                            this.templateProvider.getSetData(setName)
-                        ))
-                        .then(setData => Object.assign(tsData, setData))
-                        .then(() => this.recordTransaction(
-                            reqid, `loading template (${x.name})`,
-                            this.templateProvider.fetch(x.name)
-                        ))
-                        .catch((e) => {
-                            if (restOperation.status >= 400) {
-                                return Promise.reject();
-                            }
-                            return Promise.reject(this.genRestResponse(
-                                restOperation,
-                                404,
-                                `unable to load template: ${x.name}\n${e.stack}`
-                            ));
-                        })
-                        .then(tmpl => this.recordTransaction(
-                            reqid, `rendering template (${x.name})`,
-                            tmpl.fetchAndRender(x.parameters)
-                        ))
-                        .then(rendered => JSON.parse(rendered))
-                        .catch((e) => {
-                            if (restOperation.status >= 400) {
-                                return Promise.reject();
-                            }
-                            return Promise.reject(this.genRestResponse(
-                                restOperation,
-                                400,
-                                `failed to render template: ${x.name}\n${e.message}`
-                            ));
-                        })
-                        .then((decl) => {
-                            appsData.push({
-                                appDef: decl,
-                                metaData: {
-                                    template: x.name,
-                                    setHash: tsData.hash,
-                                    view: x.parameters,
-                                    lastModified
-                                }
-                            });
-                        });
+            .then(() => this.renderTemplates(reqid, data))
+            .catch((e) => {
+                let code = 400;
+                if (e.message.match(/Could not find template/)) {
+                    code = 404;
+                }
+
+                return this.genRestResponse(restOperation, code, e.stack);
+            })
+            .then((appsData) => {
+                appsData.forEach((appData) => {
+                    this.generateTeemReportApplication('modify', appData.template);
                 });
-                return promiseChain.then(() => appsData);
+                return appsData;
             })
             .then(appsData => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
@@ -1194,7 +1183,7 @@ class FASTWorker {
                 return Promise.reject(this.genRestResponse(
                     restOperation,
                     400,
-                    `error generating AS3 declaration\n${e.message}`
+                    `error generating AS3 declaration\n${e.stack}`
                 ));
             })
             .then((response) => {
@@ -1334,6 +1323,32 @@ class FASTWorker {
             });
     }
 
+    postRender(restOperation, data) {
+        const reqid = restOperation.requestId;
+        if (!Array.isArray(data)) {
+            data = [data];
+        }
+
+        // this.logger.info(`postRender() received:\n${JSON.stringify(data, null, 2)}`);
+
+        return Promise.resolve()
+            .then(() => this.renderTemplates(reqid, data))
+            .catch((e) => {
+                let code = 400;
+                if (e.message.match(/Could not find template/)) {
+                    code = 404;
+                }
+
+                return this.genRestResponse(restOperation, code, e.stack);
+            })
+            .then(rendered => this.genRestResponse(restOperation, 200, rendered))
+            .catch((e) => {
+                if (restOperation.status < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
+    }
+
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -1352,6 +1367,8 @@ class FASTWorker {
                 return this.postTemplateSets(restOperation, body);
             case 'settings':
                 return this.postSettings(restOperation, body);
+            case 'render':
+                return this.postRender(restOperation, body);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }
