@@ -4,6 +4,7 @@
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
+  "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
   "scripts": {
     "lint": "eslint nodejs lib presentation/app.js test scripts stand-alone",
