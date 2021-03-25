@@ -6,7 +6,7 @@ MAINDIR=$(pwd)
 VERSION=$(./scripts/getversion.sh)
 RELEASE=1
 PKG_NAME=$(node -e "console.log(require('./package.json').name);")
-OUTPUT_DIR=${MAINDIR}/../dist
+OUTPUT_DIR=${MAINDIR}/dist
 
 rm -rf "$MAINDIR/rpmbuild"
 
