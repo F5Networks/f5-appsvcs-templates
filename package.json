@@ -6,7 +6,7 @@
   "description": "",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test scripts stand-alone",
+    "lint": "eslint nodejs lib presentation/app.js test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
@@ -52,8 +52,8 @@
   "nyc": {
     "all": true,
     "include": [
-      "iappslx/nodejs/**/*.js",
-      "iappslx/lib/**/*.js"
+      "nodejs/**/*.js",
+      "lib/**/*.js"
     ]
   },
   "dependencies": {

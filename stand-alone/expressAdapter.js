@@ -124,7 +124,7 @@ function generateApp(worker) {
 
     // Create an express app
     const app = express();
-    app.use(express.static(path.join(__dirname, '../iappslx/presentation')));
+    app.use(express.static(path.join(__dirname, '../presentation')));
     app.use(express.json());
     app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
         .then(() => getWorkerResponse(worker, req, res))

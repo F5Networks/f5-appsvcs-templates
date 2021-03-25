@@ -17,11 +17,11 @@ Framework for deploying configuration on BIG-IP using mustache templates
 echo -n %{version}-%{release} > %{_builddir}/version
 # REST worker
 mkdir -p %{_builddir}/nodejs
-npx babel %{main}/nodejs -d %{_builddir}/nodejs --copy-files --config-file %{main}/../babel.config.js
+npx babel %{main}/nodejs -d %{_builddir}/nodejs --copy-files --config-file %{main}/babel.config.js
 mkdir -p %{_builddir}/lib
-npx babel %{main}/lib -d %{_builddir}/lib --copy-files --config-file %{main}/../babel.config.js
-cp %{main}/../package.json %{_builddir}
-%{main}/../scripts/copy-node-modules.sh %{main}/.. %{_builddir}/node_modules
+npx babel %{main}/lib -d %{_builddir}/lib --copy-files --config-file %{main}/babel.config.js
+cp %{main}/package.json %{_builddir}
+%{main}/scripts/copy-node-modules.sh %{main} %{_builddir}/node_modules
 # Presentation layer
 mkdir -p %{_builddir}/presentation
 cp %{main}/presentation/*.html %{_builddir}/presentation
@@ -31,7 +31,7 @@ cp -r %{main}/presentation/css %{_builddir}/presentation
 cp -r %{main}/presentation/js %{_builddir}/presentation
 cp -r %{main}/presentation/webfonts %{_builddir}/presentation
 # Default template sets
-cp -r %{main}/../templates/ %{_builddir}/templatesets
+cp -r %{main}/templates/ %{_builddir}/templatesets
 
 %install
 rm -rf $RPM_BUILD_ROOT

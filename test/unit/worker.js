@@ -33,9 +33,9 @@ const nock = require('nock');
 
 const fast = require('@f5devcentral/f5-fast-core');
 
-const AS3DriverConstantsKey = require('../../iappslx/lib/drivers').AS3DriverConstantsKey;
+const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
 
-const FASTWorker = require('../../iappslx/nodejs/fastWorker.js');
+const FASTWorker = require('../../nodejs/fastWorker.js');
 
 class RestOp {
     constructor(uri) {

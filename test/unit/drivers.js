@@ -26,7 +26,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { AS3Driver, AS3DriverConstantsKey } = require('../../iappslx/lib/drivers');
+const { AS3Driver, AS3DriverConstantsKey } = require('../../lib/drivers');
 
 describe('AS3 Driver tests', function () {
     const appDef = {
