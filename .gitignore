@@ -11,5 +11,6 @@ node_modules
 rpmbuild
 test-output.*
 iappslx/presentation/openapi.json
+iappslx/presentation/apidoc.html
 venv/
 docs/userguide/proposed-doc-rev.rst
