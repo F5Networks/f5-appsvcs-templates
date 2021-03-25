@@ -242,10 +242,8 @@ class FASTWorker {
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
         let config;
-
-        // Find any template sets on disk (e.g., from the RPM) and add them to
-        // the data store. Do not overwrite template sets already in the data store.
         let saveState = true;
+
         return Promise.resolve()
             // Automatically add a block
             .then(() => {
