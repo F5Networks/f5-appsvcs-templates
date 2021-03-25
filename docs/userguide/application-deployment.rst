@@ -32,20 +32,28 @@ Clicking on the View Rendered button displays a sample of the rendered output of
 Deploy using the FAST API
 -------------------------
 
-Deploying an application via a REST call, some familiarity with the REST API is assumed and will not be covered.
+Deploying an application via a REST call, some familiarity with REST APIs is assumed and will not be covered.
 
 Method POST 
 ^^^^^^^^^^^
 
-Before you begin, create the JSON schema file with the configuration needed for the deployment.  
-See `Creating New Templates <https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/userguide/template-authoring.html>`_ for information on creating AS3 declarations and JSON Schema.
+Doing the same examples/simple_udp deployment as the above GUI section via the FAST REST API can be done using the following curl example:
 
-Upload the file to the BIG-IP system using cURL from a Linux shell using the following syntax:
+curl -sku <username>:<password> -H "Content-Type: application/json" -X POST https::/<addr>/mgmt/shared/fast/applications -d " \
 
-   .. code-block:: shell
+   .. code-block:: json
 
-      $ curl -sku <BIG-IP username>:<BIG-IP password> --data-binary @<path to zip file> -H "Content-Type: application/octet-stream" -H "Content-Range: 0-<content-length minus 1>/<content-length>" -H "Content-Length: <file size in bytes>" -H "Connection: keep-alive" https://<IP address of BIG-IP>/mgmt/shared/file-transfer/uploads/<zipfile-name>.zip
-
+      { \
+         "name": "examples/simple_http", \
+         "parameters": { \
+           "tenant_name": "Tenant1", \
+           "application_name": "Application1", \
+           "virtual_port": 443, \
+           "virtual_address": 192.168.1.0, \
+           "server_port": 80, \
+           "server_addresses": ["10.10.10.1"] \
+         } \
+      }"
 
 To send your declaration to FAST, use the POST method to the URI.
 
@@ -55,8 +63,5 @@ To send your declaration to FAST, use the POST method to the URI.
 
 In addition to deploying a declaration, POST supports more actions, like reporting a previous declaration (useful with remote targets since GET may only have localhost credentials) or returning the index of saved declarations. 
 For more information and usage options (including detailed information on actions), see `AS3s Method POST <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/as3-api.html#post-ref>`_
-
-
-
 
 .. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of FAST installed templates.
