@@ -3,7 +3,7 @@ bigipHideTemplate: true
 definitions:
   irule_names:
     title: iRules
-    description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server.
+    description: Hold the *control* key to select or deselect multiple iRules to attach to the TCP virtual server.
     type: array
     uniqueItems: true
     items:

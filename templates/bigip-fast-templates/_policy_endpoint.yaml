@@ -3,7 +3,7 @@ bigipHideTemplate: true
 definitions:
   endpoint_policy_names:
     title: Endpoint Policies
-    description: Hold the *control* key to select multiple policies to attach to the virtual server.
+    description: Hold the *control* key to select or deselect multiple policies to attach to the virtual server.
     type: array
     uniqueItems: true
     items:
