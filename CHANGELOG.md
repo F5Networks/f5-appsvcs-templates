@@ -10,6 +10,7 @@
 ## Changed
 * Reduce the install size of f5-appsvcs-templates
 * Use a value of [null] for enum when hydrating enumFromBigip with 0 items
+* Update f5-faste-core from v0.11.0 to v0.12.0
 
 # 1.7.1
 ## Fixed
