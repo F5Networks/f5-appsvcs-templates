@@ -39,7 +39,9 @@ Method POST
 
 Doing the same examples/simple_udp deployment as the above GUI section via the FAST REST API can be done using the following curl example:
 
-curl -sku <username>:<password> -H "Content-Type: application/json" -X POST https::/<addr>/mgmt/shared/fast/applications -d " \
+   .. code-block:: shell
+
+      curl -sku <username>:<password> -H "Content-Type: application/json" -X POST https::/<addr>/mgmt/shared/fast/applications -d " \
 
    .. code-block:: json
 
@@ -61,7 +63,7 @@ To send your declaration to FAST, use the POST method to the URI.
 
       $ curl -d -X POST https://<IP address of BIG-IP>/mgmt/shared/fast/applications/declare
 
-In addition to deploying a declaration, POST supports more actions, like reporting a previous declaration (useful with remote targets since GET may only have localhost credentials) or returning the index of saved declarations. 
+In addition to deploying a declaration, POST supports more actions like reporting a previous declaration (useful with remote targets since GET may only have localhost credentials) or returning the index of saved declarations. 
 For more information and usage options (including detailed information on actions), see `AS3s Method POST <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/as3-api.html#post-ref>`_
 
 .. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of FAST installed templates.

@@ -11,6 +11,10 @@ Document Revision History
         - Description
         - Date
 
+      * - 11.0
+        - Updated the documentation for FAST v1.8. This release contains the following changes: |br| * Added Add /render endpoint |br| |br| Fixed: |br| * Fixed f5-appsvcs-templates missing after a UCS save/restore |br| * Fixed erroneous template errors on deleted template sets |br| * Fixed error loading templates when template data group gets too large |br| |br| Changed: |br| * Reduced the install size of f5-appsvcs-templates |br| * Use a value of null for enum when hydrating enumFromBigip with 0 items
+        - 04-06-21
+
       * - 10.0
         - Updated the documentation for FAST v1.7. This release contains the following changes: |br| * Added /settings endpoint |br| * Added config information to /info endpoint |br| * Added GUI front-end (Settings tab) for settings endpoint |br| * driver: Allow automatically setting up log forwarding for Telemetry Streaming |br| * Added 'ts' as a valid bigipDependencies keyword |br| * bigip-fast-templates: Add supported version of the Microsoft Exchange template |br| * bigip-fast-templates: Add option to use log forwarding traffic logs for Telemetry Streaming |br| |br| Fixed: |br| * Improved load times of templates with many sub-templates |br| * Fixed template dependency checking not working on subsequent template loads |br| |br| Changed: |br| * GUI: Open links from Markdown descriptions in new tabs |br| * GUI: Display full template text when using View Template button |br| * Update f5-fast-core from v0.10.0 to v0.11.0
         - 02-23-21
