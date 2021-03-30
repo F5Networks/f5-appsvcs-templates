@@ -12,7 +12,7 @@ Document Revision History
         - Date
 
       * - 11.0
-        - Updated the documentation for FAST v1.8. This release contains the following changes: |br| * Added Add /render endpoint |br| |br| Fixed: |br| * Fixed f5-appsvcs-templates missing after a UCS save/restore |br| * Fixed erroneous template errors on deleted template sets |br| * Fixed error loading templates when template data group gets too large |br| |br| Changed: |br| * Reduced the install size of f5-appsvcs-templates |br| * Use a value of null for enum when hydrating enumFromBigip with 0 items
+        - Updated the documentation for FAST v1.8. This release contains the following changes: |br| * Added /render endpoint |br| * Added support for Local Traffic Policies |br| * Added support for VLAN selection |br| |br| Fixed: |br| * Fixed f5-appsvcs-templates missing after a UCS save/restore |br| * Fixed erroneous template errors on deleted template sets |br| * Fixed error loading templates when template data group gets too large |br| |br| Changed: |br| * Reduced the install size of f5-appsvcs-templates |br| * Use a value of null for enum when hydrating enumFromBigip with 0 items
         - 04-06-21
 
       * - 10.0

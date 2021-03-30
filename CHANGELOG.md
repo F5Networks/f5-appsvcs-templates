@@ -1,9 +1,20 @@
 # 1.8.0
 ## Added
+* Added /render endpoint
+* Added support for Local Traffic Policies
+* Added support for VLAN Selection
 
 ## Fixed
+* Fix f5-appsvcs-templates missing after a UCS save/restore
+* Fix erroneous template errors on deleted template sets
 
 ## Changed
+* Reduce the install size of f5-appsvcs-templates
+* Use a value of [null] for enum when hydrating enumFromBigip with 0 items
+
+# 1.7.1
+## Fixed
+* Fix error when saving settings on BIG-IP 13.1
 
 # 1.7.0
 ## Added
