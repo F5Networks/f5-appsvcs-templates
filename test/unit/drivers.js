@@ -95,6 +95,18 @@ describe('AS3 Driver tests', function () {
 
         return assert.becomes(driver._getDecl(), as3stub);
     });
+    it('get_decl_retry', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3ep)
+            .query(true)
+            .reply(500, {})
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
+
+        return assert.becomes(driver._getDecl(), as3stub);
+    });
     it('list_app_names_empty', function () {
         const driver = new AS3Driver();
         nock(host)
