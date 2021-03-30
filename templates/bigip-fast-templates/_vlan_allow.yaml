@@ -7,7 +7,7 @@ definitions:
     type: boolean
   vlans_allow:
     title: Allow Specified VLANs
-    description: Names of existing VLANs to add to this virtual server to allow. Check to enable VLAN allow list, uncheck to enable VLAN reject list.
+    description: Names of existing VLANs to add to this virtual server to allow. Check to ALLOW all VLANs in this list. Uncheck to REJECT all VLANs in this list.
     type: boolean
     default: true
  vlan_names:
