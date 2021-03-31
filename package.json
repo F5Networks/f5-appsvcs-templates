@@ -60,7 +60,7 @@
   "dependencies": {
     "@babel/runtime": "^7.13.9",
     "@f5devcentral/atg-storage": "git+https://github.com/f5devcentral/atg-storage.git#50384f0aed49c3e9094363c7d35875d7f7404979",
-    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#5a6a7cd57e1f4386e7990aa39e21539a15cb3fe8",
+    "@f5devcentral/f5-fast-core": "^0.12.0",
     "@f5devcentral/f5-teem": "^1.4.6",
     "ajv": "^6.12.6",
     "axios": "^0.21.1",
