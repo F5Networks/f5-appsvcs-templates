@@ -26,7 +26,7 @@ definitions:
     enumFromBigip: security/firewall/policy
   log_profile_names:
     title: Security Log Profiles
-    description: Hold the *control* key to select multiple log profiles.
+    description: Hold the *control* key to select or deselect multiple log profiles.
     type: array
     uniqueItems: true
     items:

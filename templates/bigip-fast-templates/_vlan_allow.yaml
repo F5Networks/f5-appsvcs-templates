@@ -1,0 +1,42 @@
+contentType: application/json
+bigipHideTemplate: true
+definitions:
+  vlans_enable:
+    title: Enable VLAN Filtering
+    description: Select to enable VLANs.
+    type: boolean
+  vlans_allow:
+    title: Allow Specified VLANs
+    description: Names of existing VLANs to add to this virtual server to allow. Check to ALLOW all VLANs in this list. Uncheck to REJECT all VLANs in this list.
+    type: boolean
+    default: true
+  vlan_names:
+    title: VLAN Names
+    description: List of BIG-IP VLANs.
+    type: array
+    uniqueItems: true
+    items:
+      type: string
+      enumFromBigip: net/vlan
+    default: []
+template: |
+    {
+        "{{tenant_name}}": {
+          "{{app_name}}": {
+            "{{app_name}}": {
+              {{#vlans_enable}}
+                {{#vlans_allow}}
+                  "allowVlans": [
+                {{/vlans_allow}}
+                {{^vlans_allow}}
+                  "rejectVlans": [
+                {{/vlans_allow}}
+                {{#vlan_names}}
+                { "bigip": {{ . }} },
+                {{/vlan_names}}
+                ]
+              {{/vlans_enable}}
+            }
+          }
+        }
+    }

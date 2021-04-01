@@ -15,6 +15,7 @@ allOf:
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_policy_endpoint.yaml#"
   - $ref: "_irule.yaml#"
+  - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
   - $ref: "_security_firewall.yaml#"

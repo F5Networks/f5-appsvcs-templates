@@ -12,6 +12,7 @@ allOf:
   - $ref: "_monitor_sharepoint.yaml#"
   - $ref: "_http_profile_sharepoint.yaml#"
   - $ref: "_tcp_profile.yaml#"
+  - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
   - $ref: "_security_firewall.yaml#"
