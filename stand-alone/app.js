@@ -24,7 +24,7 @@ process.AFL_TW_TS = path.join(__dirname, '../templates');
 
 const fast = require('@f5devcentral/f5-fast-core');
 
-const FastWorker = require('../iappslx/nodejs/fastWorker');
+const FastWorker = require('../nodejs/fastWorker');
 const expressAdapter = require('./expressAdapter');
 
 const port = 8080;

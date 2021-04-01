@@ -10,6 +10,7 @@ docs/_static/apidocs.html
 node_modules
 rpmbuild
 test-output.*
-iappslx/presentation/openapi.json
+presentation/openapi.json
+presentation/apidoc.html
 venv/
 docs/userguide/proposed-doc-rev.rst

@@ -26,7 +26,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { AS3Driver, AS3DriverConstantsKey } = require('../../iappslx/lib/drivers');
+const { AS3Driver, AS3DriverConstantsKey } = require('../../lib/drivers');
 
 describe('AS3 Driver tests', function () {
     const appDef = {
@@ -92,6 +92,18 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .query(true)
             .reply(204, '');
+
+        return assert.becomes(driver._getDecl(), as3stub);
+    });
+    it('get_decl_retry', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3ep)
+            .query(true)
+            .reply(500, {})
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
 
         return assert.becomes(driver._getDecl(), as3stub);
     });

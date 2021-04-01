@@ -13,7 +13,7 @@ x-errors:
           schema:
             $ref: "#/components/schemas/Error"
 info:
-  version: 1.8.0-rc.0
+  version: 1.8.0-rc.4
   title: F5 Application Services Templates API
   license:
     name: Apache 2.0
@@ -490,6 +490,51 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Info"
+        '500': *serverError
+        default: *defaultResponse
+  /render:
+    post:
+      summary: Render one or more applications from templates
+      description: |
+        Render application templates without posting them to AS3
+
+        NOTE: The rendered template results are not stitched with other AS3 applications 
+        on the box. In other words, posting these results to AS3 directly can result in data loss.
+      operationId: render
+      tags:
+        - Application Management
+      requestBody:
+        description: |
+          A task definition, including the name of the template to render and the template parameters
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/ApplicationDefinition"
+                - $ref: "#/components/schemas/ApplicationDefinitionList"
+      responses:
+        '200':
+          description: |
+            The rendered templates as an array of JSON objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '400':
+          description: An improper application definition was submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: The specified template could not be found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         '500': *serverError
         default: *defaultResponse
 components:

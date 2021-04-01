@@ -25,7 +25,7 @@ const url = require('url');
 
 const extract = require('extract-zip');
 const axios = require('axios');
-const Ajv = require('ajv').default;
+const Ajv = require('ajv');
 
 const semver = require('semver');
 
@@ -40,14 +40,7 @@ const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 
-let pkg = null;
-try {
-    // First try the development environment
-    pkg = require('../../package.json'); // eslint-disable-line global-require
-} catch (e) {
-    // Then try production location
-    pkg = require('../package.json'); // eslint-disable-line global-require,import/no-unresolved
-}
+const pkg = require('../package.json');
 
 const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
@@ -64,9 +57,8 @@ if (typeof bigipStrictCert === 'string') {
     );
 }
 
-const ajv = new Ajv({
-    strict: false
-});
+const ajv = new Ajv();
+ajv.addFormat('checkbox', /.*/);
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
@@ -79,6 +71,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '59fc4a24b4dea268640744fa7187a928e7a2efcff870efa492be19c7a192bc75', // v1.8
         '83df55f23066fd0ac205ce3dca2c96ffd71e459914d7dcf205f3201fb1570427', // v1.7
         '9b65c17982fd5f83a36576c1a55f2771a0011283db8221704925ee803b8dbd13', // v1.6
         '48316eb5f20c6f3bc4e78ad50b0d82fae46fc3c7fa615fe438ff8f84b3a3c2ea', // v1.5
@@ -249,11 +242,45 @@ class FASTWorker {
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
         let config;
-
-        // Find any template sets on disk (e.g., from the RPM) and add them to
-        // the data store. Do not overwrite template sets already in the data store.
         let saveState = true;
+
         return Promise.resolve()
+            // Automatically add a block
+            .then(() => {
+                const hosturl = url.parse(bigipHost);
+                if (hosturl.hostname !== 'localhost') {
+                    return Promise.resolve();
+                }
+
+                return Promise.resolve()
+                    .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
+                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
+                    .catch(e => this.handleResponseError(e, 'to get blocks'))
+                    .then((results) => {
+                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
+                        const blockData = {
+                            name: mainBlockName,
+                            state: 'BOUND',
+                            configurationProcessorReference: {
+                                link: 'https://localhost/mgmt/shared/iapp/processors/noop'
+                            },
+                            presentationHtmlReference: {
+                                link: `https://localhost/iapps/${projectName}/index.html`
+                            }
+                        };
+
+                        if (matchingBlocks.length === 0) {
+                            // No existing block, make a new one
+                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
+                        }
+
+                        // Found a block, do nothing
+                        return Promise.resolve({ status: 200 });
+                    })
+                    .catch(e => this.handleResponseError(e, 'to set block state'))
+                    .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
+            })
+            // Load config
             .then(() => this.getConfig(0))
             .then((cfg) => {
                 config = cfg;
@@ -307,41 +334,6 @@ class FASTWorker {
             .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
-            // Automatically add a block
-            .then(() => {
-                const hosturl = url.parse(bigipHost);
-                if (hosturl.hostname !== 'localhost') {
-                    return Promise.resolve();
-                }
-
-                return Promise.resolve()
-                    .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
-                    .catch(e => this.handleResponseError(e, 'to get blocks'))
-                    .then((results) => {
-                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
-                        const blockData = {
-                            name: mainBlockName,
-                            state: 'BOUND',
-                            configurationProcessorReference: {
-                                link: 'https://localhost/mgmt/shared/iapp/processors/noop'
-                            },
-                            presentationHtmlReference: {
-                                link: `https://localhost/iapps/${projectName}/index.html`
-                            }
-                        };
-
-                        if (matchingBlocks.length === 0) {
-                            // No existing block, make a new one
-                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
-                        }
-
-                        // Found a block, do nothing
-                        return Promise.resolve({ status: 200 });
-                    })
-                    .catch(e => this.handleResponseError(e, 'to set block state'))
-                    .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
-            })
             // Done
             .then(() => {
                 const dt = Date.now() - startTime;
@@ -458,8 +450,14 @@ class FASTWorker {
         return Promise.resolve(templateNames)
             .then(tmplList => Promise.all(tmplList.map(
                 x => this.templateProvider.fetch(x.name || x).then(tmpl => [x, tmpl])
+                    .catch((e) => {
+                        if (e.message.match(/Could not find template set/)) {
+                            return Promise.resolve(undefined);
+                        }
+                        return Promise.reject(e);
+                    })
             )))
-            .then(tmpls => tmpls.filter(x => !x[1].bigipHideTemplate))
+            .then(tmpls => tmpls.filter(x => x && !x[1].bigipHideTemplate))
             .then(tmpls => tmpls.map(x => x[0]));
     }
 
@@ -751,6 +749,8 @@ class FASTWorker {
                     .then((items) => {
                         if (items.length !== 0) {
                             prop.enum = items;
+                        } else {
+                            prop.enum = [null];
                         }
                     })
                     .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`)));
@@ -812,6 +812,67 @@ class FASTWorker {
                         );
                     });
             });
+    }
+
+    renderTemplates(reqid, data) {
+        const appsData = [];
+        const lastModified = new Date().toISOString();
+        let promiseChain = Promise.resolve();
+        data.forEach((x) => {
+            if (!x.name) {
+                promiseChain = promiseChain
+                    .then(() => Promise.reject(new Error('name property is missing')));
+                return;
+            }
+            if (!x.parameters) {
+                promiseChain = promiseChain
+                    .then(() => Promise.reject(new Error('parameters property is missing')));
+                return;
+            }
+            const tsData = {};
+            const [setName, templateName] = x.name.split('/');
+            promiseChain = promiseChain
+                .then(() => {
+                    if (!setName || !templateName) {
+                        return Promise.reject(new Error(
+                            `expected name to be of the form "setName/templateName", but got ${x.name}`
+                        ));
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => this.recordTransaction(
+                    reqid, `fetching template set data for ${setName}`,
+                    this.templateProvider.getSetData(setName)
+                ))
+                .then(setData => Object.assign(tsData, setData))
+                .then(() => this.recordTransaction(
+                    reqid, `loading template (${x.name})`,
+                    this.templateProvider.fetch(x.name)
+                ))
+                .catch(e => Promise.reject(new Error(`unable to load template: ${x.name}\n${e.stack}`)))
+                .then(tmpl => this.recordTransaction(
+                    reqid, `rendering template (${x.name})`,
+                    tmpl.fetchAndRender(x.parameters)
+                ))
+                .then(rendered => JSON.parse(rendered))
+                .catch(e => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.message}`)))
+                .then((decl) => {
+                    appsData.push({
+                        appDef: decl,
+                        metaData: {
+                            template: x.name,
+                            setHash: tsData.hash,
+                            view: x.parameters,
+                            lastModified
+                        }
+                    });
+                });
+        });
+
+        promiseChain = promiseChain
+            .then(() => appsData);
+
+        return promiseChain;
     }
 
     /**
@@ -1081,7 +1142,6 @@ class FASTWorker {
 
     postApplications(restOperation, data) {
         const reqid = restOperation.requestId;
-        const lastModified = new Date().toISOString();
         if (!Array.isArray(data)) {
             data = [data];
         }
@@ -1089,91 +1149,20 @@ class FASTWorker {
         // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
 
         return Promise.resolve()
-            .then(() => {
-                const appsData = [];
-                let promiseChain = Promise.resolve();
-                data.forEach((x) => {
-                    if (!x.name) {
-                        promiseChain = promiseChain
-                            .then(() => Promise.reject(this.genRestResponse(
-                                restOperation,
-                                400,
-                                'name property is missing'
-                            )));
-                        return;
-                    }
-                    if (!x.parameters) {
-                        promiseChain = promiseChain
-                            .then(() => Promise.reject(this.genRestResponse(
-                                restOperation,
-                                400,
-                                'parameters property is missing'
-                            )));
-                        return;
-                    }
-                    const tsData = {};
-                    const [setName, templateName] = x.name.split('/');
-                    promiseChain = promiseChain
-                        .then(() => {
-                            this.generateTeemReportApplication('modify', x.name);
-                        })
-                        .then(() => {
-                            if (!setName || !templateName) {
-                                return Promise.reject(this.genRestResponse(
-                                    restOperation,
-                                    400,
-                                    `expected name to be of the form "setName/templateName", but got ${x.name}`
-                                ));
-                            }
-                            return Promise.resolve();
-                        })
-                        .then(() => this.recordTransaction(
-                            reqid, `fetching template set data for ${setName}`,
-                            this.templateProvider.getSetData(setName)
-                        ))
-                        .then(setData => Object.assign(tsData, setData))
-                        .then(() => this.recordTransaction(
-                            reqid, `loading template (${x.name})`,
-                            this.templateProvider.fetch(x.name)
-                        ))
-                        .catch((e) => {
-                            if (restOperation.status >= 400) {
-                                return Promise.reject();
-                            }
-                            return Promise.reject(this.genRestResponse(
-                                restOperation,
-                                404,
-                                `unable to load template: ${x.name}\n${e.stack}`
-                            ));
-                        })
-                        .then(tmpl => this.recordTransaction(
-                            reqid, `rendering template (${x.name})`,
-                            tmpl.fetchAndRender(x.parameters)
-                        ))
-                        .then(rendered => JSON.parse(rendered))
-                        .catch((e) => {
-                            if (restOperation.status >= 400) {
-                                return Promise.reject();
-                            }
-                            return Promise.reject(this.genRestResponse(
-                                restOperation,
-                                400,
-                                `failed to render template: ${x.name}\n${e.message}`
-                            ));
-                        })
-                        .then((decl) => {
-                            appsData.push({
-                                appDef: decl,
-                                metaData: {
-                                    template: x.name,
-                                    setHash: tsData.hash,
-                                    view: x.parameters,
-                                    lastModified
-                                }
-                            });
-                        });
+            .then(() => this.renderTemplates(reqid, data))
+            .catch((e) => {
+                let code = 400;
+                if (e.message.match(/Could not find template/)) {
+                    code = 404;
+                }
+
+                return this.genRestResponse(restOperation, code, e.stack);
+            })
+            .then((appsData) => {
+                appsData.forEach((appData) => {
+                    this.generateTeemReportApplication('modify', appData.template);
                 });
-                return promiseChain.then(() => appsData);
+                return appsData;
             })
             .then(appsData => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
@@ -1186,7 +1175,7 @@ class FASTWorker {
                 return Promise.reject(this.genRestResponse(
                     restOperation,
                     400,
-                    `error generating AS3 declaration\n${e.message}`
+                    `error generating AS3 declaration\n${e.stack}`
                 ));
             })
             .then((response) => {
@@ -1326,6 +1315,32 @@ class FASTWorker {
             });
     }
 
+    postRender(restOperation, data) {
+        const reqid = restOperation.requestId;
+        if (!Array.isArray(data)) {
+            data = [data];
+        }
+
+        // this.logger.info(`postRender() received:\n${JSON.stringify(data, null, 2)}`);
+
+        return Promise.resolve()
+            .then(() => this.renderTemplates(reqid, data))
+            .catch((e) => {
+                let code = 400;
+                if (e.message.match(/Could not find template/)) {
+                    code = 404;
+                }
+
+                return this.genRestResponse(restOperation, code, e.stack);
+            })
+            .then(rendered => this.genRestResponse(restOperation, 200, rendered))
+            .catch((e) => {
+                if (restOperation.status < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
+    }
+
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -1344,6 +1359,8 @@ class FASTWorker {
                 return this.postTemplateSets(restOperation, body);
             case 'settings':
                 return this.postSettings(restOperation, body);
+            case 'render':
+                return this.postRender(restOperation, body);
             default:
                 return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
             }

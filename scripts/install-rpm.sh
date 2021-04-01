@@ -20,7 +20,7 @@ if [ -z "$TARGET_RPM" ]; then
 fi
 
 if [ -z "$TARGET_RPM" ]; then
-    echo "Could not find RPM in ../dist folder. Verify that ../dist folder contains" \
+    echo "Could not find RPM in dist folder. Verify that dist folder contains" \
         "an rpm or provide specific file path to RPM."
     exit 0
 fi

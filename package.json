@@ -1,12 +1,13 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.8.0-rc.0",
+  "version": "1.8.0-rc.4",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
+  "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint iappslx/nodejs iappslx/lib iappslx/presentation/app.js test scripts stand-alone",
+    "lint": "eslint nodejs lib presentation/app.js test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
@@ -26,22 +27,22 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.12.17",
-    "@babel/core": "^7.12.17",
-    "@babel/plugin-transform-runtime": "^7.12.17",
-    "@babel/preset-env": "^7.12.17",
+    "@babel/cli": "^7.13.14",
+    "@babel/core": "^7.13.14",
+    "@babel/plugin-transform-runtime": "^7.13.9",
+    "@babel/preset-env": "^7.13.12",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
-    "browserify": "^16.5.2",
-    "chai": "^4.3.0",
+    "browserify": "^17.0.0",
+    "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
+    "eslint": "^7.23.0",
     "express": "^4.17.1",
-    "eslint": "^6.8.0",
-    "marked": "^1.2.9",
+    "marked": "^2.0.1",
     "mocha": "^8.3.0",
     "mock-fs": "^4.13.0",
-    "nock": "^12.0.3",
+    "nock": "^13.0.11",
     "nyc": "^15.1.0",
-    "redoc-cli": "^0.10.2"
+    "redoc-cli": "^0.10.4"
   },
   "eslintConfig": {
     "extends": "@f5devcentral/eslint-config-f5-atg",
@@ -52,21 +53,21 @@
   "nyc": {
     "all": true,
     "include": [
-      "iappslx/nodejs/**/*.js",
-      "iappslx/lib/**/*.js"
+      "nodejs/**/*.js",
+      "lib/**/*.js"
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.12.13",
-    "@f5devcentral/f5-fast-core": "^0.11.0",
+    "@babel/runtime": "^7.13.9",
+    "@f5devcentral/atg-storage": "git+https://github.com/f5devcentral/atg-storage.git#50384f0aed49c3e9094363c7d35875d7f7404979",
+    "@f5devcentral/f5-fast-core": "^0.12.0",
     "@f5devcentral/f5-teem": "^1.4.6",
-    "ajv": "^7.1.0",
+    "ajv": "^6.12.6",
     "axios": "^0.21.1",
-    "core-js": "^3.8.3",
+    "core-js": "^3.10.0",
     "deepmerge": "^4.2.2",
     "extract-zip": "^1.7.0",
-    "fs-extra": "^8.1.0",
-    "semver": "^7.3.4",
-    "uuid": "^7.0.3"
+    "fs-extra": "^9.1.0",
+    "semver": "^7.3.5"
   }
 }

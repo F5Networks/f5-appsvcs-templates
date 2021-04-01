@@ -33,9 +33,9 @@ const nock = require('nock');
 
 const fast = require('@f5devcentral/f5-fast-core');
 
-const AS3DriverConstantsKey = require('../../iappslx/lib/drivers').AS3DriverConstantsKey;
+const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
 
-const FASTWorker = require('../../iappslx/nodejs/fastWorker.js');
+const FASTWorker = require('../../nodejs/fastWorker.js');
 
 class RestOp {
     constructor(uri) {
@@ -155,6 +155,7 @@ function createWorker() {
 }
 
 describe('template worker tests', function () {
+    this.timeout(2500);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
@@ -163,12 +164,16 @@ describe('template worker tests', function () {
         schemaVersion: '3.0.0'
     };
 
-    beforeEach(function () {
-        testStorage = new fast.dataStores.StorageMemory();
+    before(function () {
         const tsNames = [
             'bigip-fast-templates',
             'examples'
         ];
+        testStorage = new fast.dataStores.StorageMemory();
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
+    });
+
+    beforeEach(function () {
         nock('http://localhost:8100')
             .persist()
             .get('/mgmt/tm/sys/provision')
@@ -211,7 +216,6 @@ describe('template worker tests', function () {
             .get('/mgmt/shared/telemetry/info')
             .reply(200, {
             });
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
     });
 
     afterEach(function () {
@@ -1343,7 +1347,6 @@ describe('template worker tests', function () {
                 }
             }));
         const postScope = nock('http://localhost:8100')
-            .log(console.log)
             .post(`/mgmt/${worker.WORKER_URI_PATH}/applications/`)
             .reply(202, {
                 code: 202,
@@ -1356,6 +1359,71 @@ describe('template worker tests', function () {
             .then(() => {
                 assert(as3Scope.isDone());
                 assert(postScope.isDone(), 'failed to post new applications');
+            });
+    });
+    it('post_render_bad_tmplid', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'foobar/does_not_exist',
+            parameters: {}
+        });
+        return worker.onPost(op)
+            .then(() => {
+                assert.equal(op.status, 404);
+                assert.match(op.body.message, /Could not find template/);
+            });
+    });
+    it('post_render_bad_params', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {
+                virtual_port: 'foobar'
+            }
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /Parameters failed validation/);
+            });
+    });
+    it('post_render_bad_properties', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+        });
+
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /name property is missing/);
+            })
+            .then(() => op.setBody({
+                name: 'examples/simple_udp_defaults'
+            }))
+            .then(() => worker.onPost(op))
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /parameters property is missing/);
+            });
+    });
+    it('post_render', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {}
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 3));
+                assert.equal(op.status, 200);
+                assert(Array.isArray(op.body.message));
             });
     });
 });

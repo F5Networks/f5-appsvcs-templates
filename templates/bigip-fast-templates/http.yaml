@@ -13,6 +13,7 @@ allOf:
   - $ref: "_monitor_http.yaml#"
   - $ref: "_http_profile.yaml#"
   - $ref: "_tcp_profile.yaml#"
+  - $ref: "_policy_endpoint.yaml#"
   - $ref: "_irule.yaml#"
 anyOf:
   - {}

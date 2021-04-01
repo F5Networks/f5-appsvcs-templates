@@ -90,6 +90,9 @@ const view = {
     enable_multiplex: true,
     make_multiplex_profile: true,
 
+    // endpoint policy
+    endpoint_policy_names: [],
+
     // irules
     irule_names: [],
 
@@ -143,6 +146,7 @@ const expected = {
                         bigip: 'log local'
                     }
                 ],
+                policyEndpoint: [],
                 iRules: []
             },
             app1_pool: {
@@ -325,7 +329,7 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls pass-thru with existing pool', function () {
+    describe('tls pass-thru with existing pool, specified irule and endpoint policy', function () {
         before(() => {
             // existing pool
             delete view.pool_members;
@@ -334,6 +338,14 @@ describe(template, function () {
             delete expected.t1.app1.app1_pool;
             expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
             delete expected.t1.app1.app1_monitor;
+            view.irule_names = ['/Common/my_irule'];
+            view.endpoint_policy_names = ['/Common/my_policy'];
+            expected.t1.app1.app1.iRules = [{
+                bigip: '/Common/my_irule'
+            }];
+            expected.t1.app1.app1.policyEndpoint = [{
+                bigip: '/Common/my_policy'
+            }];
         });
         util.assertRendering(template, view, expected);
     });
