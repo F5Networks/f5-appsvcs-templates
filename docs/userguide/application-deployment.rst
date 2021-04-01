@@ -26,25 +26,25 @@ See the image below for example field entries.
 
 Clicking on the View Rendered button displays a sample of the rendered output of the template.
 
-.. image:: View_rendered.png
+.. image:: View_Rendered.png
    :width: 350
+
+Clicking on Submit will start a deployment job.
+The current status of the job can be found on the *Deploy Log* tab.
 
 Deploy using the FAST API
 -------------------------
 
-Deploying an application via a REST call, some familiarity with REST APIs is assumed and will not be covered.
+FAST also exposes a REST API for programmability and automation.
+The basics of working with REST APIs is assumed and will not be covered in this document.
 
-Method POST 
-^^^^^^^^^^^
 
-Doing the same examples/simple_udp deployment as the above GUI section via the FAST REST API can be done using the following curl example:
+The same **examples/simple_udp** deployment from the above GUI example can be done via a *POST* to the `mgmt/shared/fast/applications` endpoint.
+Using cURL to do this would look like:
 
    .. code-block:: shell
 
-      curl -sku <username>:<password> -H "Content-Type: application/json" -X POST https::/<addr>/mgmt/shared/fast/applications -d " \
-
-   .. code-block:: json
-
+      curl -sku <BIG-IP username>:<BIG-IP password> -H "Content-Type: application/json" -X POST https::/<IP address of BIG-IP>/mgmt/shared/fast/applications -d " \
       { \
          "name": "examples/simple_http", \
          "parameters": { \
@@ -57,13 +57,10 @@ Doing the same examples/simple_udp deployment as the above GUI section via the F
          } \
       }"
 
-To send your declaration to FAST, use the POST method to the URI.
+This job is asynchronous and a successful response indicates that the task was submitted, not that it completed successfully.
+The response payload contains an `id` that can be used to query `mgmt/shared/fast/tasks/<task ID>` for the current status of the task.
 
-   .. code-block:: shell
+Submitting another task while a previous one is still in progress can result in an error from AS3.
+It is recommended to either wait on the result of a previous deployment task before submitting another one or to enable `Burst Handling <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/burst-handling.html>`_ for AS3.
 
-      $ curl -d -X POST https://<IP address of BIG-IP>/mgmt/shared/fast/applications/declare
-
-In addition to deploying a declaration, POST supports more actions like reporting a previous declaration (useful with remote targets since GET may only have localhost credentials) or returning the index of saved declarations. 
-For more information and usage options (including detailed information on actions), see `AS3s Method POST <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/as3-api.html#post-ref>`_
-
-.. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of FAST installed templates.
+A reference for the FAST REST API can be found in :ref:`api-ref`.
