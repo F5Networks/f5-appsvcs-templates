@@ -22,7 +22,7 @@ Installation
 
 See :ref:`Install / Uninstall<install>` for installation instructions.
 
-   .. NOTE:: On BIG-IP versions prior to 14.0, the iApps LX framework must be enabled before the Configuration utility is visible.
+.. NOTE:: On BIG-IP versions prior to 14.0, the iApps LX framework must be enabled before the Configuration utility is visible. 
       To do this, run the following command on the BIG-IP: ``touch /var/config/rest/iapps/enable``.
       This command only needs to be run once (per BIG-IP system).
       This is not necessary with BIG-IP 14.0 and later.

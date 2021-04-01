@@ -7,15 +7,15 @@ Support will only be provided to customers who have an existing BIG-IP support c
 **FAST Software Lifecycle:**
 
 * FAST releases are intended to be delivered on a 6-week basis 
-* FAST releases are supported for 3 months 
+* FAST releases are supported for 3 months, unless replaced with a newer veresion 
 * "End of Support" = End of Software Development (EOSD) + End of Technical Support (EOTS)
 
 Currently supported versions:
 
 | Software Version | First Customer Ship | End of Support |
 | ---------------- | ------------------- | -------------- |
-| 1.6              | 12-Jan-2021         | 12-Apr-2021    |
-| 1.7              | 23-Feb-2021         | 23-May-2021    |
+| 1.7.1            | 12-Mar-2021         | 12-Jun-2021    |
+| 1.8              | 06-Apr-2021         | 06-Jul-2021    |
 
 
 Versions no longer supported:
@@ -28,6 +28,8 @@ Versions no longer supported:
 | 1.3              | 01-Sep-2020         | 01-Dec-2020    |
 | 1.4              | 13-Oct-2020         | 13-Jan-2021    |
 | 1.5              | 20-Nov-2020         | 20-Feb-2021    |
+| 1.6              | 12-Jan-2021         | 12-Apr-2021    |
+| 1.7              | 23-Feb-2021         | 12-Mar-2021    |
 
 See the [Release notes](https://github.com/F5Networks/f5-appsvcs-templates/releases) and [FAST documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/) for new features and issues resolved for each release.
 

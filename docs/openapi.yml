@@ -467,7 +467,7 @@ paths:
     get:
       tags:
         - FAST Extension
-      summary: JSON schema for the /settings endpoing
+      summary: JSON schema for the /settings endpoint
       responses:
         '200':
           description: success

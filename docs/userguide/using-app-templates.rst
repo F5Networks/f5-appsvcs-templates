@@ -17,7 +17,7 @@ FAST Menu Tabs
 --------------
 
 When launching FAST, the Applications List tab is selected. If you have never used FAST before
-the application list will likely be empty. See the :ref:`deploytab` tab on deploying a new application.
+the application list will likely be empty. See the :ref:`deploytab` tab for deploying a new application.
 
 The tabs in the FAST interface:
 

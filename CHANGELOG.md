@@ -1,6 +1,8 @@
 # 1.8.0
 ## Added
 * Add /render endpoint
+* bigip-fast-templates: Add support for Local Traffic Policies
+* bigip-fast-templates: Add support for VLAN filtering
 
 ## Fixed
 * Fix f5-appsvcs-templates missing after a UCS save/restore
