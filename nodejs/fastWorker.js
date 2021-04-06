@@ -26,6 +26,7 @@ const url = require('url');
 const extract = require('extract-zip');
 const axios = require('axios');
 const Ajv = require('ajv');
+const merge = require('deepmerge');
 
 const semver = require('semver');
 
@@ -186,6 +187,7 @@ class FASTWorker {
     getConfigSchema() {
         const baseSchema = {
             $schema: 'http://json-schema.org/schema#',
+            title: 'FAST Settings',
             type: 'object',
             properties: {
                 deletedTemplateSets: {
@@ -204,9 +206,7 @@ class FASTWorker {
             ]
         };
 
-        return Object.assign({}, baseSchema, this.driver.getSettingsSchema(), {
-            title: 'FAST Settings'
-        });
+        return merge(this.driver.getSettingsSchema(), baseSchema);
     }
 
     saveConfig(config, reqid) {
