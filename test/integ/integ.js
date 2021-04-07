@@ -36,10 +36,6 @@ if (!bigipCreds) {
 
 const endpoint = axios.create({
     baseURL: `https://${bigipTarget}`,
-    auth: {
-        username: bigipCreds.split(':')[0],
-        password: bigipCreds.split(':')[1]
-    },
     httpsAgent: new https.Agent({
         rejectUnauthorized: false
     })
@@ -95,6 +91,18 @@ function deployApplication(templateName, parameters) {
 
 describe('Applications', function () {
     this.timeout(120000);
+    before(() => Promise.resolve()
+        .then(() => endpoint.post('/mgmt/shared/authn/login', {
+            username: bigipCreds.split(':')[0],
+            password: bigipCreds.split(':')[1],
+            loginProviderName: 'tmos'
+        }))
+        .then((response) => {
+            const token = response.data.token.token;
+            endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
+        })
+        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`))));
+
     it('Delete all applications', () => Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
