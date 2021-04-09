@@ -60,6 +60,10 @@ if (typeof bigipStrictCert === 'string') {
 
 const ajv = new Ajv();
 ajv.addFormat('checkbox', /.*/);
+ajv.addFormat('table', /.*/);
+ajv.addFormat('password', /.*/);
+ajv.addFormat('text', /.*/);
+ajv.addFormat('grid-strict', /.*/);
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
@@ -150,7 +154,8 @@ class FASTWorker {
     getConfig(reqid) {
         reqid = reqid || 0;
         const defaultConfig = {
-            deletedTemplateSets: []
+            deletedTemplateSets: [],
+            ipamProviders: []
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
@@ -185,6 +190,93 @@ class FASTWorker {
             });
     }
 
+    createIPAMProviderSchema(service, overrides) {
+        overrides = overrides || {};
+
+        return {
+            type: 'object',
+            title: service,
+            format: 'grid-strict',
+            properties: merge({
+                name: {
+                    title: 'Name',
+                    type: 'string',
+                    options: {
+                        grid_columns: 2,
+                        grid_break: true
+                    }
+                },
+                host: {
+                    title: 'Host',
+                    type: 'string',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                username: {
+                    title: 'Username',
+                    type: 'string',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                password: {
+                    title: 'Password',
+                    type: 'string',
+                    format: 'password',
+                    options: {
+                        grid_columns: 4,
+                        grid_break: true
+                    }
+                },
+                retrieveUrl: {
+                    title: 'Retrieve URL',
+                    type: 'string',
+                    format: 'text',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                retrieveBody: {
+                    title: 'Retrieve Body',
+                    type: 'string',
+                    format: 'text',
+                    default: '{}',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                retrievePathQuery: {
+                    title: 'Retrieve Path Query',
+                    type: 'string',
+                    format: 'text',
+                    default: '$',
+                    options: {
+                        grid_columns: 4,
+                        grid_break: true
+                    }
+                },
+                releaseUrl: {
+                    title: 'Release URL',
+                    type: 'string',
+                    format: 'text',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                releaseBody: {
+                    title: 'Release Body',
+                    type: 'string',
+                    format: 'text',
+                    default: '{}',
+                    options: {
+                        grid_columns: 4
+                    }
+                }
+            }, overrides)
+        };
+    }
+
     getConfigSchema() {
         const baseSchema = {
             $schema: 'http://json-schema.org/schema#',
@@ -199,6 +291,64 @@ class FASTWorker {
                     uniqueItems: true,
                     options: {
                         hidden: true
+                    }
+                },
+                ipamProviders: {
+                    title: 'IPAM Providers',
+                    format: 'table',
+                    type: 'array',
+                    items: {
+                        anyOf: [
+                            this.createIPAMProviderSchema('Infoblox', {
+                                apiVersion: {
+                                    title: 'API Version',
+                                    type: 'string',
+                                    default: 'V2.11',
+                                    options: {
+                                        grid_columns: 2
+                                    }
+                                },
+                                network: {
+                                    title: 'Network Name',
+                                    type: 'string',
+                                    options: {
+                                        grid_columns: 3,
+                                        grid_break: true
+                                    }
+                                },
+                                retrieveUrl: {
+                                    const: '{{host}}/wapi/{{apiVersion}}/network/{{network}}?_function=next_available_ip&_return_as_object=1',
+                                    options: {
+                                        hidden: true
+                                    }
+                                },
+                                retrieveBody: {
+                                    const: '{ "num": 1 }',
+                                    options: {
+                                        hidden: true
+                                    }
+                                },
+                                retrievePathQuery: {
+                                    const: '$.ipv4addrs[0].ipv4addr',
+                                    options: {
+                                        hidden: true
+                                    }
+                                },
+                                releaseUrl: {
+                                    const: '{{host}}/wapi/{{apiVersion}}/ipv4address/{{network}}:{{addr}}',
+                                    options: {
+                                        hidden: true
+                                    }
+                                },
+                                releaseBody: {
+                                    const: '{}',
+                                    options: {
+                                        hidden: true
+                                    }
+                                }
+                            }),
+                            this.createIPAMProviderSchema('Generic')
+                        ]
                     }
                 }
             },

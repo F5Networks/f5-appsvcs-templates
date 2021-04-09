@@ -242,6 +242,7 @@ const createCommonEditor = (schema, defaults) => {
         disable_properties: true,
         disable_collapse: true,
         array_controls_top: true,
+        keep_oneof_values: false,
         theme: 'spectre',
         iconlib: 'fontawesome5'
     });
