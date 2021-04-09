@@ -1032,6 +1032,12 @@ describe('template worker tests', function () {
     });
     it('hydrateSchema', function () {
         const worker = createWorker();
+        worker.configStorage.data.config = {
+            ipamProviders: [
+                { name: 'bar' }
+            ]
+        };
+
         const inputSchema = {
             properties: {
                 foo: {
@@ -1043,6 +1049,17 @@ describe('template worker tests', function () {
                     items: {
                         type: 'string',
                         enumFromBigip: 'ltm/profile/http-compression'
+                    }
+                },
+                fooIpam: {
+                    type: 'string',
+                    ipFromIpam: true
+                },
+                fooIpamItems: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        ipFromIpam: true
                     }
                 }
             }
@@ -1064,6 +1081,7 @@ describe('template worker tests', function () {
         };
         return worker.hydrateSchema(tmpl, 0)
             .then((schema) => {
+                console.log(schema);
                 assert.deepEqual(schema.properties.foo.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
@@ -1071,6 +1089,12 @@ describe('template worker tests', function () {
                 assert.deepEqual(schema.properties.fooItems.items.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
+                ]);
+                assert.deepEqual(schema.properties.fooIpam.enum, [
+                    'bar'
+                ]);
+                assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
+                    'bar'
                 ]);
             });
     });

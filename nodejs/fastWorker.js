@@ -838,9 +838,17 @@ class FASTWorker {
             this._hydrateCache = null;
         }
 
-        if (!schema.properties && subTemplates.length === 0) {
-            return Promise.resolve();
-        }
+        const ipFromIpamProps = Object.entries(schema.properties || {})
+            .reduce((acc, curr) => {
+                const [key, value] = curr;
+                if (value.ipFromIpam) {
+                    acc[key] = value;
+                }
+                if (value.items && value.items.ipFromIpam) {
+                    acc[`${key}.items`] = value.items;
+                }
+                return acc;
+            }, {});
 
         const enumFromBigipProps = Object.entries(schema.properties || {})
             .reduce((acc, curr) => {
@@ -853,7 +861,8 @@ class FASTWorker {
                 }
                 return acc;
             }, {});
-        const propNames = Object.keys(enumFromBigipProps);
+        const propNames = Object.keys(enumFromBigipProps)
+            .concat(Object.keys(ipFromIpamProps));
         if (propNames.length > 0) {
             this.logger.fine(
                 `FAST Worker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
@@ -865,7 +874,27 @@ class FASTWorker {
         }
 
         return Promise.resolve()
+            .then(() => {
+                if (ipFromIpamProps.length === 0) {
+                    return Promise.resolve();
+                }
+
+                if (this._hydrateCache.__config) {
+                    return Promise.resolve();
+                }
+
+                return this.getConfig(requestId)
+                    .then((config) => {
+                        this._hydrateCache.__config = config;
+                    });
+            })
             .then(() => Promise.all(subTemplates.map(x => this.hydrateSchema(x, requestId))))
+            .then(() => {
+                const config = this._hydrateCache.__config;
+                Object.values(ipFromIpamProps).forEach((prop) => {
+                    prop.enum = config.ipamProviders.map(x => x.name);
+                });
+            })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
                 const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
                 return Promise.resolve()
