@@ -285,6 +285,18 @@ const newEditor = (tmplid, view, existingApp) => {
             // Get schema and modify it work better with JSON Editor
             const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
 
+            // Strip IPAM fields for existing applications
+            if (existingApp) {
+                Object.entries(schema.properties || {}).forEach(([propName, prop]) => {
+                    if (prop.ipFromIpam) {
+                        prop.default = view[propName];
+                        prop.immutable = true;
+                        delete prop.enum;
+                        delete prop.ipFromIpam;
+                    }
+                });
+            }
+
             // Create a new editor
             editor = createCommonEditor(schema, tmpl.getCombinedParameters(view));
 
