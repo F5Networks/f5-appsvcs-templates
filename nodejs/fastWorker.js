@@ -27,6 +27,8 @@ const extract = require('extract-zip');
 const axios = require('axios');
 const Ajv = require('ajv');
 const merge = require('deepmerge');
+const Mustache = require('mustache');
+const JSONPath = require('jsonpath-plus').JSONPath;
 
 const semver = require('semver');
 
@@ -987,7 +989,12 @@ class FASTWorker {
     renderTemplates(reqid, data) {
         const appsData = [];
         const lastModified = new Date().toISOString();
-        let promiseChain = Promise.resolve();
+        let config = {};
+        let promiseChain = Promise.resolve()
+            .then(() => this.getConfig(reqid))
+            .then((configData) => {
+                config = configData;
+            });
         data.forEach((x) => {
             if (!x.name) {
                 promiseChain = promiseChain
@@ -1020,12 +1027,64 @@ class FASTWorker {
                     this.templateProvider.fetch(x.name)
                 ))
                 .catch(e => Promise.reject(new Error(`unable to load template: ${x.name}\n${e.stack}`)))
+                .then((tmpl) => {
+                    let ipamChain = Promise.resolve();
+                    const schema = tmpl.getParametersSchema();
+                    const ipFromIpamProps = Object.entries(schema.properties)
+                        .reduce((acc, curr) => {
+                            const [key, value] = curr;
+                            if (value.ipFromIpam) {
+                                acc[key] = value;
+                            }
+                            if (value.items && value.items.ipFromIpam) {
+                                acc[`${key}.items`] = value.items;
+                            }
+                            return acc;
+                        }, {});
+                    Object.entries(ipFromIpamProps).forEach(([name, prop]) => {
+                        const providerName = x.parameters[name];
+                        const provider = config.ipamProviders
+                            .filter(p => p.name === providerName)[0];
+                        delete prop.enum;
+                        ipamChain = ipamChain
+                            .then(() => this.recordTransaction(
+                                reqid, `fetching address from IPAM provider: ${providerName}`,
+                                axios.post(
+                                    Mustache.render(provider.retrieveUrl, provider),
+                                    JSON.parse(Mustache.render(provider.retrieveBody, provider)),
+                                    {
+                                        auth: {
+                                            username: provider.username,
+                                            password: provider.password
+                                        }
+                                    }
+                                )
+                            ))
+                            .catch(e => Promise.reject(new Error(
+                                `failed to get IP address from IPAM provider (${providerName}): ${e.stack}`
+                            )))
+                            .then((res) => {
+                                let value = '';
+                                try {
+                                    value = JSON.parse(res.data);
+                                } catch (e) {
+                                    value = res.data;
+                                }
+                                value = JSONPath(provider.retrievePathQuery, value)[0];
+                                x.parameters[name] = value;
+                            });
+                    });
+
+                    ipamChain = ipamChain
+                        .then(() => tmpl);
+                    return ipamChain;
+                })
                 .then(tmpl => this.recordTransaction(
                     reqid, `rendering template (${x.name})`,
                     tmpl.fetchAndRender(x.parameters)
                 ))
                 .then(rendered => JSON.parse(rendered))
-                .catch(e => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.message}`)))
+                .catch(e => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.stack}`)))
                 .then((decl) => {
                     appsData.push({
                         appDef: decl,

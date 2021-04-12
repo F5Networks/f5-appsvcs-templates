@@ -162,7 +162,7 @@ function resetScope(scope) {
 }
 
 describe('template worker tests', function () {
-    this.timeout(2500);
+    this.timeout(3000);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
@@ -602,6 +602,50 @@ describe('template worker tests', function () {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.status, 400);
                 assert.match(op.body.message, /parameters property is missing/);
+            });
+    });
+    it('post_apps_ipam', function () {
+        const worker = createWorker();
+        const ipamProvider = {
+            name: 'testing',
+            host: 'http://example.com',
+            username: 'admin',
+            password: 'password',
+            retrieveUrl: '{{host}}/nextip',
+            retrieveBody: '{ "num": 1}',
+            retrievePathQuery: '$.addrs[0].ipv4'
+        };
+        worker.configStorage.data.config = {
+            ipamProviders: [ipamProvider]
+        };
+        let retrievedAddr = '';
+        const op = new RestOp('applications');
+        op.setBody({
+            name: 'examples/simple_udp_ipam',
+            parameters: {
+                virtual_address: 'testing'
+            }
+        });
+        nock('http://example.com')
+            .post('/nextip', { num: 1 })
+            .reply(200, { addrs: [{ ipv4: '192.0.0.0' }] });
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
+        nock(host)
+            .persist()
+            .post(`${as3ep}/foo?async=true`, (body) => {
+                retrievedAddr = body.foo.bar.serviceMain.virtualAddresses[0];
+                return true;
+            })
+            .reply(202, {});
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 202);
+                assert.strictEqual(retrievedAddr, '192.0.0.0');
             });
     });
     it('post_apps', function () {
