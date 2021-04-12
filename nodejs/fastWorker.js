@@ -1157,7 +1157,7 @@ class FASTWorker {
                     code = 404;
                 }
 
-                return this.genRestResponse(restOperation, code, e.stack);
+                return Promise.reject(this.genRestResponse(restOperation, code, e.stack));
             })
             .then((appsData) => {
                 appsData.forEach((appData) => {
@@ -1170,7 +1170,7 @@ class FASTWorker {
                 this.driver.createApplications(appsData)
             ))
             .catch((e) => {
-                if (restOperation.status >= 400) {
+                if (restOperation.getStatusCode() >= 400) {
                     return Promise.reject();
                 }
                 return Promise.reject(this.genRestResponse(
@@ -1192,7 +1192,7 @@ class FASTWorker {
                 ));
             })
             .catch((e) => {
-                if (restOperation.status < 400) {
+                if (restOperation.getStatusCode() < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });
@@ -1310,7 +1310,7 @@ class FASTWorker {
             .then(() => this.saveConfig(config, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
-                if (restOperation.status < 400) {
+                if (restOperation.getStatusCode() < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });
@@ -1332,11 +1332,11 @@ class FASTWorker {
                     code = 404;
                 }
 
-                return this.genRestResponse(restOperation, code, e.stack);
+                return Promise.reject(this.genRestResponse(restOperation, code, e.stack));
             })
             .then(rendered => this.genRestResponse(restOperation, 200, rendered))
             .catch((e) => {
-                if (restOperation.status < 400) {
+                if (restOperation.getStatusCode() < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });
@@ -1579,7 +1579,7 @@ class FASTWorker {
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
-                if (!restOperation.status || restOperation.status < 400) {
+                if (restOperation.getStatusCode() < 400) {
                     this.genRestResponse(restOperation, 500, e.stack);
                 }
             });
