@@ -8,6 +8,7 @@ definitions:
     minLength: 1
     maxLength: 255
     pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
+    immutable: true
   app_name:
     title: Application Name
     description: The *application* is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
@@ -15,6 +16,7 @@ definitions:
     minLength: 1
     maxLength: 255
     pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
+    immutable: true
 template: |
   {
     "class": "ADC",

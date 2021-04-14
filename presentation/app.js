@@ -270,7 +270,7 @@ const createCommonEditor = (schema, defaults) => {
     return newEd;
 };
 
-const newEditor = (tmplid, view) => {
+const newEditor = (tmplid, view, existingApp) => {
     if (editor) {
         editor.destroy();
     }
@@ -288,13 +288,20 @@ const newEditor = (tmplid, view) => {
 
             editor.on('ready', () => {
                 dispOutput('Editor ready');
-
                 // Enable form button now that the form is ready
                 document.getElementById('view-tmpl-btn').disabled = false;
                 document.getElementById('view-schema-btn').disabled = false;
                 document.getElementById('view-view-btn').disabled = false;
                 document.getElementById('view-render-btn').disabled = false;
                 document.getElementById('btn-form-submit').disabled = false;
+
+                if (existingApp) {
+                    Object.values(editor.editors).forEach((ed) => {
+                        if (ed.schema.immutable) {
+                            ed.disable();
+                        }
+                    });
+                }
             });
 
             editor.on('change', () => {
@@ -479,7 +486,7 @@ route('modify', 'create', (appID) => {
     return getJSON(`applications/${appID}`)
         .then((appData) => {
             const appDef = appData.constants.fast;
-            newEditor(appDef.template, appDef.view);
+            newEditor(appDef.template, appDef.view, true);
         })
         .catch(e => dispOutput(e.message));
 });

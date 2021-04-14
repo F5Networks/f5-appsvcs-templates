@@ -1,3 +1,9 @@
+# 1.9.0
+## Added
+## Fixed
+## Changed
+* Make tenant and app name fields immutable to prevent update when editing existing apps
+
 # 1.8.0
 ## Added
 * Add /render endpoint
