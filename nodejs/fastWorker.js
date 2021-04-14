@@ -986,6 +986,70 @@ class FASTWorker {
             .then(() => apps);
     }
 
+    releaseIPAMAddress(reqid, config, appData) {
+        if (!appData.ipamAddrs) {
+            return Promise.resolve();
+        }
+
+        const promises = [];
+        Object.entries(appData.ipamAddrs).forEach(([providerName, addrs]) => {
+            const provider = config.ipamProviders
+                .filter(p => p.name === providerName)[0];
+            addrs.forEach((address) => {
+                const view = Object.assign({}, provider, { address });
+                promises.push(Promise.resolve()
+                    .then(() => this.recordTransaction(
+                        reqid, `releasing ${address} from IPAM provider: ${providerName}`,
+                        axios.post(
+                            Mustache.render(provider.releaseUrl, view),
+                            JSON.parse(Mustache.render(provider.releaseBody, view)),
+                            {
+                                auth: {
+                                    username: provider.username,
+                                    password: provider.password
+                                }
+                            }
+                        )
+                    ))
+                    .catch(e => this.logger.error(
+                        `failed to release IP address from IPAM provider (${providerName}): ${e.stack}`
+                    )));
+            });
+        });
+
+        return Promise.all(promises);
+    }
+
+    releaseIPAMAddressesFromApps(reqid, appsData) {
+        let config;
+        const promises = [];
+        appsData.forEach((appDef) => {
+            let view;
+            if (appDef.metaData) {
+                if (Object.keys(appDef.metaData.ipamAddrs || {}) === 0) {
+                    return;
+                }
+                view = appDef.metaData;
+            } else {
+                if (Object.keys(appDef.ipamAddrs || {}) === 0) {
+                    return;
+                }
+                view = appDef;
+            }
+            promises.push(Promise.resolve()
+                .then(() => {
+                    if (config) {
+                        return Promise.resolve(config);
+                    }
+                    return this.getConfig(reqid)
+                        .then((c) => { config = c; });
+                })
+                .then(() => this.releaseIPAMAddress(reqid, config, view)));
+        });
+
+        return Promise.all(promises);
+    }
+
     renderTemplates(reqid, data) {
         const appsData = [];
         const lastModified = new Date().toISOString();
@@ -1008,6 +1072,7 @@ class FASTWorker {
             }
             const tsData = {};
             const [setName, templateName] = x.name.split('/');
+            const ipamAddrs = {};
             promiseChain = promiseChain
                 .then(() => {
                     if (!setName || !templateName) {
@@ -1046,6 +1111,9 @@ class FASTWorker {
                         const provider = config.ipamProviders
                             .filter(p => p.name === providerName)[0];
                         delete prop.enum;
+                        if (!ipamAddrs[providerName]) {
+                            ipamAddrs[providerName] = [];
+                        }
                         ipamChain = ipamChain
                             .then(() => this.recordTransaction(
                                 reqid, `fetching address from IPAM provider: ${providerName}`,
@@ -1072,6 +1140,7 @@ class FASTWorker {
                                 }
                                 value = JSONPath(provider.retrievePathQuery, value)[0];
                                 x.parameters[name] = value;
+                                ipamAddrs[providerName].push(value);
                             });
                     });
 
@@ -1084,7 +1153,11 @@ class FASTWorker {
                     tmpl.fetchAndRender(x.parameters)
                 ))
                 .then(rendered => JSON.parse(rendered))
-                .catch(e => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.stack}`)))
+                .catch(e => Promise.resolve()
+                    // Release any IPAM IP addrs
+                    .then(() => this.releaseIPAMAddress(reqid, config, { ipamAddrs }))
+                    // Now re-reject
+                    .then(() => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.stack}`))))
                 .then((decl) => {
                     appsData.push({
                         appDef: decl,
@@ -1092,7 +1165,8 @@ class FASTWorker {
                             template: x.name,
                             setHash: tsData.hash,
                             view: x.parameters,
-                            lastModified
+                            lastModified,
+                            ipamAddrs
                         }
                     });
                 });
@@ -1378,6 +1452,7 @@ class FASTWorker {
         }
 
         // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
+        let appsData;
 
         return Promise.resolve()
             .then(() => this.renderTemplates(reqid, data))
@@ -1389,13 +1464,16 @@ class FASTWorker {
 
                 return Promise.reject(this.genRestResponse(restOperation, code, e.stack));
             })
-            .then((appsData) => {
+            .then((renderResults) => {
+                appsData = renderResults;
+            })
+            .then(() => {
                 appsData.forEach((appData) => {
                     this.generateTeemReportApplication('modify', appData.template);
                 });
                 return appsData;
             })
-            .then(appsData => this.recordTransaction(
+            .then(() => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
                 this.driver.createApplications(appsData)
             ))
@@ -1403,11 +1481,12 @@ class FASTWorker {
                 if (restOperation.getStatusCode() >= 400) {
                     return Promise.reject();
                 }
-                return Promise.reject(this.genRestResponse(
-                    restOperation,
-                    400,
-                    `error generating AS3 declaration\n${e.stack}`
-                ));
+                return this.releaseIPAMAddressesFromApps(reqid, appsData)
+                    .then(() => Promise.reject(this.genRestResponse(
+                        restOperation,
+                        400,
+                        `error generating AS3 declaration\n${e.stack}`
+                    )));
             })
             .then((response) => {
                 if (response.status >= 300) {
@@ -1564,6 +1643,8 @@ class FASTWorker {
 
                 return Promise.reject(this.genRestResponse(restOperation, code, e.stack));
             })
+            .then(rendered => this.releaseIPAMAddressesFromApps(reqid, rendered)
+                .then(() => rendered))
             .then(rendered => this.genRestResponse(restOperation, 200, rendered))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
@@ -1616,9 +1697,14 @@ class FASTWorker {
             data = [];
         }
 
+        const appNames = data.map(x => x.split('/'));
         return Promise.resolve()
-            .then(() => data.map(x => x.split('/')))
-            .then(appNames => this.recordTransaction(
+            .then(() => this.recordTransaction(
+                reqid, 'requesting application data from driver',
+                Promise.all(appNames.map(x => this.driver.getApplication(...x)))
+            ))
+            .then(appsData => this.releaseIPAMAddressesFromApps(reqid, appsData))
+            .then(() => this.recordTransaction(
                 reqid, 'deleting applications',
                 this.driver.deleteApplications(appNames)
             ))
