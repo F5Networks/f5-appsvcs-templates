@@ -534,7 +534,7 @@ route('tasks', 'tasks', () => {
                     task.canResubmit = true;
                 }
             });
-            if (["3.26.0", "3.27.0"].includes(as3Version)) {
+            if (['3.26.0', '3.27.0'].includes(as3Version)) {
                 tasks.reverse();
             }
             appState.data.tasks = tasks;
