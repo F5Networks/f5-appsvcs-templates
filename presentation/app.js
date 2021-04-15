@@ -83,6 +83,7 @@ const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
 let editor = null;
 let UI;
+let as3Version;
 
 const appState = {
     debugOutput: '',
@@ -378,6 +379,9 @@ const newEditor = (tmplid, view, existingApp) => {
 
 // Check that AS3 is available
 safeFetch('/mgmt/shared/appsvcs/info')
+    .then((res) => {
+        as3Version = res.version;
+    })
     .catch((e) => {
         appState.foundAS3 = false;
         appState.busy = false;
@@ -506,7 +510,7 @@ route('resubmit', 'create', (taskid) => {
 });
 route('tasks', 'tasks', () => {
     const submissionData = getSubmissionData();
-    const renderTaskList = () => getJSON('tasks')
+    const updateTaskList = () => getJSON('tasks')
         .then((tasks) => {
             tasks.forEach((task) => {
                 task.errMsg = '';
@@ -530,20 +534,23 @@ route('tasks', 'tasks', () => {
                     task.canResubmit = true;
                 }
             });
+            if (["3.26.0", "3.27.0"].includes(as3Version)) {
+                tasks.reverse();
+            }
             appState.data.tasks = tasks;
 
             const inProgressJob = (
                 tasks.filter(x => x.message === 'in progress').length !== 0
             );
             if (inProgressJob) {
-                setTimeout(renderTaskList, 5000);
+                setTimeout(updateTaskList, 5000);
             }
         });
 
     appState.data = {
         tasks: []
     };
-    return renderTaskList();
+    return updateTaskList();
 });
 route('settings', 'settings', () => {
     if (editor) {
