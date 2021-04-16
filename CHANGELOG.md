@@ -1,8 +1,12 @@
 # 1.9.0
 ## Added
+* templates: Add "immutable" property for parameters that should not be edited on application updates
+
 ## Fixed
+* GUI: Fix task order in the Deploy Log when using AS3 versions 3.26.0 and 3.27.0
+
 ## Changed
-* Make tenant and app name fields immutable to prevent update when editing existing apps
+* bigip-fast-templates: Make tenant and application names immutable
 
 # 1.8.0
 ## Added
