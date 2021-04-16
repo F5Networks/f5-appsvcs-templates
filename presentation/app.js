@@ -99,14 +99,6 @@ const appState = {
     busy: true
 };
 
-// Auto-register HTML template tags as Vue components
-// eslint-disable-next-line no-restricted-syntax
-for (const tmpl of document.getElementsByTagName('template')) {
-    Vue.component(tmpl.id, {
-        props: ['data'],
-        template: `#${tmpl.id}`
-    });
-}
 // eslint-disable-next-line no-unused-vars
 const vueApp = new Vue({
     el: '#vue-app',
@@ -134,6 +126,15 @@ const vueApp = new Vue({
         }
     }
 });
+
+// Auto-register HTML template tags as Vue components
+// eslint-disable-next-line no-restricted-syntax
+for (const tmpl of document.getElementsByTagName('template')) {
+    vueApp.component(tmpl.id, {
+        props: ['data'],
+        template: `#${tmpl.id}`
+    });
+}
 
 const dispOutput = (output) => {
     if (typeof output === 'object') {
