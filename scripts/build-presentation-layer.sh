@@ -8,4 +8,4 @@ npx redoc-cli bundle -o presentation/apidoc.html openapi-tmp.yml
 rm openapi-tmp.*
 
 # Bundle Node modules
-npx browserify presentation/app.js -o presentation/bundle.js --exclude original-fs
+npx webpack
