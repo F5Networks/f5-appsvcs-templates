@@ -35,6 +35,7 @@ const sinon = require('sinon');
 const fast = require('@f5devcentral/f5-fast-core');
 
 const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
+const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker.js');
 
@@ -139,7 +140,9 @@ class TeemDeviceMock {
 }
 
 function createWorker() {
-    const worker = new FASTWorker();
+    const worker = new FASTWorker({
+        secretsManager: new SecretsBase64()
+    });
     patchWorker(worker);
 
     worker.storage = testStorage;
@@ -671,6 +674,9 @@ describe('template worker tests', function () {
         op.setBody({
             deletedTemplateSets: [
                 'foo'
+            ],
+            ipamProviders: [
+                { name: 'test', password: 'foobar' }
             ]
         });
         return worker.onPost(op)
@@ -681,6 +687,7 @@ describe('template worker tests', function () {
             .then(() => worker.getConfig(0))
             .then((config) => {
                 assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
             });
     });
     it('post_settings_bad', function () {
@@ -791,6 +798,9 @@ describe('template worker tests', function () {
         op.setBody({
             deletedTemplateSets: [
                 'foo'
+            ],
+            ipamProviders: [
+                { name: 'test', password: 'foobar' }
             ]
         });
         return worker.onPatch(op)
@@ -801,6 +811,7 @@ describe('template worker tests', function () {
             .then(() => worker.getConfig(0))
             .then((config) => {
                 assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
             });
     });
     it('patch_settings_bad', function () {

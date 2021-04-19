@@ -36,6 +36,7 @@ const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const drivers = require('../lib/drivers');
+const { SecretsSecureVault } = require('../lib/secrets');
 
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
@@ -92,7 +93,8 @@ const supportedHashes = {
 };
 
 class FASTWorker {
-    constructor() {
+    constructor(options) {
+        options = options || {};
         this.state = {};
 
         this.isPublic = true;
@@ -113,6 +115,7 @@ class FASTWorker {
             name: projectName,
             version: pkg.version
         });
+        this.secretsManager = options.secretsManager || new SecretsSecureVault();
         this.transactionLogger = new TransactionLogger(
             (transaction) => {
                 const [id, text] = transaction.split('@@');
@@ -372,6 +375,24 @@ class FASTWorker {
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
             });
+    }
+
+    encryptConfigSecrets(newConfig, prevConfig) {
+        return Promise.all((newConfig.ipamProviders || []).map(provider => Promise.resolve()
+            .then(() => {
+                const prevProvider = prevConfig.ipamProviders.filter(
+                    x => x.name === provider.name
+                )[0];
+
+                if (prevProvider && prevProvider.password === provider.password) {
+                    return Promise.resolve(provider.password);
+                }
+
+                return this.secretsManager.encrypt(provider.password || '');
+            })
+            .then((password) => {
+                provider.password = password;
+            })));
     }
 
     handleResponseError(e, description) {
@@ -998,7 +1019,8 @@ class FASTWorker {
             addrs.forEach((address) => {
                 const view = Object.assign({}, provider, { address });
                 promises.push(Promise.resolve()
-                    .then(() => this.recordTransaction(
+                    .then(() => this.secretsManager.decrypt(provider.password))
+                    .then(providerPassword => this.recordTransaction(
                         reqid, `releasing ${address} from IPAM provider: ${providerName}`,
                         axios.post(
                             Mustache.render(provider.releaseUrl, view),
@@ -1006,7 +1028,7 @@ class FASTWorker {
                             {
                                 auth: {
                                     username: provider.username,
-                                    password: provider.password
+                                    password: providerPassword
                                 }
                             }
                         )
@@ -1115,7 +1137,8 @@ class FASTWorker {
                             ipamAddrs[providerName] = [];
                         }
                         ipamChain = ipamChain
-                            .then(() => this.recordTransaction(
+                            .then(() => this.secretsManager.decrypt(provider.password))
+                            .then(providerPassword => this.recordTransaction(
                                 reqid, `fetching address from IPAM provider: ${providerName}`,
                                 axios.post(
                                     Mustache.render(provider.retrieveUrl, provider),
@@ -1123,7 +1146,7 @@ class FASTWorker {
                                     {
                                         auth: {
                                             username: provider.username,
-                                            password: provider.password
+                                            password: providerPassword
                                         }
                                     }
                                 )
@@ -1614,6 +1637,8 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
+            .then(() => this.getConfig(reqid))
+            .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
             .then(() => this.gatherProvisionData(reqid, true))
             .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
@@ -1877,6 +1902,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.getConfig(reqid))
+            .then(prevConfig => this.encryptConfigSecrets(config, prevConfig)
+                .then(() => prevConfig))
             .then((prevConfig) => {
                 combinedConfig = Object.assign({}, prevConfig, config);
             })
