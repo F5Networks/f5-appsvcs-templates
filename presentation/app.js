@@ -100,6 +100,17 @@ const appState = {
     busy: true
 };
 
+const dispOutput = (output) => {
+    if (typeof output === 'object') {
+        output = JSON.stringify(output, null, 2);
+    }
+
+    if (output.length > 0) {
+        console.log(output);
+    }
+    appState.debugOutput = output;
+};
+
 // Auto-register all components in pages directory
 const requireComponent = require.context(
     './pages',
@@ -135,20 +146,15 @@ const vueApp = new Vue({
             }
             window.modalFunc = func;
             appState.modal.message = msg;
+        },
+        getJSON(path) {
+            return getJSON(path);
+        },
+        dispOutput(msg) {
+            return dispOutput(msg);
         }
     }
 });
-
-const dispOutput = (output) => {
-    if (typeof output === 'object') {
-        output = JSON.stringify(output, null, 2);
-    }
-
-    if (output.length > 0) {
-        console.log(output);
-    }
-    appState.debugOutput = output;
-};
 
 const multipartUpload = (file) => {
     const CHUNK_SIZE = 1000000;
@@ -435,38 +441,6 @@ window.addEventListener('load', router);
 
 // Define routes
 route('', 'applications', () => {
-    vueApp.$refs.page.deleteApplication = (appPath) => {
-        vueApp.showModal(
-            'warning',
-            `Application ${appPath} will be permanently deleted!`,
-            () => {
-                appState.busy = true;
-                dispOutput(`Deleting ${appPath}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/applications/${appPath}`, {
-                        method: 'DELETE'
-                    }))
-                    .then(() => {
-                        window.location.href = '#tasks';
-                    })
-                    .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
-            }
-        );
-    };
-
-    appState.data = {
-        appsList: []
-    };
-
-    return getJSON('applications')
-        .then((appsList) => {
-            appsList.forEach((app) => {
-                app.path = `${app.tenant}/${app.name}`;
-            });
-            appState.data.appsList = appsList;
-            dispOutput('');
-        })
-        .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
 });
 route('create', 'create', () => {
     vueApp.$refs.page.newEditor = (tmplid) => {

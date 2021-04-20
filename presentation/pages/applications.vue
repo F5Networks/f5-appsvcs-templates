@@ -11,7 +11,7 @@
                 <div class="td col3">Actions</div>
             </div>
             <div class="tr" height="1px"></div>
-            <div class="tr" v-for="app in data.appsList">
+            <div class="tr" v-for="app in appsList">
                 <div class="td col1 clickable" @click="location.href='#modify/'+app.path">
                     <span class="tenant">{{app.tenant}}</span>
                     <span class="fas fa-angle-double-right icon"></span>
@@ -34,6 +34,41 @@
 <script>
 module.exports = {
     name: 'page-applications',
-    props: ['data']
+    data() {
+        return {
+            appsList: []
+        }
+    },
+    methods: {
+        deleteApplication(appPath) {
+            this.$root.showModal(
+                'warning',
+                `Application ${appPath} will be permanently deleted!`,
+                () => {
+                    this.$root.busy = true;
+                    this.$root.dispOutput(`Deleting ${appPath}`);
+                    return Promise.resolve()
+                        .then(() => this.$root.safeFetch(`${this.$root.endPointUrl}/applications/${appPath}`, {
+                            method: 'DELETE'
+                        }))
+                        .then(() => {
+                            window.location.href = '#tasks';
+                        })
+                        .catch(e => this.$root.dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
+                }
+            );
+        }
+    },
+    async created() {
+        await this.$root.getJSON('applications')
+            .then((appsList) => {
+                appsList.forEach((app) => {
+                    app.path = `${app.tenant}/${app.name}`;
+                });
+                this.appsList = appsList;
+                this.$root.dispOutput('');
+            })
+            .catch(e => this.$root.dispOutput(`Error fetching applications: ${e.message}`));
+    }
 };
 </script>
