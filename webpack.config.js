@@ -1,6 +1,8 @@
 'use strict';
 
-var path = require('path');
+const path = require('path');
+
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 module.exports = {
     mode: 'production',
@@ -11,18 +13,27 @@ module.exports = {
     },
     resolve: {
         fallback: {
-            buffer: false,
-            crypto: false,
             child_process: false,
+            crypto: false,
             fs: false,
             http: false,
             https: false,
             'original-fs': false,
             path: false,
             vm: false,
-            url: false,
-            util: false,
             zlib: false
         }
-    }
+    },
+    plugins: [
+        new NodePolyfillPlugin({
+            excludeAliases: [
+                'crypto',
+                'http',
+                'https',
+                'path',
+                'vm',
+                'zlib'
+            ]
+        })
+    ]
 };
