@@ -10,7 +10,7 @@
             <div class="td col3">Operation</div>
             <div class="td col4">Result</div></div>
         <div class="tr" height="1px"></div>
-        <div v-for="task in data.tasks" class="tr">
+        <div v-for="task in tasks" class="tr">
             <span class="tooltip tooltip-right td clickable-darker col1" data-tooltip="go to task">
                 <a :href="'/mgmt/shared/fast/tasks/' + task.id">{{task.id}}</a>
             </span>
@@ -51,6 +51,51 @@
 <script>
 module.exports = {
     name: 'page-tasks',
-    props: ['data']
+    data() {
+        return {
+            tasks: []
+        }
+    },
+    async created() {
+        const submissionData = this.$root.getSubmissionData();
+        const updateTaskList = () => this.$root.getJSON('tasks')
+            .then((tasks) => {
+                tasks.forEach((task) => {
+                    task.errMsg = '';
+                    if (task.message.includes('Error:')) {
+                        task.errMsg = task.message.replace(/Error:/);
+                        task.message = 'Error';
+                    } else if (task.message.includes('declaration failed')) {
+                        task.errMsg = task.message.replace(/declaration failed/);
+                        task.message = 'declaration failed';
+                    } else if (task.message.includes('declaration is invalid')) {
+                        task.errMsg = task.message.replace(/declaration is invalid/);
+                        task.message = 'declaration is invalid';
+                    }
+                    task.showPopover = false;
+                    if (task.message === 'success' && submissionData[task.id]) {
+                        delete submissionData[task.id];
+                        this.$root.storeSubmissionData(submissionData);
+                    }
+
+                    if (submissionData[task.id]) {
+                        task.canResubmit = true;
+                    }
+                });
+                if (['3.26.0', '3.27.0'].includes(this.$root.as3Version)) {
+                    tasks.reverse();
+                }
+                this.tasks = tasks;
+
+                const inProgressJob = (
+                    tasks.filter(x => x.message === 'in progress').length !== 0
+                );
+                if (inProgressJob) {
+                    setTimeout(updateTaskList, 5000);
+                }
+            });
+
+        await updateTaskList();
+    }
 };
 </script>

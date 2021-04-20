@@ -82,13 +82,22 @@ const safeFetch = (uri, opts, numAttempts) => {
 };
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
+const storeSubmissionData = (data) => {
+    UiWorker.store('submission-data', JSON.stringify(data));
+};
+
+const getSubmissionData = () => {
+    const submissionData = UiWorker.getStore('submission-data') || '{}';
+    return JSON.parse(submissionData);
+};
+
 let editor = null;
 let UI;
-let as3Version;
 
 const appState = {
     debugOutput: '',
     foundAS3: true,
+    as3Version: undefined,
     data: {},
     modal: {
         message: '',
@@ -152,6 +161,12 @@ const vueApp = new Vue({
         },
         dispOutput(msg) {
             return dispOutput(msg);
+        },
+        getSubmissionData() {
+            return getSubmissionData();
+        },
+        storeSubmissionData(data) {
+            return storeSubmissionData(data);
         }
     }
 });
@@ -185,15 +200,6 @@ const multipartUpload = (file) => {
         return uploadPart(0, CHUNK_SIZE - 1);
     }
     return uploadPart(0, file.size - 1);
-};
-
-const storeSubmissionData = (data) => {
-    UiWorker.store('submission-data', JSON.stringify(data));
-};
-
-const getSubmissionData = () => {
-    const submissionData = UiWorker.getStore('submission-data') || '{}';
-    return JSON.parse(submissionData);
 };
 
 // eslint-disable-next-line no-undef
@@ -390,7 +396,7 @@ const newEditor = (tmplid, view, existingApp) => {
 // Check that AS3 is available
 safeFetch('/mgmt/shared/appsvcs/info')
     .then((res) => {
-        as3Version = res.version;
+        appState.as3Version = res.version;
     })
     .catch((e) => {
         appState.foundAS3 = false;
@@ -487,48 +493,6 @@ route('resubmit', 'create', (taskid) => {
         .catch(e => dispOutput(e.message));
 });
 route('tasks', 'tasks', () => {
-    const submissionData = getSubmissionData();
-    const updateTaskList = () => getJSON('tasks')
-        .then((tasks) => {
-            tasks.forEach((task) => {
-                task.errMsg = '';
-                if (task.message.includes('Error:')) {
-                    task.errMsg = task.message.replace(/Error:/);
-                    task.message = 'Error';
-                } else if (task.message.includes('declaration failed')) {
-                    task.errMsg = task.message.replace(/declaration failed/);
-                    task.message = 'declaration failed';
-                } else if (task.message.includes('declaration is invalid')) {
-                    task.errMsg = task.message.replace(/declaration is invalid/);
-                    task.message = 'declaration is invalid';
-                }
-                task.showPopover = false;
-                if (task.message === 'success' && submissionData[task.id]) {
-                    delete submissionData[task.id];
-                    storeSubmissionData(submissionData);
-                }
-
-                if (submissionData[task.id]) {
-                    task.canResubmit = true;
-                }
-            });
-            if (['3.26.0', '3.27.0'].includes(as3Version)) {
-                tasks.reverse();
-            }
-            appState.data.tasks = tasks;
-
-            const inProgressJob = (
-                tasks.filter(x => x.message === 'in progress').length !== 0
-            );
-            if (inProgressJob) {
-                setTimeout(updateTaskList, 5000);
-            }
-        });
-
-    appState.data = {
-        tasks: []
-    };
-    return updateTaskList();
 });
 route('settings', 'settings', () => {
     if (editor) {
