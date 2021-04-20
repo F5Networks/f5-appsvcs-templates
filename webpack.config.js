@@ -3,12 +3,21 @@
 const path = require('path');
 
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
 
 module.exports = {
     entry: './presentation/app.js',
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'presentation')
+    },
+    module: {
+        rules: [
+            {
+                test: /\.vue$/,
+                loader: 'vue-loader'
+            }
+        ]
     },
     resolve: {
         fallback: {
@@ -33,6 +42,7 @@ module.exports = {
                 'vm',
                 'zlib'
             ]
-        })
+        }),
+        new VueLoaderPlugin()
     ]
 };

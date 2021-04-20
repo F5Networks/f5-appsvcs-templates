@@ -21,6 +21,7 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const marked = require('marked');
+
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const UiWorker = require('./lib/ui-worker.js');
@@ -99,14 +100,17 @@ const appState = {
     busy: true
 };
 
-// Auto-register HTML template tags as Vue components
-// eslint-disable-next-line no-restricted-syntax
-for (const tmpl of document.getElementsByTagName('template')) {
-    Vue.component(tmpl.id, {
-        props: ['data'],
-        template: `#${tmpl.id}`
-    });
-}
+// Auto-register all components in pages directory
+const requireComponent = require.context(
+    './pages',
+    false,
+    /.*\.vue$/
+);
+requireComponent.keys().forEach((fileName) => {
+    const componentConfig = requireComponent(fileName);
+    Vue.component(componentConfig.name, componentConfig.default || componentConfig);
+});
+
 // eslint-disable-next-line no-unused-vars
 const vueApp = new Vue({
     el: '#vue-app',
@@ -430,7 +434,7 @@ window.addEventListener('hashchange', router);
 window.addEventListener('load', router);
 
 // Define routes
-route('', 'apps', () => {
+route('', 'applications', () => {
     vueApp.$refs.page.deleteApplication = (appPath) => {
         vueApp.showModal(
             'warning',
