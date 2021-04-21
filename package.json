@@ -19,7 +19,7 @@
     "build": "npm run buildgui && npm run buildrpm",
     "version": "./scripts/fix-version.sh",
     "start": "node --unhandled-rejections=strict stand-alone/app.js",
-    "watch": "npm-watch"
+    "watch": "NODE_ENV=development npm-watch"
   },
   "keywords": [
     "as3",

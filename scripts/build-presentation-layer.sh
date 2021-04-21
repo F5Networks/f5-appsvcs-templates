@@ -8,4 +8,7 @@ npx redoc-cli bundle -o presentation/apidoc.html openapi-tmp.yml
 rm openapi-tmp.*
 
 # Bundle Node modules
+if [ -z "${NODE_ENV:+x}" ]; then
+    export NODE_ENV=production
+fi
 npx webpack
