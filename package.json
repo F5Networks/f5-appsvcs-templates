@@ -80,7 +80,7 @@
     "core-js": "^3.10.0",
     "deepmerge": "^4.2.2",
     "extract-zip": "^1.7.0",
-    "fs-extra": "^9.1.0",
+    "fs-extra": "^8.1.0",
     "semver": "^7.3.5"
   }
 }
