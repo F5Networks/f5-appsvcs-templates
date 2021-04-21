@@ -26,34 +26,111 @@ A ``{{tenant}}`` tag in a template renders the value of the `tenant` key.
 
 Sections
 ^^^^^^^^
-For iterating over a list of data, we make use of Mustache sections. 
-Sections render block of text one or more times depending on the value of the key.  
-Sections begin with a pound (#) and end with a slash (/). 
-Each of the signs are followed by the key whose value is the basis for rendering the section.
+| For iterating over a list of data, we make use of Mustache sections. 
+| Sections render blocks of text one or more times, depending on the value of the key in the current context.
+| A section begins with a pound and ends with a slash. That is, {{#person}} begins a *"person"* section while {{/person}} ends it.
+| The behavior of the section is determined by the value of the key.
+
+Using the *person* section example from above, 2 types of lists can be created: *Empty List* or *Non-Empty List*.
+
+**False Values or Empty Lists**
+
+If the *person* key exists, and has a value of false or an empty list, the HTML between the pound and slash will not be displayed.
+
+Template:
 
 .. code-block:: mustache
 
-   {{#tenant}}
-   < Other_code>
-   {{/tenant}}
+   Shown:
+    {{#person}}
+   Never shown:
+    {{/person}}
+   Hash:
+    {    "person": false   }
+   Output:
+   Shown.
+
+**Non-Empty Lists**
+
+If the *person* key exists, and has a non-false value, the HTML between the pound and slash will be rendered and displayed one or more times.
+
+When the value is a non-empty list, the text in the block will be displayed once for each item in the list. 
+The context of the block will be set to the current item for each iteration. In this way we can loop over collections.
+
+Template:
+
+.. code-block:: mustache
+
+    {{#repo}}
+         <b>{{name}}</b>
+    {{/repo}}
+   Hash:
+    {
+      "repo": [
+
+      { "name": "resque" },
+      { "name": "hub" },
+      { "name": "rip" }
+     ]
+    }
+   Output:
+   <b>resque</b>
+   <b>hub</b>
+   <b>rip</b>
+
+
+**Overlaid Definitions**
+
+The way FAST generates parameter definitions can be surprising at times if that parameter shows up multiple times in the template text. 
+
+When generating parameter definitions, FAST looks at the following locations **in the following order**, with later definitions overriding/modifying previous ones:
+
+1. Embedded mustache tags in any merged templates.  For example: ``{{var:f5:port}}``
+2. The *definitions* properties of any merged templates. Templates are merged by name using ``$ref`` inside a *oneOf*, *anyOf*, or *allOf* clause.
+3. Embedded mustache tags in the primary template. 
+4. The *definitions* property in the primary template.
+5. The *parameters* property in any merged templates.
+6. The *parameters* property in the primary template.
+
+**Notes**
+
+* If a duplicate Mustache tag exists in the template, then the last encountered tag is used for the definition. The order that Mustache tags are parsed in should not be assumed.
+* Properties within the definition (e.g., title, description, type, format, default, etc.) are merged together as they are found with newer data taking precedence over old data on key conflicts.
+* Values from the parameters property of YAML templates will be used in place of the default from the parameter definition but will not actually update the definition itself.
+
+.. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Sections.
 
 
 Partials
 ^^^^^^^^
 Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
-The syntax for including a partial uses curley braces and an angle bracket (>). 
-As an example we define a `node` partial as: ``{{> node}}`` written in `yaml` format.
+The syntax for including a partial uses curley braces and an angle bracket {{> }}. 
 
-.. code-block:: yaml
+The following example is taken from the FAST Microsoft Exchange template, POP3 section.
 
-    template: |
-    {
-        "{{tenant}}": {
-        "{{application_name}}" {
-            ... etc ... 
-            }
-        }
-    }
+.. code-block:: none
+
+    service_pop3VS:
+      template: |
+        {{#pop3}}
+          "{{app_name}}_pop3_vs": {
+            {{#single_vip}}
+              "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+            {{/single_vip}}
+            {{^single_vip}}
+              "virtualAddresses": ["{{pop3_virtual_address:f5:ipv4}}"],
+            {{/single_vip}}
+            "pool": "exchangeVS_pop3_pool",
+            "virtualPort": 995,
+            "class": "Service_TCP",
+            {{> service_tls_server_def}}
+            {{> service_tls_client_def}}
+            {{> service_snat_def}}
+            {{> service_tcp_def}}
+          },
+        {{/pop3}}
+
+.. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Partials.
 
 
 JSON Schema Basic Types

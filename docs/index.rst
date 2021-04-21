@@ -50,7 +50,7 @@ Previous buttons to explore the documentation.
 
 .. |as3| raw:: html
 
-   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/" target="_blank">AS3</a>
+   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/" target="_blank">AS3</a>
 
 .. |sf| raw:: html
 
