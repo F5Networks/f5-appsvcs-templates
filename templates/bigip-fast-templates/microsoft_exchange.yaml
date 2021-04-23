@@ -24,6 +24,8 @@ definitions:
     oneOf:
     - format: ipv4
     - format: ipv6
+    dependencies:
+    - single_vip
   virtual_port:
     title: Virtual Server Port
     type: integer
