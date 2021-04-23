@@ -7,7 +7,7 @@
   "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint --ext .js,.vue nodejs lib presentation/app.js test scripts stand-alone",
+    "lint": "eslint --ext .js,.vue nodejs lib presentation/app.js presentation/pages test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
@@ -60,7 +60,11 @@
     ],
     "rules": {
       "no-control-regex": "off",
-      "strict": "off"
+      "strict": "off",
+      "vue/html-indent": [
+        "error",
+        4
+      ]
     }
   },
   "nyc": {

@@ -130,8 +130,8 @@ const pageComponents = {};
 requireComponent.keys().forEach((fileName) => {
     const componentConfig = requireComponent(fileName);
     const component = componentConfig.default || componentConfig;
-    Vue.component(componentConfig.name, component);
-    pageComponents[componentConfig.name.replace('page-', '')] = component;
+    Vue.component(component.name, component);
+    pageComponents[component.name.replace('Page', '').toLowerCase()] = component;
 });
 
 // Setup router

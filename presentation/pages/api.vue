@@ -1,10 +1,15 @@
-<template >
-    <iframe src="apidoc.html"></iframe>
+<template>
+    <iframe src="apidoc.html" />
 </template>
 
 <script>
-module.exports = {
-    name: 'page-api',
-    props: ['data']
+export default {
+    name: 'PageApi',
+    props: {
+        data: {
+            type: Object,
+            required: true
+        }
+    }
 };
 </script>
