@@ -48,6 +48,7 @@
     "redoc-cli": "^0.10.4",
     "sinon": "^10.0.0",
     "vue-loader": "^15.9.6",
+    "vue-router": "^3.5.1",
     "vue-template-compiler": "^2.6.12",
     "webpack": "^5.36.2",
     "webpack-cli": "^4.7.0"

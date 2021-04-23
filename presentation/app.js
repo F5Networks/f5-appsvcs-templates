@@ -21,10 +21,10 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const marked = require('marked');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const VueRouter = require('vue-router').default;
 
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
-
-const UiWorker = require('./lib/ui-worker.js');
 
 const endPointUrl = '/mgmt/shared/fast';
 
@@ -83,16 +83,15 @@ const safeFetch = (uri, opts, numAttempts) => {
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
 const storeSubmissionData = (data) => {
-    UiWorker.store('submission-data', JSON.stringify(data));
+    localStorage.setItem('submission-data', JSON.stringify(data));
 };
 
 const getSubmissionData = () => {
-    const submissionData = UiWorker.getStore('submission-data') || '{}';
+    const submissionData = localStorage.getItem('submission-data') || '{}';
     return JSON.parse(submissionData);
 };
 
 let editor = null;
-let UI;
 
 const appState = {
     debugOutput: '',
@@ -106,7 +105,8 @@ const appState = {
     pageComponent: {
         template: '<div></div>'
     },
-    busy: true
+    busy: true,
+    endPointUrl
 };
 
 const dispOutput = (output) => {
@@ -126,51 +126,53 @@ const requireComponent = require.context(
     false,
     /.*\.vue$/
 );
+const pageComponents = {};
 requireComponent.keys().forEach((fileName) => {
     const componentConfig = requireComponent(fileName);
-    Vue.component(componentConfig.name, componentConfig.default || componentConfig);
+    const component = componentConfig.default || componentConfig;
+    Vue.component(componentConfig.name, component);
+    pageComponents[componentConfig.name.replace('page-', '')] = component;
 });
 
-// eslint-disable-next-line no-unused-vars
-const vueApp = new Vue({
-    el: '#vue-app',
-    data: appState,
-    methods: {
-        cancelModal() {
-            appState.modal.message = '';
-        },
-        continueModal() {
-            const modalFunc = window.modalFunc || Promise.resolve();
-            Promise.resolve()
-                .then(() => modalFunc())
-                .finally(() => this.cancelModal());
-        },
-        showModal(type, msg, func) {
-            if (type === 'warning') {
-                appState.modal.icon = 'info-warning';
-                appState.modal.title = 'Warning';
-            } else {
-                appState.modal.icon = 'info-circle';
-                appState.modal.title = 'Info';
-            }
-            window.modalFunc = func;
-            appState.modal.message = msg;
-        },
-        getJSON(path) {
-            return getJSON(path);
-        },
-        dispOutput(msg) {
-            return dispOutput(msg);
-        },
-        getSubmissionData() {
-            return getSubmissionData();
-        },
-        storeSubmissionData(data) {
-            return storeSubmissionData(data);
-        }
-    }
+// Setup router
+const routes = {};
+function route(path, _pageName, pageFunc) {
+    routes[`/${path}`] = { pageFunc };
+}
+
+Vue.use(VueRouter);
+
+const router = new VueRouter({
+    routes: [
+        { path: '/', component: pageComponents.applications },
+        { path: '/create', component: pageComponents.create },
+        { path: '/modify/:appid(.*)', component: pageComponents.create },
+        { path: '/resubmit/:taskid', component: pageComponents.create },
+        { path: '/tasks', component: pageComponents.tasks },
+        { path: '/settings', component: pageComponents.settings },
+        { path: '/api', component: pageComponents.api },
+        { path: '/templates', component: pageComponents.templates }
+    ]
 });
 
+router.beforeEach((to, from, next) => {
+    appState.busy = true;
+    dispOutput('');
+    next();
+});
+
+router.afterEach((to) => {
+    const routePath = to.path;
+    const routeInfo = routes[routePath];
+    const pageFunc = (routeInfo && routeInfo.pageFunc) || (() => Promise.resolve());
+    return Promise.resolve()
+        .then(() => pageFunc(to.params))
+        .finally(() => {
+            appState.busy = false;
+        });
+});
+
+let vueApp;
 const multipartUpload = (file) => {
     const CHUNK_SIZE = 1000000;
     const uploadPart = (start, end) => {
@@ -373,7 +375,7 @@ const newEditor = (tmplid, view, existingApp) => {
                         storeSubmissionData(submissionData);
                     })
                     .then(() => {
-                        window.location.href = '#tasks';
+                        vueApp.$router.push('tasks');
                     })
                     .catch((e) => {
                         appState.busy = false;
@@ -404,96 +406,8 @@ safeFetch('/mgmt/shared/appsvcs/info')
         console.log(`Error reaching AS3: ${e.message}`);
     });
 
-// Setup basic routing
-const routes = {};
-function route(path, pageName, pageFunc) {
-    routes[path] = { pageName, pageFunc };
-}
-
-function router() {
-    const rawUrl = window.location.hash.slice(1) || '';
-    const url = rawUrl.replace(/\/application.*?\/edit/, '');
-    const urlParts = url.split('/');
-    const routeInfo = routes[urlParts[0]];
-
-    const app = document.getElementById('app');
-    if (!UI) UI = new UiWorker(app);
-    appState.busy = true;
-    UI.startMoveToRoute(urlParts[0]);
-
-    // Error on unknown route
-    if (!routeInfo) {
-        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${Object.keys(routes).join(',')})`;
-        app.innerText = msg;
-        console.error(msg);
-        return;
-    }
-
-    // Load new page
-    dispOutput('');
-    appState.pageComponent = `page-${routeInfo.pageName}`;
-
-    const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
-    Promise.resolve()
-        .then(() => pageFunc(urlParts.slice(1).join('/')))
-        .finally(() => {
-            UI.completeMoveToRoute();
-            appState.busy = false;
-        });
-}
-
-window.addEventListener('hashchange', router);
-window.addEventListener('load', router);
-
-// Define routes
-route('', 'applications', () => {
-});
-route('create', 'create', () => {
-    vueApp.$refs.page.newEditor = (tmplid) => {
-        newEditor(tmplid);
-    };
-
-    vueApp.$refs.page.currentSet = (setName) => {
-        appState.data.sets.forEach((set) => {
-            set.expanded = set.name === setName;
-        });
-    };
-
-    appState.data = {
-        sets: []
-    };
-    return getJSON('templatesets')
-        .then((data) => {
-            appState.data.sets = data.map(x => Object.assign({}, x, { expanded: false }));
-            dispOutput('');
-        })
-        .catch(e => dispOutput(e.message));
-});
-route('modify', 'create', (appID) => {
-    dispOutput(`Fetching app data for ${appID}`);
-    return getJSON(`applications/${appID}`)
-        .then((appData) => {
-            const appDef = appData.constants.fast;
-            newEditor(appDef.template, appDef.view, true);
-        })
-        .catch(e => dispOutput(e.message));
-});
-route('resubmit', 'create', (taskid) => {
-    const submissionData = getSubmissionData();
-    if (!submissionData[taskid]) {
-        dispOutput(`Could not find submission data for task ${taskid}`);
-        return Promise.resolve();
-    }
-
-    const template = submissionData[taskid].template;
-    const parameters = submissionData[taskid].parameters;
-
-    return Promise.resolve()
-        .then(() => newEditor(template, parameters))
-        .catch(e => dispOutput(e.message));
-});
-route('tasks', 'tasks', () => {
-});
+// Route functions
+// TODO: Move these to page components
 route('settings', 'settings', () => {
     if (editor) {
         editor.destroy();
@@ -537,7 +451,6 @@ route('settings', 'settings', () => {
         })
         .catch(e => dispOutput(e.message));
 });
-route('api', 'api', () => Promise.resolve());
 route('templates', 'templates', () => {
     const filters = {
         enabled: 'Enabled',
@@ -546,7 +459,7 @@ route('templates', 'templates', () => {
         all: 'All Template Sets'
     };
     const templatesFilterKey = 'templates-filter';
-    let currentFilter = UiWorker.getStore(templatesFilterKey);
+    let currentFilter = localStorage.getItem(templatesFilterKey);
     if (!currentFilter) {
         currentFilter = 'enabled';
     }
@@ -664,7 +577,7 @@ route('templates', 'templates', () => {
     vueApp.$refs.page.setFilter = (filter) => {
         currentFilter = filter;
         appState.data.currentFilter = filter;
-        UiWorker.store(templatesFilterKey, filter);
+        localStorage.setItem(templatesFilterKey, filter);
         document.getElementById('templates-filter').classList.remove('active'); // Collapse the drop down
         reloadTemplates();
     };
@@ -760,3 +673,55 @@ route('templates', 'templates', () => {
 
     return renderTemplates();
 });
+
+// Create and mount Vue app
+vueApp = new Vue({
+    data: appState,
+    router,
+    methods: {
+        cancelModal() {
+            appState.modal.message = '';
+        },
+        continueModal() {
+            const modalFunc = window.modalFunc || Promise.resolve();
+            Promise.resolve()
+                .then(() => modalFunc())
+                .finally(() => this.cancelModal());
+        },
+        showModal(type, msg, func) {
+            if (type === 'warning') {
+                appState.modal.icon = 'info-warning';
+                appState.modal.title = 'Warning';
+            } else {
+                appState.modal.icon = 'info-circle';
+                appState.modal.title = 'Info';
+            }
+            window.modalFunc = func;
+            appState.modal.message = msg;
+        },
+        safeFetch(uri, opts, numAttempts) {
+            return safeFetch(uri, opts, numAttempts);
+        },
+        getJSON(path) {
+            return getJSON(path);
+        },
+        dispOutput(msg) {
+            return dispOutput(msg);
+        },
+        getSubmissionData() {
+            return getSubmissionData();
+        },
+        storeSubmissionData(data) {
+            return storeSubmissionData(data);
+        },
+        newEditor(tmplid, view, existingApp) {
+            return newEditor(tmplid, view, existingApp);
+        },
+        destroyEditor() {
+            if (editor) {
+                editor.destroy();
+            }
+        }
+    }
+});
+vueApp.$mount('#vue-app');

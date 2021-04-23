@@ -20,13 +20,13 @@
                 <div class="header-logo"><img src="img/as3robot.png" height="55px"/></div>
                 <div class="header-title">F5 Application Services Templates</div>
             </div>
-            <div id="nav-bar">
-                <a class="btn-nav" href="#">Application List</a>
-                <a class="btn-nav" href="#create">Deploy</a>
-                <a class="btn-nav" href="#templates">Templates</a>
-                <a class="btn-nav" href="#tasks">Deploy Log</a>
-                <a class="btn-nav" href="#settings">Settings</a>
-                <a class="btn-nav" href="#api">API</a>
+            <div id="nav-bar" v-cloak :class="{ 'nav-disabled': busy }">
+                <router-link to="/">Application List</router-link>
+                <router-link to="/create">Deploy</router-link>
+                <router-link to="/templates">Templates</router-link>
+                <router-link to="/tasks">Deploy Log</router-link>
+                <router-link to="/settings">Settings</router-link>
+                <router-link to="/api">API</router-link>
             </div>
             <div id="content-wrapper">
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
@@ -36,7 +36,7 @@
                         Please check that AS3 is properly installed.
                         AS3 can be downloaded <a href="https://f5.com/getas3">here</a>.
                     </h1>
-                    <component ref="page" :is="pageComponent" :data="data" :class="{ 'display-none': busy }"></component>
+                    <router-view ref="page" :data="data" :class="{ 'display-none': busy }"></router-view>
                     <pre id="output">{{debugOutput}}</pre>
                     <div v-if="modal.message && !busy" class="modal active">
                         <div class="modal-container">
@@ -63,7 +63,7 @@
 
         <!-- Scripts -->
         <script src="js/jsoneditor.min.js"></script>
-        <script src="js/vue.min.js"></script>
+        <script src="js/vue.js"></script>
         <script src="bundle.js" charset="utf-8"></script>
     </body>
 </html>

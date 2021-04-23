@@ -12,7 +12,7 @@
             </div>
             <div class="tr" height="1px"></div>
             <div class="tr" v-for="app in appsList">
-                <div class="td col1 clickable" @click="location.href='#modify/'+app.path">
+                <div class="td col1 clickable" @click="$root.$router.push('/modify/'+app.path)">
                     <span class="tenant">{{app.tenant}}</span>
                     <span class="fas fa-angle-double-right icon"></span>
                     <span class="application">{{app.name}}</span>
@@ -20,7 +20,8 @@
                 <div class="td col2">{{app.template}}</div>
                 <div class="td col3">
                     <span class="tooltip tooltip-right" data-tooltip="Modify Application">
-                        <a class="fas fa-edit icon btn-icon" :href="'#modify/'+app.path"></a>
+                        <router-link class="fas fa-edit icon btn-icon" :to="'/modify/'+app.path">
+                        </router-link>
                     </span>
                     <span class="tooltip tooltip-right" data-tooltip="Delete Application">
                         <a class="fas fa-trash icon btn-icon" @click="deleteApplication(app.path)"></a>
@@ -52,7 +53,7 @@ module.exports = {
                             method: 'DELETE'
                         }))
                         .then(() => {
-                            window.location.href = '#tasks';
+                            this.$root.$router.push('tasks');
                         })
                         .catch(e => this.$root.dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
                 }

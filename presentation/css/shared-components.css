@@ -29,17 +29,17 @@
   width: max-content;
 }
 
-#selected-nav {
+.router-link-exact-active {
   background-image: none !important;
   height: 39px;
   pointer-events: none;
 }
 
-.nav-disabled {
+.nav-disabled a {
   pointer-events: none;
 }
 
-.btn-nav {
+#nav-bar a {
   display: block;
   float: left;
   color: #333;

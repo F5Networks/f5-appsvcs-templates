@@ -44,6 +44,9 @@ button:disabled:hover {
   background-color: #778797a1 !important;
   border-color: #545f6b36 !important;
 }
+.display-none {
+  display: none;
+}
 .btn {
   border-radius: 3px;
 }
