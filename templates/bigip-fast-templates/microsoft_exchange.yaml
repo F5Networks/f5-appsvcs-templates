@@ -144,6 +144,11 @@ definitions:
     title: Specify the name of an existing BIG-IP serverssl profile.
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
     enumFromBigip: 'ltm/profile/server-ssl'
+    dependencies:
+    - enable_tls_client
+    - make_tls_client_profile
+    invertDependency:
+    - make_tls_client_profile
   enable_multiplex:
     title: Connection Multiplexing
     description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
