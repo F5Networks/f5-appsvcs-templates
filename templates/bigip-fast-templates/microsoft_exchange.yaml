@@ -138,6 +138,8 @@ definitions:
   make_tls_client_profile:
     title: Automatically manage the TLS client profile
     type: boolean
+    dependencies:
+    - enable_tls_client
   tls_client_profile_name:
     title: Specify the name of an existing BIG-IP serverssl profile.
     description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
