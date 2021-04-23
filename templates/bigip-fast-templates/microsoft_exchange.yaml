@@ -123,7 +123,7 @@ definitions:
     - snat_automap
   enable_tls_server:
     title: TLS Server
-    description: Select an existing TLS server profile. TLS server profiles are of type "ltm clientssl" on BIG-IP.
+    description: 'Build a TLS server profile. Note: TLS server profiles are of type "ltm clientssl" on BIG-IP.'
     type: boolean
   tls_cert_name:
     title: Specify the name of an existing BIG-IP SSL certificate.
@@ -142,7 +142,7 @@ definitions:
     - enable_tls_client
   tls_client_profile_name:
     title: Specify the name of an existing BIG-IP serverssl profile.
-    description: TLS client profiles are of type "ltm serverssl" on BIG-IP.
+    description: 'Note: TLS client profiles are of type "ltm serverssl" on BIG-IP.'
     enumFromBigip: 'ltm/profile/server-ssl'
     dependencies:
     - enable_tls_client
