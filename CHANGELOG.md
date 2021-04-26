@@ -4,11 +4,15 @@
 
 ## Fixed
 * GUI: Fix task order in the Deploy Log when using AS3 versions 3.26.0 and 3.27.0
-* bigip-fast-templates: Fix missing virtual address when selecting Common VIP in the Microsoft Exchange template
-* bigip-fast-templates: Fix missing "Automatically manage the TLS client profile" when selecting "TLS CLient" in the Microsoft Exchange template
 
 ## Changed
 * bigip-fast-templates: Make tenant and application names immutable
+
+# 1.8.1
+## Fixed
+* bigip-fast-templates: Fix missing virtual address when selecting Common VIP in the Microsoft Exchange template
+* bigip-fast-templates: Fix missing "Automatically manage the TLS client profile" when selecting "TLS CLient" in the Microsoft Exchange template
+* Fix error when uploading custom template sets to BIG-IP 13.1
 
 # 1.8.0
 ## Added

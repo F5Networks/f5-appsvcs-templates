@@ -73,6 +73,7 @@ const configKey = 'config';
 const supportedHashes = {
     'bigip-fast-templates': [
         '8784c0c72c16a7a588c00920431e26ca23231674ca7ce75f3625ab03b8a81342', // v1.9
+        'fbaee3fd9ecce14a2d90df8c155998749b49126e0eb80267e9b426c58677a164', // v1.8.1
         '42650496f8e1b00a7e8e6a7c148a781bb4204e95f09f66d7d89af5793ae0b8b7', // v1.8
         '83df55f23066fd0ac205ce3dca2c96ffd71e459914d7dcf205f3201fb1570427', // v1.7
         '9b65c17982fd5f83a36576c1a55f2771a0011283db8221704925ee803b8dbd13', // v1.6
