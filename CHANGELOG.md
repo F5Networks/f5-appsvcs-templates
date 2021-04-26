@@ -2,6 +2,7 @@
 ## Fixed
 * bigip-fast-templates: Fix missing virtual address when selecting Common VIP in the Microsoft Exchange template
 * bigip-fast-templates: Fix missing "Automatically manage the TLS client profile" when selecting "TLS CLient" in the Microsoft Exchange template
+* Fix error when uploading custom template sets to BIG-IP 13.1
 
 # 1.8.0
 ## Added
