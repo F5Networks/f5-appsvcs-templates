@@ -1,6 +1,7 @@
 # 1.9.0
 ## Added
 * templates: Add "immutable" property for parameters that should not be edited on application updates
+* Allow sending a list of applications to delete when sending a DELETE to /applications
 
 ## Fixed
 * GUI: Fix task order in the Deploy Log when using AS3 versions 3.26.0 and 3.27.0

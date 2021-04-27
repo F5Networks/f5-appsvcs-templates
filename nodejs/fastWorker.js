@@ -1371,35 +1371,25 @@ class FASTWorker {
         }
     }
 
-    deleteApplications(restOperation, appid) {
+    deleteApplications(restOperation, appid, data) {
         const reqid = restOperation.requestId;
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
 
         if (appid) {
-            const tenant = pathElements[4];
-            const app = pathElements[5];
-            return Promise.resolve()
-                .then(() => this.recordTransaction(
-                    reqid, 'requesting driver to delete an application',
-                    this.driver.deleteApplication(tenant, app)
-                ))
-                .then((result) => {
-                    restOperation.setHeaders('Content-Type', 'text/json');
-                    restOperation.setBody(result.body);
-                    restOperation.setStatusCode(result.status);
-                    this.completeRestOperation(restOperation);
-                })
-                .then(() => {
-                    this.generateTeemReportApplication('delete', '');
-                })
-                .catch(e => this.genRestResponse(restOperation, 404, e.stack));
+            data = [`${pathElements[4]}/${pathElements[5]}`];
+        }
+
+        if (typeof data === 'string') {
+            // convert empty string to an empty array
+            data = [];
         }
 
         return Promise.resolve()
-            .then(() => this.recordTransaction(
-                reqid, 'deleting all managed applications',
-                this.driver.deleteApplications()
+            .then(() => data.map(x => x.split('/')))
+            .then(appNames => this.recordTransaction(
+                reqid, 'deleting applications',
+                this.driver.deleteApplications(appNames)
             ))
             .then((result) => {
                 restOperation.setHeaders('Content-Type', 'text/json');
@@ -1410,7 +1400,15 @@ class FASTWorker {
             .then(() => {
                 this.generateTeemReportApplication('delete', '');
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+            .catch((e) => {
+                if (e.message.match('no tenant found')) {
+                    return this.genRestResponse(restOperation, 404, e.message);
+                }
+                if (e.message.match('could not find application')) {
+                    return this.genRestResponse(restOperation, 404, e.message);
+                }
+                return this.genRestResponse(restOperation, 500, e.stack);
+            });
     }
 
     deleteTemplateSets(restOperation, tsid) {
@@ -1498,6 +1496,7 @@ class FASTWorker {
     }
 
     onDelete(restOperation) {
+        const body = restOperation.getBody();
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
         const collection = pathElements[3];
@@ -1510,7 +1509,7 @@ class FASTWorker {
         try {
             switch (collection) {
             case 'applications':
-                return this.deleteApplications(restOperation, itemid);
+                return this.deleteApplications(restOperation, itemid, body);
             case 'templatesets':
                 return this.deleteTemplateSets(restOperation, itemid);
             case 'settings':
