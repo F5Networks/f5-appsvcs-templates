@@ -4,6 +4,7 @@
 
 ## Fixed
 * GUI: Fix task order in the Deploy Log when using AS3 versions 3.26.0 and 3.27.0
+* bigip-fast-templates: Replace external URL monitor script references with inline scripts
 
 ## Changed
 * bigip-fast-templates: Make tenant and application names immutable
