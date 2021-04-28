@@ -27,7 +27,7 @@ A ``{{tenant}}`` tag in a template renders the value of the `tenant` key.
 Sections
 ^^^^^^^^
 | For iterating over a list of data, we make use of Mustache sections. 
-| Sections render blocks of text one or more times, depending on the value of the key in the current context.
+| Sections render blocks of text zero or more times, depending on the value of the key in the current context.
 | A section begins with a pound and ends with a slash. That is, {{#person}} begins a *"person"* section while {{/person}} ends it.
 | The behavior of the section is determined by the value of the key.
 
@@ -35,24 +35,23 @@ Using the *person* section example from above, 2 types of lists can be created: 
 
 **False Values or Empty Lists**
 
-If the *person* key exists, and has a value of false or an empty list, the HTML between the pound and slash will not be displayed.
-
-Template:
+If the *person* key exists, and has a value of false, or an empty list, the text between the pound and slash will not be displayed.
+In the following example, *person* has a ``parameter: false``, therefore RED will not be displayed, resulting in the ``Rendered Output: BLUE``.
 
 .. code-block:: mustache
 
-   Shown:
-    {{#person}}
-   Never shown:
+   {{#person}}
+    "RED"],
+    {{/person}
+    {{^person}}
+    "BLUE",
     {{/person}}
-   Hash:
-    {    "person": false   }
-   Output:
-   Shown.
+    parameters:
+		person: false
+			
+	Rendered Output: BLUE
 
 **Non-Empty Lists**
-
-If the *person* key exists, and has a non-false value, the HTML between the pound and slash will be rendered and displayed one or more times.
 
 When the value is a non-empty list, the text in the block will be displayed once for each item in the list. 
 The context of the block will be set to the current item for each iteration. In this way we can loop over collections.
@@ -64,10 +63,7 @@ Template:
     {{#repo}}
          <b>{{name}}</b>
     {{/repo}}
-   Hash:
-    {
       "repo": [
-
       { "name": "resque" },
       { "name": "hub" },
       { "name": "rip" }
@@ -79,7 +75,46 @@ Template:
    <b>rip</b>
 
 
-**Overlaid Definitions**
+.. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Sections.
+
+
+Partials
+^^^^^^^^
+Along with sections, Mustache utilizes partials. Mustache partials can be thought of as a way to insert template snippets.
+The syntax for including a partial uses curley braces and an angle bracket {{> }}. 
+
+For FAST, a partial definition must contain template text, i.e., define a template property
+
+The following example is taken from the FAST Microsoft Exchange template, POP3 section.
+
+.. code-block:: none
+
+  definitions:
+    partialDef:
+      template: |
+        {{#useVar}}
+          {{var}}
+        {{/useVar}}
+    useVar:
+      type: boolean
+  template: |
+  {{> partialDef}}
+  {{> partialDef}}
+  parameters:
+  {
+    "useVar": true,
+    "var": "sample"
+  }
+
+ outputs:
+ sample
+ sample
+
+
+.. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Partials.
+
+Overlaid Definitions
+^^^^^^^^^^^^^^^^^^^^
 
 The way FAST generates parameter definitions can be surprising at times if that parameter shows up multiple times in the template text. 
 
@@ -97,40 +132,6 @@ When generating parameter definitions, FAST looks at the following locations **i
 * If a duplicate Mustache tag exists in the template, then the last encountered tag is used for the definition. The order that Mustache tags are parsed in should not be assumed.
 * Properties within the definition (e.g., title, description, type, format, default, etc.) are merged together as they are found with newer data taking precedence over old data on key conflicts.
 * Values from the parameters property of YAML templates will be used in place of the default from the parameter definition but will not actually update the definition itself.
-
-.. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Sections.
-
-
-Partials
-^^^^^^^^
-Along with sections, Mustache utilizes partials. Mustache partials may be thought of as file includes. 
-The syntax for including a partial uses curley braces and an angle bracket {{> }}. 
-
-The following example is taken from the FAST Microsoft Exchange template, POP3 section.
-
-.. code-block:: none
-
-    service_pop3VS:
-      template: |
-        {{#pop3}}
-          "{{app_name}}_pop3_vs": {
-            {{#single_vip}}
-              "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
-            {{/single_vip}}
-            {{^single_vip}}
-              "virtualAddresses": ["{{pop3_virtual_address:f5:ipv4}}"],
-            {{/single_vip}}
-            "pool": "exchangeVS_pop3_pool",
-            "virtualPort": 995,
-            "class": "Service_TCP",
-            {{> service_tls_server_def}}
-            {{> service_tls_client_def}}
-            {{> service_snat_def}}
-            {{> service_tcp_def}}
-          },
-        {{/pop3}}
-
-.. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Partials.
 
 
 JSON Schema Basic Types

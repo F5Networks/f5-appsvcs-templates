@@ -11,6 +11,14 @@ Document Revision History
         - Description
         - Date
 
+      * - 13.0
+        - Updated the documentation for FAST v1.9. This release contains the following changes:  |br| |br| Fixed: |br|
+        - 05-18-21
+
+      * - 12.0
+        - Updated the documentation for FAST v1.8.1. This release contains the following changes:  |br| Fixed: |br| * bigip-fast-templates: Fix missing virtual address when selecting Common VIP in the Microsoft Exchange template |br| * bigip-fast-templates: Fix missing "Automatically manage the TLS client profile" when selecting "TLS CLient" in the Microsoft Exchange template |br| * Fix error when uploading custom template sets to BIG-IP 13.1
+        - 04-26-21
+
       * - 11.0
         - Updated the documentation for FAST v1.8. This release contains the following changes: |br| * Added /render endpoint |br| * Added support for Local Traffic Policies |br| * Added support for VLAN selection |br| |br| Fixed: |br| * Fixed f5-appsvcs-templates missing after a UCS save/restore |br| * Fixed erroneous template errors on deleted template sets |br| * Fixed error loading templates when template data group gets too large |br| |br| Changed: |br| * Reduced the install size of f5-appsvcs-templates |br| * Use a value of null for enum when hydrating enumFromBigip with 0 items
         - 04-06-21
