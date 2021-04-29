@@ -849,6 +849,20 @@ class FASTWorker {
             });
     }
 
+    getPropsWithChild(schema, childName) {
+        return Object.entries(schema.properties || {})
+            .reduce((acc, curr) => {
+                const [key, value] = curr;
+                if (value[childName]) {
+                    acc[key] = value;
+                }
+                if (value.items && value.items[childName]) {
+                    acc[`${key}.items`] = value.items;
+                }
+                return acc;
+            }, {});
+    }
+
     hydrateSchema(tmpl, requestId, clearCache) {
         const schema = tmpl._parametersSchema;
         const subTemplates = [
@@ -861,29 +875,9 @@ class FASTWorker {
             this._hydrateCache = null;
         }
 
-        const ipFromIpamProps = Object.entries(schema.properties || {})
-            .reduce((acc, curr) => {
-                const [key, value] = curr;
-                if (value.ipFromIpam) {
-                    acc[key] = value;
-                }
-                if (value.items && value.items.ipFromIpam) {
-                    acc[`${key}.items`] = value.items;
-                }
-                return acc;
-            }, {});
+        const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+        const enumFromBigipProps = this.getPropsWithChild(schema, 'enumFromBigip');
 
-        const enumFromBigipProps = Object.entries(schema.properties || {})
-            .reduce((acc, curr) => {
-                const [key, value] = curr;
-                if (value.enumFromBigip) {
-                    acc[key] = value;
-                }
-                if (value.items && value.items.enumFromBigip) {
-                    acc[`${key}.items`] = value.items;
-                }
-                return acc;
-            }, {});
         const propNames = Object.keys(enumFromBigipProps)
             .concat(Object.keys(ipFromIpamProps));
         if (propNames.length > 0) {
@@ -1007,35 +1001,82 @@ class FASTWorker {
             .then(() => apps);
     }
 
-    releaseIPAMAddress(reqid, config, appData) {
+    populateIPAMAddress(template, templateData, config, reqid, ipamAddrs) {
+        let ipamChain = Promise.resolve();
+        const schema = template.getParametersSchema();
+        const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+        Object.entries(ipFromIpamProps).forEach(([name, prop]) => {
+            const providerName = templateData.parameters[name];
+            const provider = config.ipamProviders
+                .find(p => p.name === providerName);
+            if (provider) {
+                delete prop.enum;
+                if (!ipamAddrs[providerName]) {
+                    ipamAddrs[providerName] = [];
+                }
+                ipamChain = ipamChain
+                    .then(() => this.recordTransaction(
+                        reqid, `fetching address from IPAM provider: ${providerName}`,
+                        axios.post(
+                            Mustache.render(provider.retrieveUrl, provider),
+                            JSON.parse(Mustache.render(provider.retrieveBody, provider)),
+                            {
+                                auth: {
+                                    username: provider.username,
+                                    password: provider.password
+                                }
+                            }
+                        )
+                    ))
+                    .catch(e => Promise.reject(new Error(
+                        `failed to get IP address from IPAM provider (${providerName}): ${e.stack}`
+                    )))
+                    .then((res) => {
+                        let value = '';
+                        try {
+                            value = JSON.parse(res.data);
+                        } catch (e) {
+                            value = res.data;
+                        }
+                        value = JSONPath(provider.retrievePathQuery, value)[0];
+                        templateData.parameters[name] = value;
+                        ipamAddrs[providerName].push(value);
+                    });
+            }
+        });
+        return ipamChain;
+    }
+
+    releaseIPAMAddress(reqid, config, appData, excludeAddrs) {
         if (!appData.ipamAddrs) {
             return Promise.resolve();
         }
-
         const promises = [];
         Object.entries(appData.ipamAddrs).forEach(([providerName, addrs]) => {
             const provider = config.ipamProviders
                 .filter(p => p.name === providerName)[0];
             addrs.forEach((address) => {
-                const view = Object.assign({}, provider, { address });
-                promises.push(Promise.resolve()
-                    .then(() => this.secretsManager.decrypt(provider.password))
-                    .then(providerPassword => this.recordTransaction(
-                        reqid, `releasing ${address} from IPAM provider: ${providerName}`,
-                        axios.post(
-                            Mustache.render(provider.releaseUrl, view),
-                            JSON.parse(Mustache.render(provider.releaseBody, view)),
-                            {
-                                auth: {
-                                    username: provider.username,
-                                    password: providerPassword
+                if (!excludeAddrs || !excludeAddrs[provider] || !excludeAddrs[provider].find(a => a === address)) {
+                    const view = Object.assign({}, provider, { address });
+                    promises.push(Promise.resolve()
+                        .then(() => this.secretsManager.decrypt(provider.password))
+                        .then(providerPassword => this.recordTransaction(
+                            reqid, `releasing ${address} from IPAM provider: ${providerName}`,
+                            axios.post(
+                                Mustache.render(provider.releaseUrl, view),
+                                JSON.parse(Mustache.render(provider.releaseBody, view)),
+                                {
+                                    auth: {
+                                        username: provider.username,
+                                        password: providerPassword
+                                    }
                                 }
-                            }
-                        )
-                    ))
-                    .catch(e => this.logger.error(
-                        `failed to release IP address from IPAM provider (${providerName}): ${e.stack}`
-                    )));
+                            )
+                        ))
+                        .catch(e => this.logger.error(
+                            `failed to release IP address from IPAM provider (${providerName}): ${e.stack}`
+                        )));
+                }
             });
         });
 
@@ -1081,25 +1122,25 @@ class FASTWorker {
             .then((configData) => {
                 config = configData;
             });
-        data.forEach((x) => {
-            if (!x.name) {
+        data.forEach((tmplData) => {
+            if (!tmplData.name) {
                 promiseChain = promiseChain
                     .then(() => Promise.reject(new Error('name property is missing')));
                 return;
             }
-            if (!x.parameters) {
+            if (!tmplData.parameters) {
                 promiseChain = promiseChain
                     .then(() => Promise.reject(new Error('parameters property is missing')));
                 return;
             }
             const tsData = {};
-            const [setName, templateName] = x.name.split('/');
+            const [setName, templateName] = tmplData.name.split('/');
             const ipamAddrs = {};
             promiseChain = promiseChain
                 .then(() => {
                     if (!setName || !templateName) {
                         return Promise.reject(new Error(
-                            `expected name to be of the form "setName/templateName", but got ${x.name}`
+                            `expected name to be of the form "setName/templateName", but got ${tmplData.name}`
                         ));
                     }
                     return Promise.resolve();
@@ -1110,88 +1151,39 @@ class FASTWorker {
                 ))
                 .then(setData => Object.assign(tsData, setData))
                 .then(() => this.recordTransaction(
-                    reqid, `loading template (${x.name})`,
-                    this.templateProvider.fetch(x.name)
+                    reqid, `loading template (${tmplData.name})`,
+                    this.templateProvider.fetch(tmplData.name)
                 ))
-                .catch(e => Promise.reject(new Error(`unable to load template: ${x.name}\n${e.stack}`)))
-                .then((tmpl) => {
-                    let ipamChain = Promise.resolve();
-                    const schema = tmpl.getParametersSchema();
-                    const ipFromIpamProps = Object.entries(schema.properties)
-                        .reduce((acc, curr) => {
-                            const [key, value] = curr;
-                            if (value.ipFromIpam) {
-                                acc[key] = value;
-                            }
-                            if (value.items && value.items.ipFromIpam) {
-                                acc[`${key}.items`] = value.items;
-                            }
-                            return acc;
-                        }, {});
-                    Object.entries(ipFromIpamProps).forEach(([name, prop]) => {
-                        const providerName = x.parameters[name];
-                        const provider = config.ipamProviders
-                            .filter(p => p.name === providerName)[0];
-                        delete prop.enum;
-                        if (!ipamAddrs[providerName]) {
-                            ipamAddrs[providerName] = [];
-                        }
-                        ipamChain = ipamChain
-                            .then(() => this.secretsManager.decrypt(provider.password))
-                            .then(providerPassword => this.recordTransaction(
-                                reqid, `fetching address from IPAM provider: ${providerName}`,
-                                axios.post(
-                                    Mustache.render(provider.retrieveUrl, provider),
-                                    JSON.parse(Mustache.render(provider.retrieveBody, provider)),
-                                    {
-                                        auth: {
-                                            username: provider.username,
-                                            password: providerPassword
-                                        }
-                                    }
-                                )
-                            ))
-                            .catch(e => Promise.reject(new Error(
-                                `failed to get IP address from IPAM provider (${providerName}): ${e.stack}`
-                            )))
-                            .then((res) => {
-                                let value = '';
-                                try {
-                                    value = JSON.parse(res.data);
-                                } catch (e) {
-                                    value = res.data;
-                                }
-                                value = JSONPath(provider.retrievePathQuery, value)[0];
-                                x.parameters[name] = value;
-                                ipamAddrs[providerName].push(value);
-                            });
-                    });
-
-                    ipamChain = ipamChain
-                        .then(() => tmpl);
-                    return ipamChain;
-                })
+                .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
+                .then(tmpl => this.populateIPAMAddress(tmpl, tmplData, config, reqid, ipamAddrs)
+                    .then(() => tmpl))
                 .then(tmpl => this.recordTransaction(
-                    reqid, `rendering template (${x.name})`,
-                    tmpl.fetchAndRender(x.parameters)
+                    reqid, `rendering template (${tmplData.name})`,
+                    tmpl.fetchAndRender(tmplData.parameters)
                 ))
                 .then(rendered => JSON.parse(rendered))
                 .catch(e => Promise.resolve()
                     // Release any IPAM IP addrs
                     .then(() => this.releaseIPAMAddress(reqid, config, { ipamAddrs }))
                     // Now re-reject
-                    .then(() => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.stack}`))))
+                    .then(() => Promise.reject(new Error(`failed to render template: ${tmplData.name}\n${e.stack}`))))
                 .then((decl) => {
-                    appsData.push({
+                    const appData = {
                         appDef: decl,
                         metaData: {
-                            template: x.name,
+                            template: tmplData.name,
                             setHash: tsData.hash,
-                            view: x.parameters,
+                            view: tmplData.parameters,
                             lastModified,
                             ipamAddrs
                         }
-                    });
+                    };
+                    appsData.push(appData);
+
+                    const oldAppData = tmplData.previousDef || {};
+                    if (oldAppData.ipamAddrs) {
+                        this.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
+                    }
                 });
         });
 

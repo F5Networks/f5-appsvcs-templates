@@ -44,4 +44,5 @@ console.log([
 ].join(' '));
 
 expressAdapter.generateApp(worker)
+
     .then(app => app.listen(port));

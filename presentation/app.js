@@ -285,14 +285,12 @@ const newEditor = (tmplid, view, existingApp) => {
             // Get schema and modify it work better with JSON Editor
             const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
 
-            // Strip IPAM fields for existing applications
+            // Prep IPAM fields for existing applications
             if (existingApp) {
                 Object.entries(schema.properties || {}).forEach(([propName, prop]) => {
-                    if (prop.ipFromIpam) {
-                        prop.default = view[propName];
-                        prop.immutable = true;
-                        delete prop.enum;
-                        delete prop.ipFromIpam;
+                    if (prop.ipFromIpam && !prop.immutable) {
+                        prop.description = `${prop.description} | Current: ${view[propName]}`;
+                        delete view[propName];
                     }
                 });
             }
@@ -351,7 +349,8 @@ const newEditor = (tmplid, view, existingApp) => {
                     },
                     body: JSON.stringify({
                         name: tmplid,
-                        parameters
+                        parameters,
+                        previousDef: existingApp
                     })
                 };
                 appState.busy = true;
@@ -503,7 +502,7 @@ route('modify', 'create', (appID) => {
     return getJSON(`applications/${appID}`)
         .then((appData) => {
             const appDef = appData.constants.fast;
-            newEditor(appDef.template, appDef.view, true);
+            newEditor(appDef.template, appDef.view, appDef);
         })
         .catch(e => dispOutput(e.message));
 });

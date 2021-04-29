@@ -616,22 +616,29 @@ describe('template worker tests', function () {
             password: 'password',
             retrieveUrl: '{{host}}/nextip',
             retrieveBody: '{ "num": 1}',
-            retrievePathQuery: '$.addrs[0].ipv4'
+            retrievePathQuery: '$.addrs[0].ipv4',
+            releaseUrl: '{{host}}/release/{{address}}',
+            releaseBody: '{}'
         };
         worker.configStorage.data.config = {
             ipamProviders: [ipamProvider]
         };
         let retrievedAddr = '';
-        const op = new RestOp('applications');
-        op.setBody({
+        let releasedAddr = '';
+        const initialBody = {
             name: 'examples/simple_udp_ipam',
             parameters: {
-                virtual_address: 'testing'
+                use_ipam_addrs: true,
+                virtual_address_ipam: 'testing'
             }
-        });
+        };
         nock('http://example.com')
             .post('/nextip', { num: 1 })
-            .reply(200, { addrs: [{ ipv4: '192.0.0.0' }] });
+            .reply(200, { addrs: [{ ipv4: '192.0.0.0' }] })
+            .post(/\/release\/.*/)
+            .reply(200, (uri) => {
+                releasedAddr = uri.substr(uri.lastIndexOf('/') + 1);
+            });
         nock(host)
             .persist()
             .get(as3ep)
@@ -644,11 +651,34 @@ describe('template worker tests', function () {
                 return true;
             })
             .reply(202, {});
+        // initial create
+        const op = new RestOp('applications');
+        op.setBody(initialBody);
         return worker.onPost(op)
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.status, 202);
-                assert.strictEqual(retrievedAddr, '192.0.0.0');
+                assert.strictEqual(retrievedAddr, '192.0.0.0', 'should use address from IPAM');
+
+                // simulate update to a non-ipam to trigger release
+                initialBody.ipamAddrs = {
+                    testing: [retrievedAddr]
+                };
+                op.setBody({
+                    name: 'examples/simple_udp_ipam',
+                    parameters: {
+                        use_ipam_addrs: false,
+                        virtual_address_ipam: undefined,
+                        virtual_address: '10.10.1.2'
+                    },
+                    previousDef: initialBody
+                });
+                return worker.onPost(op);
+            })
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.strictEqual(releasedAddr, '192.0.0.0', 'should release previous IPAM address');
+                assert.strictEqual(retrievedAddr, '10.10.1.2', 'should update to non-IPAM address');
             });
     });
     it('post_apps', function () {
