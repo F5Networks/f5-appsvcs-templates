@@ -1,7 +1,7 @@
 contentType: application/json
 title: Microsoft ADFS Application Template
 description: Configure high availability and optimization for Microsoft ADFS implementations.
-bigipMinimumAS3: 3.23
+bigipMinimumAS3: 3.24.0
 allOf:
   - contentType: application/json
     definitions:
