@@ -101,9 +101,7 @@ describe('Applications', function () {
             const token = response.data.token.token;
             endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
         })
-        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`))));
-
-    it('Delete all applications', () => Promise.resolve()
+        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`)))
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
             const taskid = response.data.id;
