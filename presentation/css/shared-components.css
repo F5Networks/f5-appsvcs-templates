@@ -2,37 +2,22 @@
     HEADER
 **********************************/
 #header {
-  height: 64px;
-  padding: 5px;
+  display: inline-block;
+  font-size: 150%;
+  margin-right: 100px;
 }
 
-.header-logo {
-    float: left;
-    margin: 0px 13px;
-    filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25)) drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.25));
-}
-
-.header-title {
-  font-size: 200%;
-  margin-top: 20px;
-  filter: drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.4));
-  min-width: 515px;
+#header img {
+  vertical-align: middle;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25)) drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.25));
 }
 
 /*********************************
     NAVBAR
 **********************************/
 #nav-bar {
-  background: #deddd9;
-  border: 1px solid #bebebe;
-  height: 41px;
-  width: max-content;
-}
-
-.router-link-exact-active {
-  background-image: none !important;
-  height: 39px;
-  pointer-events: none;
+  display: inline-block;
+  vertical-align: bottom;
 }
 
 .nav-disabled a {
@@ -42,13 +27,24 @@
 #nav-bar a {
   display: block;
   float: left;
-  color: #333;
+  color: #6f6f6f;
   text-align: center;
   padding-top: 13px;
   height: 40px;
-  width: 225px;
+  margin: 0px 10px;
+  width: 120px;
+}
+
+.router-link-exact-active {
+  height: 39px;
+  pointer-events: none;
   font-weight: bold;
-  background: #deddd9 url(../img/background_panel.gif) bottom right repeat-x;
+  color: black !important;
+}
+
+.router-link-exact-active,
+#nav-bar a:hover {
+  border-bottom: 4px solid #1d98d0;
 }
 
 /*********************************

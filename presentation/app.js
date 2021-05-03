@@ -144,7 +144,8 @@ Vue.use(VueRouter);
 
 const router = new VueRouter({
     routes: [
-        { path: '/', component: pageComponents.applications },
+        { path: '/', redirect: '/applications' },
+        { path: '/applications', component: pageComponents.applications },
         { path: '/create', component: pageComponents.create },
         { path: '/modify/:appid(.*)', component: pageComponents.create },
         { path: '/resubmit/:taskid', component: pageComponents.create },

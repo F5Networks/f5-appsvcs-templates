@@ -17,17 +17,18 @@
         <!-- Static Content -->
         <div id="vue-app">
             <div id="header">
-                <div class="header-logo"><img src="img/as3robot.png" height="55px"/></div>
-                <div class="header-title">F5 Application Services Templates</div>
+                <img src="img/fastrobot.png" height="48px"/>
+                F5 Application Services Templates
             </div>
             <div id="nav-bar" v-cloak :class="{ 'nav-disabled': busy }">
-                <router-link to="/">Applications</router-link>
+                <router-link to="/templates">FAST Templates</router-link>
                 <router-link to="/create">Deploy</router-link>
-                <router-link to="/templates">Templates</router-link>
-                <router-link to="/tasks">Deploy Log</router-link>
+                <router-link to="/applications">Applications</router-link>
+                <router-link to="/tasks">History</router-link>
                 <router-link to="/settings">Settings</router-link>
                 <router-link to="/api">API</router-link>
             </div>
+            <hr />
             <div id="content-wrapper">
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
                 <div id="app" v-cloak>
