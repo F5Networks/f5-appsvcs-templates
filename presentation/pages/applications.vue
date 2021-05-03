@@ -1,73 +1,40 @@
 <template>
     <div id="page-applications">
-        <div
-            id="app-list"
-            class="styled-list"
+        <sorted-table
+            ref="table"
+            :table-data="appsList"
+            :columns="columns"
+            :checkboxes="true"
+        />
+        <button
+            class="btn btn-primary"
+            :disabled="!$refs.table || $refs.table.selectedRows.length === 0"
+            @click="deleteApplications()"
         >
-            <div class="th-row">
-                <div class="td tenant-app-th col1">
-                    <span class="tenant-app-th tenant">Tenant</span>
-                    <span class="fas fa-angle-double-right icon tenant-app-th" />
-                    <span class="tenant-app-th application">Application</span>
-                </div>
-                <div class="td col2">
-                    Template
-                </div>
-                <div class="td col3">
-                    Actions
-                </div>
-            </div>
-            <div
-                class="tr"
-                height="1px"
-            />
-            <div
-                v-for="app in appsList"
-                :key="app.tenant + app.name"
-                class="tr"
-            >
-                <div
-                    class="td col1 clickable"
-                    @click="$root.$router.push('/modify/'+app.path)"
-                >
-                    <span class="tenant">{{ app.tenant }}</span>
-                    <span class="fas fa-angle-double-right icon" />
-                    <span class="application">{{ app.name }}</span>
-                </div>
-                <div class="td col2">
-                    {{ app.template }}
-                </div>
-                <div class="td col3">
-                    <span
-                        class="tooltip tooltip-right"
-                        data-tooltip="Modify Application"
-                    >
-                        <router-link
-                            class="fas fa-edit icon btn-icon"
-                            :to="'/modify/'+app.path"
-                        />
-                    </span>
-                    <span
-                        class="tooltip tooltip-right"
-                        data-tooltip="Delete Application"
-                    >
-                        <a
-                            class="fas fa-trash icon btn-icon"
-                            @click="deleteApplication(app.path)"
-                        />
-                    </span>
-                </div>
-            </div>
-        </div>
+            Delete
+        </button>
     </div>
 </template>
 
 <script>
+import SortedTable from '../components/SortedTable.vue';
+
 export default {
     name: 'PageApplications',
+    components: {
+        SortedTable
+    },
     data() {
         return {
-            appsList: []
+            appsList: [],
+            columns: {
+                Name: {
+                    property: 'name',
+                    link: '/modify/{{row.path}}'
+                },
+                Tenant: 'tenant',
+                Template: 'template'
+            }
         };
     },
     async created() {
@@ -82,21 +49,28 @@ export default {
             .catch(e => this.$root.dispOutput(`Error fetching applications: ${e.message}`));
     },
     methods: {
-        deleteApplication(appPath) {
+        deleteApplications() {
+            const appPaths = this.$refs.table.selectedRows.map(
+                x => `${x.tenant}/${x.name}`
+            );
+            if (appPaths.length === 0) {
+                return;
+            }
             this.$root.showModal(
                 'warning',
-                `Application ${appPath} will be permanently deleted!`,
+                `The follow applications will be deleted: ${JSON.stringify(appPaths)}`,
                 () => {
                     this.$root.busy = true;
-                    this.$root.dispOutput(`Deleting ${appPath}`);
                     return Promise.resolve()
-                        .then(() => this.$root.safeFetch(`${this.$root.endPointUrl}/applications/${appPath}`, {
-                            method: 'DELETE'
+                        .then(() => this.$root.safeFetch(`${this.$root.endPointUrl}/applications`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(appPaths)
                         }))
-                        .then(() => {
-                            this.$root.$router.push('tasks');
-                        })
-                        .catch(e => this.$root.dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
+                        .then(() => this.$root.$router.push('tasks'))
+                        .catch(e => this.$root.dispOutput(`DELETE failed:\n${e.message}`));
                 }
             );
         }
