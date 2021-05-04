@@ -154,6 +154,12 @@ function createWorker() {
     return worker;
 }
 
+function resetScope(scope) {
+    scope.persist(false);
+    scope.interceptors.forEach(nock.removeInterceptor);
+    return scope;
+}
+
 describe('template worker tests', function () {
     this.timeout(2500);
     const host = 'http://localhost:8100';
@@ -163,6 +169,15 @@ describe('template worker tests', function () {
         class: 'ADC',
         schemaVersion: '3.0.0'
     };
+    const as3App = {
+        class: 'Application',
+        constants: {
+            [AS3DriverConstantsKey]: {
+                template: 'foo/bar'
+            }
+        }
+    };
+    let as3Scope;
 
     before(function () {
         const tsNames = [
@@ -211,6 +226,16 @@ describe('template worker tests', function () {
             .reply(200, {
                 version: '3.16'
             });
+        as3Scope = nock(host)
+            .persist()
+            .get(as3ep)
+            .query(true)
+            .reply(200, Object.assign({}, as3stub, {
+                tenant: {
+                    class: 'Tenant',
+                    app: as3App
+                }
+            }));
         nock('http://localhost:8100')
             .persist()
             .get('/mgmt/shared/telemetry/info')
@@ -346,33 +371,20 @@ describe('template worker tests', function () {
     it('get_apps', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    app: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: {}
-                        }
-                    }
-                }
-            }));
         return worker.onGet(op)
             .then(() => {
                 assert.notEqual(op.status, 404);
                 assert.deepEqual(op.body, [{
                     name: 'app',
-                    tenant: 'tenant'
+                    tenant: 'tenant',
+                    template: 'foo/bar'
                 }]);
             });
     });
     it('get_apps_empty', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
-        nock(host)
+        as3Scope = resetScope(as3Scope)
             .get(as3ep)
             .query(true)
             .reply(204, '');
@@ -385,17 +397,6 @@ describe('template worker tests', function () {
     it('get_apps_item_bad', function () {
         const worker = createWorker();
         const op = new RestOp('applications/foobar');
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    app: {
-                        class: 'Application'
-                    }
-                }
-            }));
         return worker.onGet(op)
             .then(() => {
                 assert.equal(op.status, 404);
@@ -404,23 +405,6 @@ describe('template worker tests', function () {
     it('get_apps_item', function () {
         const worker = createWorker();
         const op = new RestOp('applications/tenant/app');
-        const appData = {
-            foo: 'bar'
-        };
-        const as3App = {
-            class: 'Application',
-            constants: {
-                [AS3DriverConstantsKey]: appData
-            }
-        };
-        nock(host)
-            .get(as3ep)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    app: as3App
-                }
-            }));
         return worker.onGet(op)
             .then(() => {
                 assert.deepEqual(op.body, as3App);
@@ -624,11 +608,6 @@ describe('template worker tests', function () {
         });
         nock(host)
             .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
-        nock(host)
-            .persist()
             .post(`${as3ep}/foo?async=true`)
             .reply(202, {});
         return worker.onPost(op)
@@ -669,17 +648,6 @@ describe('template worker tests', function () {
     it('delete_app_bad', function () {
         const worker = createWorker();
         const op = new RestOp('applications/foobar');
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    app: {
-                        class: 'Application'
-                    }
-                }
-            }));
         return worker.onDelete(op)
             .then(() => {
                 assert.equal(op.status, 404);
@@ -688,20 +656,6 @@ describe('template worker tests', function () {
     it('delete_app', function () {
         const worker = createWorker();
         const op = new RestOp('applications/tenant/app');
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    app: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: {}
-                        }
-                    }
-                }
-            }));
         nock(host)
             .persist()
             .post(`${as3ep}/tenant?async=true`)
@@ -714,21 +668,6 @@ describe('template worker tests', function () {
     it('delete_all_apps', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    app: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: {}
-                        }
-                    }
-                }
-            }))
-            .persist();
         nock(host)
             .persist()
             .post(`${as3ep}/tenant?async=true`)
@@ -754,7 +693,7 @@ describe('template worker tests', function () {
                 virtual_port: 5556
             }
         });
-        nock(host)
+        resetScope(as3Scope)
             .get(as3ep)
             .query(true)
             .reply(200, Object.assign({}, as3stub, {
@@ -951,11 +890,6 @@ describe('template worker tests', function () {
         const templateSet = 'bigip-fast-templates';
         const op = new RestOp(`templatesets/${templateSet}`);
 
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
-
         return worker.templateProvider.hasSet(templateSet)
             .then(result => assert(result))
             .then(() => worker.onDelete(op))
@@ -967,11 +901,6 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets/does_not_exist');
 
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
-
         return worker.onDelete(op)
             .then(() => {
                 assert.equal(op.status, 404);
@@ -981,7 +910,7 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const templateSet = 'examples';
         const op = new RestOp(`templatesets/${templateSet}`);
-        nock(host)
+        resetScope(as3Scope)
             .get(as3ep)
             .query(true)
             .reply(200, Object.assign({}, as3stub, {
@@ -1014,11 +943,6 @@ describe('template worker tests', function () {
     it('delete_all_templatesets', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
-
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
 
         return worker.onDelete(op)
             .then(() => assert.equal(op.status, 200))
@@ -1071,12 +995,6 @@ describe('template worker tests', function () {
             schema: {},
             templates: {}
         };
-
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
 
         nock(host)
             .persist()
@@ -1284,7 +1202,7 @@ describe('template worker tests', function () {
     it('convert_pool_members', function () {
         const worker = createWorker();
 
-        const as3Scope = nock(host)
+        as3Scope = resetScope(as3Scope)
             .get(as3ep)
             .query(true)
             .reply(200, Object.assign({}, as3stub, {
