@@ -135,7 +135,8 @@ function generateApp(worker) {
         })
         .then(() => endpoint.request({
             method: req.method,
-            url: req.url
+            url: req.url,
+            validateStatus: () => true // pass on failures
         }))
         .then(epRsp => res
             .status(epRsp.status)
