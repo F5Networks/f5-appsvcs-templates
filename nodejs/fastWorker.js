@@ -467,25 +467,19 @@ class FASTWorker {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined))),
-            this.fsTemplateProvider.hasSet(tsid)
-                .then(result => (result ? this.fsTemplateProvider.getSetData(tsid) : Promise.resolve(undefined)))
+            this.driver.listApplications()
         ])
-            .then(([tsData, fsTsData]) => {
-                if (!tsData && !fsTsData) {
+            .then(([tsData, appsList]) => {
+                if (!tsData) {
                     return Promise.reject(new Error(`Template set ${tsid} does not exist`));
                 }
 
-                if (!tsData) {
-                    fsTsData.enabled = false;
-                    fsTsData.updateAvailable = false;
-                    return fsTsData;
-                }
-
                 tsData.enabled = true;
-                tsData.updateAvailable = (
-                    fs.existsSync(`${templatesPath}/${tsid}`)
-                    && fsTsData && fsTsData.hash !== tsData.hash
-                );
+                tsData.templates.forEach((tmpl) => {
+                    tmpl.appsList = appsList
+                        .filter(x => x.template === tmpl.name)
+                        .map(x => `${x.tenant}/${x.name}`);
+                });
 
                 return tsData;
             })
@@ -498,7 +492,6 @@ class FASTWorker {
                 name: tsid,
                 hash: '',
                 templates: [],
-                updateAvailable: false,
                 enabled: false,
                 error: e.message
             }));
@@ -1416,13 +1409,14 @@ class FASTWorker {
         if (tsid) {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
-                    reqid, 'gathering a list of applications from the driver',
-                    this.driver.listApplications()
+                    reqid, `gathering template set data for ${tsid}`,
+                    this.gatherTemplateSet(tsid)
                 ))
-                .then((appsList) => {
-                    const usedBy = appsList
-                        .filter(x => x.template.split('/')[0] === tsid)
-                        .map(x => `${x.tenant}/${x.name}`);
+                .then((setData) => {
+                    const usedBy = setData.templates.reduce((acc, curr) => {
+                        acc.push(...curr.appsList);
+                        return acc;
+                    }, []);
                     if (usedBy.length > 0) {
                         return Promise.reject(
                             new Error(`Cannot delete template set ${tsid}, it is being used by:\n${JSON.stringify(usedBy)}`)

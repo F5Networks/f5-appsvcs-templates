@@ -623,6 +623,10 @@ components:
         application:
           description: application associated with the task
           type: string
+        timestamp:
+          description: timestamp of when the job was submitted (or updated for in progress jobs)
+          type: string
+          format: date-time
     TaskList:
       type: array
       items:
@@ -686,9 +690,11 @@ components:
               hash:
                 type: string
                 description: sha256 of the template source text
-        updateAvailable:
-          type: boolean
-          description: template set has a different version available on disk
+              appsList:
+                type: array
+                description: list of applications using the template
+                items:
+                  $ref: "#/components/schemas/ApplicationDefinition"
         enabled:
           type: boolean
           description: template set is installed and ready to use
