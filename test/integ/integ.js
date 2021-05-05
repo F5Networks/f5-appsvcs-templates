@@ -91,7 +91,7 @@ function deployApplication(templateName, parameters) {
 
 describe('Applications', function () {
     this.timeout(120000);
-    before(() => Promise.resolve()
+    before('Generate auth token', () => Promise.resolve()
         .then(() => endpoint.post('/mgmt/shared/authn/login', {
             username: bigipCreds.split(':')[0],
             password: bigipCreds.split(':')[1],
@@ -101,7 +101,8 @@ describe('Applications', function () {
             const token = response.data.token.token;
             endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
         })
-        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`)))
+        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`))));
+    before('Delete all applications', () => Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
             const taskid = response.data.id;
@@ -116,7 +117,8 @@ describe('Applications', function () {
                 console.log(task);
             }
             assert.strictEqual(task.code, 200);
-        }));
+        })
+        .catch(err => Promise.reject(new Error(`Failed to delete applications: ${err.message}`))));
 
     it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
 
