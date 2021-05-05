@@ -311,12 +311,12 @@ class FASTWorker {
                     this.templateProvider.listSets()
                 )
             ]))
-            .then(([fsSets, knownSets]) => {
+            .then(([fsSets]) => {
                 const deletedSets = config.deletedTemplateSets;
                 const ignoredSets = [];
                 const sets = [];
                 fsSets.forEach((setName) => {
-                    if (knownSets.includes(setName) || deletedSets.includes(setName)) {
+                    if (deletedSets.includes(setName)) {
                         ignoredSets.push(setName);
                     } else {
                         sets.push(setName);
@@ -760,7 +760,7 @@ class FASTWorker {
             .then(() => schema);
     }
 
-    convertPoolMembers(reqid) {
+    convertPoolMembers(reqid, apps) {
         reqid = reqid || 0;
         const convertTemplateNames = [
             'bigip-fast-templates/http',
@@ -768,52 +768,48 @@ class FASTWorker {
             'bigip-fast-templates/microsoft_iis'
         ];
 
-        return Promise.resolve()
-            .then(() => this.recordTransaction(
-                reqid, 'gathering a list of applications from the driver',
-                this.driver.listApplications()
-            ))
-            .then((appsList) => {
-                const newApps = [];
+        const newApps = [];
 
-                appsList.forEach((app) => {
-                    const convert = (
-                        convertTemplateNames.includes(app.template)
-                        && app.view.pool_members
-                        && app.view.pool_members.length > 0
-                        && typeof app.view.pool_members[0] === 'string'
+        apps.forEach((app) => {
+            const convert = (
+                convertTemplateNames.includes(app.template)
+                && app.view.pool_members
+                && app.view.pool_members.length > 0
+                && typeof app.view.pool_members[0] === 'string'
+            );
+            if (convert) {
+                app.view.pool_members = [{
+                    serverAddresses: app.view.pool_members,
+                    servicePort: app.view.pool_port || 80
+                }];
+                delete app.view.pool_port;
+                newApps.push(app);
+                this.logger.info(
+                    `FAST Worker [${reqid}]: updating pool_members on ${app.tenant}/${app.name}`
+                );
+            }
+        });
+
+        let promiseChain = Promise.resolve();
+
+        if (newApps.length > 0) {
+            promiseChain = promiseChain
+                .then(() => this.recordTransaction(
+                    reqid, 'Updating pool members',
+                    this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications/`, newApps.map(app => ({
+                        name: app.template,
+                        parameters: app.view
+                    })))
+                ))
+                .then((resp) => {
+                    this.logger.info(
+                        `FAST Worker [${reqid}]: task ${resp.data.message[0].id} submitted to update pool_members`
                     );
-                    if (convert) {
-                        app.view.pool_members = [{
-                            serverAddresses: app.view.pool_members,
-                            servicePort: app.view.pool_port || 80
-                        }];
-                        delete app.view.pool_port;
-                        newApps.push(app);
-                        this.logger.info(
-                            `FAST Worker [${reqid}]: updating pool_members on ${app.tenant}/${app.name}`
-                        );
-                    }
                 });
+        }
 
-                if (newApps.length === 0) {
-                    return Promise.resolve();
-                }
-
-                return Promise.resolve()
-                    .then(() => this.recordTransaction(
-                        reqid, 'Updating pool members',
-                        this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications/`, newApps.map(app => ({
-                            name: app.template,
-                            parameters: app.view
-                        })))
-                    ))
-                    .then((resp) => {
-                        this.logger.info(
-                            `FAST Worker [${reqid}]: task ${resp.data.message[0].id} submitted to update pool_members`
-                        );
-                    });
-            });
+        return promiseChain
+            .then(() => apps);
     }
 
     renderTemplates(reqid, data) {
@@ -994,9 +990,10 @@ class FASTWorker {
                     reqid, 'GET request to appsvcs/declare',
                     this.endpoint.get('/mgmt/shared/appsvcs/declare')
                 ))
-                .then((resp) => {
-                    const decl = resp.data;
-                    restOperation.setBody(decl[tenant][app]);
+                .then(resp => resp.data[tenant][app])
+                .then(appDef => this.convertPoolMembers(reqid, [appDef]))
+                .then((appDefs) => {
+                    restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
                 })
                 .catch(e => this.genRestResponse(restOperation, 404, e.stack));
@@ -1007,6 +1004,7 @@ class FASTWorker {
                 reqid, 'gathering a list of applications from the driver',
                 this.driver.listApplications()
             ))
+            .then(appsList => this.convertPoolMembers(reqid, appsList))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);

@@ -996,13 +996,6 @@ describe('template worker tests', function () {
         // Clear the data store
         worker.storage.data = {};
 
-        // "Install" a template set to make sure it is not overridden
-        worker.storage.data['bigip-fast-templates'] = {
-            name: 'bigip-fast-templatesets',
-            schema: {},
-            templates: {}
-        };
-
         nock(host)
             .persist()
             .post(`${as3ep}/Common?async=true`)
@@ -1022,7 +1015,6 @@ describe('template worker tests', function () {
             .then(() => worker.templateProvider.list())
             .then((tmplList) => {
                 assert(tmplList.includes('examples/simple_http'));
-                assert(!tmplList.includes('bigip-fast-templates/http'));
             });
     });
     it('onStartCompleted', function () {
@@ -1280,8 +1272,10 @@ describe('template worker tests', function () {
                 ]
             });
 
-        return worker.convertPoolMembers()
+        const op = new RestOp('applications');
+        return worker.onGet(op)
             .then(() => {
+                console.log(op.body);
                 assert(as3Scope.isDone());
                 assert(postScope.isDone(), 'failed to post new applications');
             });

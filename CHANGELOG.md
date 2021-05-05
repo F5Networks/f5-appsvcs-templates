@@ -10,6 +10,7 @@
 
 ## Changed
 * bigip-fast-templates: Make tenant and application names immutable
+* Automatically update bundled template sets
 
 # 1.8.1
 ## Fixed
