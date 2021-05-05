@@ -1,101 +1,41 @@
 <template>
-    <div
-        id="task-list"
-        class="styled-list"
-    >
-        <div class="th-row">
-            <div class="td col1">
-                Task ID
-            </div>
-            <div class="td tenant-app-th col2">
-                <span class="tenant-app-th tenant">Tenant</span>
-                <a class="fas fa-angle-double-right icon tenant-app-th" />
-                <span class="tenant-app-th application">Application</span>
-            </div>
-            <div class="td col3">
-                Operation
-            </div>
-            <div class="td col4">
-                Result
-            </div>
-        </div>
-        <div
-            class="tr"
-            height="1px"
-        />
-        <div
-            v-for="task in tasks"
-            :key="task.id"
-            class="tr"
-        >
-            <span
-                class="tooltip tooltip-right td clickable-darker col1"
-                data-tooltip="go to task"
-            >
-                <a :href="'/mgmt/shared/fast/tasks/' + task.id">{{ task.id }}</a>
-            </span>
-            <div class="td col2">
-                <span class="tenant">{{ task.tenant }}</span>
-                <a class="fas fa-angle-double-right icon" />
-                <span class="application">{{ task.application }}</span>
-            </div>
-            <div class="td col3">
-                {{ task.operation }}
-            </div>
-            <div
-                v-if="task.message === 'in progress'"
-                class="td col4"
-            >
-                <div class="loading loading-sm p-centered" />
-            </div>
-            <div
-                v-else
-                :class="{ 'success-color': task.message === 'success', 'danger-color': task.errMsg }"
-                class="td col4"
-            >
-                {{ task.message }}
-                <div
-                    v-if="task.errMsg"
-                    class="popover popover-left"
-                >
-                    <a class="cursor-default danger-color fas fa-question-circle icon" />
-                    <div class="popover-container">
-                        <div
-                            class="popover-header"
-                            style="background-color: #2b1111e6;"
-                        >
-                            {{ task.message }}
-                        </div>
-                        <div class="popover-arrow-right arrow-danger" />
-                        <div
-                            class="popover-body"
-                            style="background-color: #442222f0;"
-                        >
-                            {{ task.errMsg }}
-                        </div>
-                    </div>
-                </div>
-                <span
-                    v-if="task.canResubmit"
-                    class="tooltip tooltip-right"
-                    data-tooltip="Modify and Resubmit Application"
-                >
-                    <a
-                        class="fas fa-edit btn-icon"
-                        :href="'#resubmit/'+task.id"
-                    />
-                </span>
-            </div>
-        </div>
-    </div>
+    <sorted-table
+        ref="table"
+        :table-data="tasks"
+        :columns="columns"
+    />
 </template>
 
 <script>
+import SortedTable from '../components/SortedTable.vue';
+
 export default {
     name: 'PageTasks',
+    components: {
+        SortedTable
+    },
     data() {
         return {
-            tasks: []
+            tasks: [],
+            columns: {
+                Application: 'application',
+                Template: 'name',
+                Operation: 'operation',
+                Status: 'status',
+                'App Template': {
+                    property: 'edit',
+                    link: '/resubmit/{{row.id}}'
+                },
+                Timestamp: 'timestamp',
+                Info: 'message'
+                // uncomment for debug
+                // eslint-disable-next-line comma-style
+                // , 'Task ID': {
+                //     property: 'id',
+                //     link: '/mgmt/shared/fast/tasks/{{row.id}}',
+                //     doNotRoute: true
+                // }
+            }
         };
     },
     async created() {
@@ -103,41 +43,54 @@ export default {
         const updateTaskList = () => this.$root.getJSON('tasks')
             .then((tasks) => {
                 tasks.forEach((task) => {
-                    task.errMsg = '';
                     if (task.message.includes('Error:')) {
-                        task.errMsg = task.message.replace(/Error:/);
-                        task.message = 'Error';
+                        task.message = task.message.replace(/Error:/);
+                        task.status = 'Error';
                     } else if (task.message.includes('declaration failed')) {
-                        task.errMsg = task.message.replace(/declaration failed/);
-                        task.message = 'declaration failed';
+                        task.message = task.message.replace(/declaration failed/);
+                        task.status = 'Declaration Failed';
                     } else if (task.message.includes('declaration is invalid')) {
-                        task.errMsg = task.message.replace(/declaration is invalid/);
-                        task.message = 'declaration is invalid';
-                    }
-                    task.showPopover = false;
-                    if (task.message === 'success' && submissionData[task.id]) {
-                        delete submissionData[task.id];
-                        this.$root.storeSubmissionData(submissionData);
+                        task.message = task.message.replace(/declaration is invalid/);
+                        task.status = 'Declaration is Invalid';
+                    } else if (task.message === 'success') {
+                        task.status = 'Success';
+                        task.message = '';
+                    } else if (task.message === 'no change') {
+                        task.status = 'No Change';
+                        task.message = '';
+                    } else if (task.message === 'in progress') {
+                        task.status = 'In Progress';
+                        task.message = '';
+                    } else {
+                        task.status = 'N/A';
                     }
 
-                    if (submissionData[task.id]) {
-                        task.canResubmit = true;
+                    task.edit = (submissionData[task.id]) ? 'Edit / Resubmit' : '';
+
+                    if (task.operation === 'delete-all') {
+                        task.operation = 'Delete All';
+                    } else {
+                        task.operation = task.operation.charAt(0).toUpperCase() + task.operation.slice(1);
                     }
+
+                    task.application = (task.application === '') ? 'N/A' : task.application;
+                    task.name = (task.name === '') ? 'N/A' : task.name;
                 });
-                if (['3.26.0', '3.27.0'].includes(this.$root.as3Version)) {
-                    tasks.reverse();
-                }
                 this.tasks = tasks;
 
                 const inProgressJob = (
-                    tasks.filter(x => x.message === 'in progress').length !== 0
+                    tasks.filter(x => x.status === 'In Progress').length !== 0
                 );
                 if (inProgressJob) {
-                    setTimeout(updateTaskList, 5000);
+                    setTimeout(updateTaskList, 2500);
                 }
             });
 
         await updateTaskList();
+    },
+    mounted() {
+        this.$refs.table.currentKey = 'Timestamp';
+        this.$refs.table.currentDir = 'desc';
     }
 };
 </script>

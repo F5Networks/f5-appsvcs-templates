@@ -41,7 +41,18 @@
                     :key="prop.property || prop"
                 >
                     <span v-if="typeof(prop) === 'object'">
-                        <router-link :to="createLink(prop, row)">{{ row[prop.property] }}</router-link>
+                        <a
+                            v-if="prop.doNotRoute"
+                            :href="createLink(prop, row)"
+                        >
+                            {{ row[prop.property] }}
+                        </a>
+                        <router-link
+                            v-else
+                            :to="createLink(prop, row)"
+                        >
+                            {{ row[prop.property] }}
+                        </router-link>
                     </span>
                     <span v-else>{{ row[prop] }}</span>
                 </td>
