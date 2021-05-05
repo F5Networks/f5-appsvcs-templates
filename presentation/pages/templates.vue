@@ -1,7 +1,7 @@
 <template>
     <div id="page-templates">
         <div
-            v-if="data.errors && data.errors.length > 0"
+            v-if="templateErrors.length > 0"
             class="text-error"
         >
             <h3>Template errors were found:</h3>
@@ -14,164 +14,144 @@
                 </li>
             </ul>
         </div>
-        <div class="button-row-deploy">
+        <input
+            ref="fileInput"
+            type="file"
+            style="display:none"
+            accept=".zip"
+            @change="installSet"
+        >
+        <button
+            class="btn float-right"
+            @click="$refs.fileInput.click()"
+        >
+            Add Template Set
+        </button>
+        <p>To deploy an application, start by selecting a template below</p>
+        <div
+            v-for="setData in setsList"
+            :key="setData.name"
+        >
+            <strong class="ts-name">{{ setData.name }}</strong>
             <button
-                id="btn-delete-all-ts"
-                type="button"
-                class="btn btn-red"
+                class="btn float-right"
+                @click="removeSet(setData.name)"
             >
-                Delete All
+                Remove
             </button>
-            <button
-                id="btn-add-ts"
-                type="button"
-                class="btn btn-green"
-            >
-                Add Template Set
-            </button>
-            <input
-                id="input-ts-file"
-                type="file"
-                style="display:none"
-                accept=".zip"
-            >
-            <div
-                id="templates-filter"
-                class="dropdown dropdown-left"
-            >
-                <a
-                    class="btn btn-primary dropdown-toggle inline-flex"
-                    tabindex="0"
-                >
-                    <p id="filterTag">Filter:</p>
-                    <p id="filter">{{ data.filters ? data.filters[data.currentFilter] : '' }}</p>
-                    <i class="fas fa-angle-down white" />
-                </a>
-                <ul class="menu text-left">
-                    <li
-                        v-for="(text, id) in data.filters"
-                        :key="id"
-                        :class="{ selected: data.currentFilter === id }"
-                        class="menu-item clickable"
-                    >
-                        <a @click="setFilter(id)">{{ text }}</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div id="template-list">
-            <div class="th-row">
-                <div class="td col1">
-                    TEMPLATES
-                </div>
-                <div class="td col2">
-                    APPLICATIONS
-                </div>
-                <div class="td col3">
-                    ACTIONS
-                </div>
-            </div>
-            <div
-                class="tr"
-                height="1px"
+            <sorted-table
+                :table-data="setData.templates"
+                :columns="templateColumns"
             />
-            <div
-                v-for="(setData, setName) in data.sets"
-                :key="setName"
-                :class="{ 'row-dark-red': !setData.enabled, 'red-hover': !setData.enabled }"
-                class="tr row-dark clickable"
-                @click="setData.expanded = !setData.expanded"
-            >
-                <div class="td td-template-set col1">
-                    <span
-                        class="fas icon"
-                        :class="{ 'fa-angle-right': !setData.expanded, 'fa-angle-down': setData.expanded }"
-                    />
-                    {{ setName }}&nbsp;
-                    <span class="traits">
-                        <span
-                            v-if="setData.supported"
-                            class="tooltip tooltip-right tooltipped-f5-icon"
-                            data-tooltip="Template Set Supported by F5"
-                        >
-                            <svg class="f5-icon" />
-                        </span>
-                        <span
-                            v-if="setData.enabled"
-                            class="tooltip tooltip-right"
-                            data-tooltip="Template Set is Enabled"
-                        >
-                            <a class="fas fa-check-circle icon" />
-                        </span>
-                        <span
-                            v-else
-                            class="tooltip tooltip-right tooltip-red red-base-forecolor"
-                            data-tooltip="Template Set is Disabled!"
-                        >
-                            <a class="fas fa-times-circle icon" />
-                        </span>
-
-                    </span>
-                </div>
-                <div class="td col2">
-                    <div v-if="setData.expanded">
-                        <div
-                            v-for="app in setData.apps"
-                            :key="app.tenant+app.name"
-                        >
-                            {{ app.tenant }}
-                            <a class="fas fa-angle-double-right icon" />
-                            {{ app.name }}
-                        </div>
-                    </div>
-                    <div v-else-if="setData.apps && setData.apps.length > 0">
-                        * click to view *
-                    </div>
-                </div>
-                <div class="td col3">
-                    <span
-                        v-if="setData.enabled"
-                        class="tooltip tooltip-right"
-                        data-tooltip="Remove Template Set"
-                    >
-                        <a
-                            class="fas fa-trash icon btn-icon"
-                            @click.stop="removeSet(setName)"
-                        />
-                    </span>
-                    <span
-                        v-else
-                        class="tooltip tooltip-right"
-                        data-tooltip="Install Template Set"
-                    >
-                        <a
-                            class="fas fa-download icon btn-icon"
-                            @click.stop="installSet(setName)"
-                        />
-                    </span>
-                    <span
-                        v-if="setData.updateAvailable"
-                        class="tooltip tooltip-right"
-                        data-tooltip="Update Template Set"
-                    >
-                        <a
-                            class="fas fa-edit icon btn-icon"
-                            @click.stop="updateSet(setName)"
-                        />
-                    </span>
-                </div>
-            </div>
         </div>
     </div>
 </template>
 
 <script>
+import SortedTable from '../components/SortedTable.vue';
+
 export default {
     name: 'PageTemplates',
-    props: {
-        data: {
-            type: Object,
-            required: true
+    components: {
+        SortedTable
+    },
+    data() {
+        return {
+            setsList: [],
+            templateErrors: [],
+            templateColumns: {
+                Name: {
+                    property: 'name',
+                    link: '/create/{{row.path}}'
+                },
+                'Apps using template': 'numApps',
+                Description: 'description'
+            }
+        };
+    },
+    async created() {
+        await this.reloadTemplates();
+    },
+    methods: {
+        reloadTemplates() {
+            this.$root.busy = true;
+            return Promise.resolve()
+                .then(() => Promise.all([
+                    this.$root.getJSON('templatesets'),
+                    this.$root.getJSON('templatesets?showDisabled=true')
+                ]))
+                .then(([setsList, disabledSetsList]) => {
+                    setsList.forEach((set) => {
+                        set.templates.forEach((tmpl) => {
+                            tmpl.path = tmpl.name;
+                            tmpl.name = (tmpl.title !== '') ? tmpl.title : tmpl.name.split('/')[1];
+                            tmpl.numApps = tmpl.appsList.length;
+                        });
+                    });
+                    this.templateErrors = disabledSetsList.reduce((acc, curr) => {
+                        if (curr.error) {
+                            acc.push(curr.error);
+                        }
+                        return acc;
+                    }, []);
+                    this.setsList = setsList;
+                    this.$root.dispOutput('');
+                })
+                .catch(e => this.$root.dispOutput(`Error fetching templates: ${e.message}`))
+                .finally(() => {
+                    this.$root.busy = false;
+                });
+        },
+        installSet() {
+            const file = this.$refs.fileInput.files[0];
+            const tsName = file.name.slice(0, -4);
+            this.$root.busy = true;
+            this.$root.dispOutput(`Uploading file: ${file.name}`);
+            this.$root.multipartUpload(file)
+                .then(() => this.$root.dispOutput(`Installing template set ${tsName}`))
+                .then(() => this.$root.safeFetch('/mgmt/shared/fast/templatesets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: file.name.slice(0, -4)
+                    })
+                }))
+                .then(() => {
+                    this.$root.dispOutput(`${tsName} installed successfully`);
+                })
+                .then(() => this.reloadTemplates())
+                .catch((e) => {
+                    this.$root.dispOutput(`Failed to install ${tsName}:\n${e.message}`);
+                })
+                .finally(() => {
+                    this.$root.busy = false;
+                });
+        },
+        removeSet(setName) {
+            this.$root.showModal(
+                'warning',
+                `Template Set '${setName}' will be removed!`,
+                () => {
+                    this.$root.busy = true;
+                    this.$root.dispOutput(`Deleting ${setName}`);
+                    return Promise.resolve()
+                        .then(() => this.$root.safeFetch(`${this.$root.endPointUrl}/templatesets/${setName}`, {
+                            method: 'DELETE'
+                        }))
+                        .then(() => {
+                            this.$root.dispOutput(`${setName} deleted successfully`);
+                        })
+                        .then(() => this.reloadTemplates())
+                        .catch((err) => {
+                            this.$root.dispOutput(`Failed to delete ${setName}:\n${err.message}`);
+                        })
+                        .finally(() => {
+                            this.$root.busy = false;
+                        });
+                }
+            );
         }
     }
 };
