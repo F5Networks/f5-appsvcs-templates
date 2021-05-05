@@ -1376,6 +1376,8 @@ class FASTWorker {
 
         if (appid) {
             data = [`${pathElements[4]}/${pathElements[5]}`];
+        } else if (!data) {
+            data = [];
         }
 
         if (typeof data === 'string') {
