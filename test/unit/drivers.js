@@ -20,6 +20,7 @@
 'use strict';
 
 const nock = require('nock');
+const sinon = require('sinon');
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
 
@@ -66,8 +67,13 @@ describe('AS3 Driver tests', function () {
 
     const host = 'http://localhost:8100';
 
+    beforeEach(function () {
+        this.clock = sinon.useFakeTimers();
+    });
+
     afterEach(function () {
         nock.cleanAll();
+        this.clock.restore();
     });
 
     it('app_stitching', function () {
@@ -400,7 +406,10 @@ describe('AS3 Driver tests', function () {
                             tenant: 'tenantName'
                         }],
                         declaration: Object.assign({}, as3WithApp, {
-                            id: `${AS3DriverConstantsKey}%update%tenantName%appName%0-0-0-0-0`
+                            id: `${AS3DriverConstantsKey}%update%tenantName%appName%0-0-0-0-0`,
+                            controls: {
+                                archiveTimestamp: '2021-05-05T17:14:24.794Z'
+                            }
                         })
                     },
                     {
@@ -422,7 +431,8 @@ describe('AS3 Driver tests', function () {
                 name: '',
                 parameters: {},
                 tenant: 'tenantName',
-                operation: 'delete'
+                operation: 'delete',
+                timestamp: new Date().toISOString()
             },
             {
                 application: 'appName',
@@ -432,7 +442,8 @@ describe('AS3 Driver tests', function () {
                 name: appMetadata.template,
                 parameters: appMetadata.view,
                 tenant: 'tenantName',
-                operation: 'update'
+                operation: 'update',
+                timestamp: '2021-05-05T17:14:24.794Z'
             }
         ]);
     });

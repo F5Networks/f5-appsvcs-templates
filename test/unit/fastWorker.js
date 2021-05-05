@@ -30,6 +30,7 @@ delete process.env.FAST_BIGIP_HOST; // Never try targeting a remote BIG-IP
 const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
+const sinon = require('sinon');
 
 const fast = require('@f5devcentral/f5-fast-core');
 
@@ -189,6 +190,7 @@ describe('template worker tests', function () {
     });
 
     beforeEach(function () {
+        this.clock = sinon.useFakeTimers();
         nock('http://localhost:8100')
             .persist()
             .get('/mgmt/tm/sys/provision')
@@ -246,6 +248,7 @@ describe('template worker tests', function () {
     afterEach(function () {
         nock.cleanAll();
         mockfs.restore();
+        this.clock.restore();
 
         const scratchPath = path.join(process.cwd(), 'templates', 'scratch');
         if (fs.existsSync(scratchPath)) {
@@ -440,7 +443,8 @@ describe('template worker tests', function () {
                     name: '',
                     parameters: {},
                     tenant: 'tenant',
-                    operation: 'update'
+                    operation: 'update',
+                    timestamp: new Date().toISOString()
                 }]);
             });
     });
@@ -474,7 +478,8 @@ describe('template worker tests', function () {
                     name: '',
                     parameters: {},
                     tenant: 'tenant',
-                    operation: 'update'
+                    operation: 'update',
+                    timestamp: new Date().toISOString()
                 });
             });
     });
@@ -796,6 +801,8 @@ describe('template worker tests', function () {
         const op = new RestOp('templatesets');
         const infoOp = new RestOp('info');
         const tsPath = path.join(process.cwd(), 'templates');
+
+        this.clock.restore();
 
         op.setBody({
             name: 'testset'
