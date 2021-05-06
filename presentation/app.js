@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-/* global Vue, JSONEditor */
+/* global JSONEditor */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -23,6 +23,8 @@
 const marked = require('marked');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const VueRouter = require('vue-router').default;
+// eslint-disable-next-line import/no-extraneous-dependencies
+const Vue = require('vue').default;
 
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 

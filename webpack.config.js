@@ -37,6 +37,9 @@ module.exports = {
             path: false,
             vm: false,
             zlib: false
+        },
+        alias: {
+            'vue$': 'vue/dist/vue.esm.js'
         }
     },
     plugins: [
