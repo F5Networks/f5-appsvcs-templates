@@ -31,14 +31,17 @@
         <div
             v-for="setData in setsList"
             :key="setData.name"
+            class="table-block"
         >
-            <strong class="ts-name">{{ setData.name }}</strong>
-            <button
-                class="btn float-right"
-                @click="removeSet(setData.name)"
-            >
-                Remove
-            </button>
+            <div class="clearfix">
+                <button
+                    class="btn float-right"
+                    @click="removeSet(setData.name)"
+                >
+                    Remove
+                </button>
+                <span class="text-bold">{{ setData.name }}</span>
+            </div>
             <sorted-table
                 :table-data="setData.templates"
                 :columns="templateColumns"
@@ -159,3 +162,12 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.table-block {
+    margin: 2em 0;
+}
+.sorted-table {
+    margin: 1em 0;
+}
+</style>
