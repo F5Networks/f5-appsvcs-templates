@@ -154,7 +154,9 @@ const router = new VueRouter({
         { path: '/tasks', component: pageComponents.tasks },
         { path: '/settings', component: pageComponents.settings },
         { path: '/api', component: pageComponents.api },
-        { path: '/templates', component: pageComponents.templates }
+        { path: '/templates', component: pageComponents.templates },
+        // Fix for embedding in TMUI
+        { path: '/application/*/edit', redirect: '/' }
     ]
 });
 
