@@ -461,26 +461,6 @@ vueApp = new Vue({
     data: appState,
     router,
     methods: {
-        cancelModal() {
-            appState.modal.message = '';
-        },
-        continueModal() {
-            const modalFunc = window.modalFunc || Promise.resolve();
-            Promise.resolve()
-                .then(() => modalFunc())
-                .finally(() => this.cancelModal());
-        },
-        showModal(type, msg, func) {
-            if (type === 'warning') {
-                appState.modal.icon = 'info-warning';
-                appState.modal.title = 'Warning';
-            } else {
-                appState.modal.icon = 'info-circle';
-                appState.modal.title = 'Info';
-            }
-            window.modalFunc = func;
-            appState.modal.message = msg;
-        },
         safeFetch(uri, opts, numAttempts) {
             return safeFetch(uri, opts, numAttempts);
         },

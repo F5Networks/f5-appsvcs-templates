@@ -37,25 +37,6 @@
                     </h1>
                     <router-view ref="page" :data="data" :class="{ 'd-none': busy }"></router-view>
                     <pre id="output">{{debugOutput}}</pre>
-                    <div v-if="modal.message && !busy" class="modal active">
-                        <div class="modal-container">
-                            <div class="modal-header">
-                                <a class="fas fa-times icon btn-icon modal-exit-icon float-right faded-active-border"
-                                    @click="cancelModal">
-                                </a>
-                                <div class="modal-title h4">
-                                    <a class="fas fa-exclamation-triangle icon exclamation-icon"></a>
-                                    {{modal.title}}
-                                </div>
-                            </div>
-                            <div class="modal-body">{{modal.message}}</div>
-                            <div class="modal-footer">
-                                <button class="btn btn-cancel faded-active-border" @click="cancelModal">CANCEL</button>
-                                <button class="btn btn-continue faded-active-border" @click="continueModal">CONTINUE</button>
-                            </div>
-                        </div>
-                        <a class="modal-overlay faded-active-border"></a>
-                    </div>
                 </div>
             </div>
         </div>

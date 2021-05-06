@@ -13,16 +13,23 @@
         >
             Delete
         </button>
+        <modal-dialog
+            ref="modal"
+            title="Delete"
+            confirm-text="Delete"
+        />
     </div>
 </template>
 
 <script>
 import SortedTable from '../components/SortedTable.vue';
+import ModalDialog from '../components/ModalDialog.vue';
 
 export default {
     name: 'PageApplications',
     components: {
-        SortedTable
+        SortedTable,
+        ModalDialog
     },
     data() {
         return {
@@ -59,9 +66,8 @@ export default {
             if (appPaths.length === 0) {
                 return;
             }
-            this.$root.showModal(
-                'warning',
-                `The follow applications will be deleted: ${JSON.stringify(appPaths)}`,
+            this.$refs.modal.show(
+                `Are you sure you want to delete the following applications?\n\n${JSON.stringify(appPaths)}`,
                 () => {
                     this.$root.busy = true;
                     return Promise.resolve()

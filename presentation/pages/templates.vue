@@ -47,16 +47,23 @@
                 :columns="templateColumns"
             />
         </div>
+        <modal-dialog
+            ref="modal"
+            title="Remove"
+            confirm-text="Remove"
+        />
     </div>
 </template>
 
 <script>
 import SortedTable from '../components/SortedTable.vue';
+import ModalDialog from '../components/ModalDialog.vue';
 
 export default {
     name: 'PageTemplates',
     components: {
-        SortedTable
+        SortedTable,
+        ModalDialog
     },
     data() {
         return {
@@ -136,9 +143,8 @@ export default {
                 });
         },
         removeSet(setName) {
-            this.$root.showModal(
-                'warning',
-                `Template Set '${setName}' will be removed!`,
+            this.$refs.modal.show(
+                `Are you sure you want to remove application template set "${setName}"?`,
                 () => {
                     this.$root.busy = true;
                     this.$root.dispOutput(`Deleting ${setName}`);
