@@ -9,7 +9,6 @@
         <link rel="stylesheet" href="css/animations.css">
         <link rel="stylesheet" href="css/spectre.min.css">
         <link rel="stylesheet" href="css/style.css">
-        <link rel="stylesheet" href="css/shared-components.css">
 
         <title>F5 Application Services Templates</title>
     </head>
@@ -36,7 +35,7 @@
                         Please check that AS3 is properly installed.
                         AS3 can be downloaded <a href="https://f5.com/getas3">here</a>.
                     </h1>
-                    <router-view ref="page" :data="data" :class="{ 'display-none': busy }"></router-view>
+                    <router-view ref="page" :data="data" :class="{ 'd-none': busy }"></router-view>
                     <pre id="output">{{debugOutput}}</pre>
                     <div v-if="modal.message && !busy" class="modal active">
                         <div class="modal-container">
