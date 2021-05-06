@@ -86,7 +86,10 @@ export default {
                 }
             });
 
-        await updateTaskList();
+        await updateTaskList()
+            .then(() => {
+                this.$root.busy = false;
+            });
     },
     mounted() {
         this.$refs.table.currentKey = 'Timestamp';

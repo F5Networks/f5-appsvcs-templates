@@ -46,7 +46,10 @@ export default {
                 this.appsList = appsList;
                 this.$root.dispOutput('');
             })
-            .catch(e => this.$root.dispOutput(`Error fetching applications: ${e.message}`));
+            .catch(e => this.$root.dispOutput(`Error fetching applications: ${e.message}`))
+            .finally(() => {
+                this.$root.busy = false;
+            });
     },
     methods: {
         deleteApplications() {

@@ -70,7 +70,10 @@ export default {
         };
     },
     async created() {
-        await this.reloadTemplates();
+        await this.reloadTemplates()
+            .then(() => {
+                this.$root.busy = false;
+            });
     },
     methods: {
         reloadTemplates() {

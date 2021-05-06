@@ -5,11 +5,8 @@
 <script>
 export default {
     name: 'PageApi',
-    props: {
-        data: {
-            type: Object,
-            required: true
-        }
+    created() {
+        this.$root.busy = false;
     }
 };
 </script>

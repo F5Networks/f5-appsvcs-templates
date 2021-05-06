@@ -170,11 +170,7 @@ router.afterEach((to) => {
     const routePath = to.path;
     const routeInfo = routes[routePath];
     const pageFunc = (routeInfo && routeInfo.pageFunc) || (() => Promise.resolve());
-    return Promise.resolve()
-        .then(() => pageFunc(to.params))
-        .finally(() => {
-            appState.busy = false;
-        });
+    return pageFunc(to.params);
 });
 
 let vueApp;
@@ -454,7 +450,10 @@ route('settings', 'settings', () => {
                     });
             };
         })
-        .catch(e => dispOutput(e.message));
+        .catch(e => dispOutput(e.message))
+        .finally(() => {
+            appState.busy = false;
+        });
 });
 
 // Create and mount Vue app

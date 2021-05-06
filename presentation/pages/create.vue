@@ -55,7 +55,10 @@ export default {
         }
     },
     async created() {
-        await this.update(this.$route.params);
+        await this.update(this.$route.params)
+            .then(() => {
+                this.$root.busy = false;
+            });
     },
     methods: {
         newEditor(tmplid) {
