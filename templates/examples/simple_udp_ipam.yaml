@@ -3,7 +3,7 @@
 # It allows the user to provide a virtual IP address and port along with a list of UDP server addresses.
 # The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration
 # suitable for submission to BIG-IP.
-title: Simple UDP Application
+title: Simple UDP Application with IPAM
 description: Simple UDP template with IPAM options
 definitions:
   use_ipam_addrs:
