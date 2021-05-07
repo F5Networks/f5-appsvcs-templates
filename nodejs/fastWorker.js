@@ -301,17 +301,11 @@ class FASTWorker {
             ))
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.enterTransaction(0, 'loading template sets from disk'))
-            .then(() => Promise.all([
-                this.recordTransaction(
-                    0, 'gather list of templates from disk',
-                    this.fsTemplateProvider.listSets()
-                ),
-                this.recordTransaction(
-                    0, 'gather list of loaded templates',
-                    this.templateProvider.listSets()
-                )
-            ]))
-            .then(([fsSets]) => {
+            .then(() => this.recordTransaction(
+                0, 'gather list of templates from disk',
+                this.fsTemplateProvider.listSets()
+            ))
+            .then((fsSets) => {
                 const deletedSets = config.deletedTemplateSets;
                 const ignoredSets = [];
                 const sets = [];
