@@ -261,6 +261,7 @@ const createCommonEditor = (schema, defaults) => {
         disable_properties: true,
         disable_collapse: true,
         array_controls_top: true,
+        keep_oneof_values: false,
         theme: 'spectre',
         iconlib: 'fontawesome5'
     });
@@ -302,6 +303,16 @@ const newEditor = (tmplid, view, existingApp) => {
         .then((tmpl) => {
             // Get schema and modify it work better with JSON Editor
             const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
+
+            // Prep IPAM fields for existing applications
+            if (existingApp) {
+                Object.entries(schema.properties || {}).forEach(([propName, prop]) => {
+                    if (prop.ipFromIpam && !prop.immutable) {
+                        prop.description = `${prop.description} | Current: ${view[propName]}`;
+                        delete view[propName];
+                    }
+                });
+            }
 
             // Create a new editor
             editor = createCommonEditor(schema, tmpl.getCombinedParameters(view));
@@ -356,7 +367,8 @@ const newEditor = (tmplid, view, existingApp) => {
                     },
                     body: JSON.stringify({
                         name: tmplid,
-                        parameters
+                        parameters,
+                        previousDef: existingApp
                     })
                 };
                 appState.busy = true;

@@ -1,0 +1,66 @@
+# ** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION **
+# This template is an example of how one might build a simple UDP application with load balancing.
+# It allows the user to provide a virtual IP address and port along with a list of UDP server addresses.
+# The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration
+# suitable for submission to BIG-IP.
+title: Simple UDP Application with IPAM
+description: Simple UDP template with IPAM options
+definitions:
+  use_ipam_addrs:
+    title: Use address from IPAM provider
+    description: Uncheck to manually specify an address instead of fetching from IPAM provider
+    type: boolean
+    default: true
+  virtual_address_ipam:
+    title: Virtual Address IPAM Provider
+    description: One or more IPAM providers must be configured using the Settings tab.
+    ipFromIpam: true
+  virtual_address:
+    title: Virtual Address
+    type: string
+parameters:
+  tenant_name: foo
+  application_name: bar
+  virtual_address: 192.0.2.1
+  virtual_address_ipam: 'testing'
+  virtual_port: 5555
+  server_addresses:
+    - 192.0.2.2
+  service_port: 5555
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{application_name}}": {
+        "class": "Application",
+        "template": "udp",
+            "serviceMain": {
+              "class": "Service_UDP",
+              "virtualAddresses": [
+                  {{#use_ipam_addrs}}
+                    "{{virtual_address_ipam}}"
+                  {{/use_ipam_addrs}}
+                  {{^use_ipam_addrs}}
+                    "{{virtual_address}}"
+                  {{/use_ipam_addrs}}
+              ],
+          "virtualPort": {{virtual_port:types:port}},
+          "pool": "{{application_name}}_Pool1"
+        },
+        "{{application_name}}_Pool1": {
+          "class": "Pool",
+          "monitors": [
+            "icmp"
+          ],
+          "members": [
+            {
+              "serverAddresses": {{server_addresses::array}},
+              "servicePort": {{service_port:types:port}}
+            }
+          ]
+        }
+      }
+    }
+  }

@@ -76,12 +76,11 @@ export default {
             let promiseChain = Promise.resolve();
             let template;
             let parameters;
-            let existingApp = false;
+            let existingApp;
 
             if (params.appid) {
                 // Modify
                 const appid = params.appid;
-                existingApp = true;
                 promiseChain = promiseChain
                     .then(() => this.$root.dispOutput(`Fetching app data for ${appid}`))
                     .then(() => this.$root.getJSON(`applications/${appid}`))
@@ -89,6 +88,7 @@ export default {
                         const appDef = appData.constants.fast;
                         template = appDef.template;
                         parameters = appDef.view;
+                        existingApp = appDef;
                     });
             } else if (params.taskid) {
                 // Resubmit

@@ -35,6 +35,7 @@ const sinon = require('sinon');
 const fast = require('@f5devcentral/f5-fast-core');
 
 const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
+const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker.js');
 
@@ -139,7 +140,9 @@ class TeemDeviceMock {
 }
 
 function createWorker() {
-    const worker = new FASTWorker();
+    const worker = new FASTWorker({
+        secretsManager: new SecretsBase64()
+    });
     patchWorker(worker);
 
     worker.storage = testStorage;
@@ -162,7 +165,7 @@ function resetScope(scope) {
 }
 
 describe('template worker tests', function () {
-    this.timeout(2500);
+    this.timeout(3000);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
@@ -604,6 +607,80 @@ describe('template worker tests', function () {
                 assert.match(op.body.message, /parameters property is missing/);
             });
     });
+    it('post_apps_ipam', function () {
+        const worker = createWorker();
+        const ipamProvider = {
+            name: 'testing',
+            host: 'http://example.com',
+            username: 'admin',
+            password: 'password',
+            retrieveUrl: '{{host}}/nextip',
+            retrieveBody: '{ "num": 1}',
+            retrievePathQuery: '$.addrs[0].ipv4',
+            releaseUrl: '{{host}}/release/{{address}}',
+            releaseBody: '{}'
+        };
+        worker.configStorage.data.config = {
+            ipamProviders: [ipamProvider]
+        };
+        let retrievedAddr = '';
+        let releasedAddr = '';
+        const initialBody = {
+            name: 'examples/simple_udp_ipam',
+            parameters: {
+                use_ipam_addrs: true,
+                virtual_address_ipam: 'testing'
+            }
+        };
+        nock('http://example.com')
+            .post('/nextip', { num: 1 })
+            .reply(200, { addrs: [{ ipv4: '192.0.0.0' }] })
+            .post(/\/release\/.*/)
+            .reply(200, (uri) => {
+                releasedAddr = uri.substr(uri.lastIndexOf('/') + 1);
+            });
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .query(true)
+            .reply(200, as3stub);
+        nock(host)
+            .persist()
+            .post(`${as3ep}/foo?async=true`, (body) => {
+                retrievedAddr = body.foo.bar.serviceMain.virtualAddresses[0];
+                return true;
+            })
+            .reply(202, {});
+        // initial create
+        const op = new RestOp('applications');
+        op.setBody(initialBody);
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 202);
+                assert.strictEqual(retrievedAddr, '192.0.0.0', 'should use address from IPAM');
+
+                // simulate update to a non-ipam to trigger release
+                initialBody.ipamAddrs = {
+                    testing: [retrievedAddr]
+                };
+                op.setBody({
+                    name: 'examples/simple_udp_ipam',
+                    parameters: {
+                        use_ipam_addrs: false,
+                        virtual_address_ipam: undefined,
+                        virtual_address: '10.10.1.2'
+                    },
+                    previousDef: initialBody
+                });
+                return worker.onPost(op);
+            })
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.strictEqual(releasedAddr, '192.0.0.0', 'should release previous IPAM address');
+                assert.strictEqual(retrievedAddr, '10.10.1.2', 'should update to non-IPAM address');
+            });
+    });
     it('post_apps', function () {
         const worker = createWorker();
         const op = new RestOp('applications');
@@ -627,6 +704,9 @@ describe('template worker tests', function () {
         op.setBody({
             deletedTemplateSets: [
                 'foo'
+            ],
+            ipamProviders: [
+                { name: 'test', password: 'foobar' }
             ]
         });
         return worker.onPost(op)
@@ -637,6 +717,7 @@ describe('template worker tests', function () {
             .then(() => worker.getConfig(0))
             .then((config) => {
                 assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
             });
     });
     it('post_settings_bad', function () {
@@ -747,6 +828,9 @@ describe('template worker tests', function () {
         op.setBody({
             deletedTemplateSets: [
                 'foo'
+            ],
+            ipamProviders: [
+                { name: 'test', password: 'foobar' }
             ]
         });
         return worker.onPatch(op)
@@ -757,6 +841,7 @@ describe('template worker tests', function () {
             .then(() => worker.getConfig(0))
             .then((config) => {
                 assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
             });
     });
     it('patch_settings_bad', function () {
@@ -1032,6 +1117,12 @@ describe('template worker tests', function () {
     });
     it('hydrateSchema', function () {
         const worker = createWorker();
+        worker.configStorage.data.config = {
+            ipamProviders: [
+                { name: 'bar' }
+            ]
+        };
+
         const inputSchema = {
             properties: {
                 foo: {
@@ -1043,6 +1134,17 @@ describe('template worker tests', function () {
                     items: {
                         type: 'string',
                         enumFromBigip: 'ltm/profile/http-compression'
+                    }
+                },
+                fooIpam: {
+                    type: 'string',
+                    ipFromIpam: true
+                },
+                fooIpamItems: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        ipFromIpam: true
                     }
                 }
             }
@@ -1064,6 +1166,7 @@ describe('template worker tests', function () {
         };
         return worker.hydrateSchema(tmpl, 0)
             .then((schema) => {
+                console.log(schema);
                 assert.deepEqual(schema.properties.foo.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
@@ -1071,6 +1174,12 @@ describe('template worker tests', function () {
                 assert.deepEqual(schema.properties.fooItems.items.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
+                ]);
+                assert.deepEqual(schema.properties.fooIpam.enum, [
+                    'bar'
+                ]);
+                assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
+                    'bar'
                 ]);
             });
     });

@@ -27,9 +27,13 @@ const fast = require('@f5devcentral/f5-fast-core');
 const FastWorker = require('../nodejs/fastWorker');
 const expressAdapter = require('./expressAdapter');
 
+const { SecretsBase64 } = require('../lib/secrets');
+
 const port = 8080;
 
-const worker = new FastWorker();
+const worker = new FastWorker({
+    secretsManager: new SecretsBase64()
+});
 worker.storage = new fast.dataStores.StorageMemory();
 worker.templateProvider.storage = worker.storage;
 worker.configStorage = new fast.dataStores.StorageMemory();
@@ -40,4 +44,5 @@ console.log([
 ].join(' '));
 
 expressAdapter.generateApp(worker)
+
     .then(app => app.listen(port));

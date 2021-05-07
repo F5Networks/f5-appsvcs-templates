@@ -27,6 +27,8 @@ const extract = require('extract-zip');
 const axios = require('axios');
 const Ajv = require('ajv');
 const merge = require('deepmerge');
+const Mustache = require('mustache');
+const JSONPath = require('jsonpath-plus').JSONPath;
 
 const semver = require('semver');
 
@@ -34,6 +36,7 @@ const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const drivers = require('../lib/drivers');
+const { SecretsSecureVault } = require('../lib/secrets');
 
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
@@ -60,6 +63,10 @@ if (typeof bigipStrictCert === 'string') {
 
 const ajv = new Ajv();
 ajv.addFormat('checkbox', /.*/);
+ajv.addFormat('table', /.*/);
+ajv.addFormat('password', /.*/);
+ajv.addFormat('text', /.*/);
+ajv.addFormat('grid-strict', /.*/);
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
@@ -86,7 +93,8 @@ const supportedHashes = {
 };
 
 class FASTWorker {
-    constructor() {
+    constructor(options) {
+        options = options || {};
         this.state = {};
 
         this.isPublic = true;
@@ -107,6 +115,7 @@ class FASTWorker {
             name: projectName,
             version: pkg.version
         });
+        this.secretsManager = options.secretsManager || new SecretsSecureVault();
         this.transactionLogger = new TransactionLogger(
             (transaction) => {
                 const [id, text] = transaction.split('@@');
@@ -150,7 +159,8 @@ class FASTWorker {
     getConfig(reqid) {
         reqid = reqid || 0;
         const defaultConfig = {
-            deletedTemplateSets: []
+            deletedTemplateSets: [],
+            ipamProviders: []
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
@@ -185,6 +195,93 @@ class FASTWorker {
             });
     }
 
+    createIPAMProviderSchema(service, overrides) {
+        overrides = overrides || {};
+
+        return {
+            type: 'object',
+            title: service,
+            format: 'grid-strict',
+            properties: merge({
+                name: {
+                    title: 'Name',
+                    type: 'string',
+                    options: {
+                        grid_columns: 2,
+                        grid_break: true
+                    }
+                },
+                host: {
+                    title: 'Host',
+                    type: 'string',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                username: {
+                    title: 'Username',
+                    type: 'string',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                password: {
+                    title: 'Password',
+                    type: 'string',
+                    format: 'password',
+                    options: {
+                        grid_columns: 4,
+                        grid_break: true
+                    }
+                },
+                retrieveUrl: {
+                    title: 'Retrieve URL',
+                    type: 'string',
+                    format: 'text',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                retrieveBody: {
+                    title: 'Retrieve Body',
+                    type: 'string',
+                    format: 'text',
+                    default: '{}',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                retrievePathQuery: {
+                    title: 'Retrieve Path Query',
+                    type: 'string',
+                    format: 'text',
+                    default: '$',
+                    options: {
+                        grid_columns: 4,
+                        grid_break: true
+                    }
+                },
+                releaseUrl: {
+                    title: 'Release URL',
+                    type: 'string',
+                    format: 'text',
+                    options: {
+                        grid_columns: 4
+                    }
+                },
+                releaseBody: {
+                    title: 'Release Body',
+                    type: 'string',
+                    format: 'text',
+                    default: '{}',
+                    options: {
+                        grid_columns: 4
+                    }
+                }
+            }, overrides)
+        };
+    }
+
     getConfigSchema() {
         const baseSchema = {
             $schema: 'http://json-schema.org/schema#',
@@ -199,6 +296,66 @@ class FASTWorker {
                     uniqueItems: true,
                     options: {
                         hidden: true
+                    }
+                },
+                ipamProviders: {
+                    title: 'IPAM Providers',
+                    format: 'table',
+                    type: 'array',
+                    items: {
+                        anyOf: [
+                            // Infoblox support is untested
+                            // this.createIPAMProviderSchema('Infoblox', {
+                            //     apiVersion: {
+                            //         title: 'API Version',
+                            //         type: 'string',
+                            //         default: 'V2.11',
+                            //         options: {
+                            //             grid_columns: 2
+                            //         }
+                            //     },
+                            //     network: {
+                            //         title: 'Network Name',
+                            //         type: 'string',
+                            //         options: {
+                            //             grid_columns: 3,
+                            //             grid_break: true
+                            //         }
+                            //     },
+                            //     retrieveUrl: {
+                            // eslint-disable-next-line max-len
+                            //         const: '{{host}}/wapi/{{apiVersion}}/network/{{network}}?_function=next_available_ip&_return_as_object=1',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     retrieveBody: {
+                            //         const: '{ "num": 1 }',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     retrievePathQuery: {
+                            //         const: '$.ipv4addrs[0].ipv4addr',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     releaseUrl: {
+                            //         const: '{{host}}/wapi/{{apiVersion}}/ipv4address/{{network}}:{{addr}}',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     releaseBody: {
+                            //         const: '{}',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     }
+                            // }),
+                            this.createIPAMProviderSchema('Generic')
+                        ]
                     }
                 }
             },
@@ -220,6 +377,24 @@ class FASTWorker {
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
             });
+    }
+
+    encryptConfigSecrets(newConfig, prevConfig) {
+        return Promise.all((newConfig.ipamProviders || []).map(provider => Promise.resolve()
+            .then(() => {
+                const prevProvider = prevConfig.ipamProviders.filter(
+                    x => x.name === provider.name
+                )[0];
+
+                if (prevProvider && prevProvider.password === provider.password) {
+                    return Promise.resolve(provider.password);
+                }
+
+                return this.secretsManager.encrypt(provider.password || '');
+            })
+            .then((password) => {
+                provider.password = password;
+            })));
     }
 
     handleResponseError(e, description) {
@@ -670,6 +845,20 @@ class FASTWorker {
             });
     }
 
+    getPropsWithChild(schema, childName) {
+        return Object.entries(schema.properties || {})
+            .reduce((acc, curr) => {
+                const [key, value] = curr;
+                if (value[childName]) {
+                    acc[key] = value;
+                }
+                if (value.items && value.items[childName]) {
+                    acc[`${key}.items`] = value.items;
+                }
+                return acc;
+            }, {});
+    }
+
     hydrateSchema(tmpl, requestId, clearCache) {
         const schema = tmpl._parametersSchema;
         const subTemplates = [
@@ -682,22 +871,11 @@ class FASTWorker {
             this._hydrateCache = null;
         }
 
-        if (!schema.properties && subTemplates.length === 0) {
-            return Promise.resolve();
-        }
+        const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+        const enumFromBigipProps = this.getPropsWithChild(schema, 'enumFromBigip');
 
-        const enumFromBigipProps = Object.entries(schema.properties || {})
-            .reduce((acc, curr) => {
-                const [key, value] = curr;
-                if (value.enumFromBigip) {
-                    acc[key] = value;
-                }
-                if (value.items && value.items.enumFromBigip) {
-                    acc[`${key}.items`] = value.items;
-                }
-                return acc;
-            }, {});
-        const propNames = Object.keys(enumFromBigipProps);
+        const propNames = Object.keys(enumFromBigipProps)
+            .concat(Object.keys(ipFromIpamProps));
         if (propNames.length > 0) {
             this.logger.fine(
                 `FAST Worker [${requestId}]: Hydrating properties: ${JSON.stringify(propNames, null, 2)}`
@@ -709,7 +887,27 @@ class FASTWorker {
         }
 
         return Promise.resolve()
+            .then(() => {
+                if (ipFromIpamProps.length === 0) {
+                    return Promise.resolve();
+                }
+
+                if (this._hydrateCache.__config) {
+                    return Promise.resolve();
+                }
+
+                return this.getConfig(requestId)
+                    .then((config) => {
+                        this._hydrateCache.__config = config;
+                    });
+            })
             .then(() => Promise.all(subTemplates.map(x => this.hydrateSchema(x, requestId))))
+            .then(() => {
+                const config = this._hydrateCache.__config;
+                Object.values(ipFromIpamProps).forEach((prop) => {
+                    prop.enum = config.ipamProviders.map(x => x.name);
+                });
+            })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
                 const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
                 return Promise.resolve()
@@ -799,28 +997,147 @@ class FASTWorker {
             .then(() => apps);
     }
 
+    populateIPAMAddress(template, templateData, config, reqid, ipamAddrs) {
+        let ipamChain = Promise.resolve();
+        const schema = template.getParametersSchema();
+        const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+        Object.entries(ipFromIpamProps).forEach(([name, prop]) => {
+            const providerName = templateData.parameters[name];
+            const provider = config.ipamProviders
+                .find(p => p.name === providerName);
+            if (provider) {
+                delete prop.enum;
+                if (!ipamAddrs[providerName]) {
+                    ipamAddrs[providerName] = [];
+                }
+                ipamChain = ipamChain
+                    .then(() => this.secretsManager.decrypt(provider.password))
+                    .then(providerPassword => this.recordTransaction(
+                        reqid, `fetching address from IPAM provider: ${providerName}`,
+                        axios.post(
+                            Mustache.render(provider.retrieveUrl, provider),
+                            JSON.parse(Mustache.render(provider.retrieveBody, provider)),
+                            {
+                                auth: {
+                                    username: provider.username,
+                                    password: providerPassword
+                                }
+                            }
+                        )
+                    ))
+                    .catch(e => Promise.reject(new Error(
+                        `failed to get IP address from IPAM provider (${providerName}): ${e.stack}`
+                    )))
+                    .then((res) => {
+                        let value = '';
+                        try {
+                            value = JSON.parse(res.data);
+                        } catch (e) {
+                            value = res.data;
+                        }
+                        value = JSONPath(provider.retrievePathQuery, value)[0];
+                        templateData.parameters[name] = value;
+                        ipamAddrs[providerName].push(value);
+                    });
+            }
+        });
+        return ipamChain;
+    }
+
+    releaseIPAMAddress(reqid, config, appData, excludeAddrs) {
+        if (!appData.ipamAddrs) {
+            return Promise.resolve();
+        }
+        const promises = [];
+        Object.entries(appData.ipamAddrs).forEach(([providerName, addrs]) => {
+            const provider = config.ipamProviders
+                .filter(p => p.name === providerName)[0];
+            addrs.forEach((address) => {
+                if (!excludeAddrs || !excludeAddrs[provider] || !excludeAddrs[provider].find(a => a === address)) {
+                    const view = Object.assign({}, provider, { address });
+                    promises.push(Promise.resolve()
+                        .then(() => this.secretsManager.decrypt(provider.password))
+                        .then(providerPassword => this.recordTransaction(
+                            reqid, `releasing ${address} from IPAM provider: ${providerName}`,
+                            axios.post(
+                                Mustache.render(provider.releaseUrl, view),
+                                JSON.parse(Mustache.render(provider.releaseBody, view)),
+                                {
+                                    auth: {
+                                        username: provider.username,
+                                        password: providerPassword
+                                    }
+                                }
+                            )
+                        ))
+                        .catch(e => this.logger.error(
+                            `failed to release IP address from IPAM provider (${providerName}): ${e.stack}`
+                        )));
+                }
+            });
+        });
+
+        return Promise.all(promises);
+    }
+
+    releaseIPAMAddressesFromApps(reqid, appsData) {
+        let config;
+        const promises = [];
+        appsData.forEach((appDef) => {
+            let view;
+            if (appDef.metaData) {
+                if (Object.keys(appDef.metaData.ipamAddrs || {}) === 0) {
+                    return;
+                }
+                view = appDef.metaData;
+            } else {
+                if (Object.keys(appDef.ipamAddrs || {}) === 0) {
+                    return;
+                }
+                view = appDef;
+            }
+            promises.push(Promise.resolve()
+                .then(() => {
+                    if (config) {
+                        return Promise.resolve(config);
+                    }
+                    return this.getConfig(reqid)
+                        .then((c) => { config = c; });
+                })
+                .then(() => this.releaseIPAMAddress(reqid, config, view)));
+        });
+
+        return Promise.all(promises);
+    }
+
     renderTemplates(reqid, data) {
         const appsData = [];
         const lastModified = new Date().toISOString();
-        let promiseChain = Promise.resolve();
-        data.forEach((x) => {
-            if (!x.name) {
+        let config = {};
+        let promiseChain = Promise.resolve()
+            .then(() => this.getConfig(reqid))
+            .then((configData) => {
+                config = configData;
+            });
+        data.forEach((tmplData) => {
+            if (!tmplData.name) {
                 promiseChain = promiseChain
                     .then(() => Promise.reject(new Error('name property is missing')));
                 return;
             }
-            if (!x.parameters) {
+            if (!tmplData.parameters) {
                 promiseChain = promiseChain
                     .then(() => Promise.reject(new Error('parameters property is missing')));
                 return;
             }
             const tsData = {};
-            const [setName, templateName] = x.name.split('/');
+            const [setName, templateName] = tmplData.name.split('/');
+            const ipamAddrs = {};
             promiseChain = promiseChain
                 .then(() => {
                     if (!setName || !templateName) {
                         return Promise.reject(new Error(
-                            `expected name to be of the form "setName/templateName", but got ${x.name}`
+                            `expected name to be of the form "setName/templateName", but got ${tmplData.name}`
                         ));
                     }
                     return Promise.resolve();
@@ -831,26 +1148,39 @@ class FASTWorker {
                 ))
                 .then(setData => Object.assign(tsData, setData))
                 .then(() => this.recordTransaction(
-                    reqid, `loading template (${x.name})`,
-                    this.templateProvider.fetch(x.name)
+                    reqid, `loading template (${tmplData.name})`,
+                    this.templateProvider.fetch(tmplData.name)
                 ))
-                .catch(e => Promise.reject(new Error(`unable to load template: ${x.name}\n${e.stack}`)))
+                .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
+                .then(tmpl => this.populateIPAMAddress(tmpl, tmplData, config, reqid, ipamAddrs)
+                    .then(() => tmpl))
                 .then(tmpl => this.recordTransaction(
-                    reqid, `rendering template (${x.name})`,
-                    tmpl.fetchAndRender(x.parameters)
+                    reqid, `rendering template (${tmplData.name})`,
+                    tmpl.fetchAndRender(tmplData.parameters)
                 ))
                 .then(rendered => JSON.parse(rendered))
-                .catch(e => Promise.reject(new Error(`failed to render template: ${x.name}\n${e.message}`)))
+                .catch(e => Promise.resolve()
+                    // Release any IPAM IP addrs
+                    .then(() => this.releaseIPAMAddress(reqid, config, { ipamAddrs }))
+                    // Now re-reject
+                    .then(() => Promise.reject(new Error(`failed to render template: ${tmplData.name}\n${e.stack}`))))
                 .then((decl) => {
-                    appsData.push({
+                    const appData = {
                         appDef: decl,
                         metaData: {
-                            template: x.name,
+                            template: tmplData.name,
                             setHash: tsData.hash,
-                            view: x.parameters,
-                            lastModified
+                            view: tmplData.parameters,
+                            lastModified,
+                            ipamAddrs
                         }
-                    });
+                    };
+                    appsData.push(appData);
+
+                    const oldAppData = tmplData.previousDef || {};
+                    if (oldAppData.ipamAddrs) {
+                        this.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
+                    }
                 });
         });
 
@@ -1134,6 +1464,7 @@ class FASTWorker {
         }
 
         // this.logger.info(`postApplications() received:\n${JSON.stringify(data, null, 2)}`);
+        let appsData;
 
         return Promise.resolve()
             .then(() => this.renderTemplates(reqid, data))
@@ -1145,13 +1476,16 @@ class FASTWorker {
 
                 return Promise.reject(this.genRestResponse(restOperation, code, e.stack));
             })
-            .then((appsData) => {
+            .then((renderResults) => {
+                appsData = renderResults;
+            })
+            .then(() => {
                 appsData.forEach((appData) => {
                     this.generateTeemReportApplication('modify', appData.template);
                 });
                 return appsData;
             })
-            .then(appsData => this.recordTransaction(
+            .then(() => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
                 this.driver.createApplications(appsData)
             ))
@@ -1159,11 +1493,12 @@ class FASTWorker {
                 if (restOperation.getStatusCode() >= 400) {
                     return Promise.reject();
                 }
-                return Promise.reject(this.genRestResponse(
-                    restOperation,
-                    400,
-                    `error generating AS3 declaration\n${e.stack}`
-                ));
+                return this.releaseIPAMAddressesFromApps(reqid, appsData)
+                    .then(() => Promise.reject(this.genRestResponse(
+                        restOperation,
+                        400,
+                        `error generating AS3 declaration\n${e.stack}`
+                    )));
             })
             .then((response) => {
                 if (response.status >= 300) {
@@ -1291,6 +1626,8 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
+            .then(() => this.getConfig(reqid))
+            .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
             .then(() => this.gatherProvisionData(reqid, true))
             .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
@@ -1320,6 +1657,8 @@ class FASTWorker {
 
                 return Promise.reject(this.genRestResponse(restOperation, code, e.stack));
             })
+            .then(rendered => this.releaseIPAMAddressesFromApps(reqid, rendered)
+                .then(() => rendered))
             .then(rendered => this.genRestResponse(restOperation, 200, rendered))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
@@ -1372,9 +1711,14 @@ class FASTWorker {
             data = [];
         }
 
+        const appNames = data.map(x => x.split('/'));
         return Promise.resolve()
-            .then(() => data.map(x => x.split('/')))
-            .then(appNames => this.recordTransaction(
+            .then(() => this.recordTransaction(
+                reqid, 'requesting application data from driver',
+                Promise.all(appNames.map(x => this.driver.getApplication(...x)))
+            ))
+            .then(appsData => this.releaseIPAMAddressesFromApps(reqid, appsData))
+            .then(() => this.recordTransaction(
                 reqid, 'deleting applications',
                 this.driver.deleteApplications(appNames)
             ))
@@ -1547,6 +1891,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.getConfig(reqid))
+            .then(prevConfig => this.encryptConfigSecrets(config, prevConfig)
+                .then(() => prevConfig))
             .then((prevConfig) => {
                 combinedConfig = Object.assign({}, prevConfig, config);
             })
