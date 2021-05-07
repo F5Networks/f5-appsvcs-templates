@@ -304,54 +304,56 @@ class FASTWorker {
                     type: 'array',
                     items: {
                         anyOf: [
-                            this.createIPAMProviderSchema('Infoblox', {
-                                apiVersion: {
-                                    title: 'API Version',
-                                    type: 'string',
-                                    default: 'V2.11',
-                                    options: {
-                                        grid_columns: 2
-                                    }
-                                },
-                                network: {
-                                    title: 'Network Name',
-                                    type: 'string',
-                                    options: {
-                                        grid_columns: 3,
-                                        grid_break: true
-                                    }
-                                },
-                                retrieveUrl: {
-                                    const: '{{host}}/wapi/{{apiVersion}}/network/{{network}}?_function=next_available_ip&_return_as_object=1',
-                                    options: {
-                                        hidden: true
-                                    }
-                                },
-                                retrieveBody: {
-                                    const: '{ "num": 1 }',
-                                    options: {
-                                        hidden: true
-                                    }
-                                },
-                                retrievePathQuery: {
-                                    const: '$.ipv4addrs[0].ipv4addr',
-                                    options: {
-                                        hidden: true
-                                    }
-                                },
-                                releaseUrl: {
-                                    const: '{{host}}/wapi/{{apiVersion}}/ipv4address/{{network}}:{{addr}}',
-                                    options: {
-                                        hidden: true
-                                    }
-                                },
-                                releaseBody: {
-                                    const: '{}',
-                                    options: {
-                                        hidden: true
-                                    }
-                                }
-                            }),
+                            // Infoblox support is untested
+                            // this.createIPAMProviderSchema('Infoblox', {
+                            //     apiVersion: {
+                            //         title: 'API Version',
+                            //         type: 'string',
+                            //         default: 'V2.11',
+                            //         options: {
+                            //             grid_columns: 2
+                            //         }
+                            //     },
+                            //     network: {
+                            //         title: 'Network Name',
+                            //         type: 'string',
+                            //         options: {
+                            //             grid_columns: 3,
+                            //             grid_break: true
+                            //         }
+                            //     },
+                            //     retrieveUrl: {
+                            // eslint-disable-next-line max-len
+                            //         const: '{{host}}/wapi/{{apiVersion}}/network/{{network}}?_function=next_available_ip&_return_as_object=1',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     retrieveBody: {
+                            //         const: '{ "num": 1 }',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     retrievePathQuery: {
+                            //         const: '$.ipv4addrs[0].ipv4addr',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     releaseUrl: {
+                            //         const: '{{host}}/wapi/{{apiVersion}}/ipv4address/{{network}}:{{addr}}',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     },
+                            //     releaseBody: {
+                            //         const: '{}',
+                            //         options: {
+                            //             hidden: true
+                            //         }
+                            //     }
+                            // }),
                             this.createIPAMProviderSchema('Generic')
                         ]
                     }
