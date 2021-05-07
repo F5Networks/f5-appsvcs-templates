@@ -307,7 +307,6 @@ const newEditor = (tmplid, view, existingApp) => {
             editor = createCommonEditor(schema, tmpl.getCombinedParameters(view));
 
             editor.on('ready', () => {
-                dispOutput('Editor ready');
                 // Enable form button now that the form is ready
                 document.getElementById('view-tmpl-btn').disabled = false;
                 document.getElementById('view-schema-btn').disabled = false;
@@ -361,11 +360,11 @@ const newEditor = (tmplid, view, existingApp) => {
                     })
                 };
                 appState.busy = true;
-                dispOutput(JSON.stringify(data, null, 2));
+                console.log(JSON.stringify(data, null, 2));
                 Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/applications`, data))
                     .then((result) => {
-                        dispOutput(JSON.stringify(result, null, 2));
+                        console.log(JSON.stringify(result, null, 2));
 
                         const submissionData = getSubmissionData();
                         const taskid = result.message[0].id;
@@ -384,7 +383,7 @@ const newEditor = (tmplid, view, existingApp) => {
                     });
             };
 
-            dispOutput('Editor loaded'); // Clear text on new editor load
+            console.log('Editor loaded'); // Clear text on new editor load
         })
         .catch((e) => {
             const versionError = e.message.match(/^.*since it requires AS3.*$/m);
