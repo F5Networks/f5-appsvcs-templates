@@ -1,0 +1,22 @@
+{
+  "tenant_name": "t1",
+  "app_name": "app1",
+  "virtual_address": "10.1.1.1",
+  "virtual_port": 443,
+  "pool_members": [
+    "10.0.0.1",
+    "10.0.0.2"
+  ],
+  "pool_port": 80,
+  "load_balancing_mode": "round-robin",
+  "slow_ramp_time": 300,
+  "app_fqdn": "example.f5net.com",
+  "monitor_interval": 10,
+  "enable_snat": true,
+  "snat_automap": true,
+  "enable_tls_server": true,
+  "tls_cert_name": "/Common/default.crt",
+  "tls_key_name": "/Common/default.key",
+  "enable_tls_client": true,
+  "make_tls_client_profile": true
+}

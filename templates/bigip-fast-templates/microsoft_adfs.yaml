@@ -3,18 +3,6 @@ title: Microsoft ADFS Application Template
 description: Configure high availability and optimization for Microsoft ADFS implementations.
 bigipMinimumAS3: 3.24.0
 allOf:
-  - contentType: application/json
-    definitions:
-      beta_warning:
-        title: 'Notice: Beta Test'
-        description: <span style="color:#d05000;font-size:125%">
-          This FAST template is a *Beta Version*. Please report any issues, or an RFE, on the 
-          [FAST GitHub repository](https://github.com/F5Networks/f5-appsvcs-templates) as appropriate.</span>
-        format: info
-    template: |
-      { {{beta_warning}}
-        "class": "ADC"
-      }
   - $ref: "_as3.yaml#"
   - contentType: application/json
     title: ADFS Virtuals
@@ -37,7 +25,7 @@ allOf:
         default: 443
       client_cert:
         title: Microsoft Alternate Port Client Certificate Authentication
-        description: Choose whether you want to configure BIG-IP to support client certificate authentication. If you select Yes, the iApp creates the objects needed for client certificate authentication. This uses port 49443, which is based on Microsoft's alternate port configuration.
+        description: Choose whether you want to configure BIG-IP to support client certificate authentication. If you select Yes, FAST creates the objects needed for client certificate authentication. This uses port 49443, which is based on Microsoft's alternate port configuration.
         type: boolean
     template: |
       {
@@ -59,7 +47,52 @@ allOf:
         }
       }
   - $ref: "_tls_server_profile.yaml#"
-  - $ref: "_tls_client_profile.yaml#"
+  - contentType: application/json
+    bigipHideTemplate: true
+    definitions:
+      enable_tls_server:
+        type: boolean
+      enable_tls_client:
+        title: TLS Client
+        description: Enable TLS client to encrypt server-side connections.
+        type: boolean
+        default: false
+      make_tls_client_profile:
+        title: FAST-Generated TLS Client Profile
+        description: Uncheck to use an existing TLS client profile.
+        type: boolean
+        default: true
+      tls_client_profile_name:
+        title: TLS Client Profile
+        description: Select an existing TLS client profile. TLS client profiles are of type "ltm serverssl" on BIG-IP.
+        enumFromBigip: ltm/profile/server-ssl
+        default: "/Common/serverssl"
+    template: |
+      {
+        "{{tenant_name}}": {
+          "{{app_name}}": {
+            {{#enable_tls_server}}
+            {{#enable_tls_client}}
+              {{#make_tls_client_profile}}
+                "{{app_name}}_tls_client": {
+                  "class": "TLS_Client"
+                },
+                "{{app_name}}": {
+                  "clientTLS": "{{app_name}}_tls_client"
+                }
+              {{/make_tls_client_profile}}
+              {{^make_tls_client_profile}}
+                "{{app_name}}": {
+                  "clientTLS": {
+                    "bigip": "{{tls_client_profile_name}}"
+                  }
+                }
+              {{/make_tls_client_profile}}
+            {{/enable_tls_client}}
+            {{/enable_tls_server}}
+          }
+        }
+      }
   - $ref: "_snat.yaml#"
   - contentType: application/json
     title: ADFS Virtuals
@@ -67,6 +100,7 @@ allOf:
       enable_tls_client:
         type: boolean
         dependencies: []
+        default: false
       enable_tls_server:
         type: boolean
         dependencies: []
@@ -85,7 +119,11 @@ allOf:
                 "profileTCP": "normal",
                 "profileHTTP": {
                   "use": "{{app_name}}_http"
-                }
+                },
+                "clientTLS": "{{app_name}}_tls_client"
+              },
+              "{{app_name}}_tls_client": {
+                "class": "TLS_Client"
               }
             {{/enable_tls_client}}
             {{^enable_tls_client}}
@@ -103,10 +141,9 @@ allOf:
     definitions:
       pool_members:
         title: Pool Members
-        description: Add the addresses of the Exchange servers in the pool.
+        description: Add the addresses of the Active Directory servers in the pool.
       pool_port:
-        title: Port for Exchange Services
-        description: Specify the port to use for all services except POP & IMAP.
+        title: Port for Active Directory Services
         default: 80
       load_balancing_mode:
         title: Load Balancing Method
@@ -161,7 +198,6 @@ allOf:
     definitions:
       enable_tls_client:
         type: boolean
-        default: false
       make_monitor:
         title: FAST-Generated Pool Monitor
         description: Uncheck to use an existing BIG-IP Pool Monitor.
