@@ -1015,7 +1015,8 @@ class FASTWorker {
                     ipamAddrs[providerName] = [];
                 }
                 ipamChain = ipamChain
-                    .then(() => this.recordTransaction(
+                    .then(() => this.secretsManager.decrypt(provider.password))
+                    .then(providerPassword => this.recordTransaction(
                         reqid, `fetching address from IPAM provider: ${providerName}`,
                         axios.post(
                             Mustache.render(provider.retrieveUrl, provider),
@@ -1023,7 +1024,7 @@ class FASTWorker {
                             {
                                 auth: {
                                     username: provider.username,
-                                    password: provider.password
+                                    password: providerPassword
                                 }
                             }
                         )
