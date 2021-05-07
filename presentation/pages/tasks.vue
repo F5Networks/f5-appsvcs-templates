@@ -20,6 +20,7 @@ export default {
             columns: {
                 Application: 'application',
                 Template: 'name',
+                Tenant: 'tenant',
                 Operation: 'operation',
                 Status: 'status',
                 'App Template': {
@@ -75,6 +76,7 @@ export default {
 
                     task.application = (task.application === '') ? 'N/A' : task.application;
                     task.name = (task.name === '') ? 'N/A' : task.name;
+                    task.tenant = (task.tenant === '') ? 'N/A' : task.tenant;
                 });
                 this.tasks = tasks;
 
