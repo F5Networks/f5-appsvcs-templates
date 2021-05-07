@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-/* global Vue, JSONEditor */
+/* global JSONEditor */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -21,9 +21,12 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const marked = require('marked');
-const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
+// eslint-disable-next-line import/no-extraneous-dependencies
+const VueRouter = require('vue-router').default;
+// eslint-disable-next-line import/no-extraneous-dependencies
+const Vue = require('vue').default;
 
-const UiWorker = require('./lib/ui-worker.js');
+const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
 const endPointUrl = '/mgmt/shared/fast';
 
@@ -81,13 +84,21 @@ const safeFetch = (uri, opts, numAttempts) => {
 };
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
 
+const storeSubmissionData = (data) => {
+    localStorage.setItem('submission-data', JSON.stringify(data));
+};
+
+const getSubmissionData = () => {
+    const submissionData = localStorage.getItem('submission-data') || '{}';
+    return JSON.parse(submissionData);
+};
+
 let editor = null;
-let UI;
-let as3Version;
 
 const appState = {
     debugOutput: '',
     foundAS3: true,
+    as3Version: undefined,
     data: {},
     modal: {
         message: '',
@@ -96,44 +107,9 @@ const appState = {
     pageComponent: {
         template: '<div></div>'
     },
-    busy: true
+    busy: true,
+    endPointUrl
 };
-
-// Auto-register HTML template tags as Vue components
-// eslint-disable-next-line no-restricted-syntax
-for (const tmpl of document.getElementsByTagName('template')) {
-    Vue.component(tmpl.id, {
-        props: ['data'],
-        template: `#${tmpl.id}`
-    });
-}
-// eslint-disable-next-line no-unused-vars
-const vueApp = new Vue({
-    el: '#vue-app',
-    data: appState,
-    methods: {
-        cancelModal() {
-            appState.modal.message = '';
-        },
-        continueModal() {
-            const modalFunc = window.modalFunc || Promise.resolve();
-            Promise.resolve()
-                .then(() => modalFunc())
-                .finally(() => this.cancelModal());
-        },
-        showModal(type, msg, func) {
-            if (type === 'warning') {
-                appState.modal.icon = 'info-warning';
-                appState.modal.title = 'Warning';
-            } else {
-                appState.modal.icon = 'info-circle';
-                appState.modal.title = 'Info';
-            }
-            window.modalFunc = func;
-            appState.modal.message = msg;
-        }
-    }
-});
 
 const dispOutput = (output) => {
     if (typeof output === 'object') {
@@ -146,6 +122,58 @@ const dispOutput = (output) => {
     appState.debugOutput = output;
 };
 
+// Auto-register all components in pages directory
+const requireComponent = require.context(
+    './pages',
+    false,
+    /.*\.vue$/
+);
+const pageComponents = {};
+requireComponent.keys().forEach((fileName) => {
+    const componentConfig = requireComponent(fileName);
+    const component = componentConfig.default || componentConfig;
+    Vue.component(component.name, component);
+    pageComponents[component.name.replace('Page', '').toLowerCase()] = component;
+});
+
+// Setup router
+const routes = {};
+function route(path, _pageName, pageFunc) {
+    routes[`/${path}`] = { pageFunc };
+}
+
+Vue.use(VueRouter);
+
+const router = new VueRouter({
+    routes: [
+        { path: '/', redirect: '/templates' },
+        { path: '/applications', component: pageComponents.applications },
+        { path: '/create/:tmplid(.*)', component: pageComponents.create },
+        { path: '/modify/:appid(.*)', component: pageComponents.create },
+        { path: '/resubmit/:taskid', component: pageComponents.create },
+        { path: '/tasks', component: pageComponents.tasks },
+        { path: '/settings', component: pageComponents.settings },
+        { path: '/api', component: pageComponents.api },
+        { path: '/templates', component: pageComponents.templates },
+        // Fix for embedding in TMUI
+        { path: '/application/*/edit', redirect: '/' }
+    ]
+});
+
+router.beforeEach((to, from, next) => {
+    appState.busy = true;
+    dispOutput('');
+    next();
+});
+
+router.afterEach((to) => {
+    const routePath = to.path;
+    const routeInfo = routes[routePath];
+    const pageFunc = (routeInfo && routeInfo.pageFunc) || (() => Promise.resolve());
+    return pageFunc(to.params);
+});
+
+let vueApp;
 const multipartUpload = (file) => {
     const CHUNK_SIZE = 1000000;
     const uploadPart = (start, end) => {
@@ -175,15 +203,6 @@ const multipartUpload = (file) => {
         return uploadPart(0, CHUNK_SIZE - 1);
     }
     return uploadPart(0, file.size - 1);
-};
-
-const storeSubmissionData = (data) => {
-    UiWorker.store('submission-data', JSON.stringify(data));
-};
-
-const getSubmissionData = () => {
-    const submissionData = UiWorker.getStore('submission-data') || '{}';
-    return JSON.parse(submissionData);
 };
 
 // eslint-disable-next-line no-undef
@@ -288,7 +307,6 @@ const newEditor = (tmplid, view, existingApp) => {
             editor = createCommonEditor(schema, tmpl.getCombinedParameters(view));
 
             editor.on('ready', () => {
-                dispOutput('Editor ready');
                 // Enable form button now that the form is ready
                 document.getElementById('view-tmpl-btn').disabled = false;
                 document.getElementById('view-schema-btn').disabled = false;
@@ -342,11 +360,11 @@ const newEditor = (tmplid, view, existingApp) => {
                     })
                 };
                 appState.busy = true;
-                dispOutput(JSON.stringify(data, null, 2));
+                console.log(JSON.stringify(data, null, 2));
                 Promise.resolve()
                     .then(() => safeFetch(`${endPointUrl}/applications`, data))
                     .then((result) => {
-                        dispOutput(JSON.stringify(result, null, 2));
+                        console.log(JSON.stringify(result, null, 2));
 
                         const submissionData = getSubmissionData();
                         const taskid = result.message[0].id;
@@ -357,7 +375,7 @@ const newEditor = (tmplid, view, existingApp) => {
                         storeSubmissionData(submissionData);
                     })
                     .then(() => {
-                        window.location.href = '#tasks';
+                        vueApp.$router.push('/tasks');
                     })
                     .catch((e) => {
                         appState.busy = false;
@@ -365,7 +383,7 @@ const newEditor = (tmplid, view, existingApp) => {
                     });
             };
 
-            dispOutput('Editor loaded'); // Clear text on new editor load
+            console.log('Editor loaded'); // Clear text on new editor load
         })
         .catch((e) => {
             const versionError = e.message.match(/^.*since it requires AS3.*$/m);
@@ -380,7 +398,7 @@ const newEditor = (tmplid, view, existingApp) => {
 // Check that AS3 is available
 safeFetch('/mgmt/shared/appsvcs/info')
     .then((res) => {
-        as3Version = res.version;
+        appState.as3Version = res.version;
     })
     .catch((e) => {
         appState.foundAS3 = false;
@@ -388,170 +406,8 @@ safeFetch('/mgmt/shared/appsvcs/info')
         console.log(`Error reaching AS3: ${e.message}`);
     });
 
-// Setup basic routing
-const routes = {};
-function route(path, pageName, pageFunc) {
-    routes[path] = { pageName, pageFunc };
-}
-
-function router() {
-    const rawUrl = window.location.hash.slice(1) || '';
-    const url = rawUrl.replace(/\/application.*?\/edit/, '');
-    const urlParts = url.split('/');
-    const routeInfo = routes[urlParts[0]];
-
-    const app = document.getElementById('app');
-    if (!UI) UI = new UiWorker(app);
-    appState.busy = true;
-    UI.startMoveToRoute(urlParts[0]);
-
-    // Error on unknown route
-    if (!routeInfo) {
-        const msg = `Could not find route info for url: ${url} (raw was ${rawUrl}, routes: ${Object.keys(routes).join(',')})`;
-        app.innerText = msg;
-        console.error(msg);
-        return;
-    }
-
-    // Load new page
-    dispOutput('');
-    appState.pageComponent = `page-${routeInfo.pageName}`;
-
-    const pageFunc = routeInfo.pageFunc || (() => Promise.resolve());
-    Promise.resolve()
-        .then(() => pageFunc(urlParts.slice(1).join('/')))
-        .finally(() => {
-            UI.completeMoveToRoute();
-            appState.busy = false;
-        });
-}
-
-window.addEventListener('hashchange', router);
-window.addEventListener('load', router);
-
-// Define routes
-route('', 'apps', () => {
-    vueApp.$refs.page.deleteApplication = (appPath) => {
-        vueApp.showModal(
-            'warning',
-            `Application ${appPath} will be permanently deleted!`,
-            () => {
-                appState.busy = true;
-                dispOutput(`Deleting ${appPath}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/applications/${appPath}`, {
-                        method: 'DELETE'
-                    }))
-                    .then(() => {
-                        window.location.href = '#tasks';
-                    })
-                    .catch(e => dispOutput(`Failed to delete ${appPath}:\n${e.message}`));
-            }
-        );
-    };
-
-    appState.data = {
-        appsList: []
-    };
-
-    return getJSON('applications')
-        .then((appsList) => {
-            appsList.forEach((app) => {
-                app.path = `${app.tenant}/${app.name}`;
-            });
-            appState.data.appsList = appsList;
-            dispOutput('');
-        })
-        .catch(e => dispOutput(`Error fetching applications: ${e.message}`));
-});
-route('create', 'create', () => {
-    vueApp.$refs.page.newEditor = (tmplid) => {
-        newEditor(tmplid);
-    };
-
-    vueApp.$refs.page.currentSet = (setName) => {
-        appState.data.sets.forEach((set) => {
-            set.expanded = set.name === setName;
-        });
-    };
-
-    appState.data = {
-        sets: []
-    };
-    return getJSON('templatesets')
-        .then((data) => {
-            appState.data.sets = data.map(x => Object.assign({}, x, { expanded: false }));
-            dispOutput('');
-        })
-        .catch(e => dispOutput(e.message));
-});
-route('modify', 'create', (appID) => {
-    dispOutput(`Fetching app data for ${appID}`);
-    return getJSON(`applications/${appID}`)
-        .then((appData) => {
-            const appDef = appData.constants.fast;
-            newEditor(appDef.template, appDef.view, true);
-        })
-        .catch(e => dispOutput(e.message));
-});
-route('resubmit', 'create', (taskid) => {
-    const submissionData = getSubmissionData();
-    if (!submissionData[taskid]) {
-        dispOutput(`Could not find submission data for task ${taskid}`);
-        return Promise.resolve();
-    }
-
-    const template = submissionData[taskid].template;
-    const parameters = submissionData[taskid].parameters;
-
-    return Promise.resolve()
-        .then(() => newEditor(template, parameters))
-        .catch(e => dispOutput(e.message));
-});
-route('tasks', 'tasks', () => {
-    const submissionData = getSubmissionData();
-    const updateTaskList = () => getJSON('tasks')
-        .then((tasks) => {
-            tasks.forEach((task) => {
-                task.errMsg = '';
-                if (task.message.includes('Error:')) {
-                    task.errMsg = task.message.replace(/Error:/);
-                    task.message = 'Error';
-                } else if (task.message.includes('declaration failed')) {
-                    task.errMsg = task.message.replace(/declaration failed/);
-                    task.message = 'declaration failed';
-                } else if (task.message.includes('declaration is invalid')) {
-                    task.errMsg = task.message.replace(/declaration is invalid/);
-                    task.message = 'declaration is invalid';
-                }
-                task.showPopover = false;
-                if (task.message === 'success' && submissionData[task.id]) {
-                    delete submissionData[task.id];
-                    storeSubmissionData(submissionData);
-                }
-
-                if (submissionData[task.id]) {
-                    task.canResubmit = true;
-                }
-            });
-            if (['3.26.0', '3.27.0'].includes(as3Version)) {
-                tasks.reverse();
-            }
-            appState.data.tasks = tasks;
-
-            const inProgressJob = (
-                tasks.filter(x => x.message === 'in progress').length !== 0
-            );
-            if (inProgressJob) {
-                setTimeout(updateTaskList, 5000);
-            }
-        });
-
-    appState.data = {
-        tasks: []
-    };
-    return updateTaskList();
-});
+// Route functions
+// TODO: Move these to page components
 route('settings', 'settings', () => {
     if (editor) {
         editor.destroy();
@@ -593,228 +449,43 @@ route('settings', 'settings', () => {
                     });
             };
         })
-        .catch(e => dispOutput(e.message));
-});
-route('api', 'api', () => Promise.resolve());
-route('templates', 'templates', () => {
-    const filters = {
-        enabled: 'Enabled',
-        f5: 'F5 Supported',
-        disabled: 'Disabled',
-        all: 'All Template Sets'
-    };
-    const templatesFilterKey = 'templates-filter';
-    let currentFilter = UiWorker.getStore(templatesFilterKey);
-    if (!currentFilter) {
-        currentFilter = 'enabled';
-    }
-
-    const renderTemplates = () => Promise.resolve()
-        .then(() => Promise.all([
-            getJSON('applications'),
-            getJSON('templatesets'),
-            getJSON('templatesets?showDisabled=true')
-        ]))
-        .then(([applications, templatesets, disabledTemplateSets]) => {
-            const allTemplates = templatesets
-                .concat(disabledTemplateSets)
-                .filter(x => (
-                    (currentFilter === 'all')
-                    || (currentFilter === 'f5' && x.supported)
-                    || (currentFilter === 'enabled' && x.enabled)
-                    || (currentFilter === 'disabled' && !x.enabled)
-                ));
-
-            // build dictionary of app lists, keyed by set
-            const appDict = applications.reduce((acc, curr) => {
-                const setName = curr.template.split('/')[0];
-                if (!acc[setName]) {
-                    acc[setName] = [];
-                }
-                acc[setName].push(curr);
-                return acc;
-            }, {});
-
-            const setMap = allTemplates.reduce((acc, curr) => {
-                const apps = appDict[curr.name] || [];
-                acc[curr.name] = Object.assign(curr, {
-                    expanded: apps.length < 3,
-                    apps
-                });
-                return acc;
-            }, {});
-
-            appState.data.sets = setMap;
-            Object.values(setMap).forEach((setData) => {
-                if (!setData.enabled && setData.updateAvailable) {
-                    console.error('enabled === false && updateAvailable is illegal. Critical Error');
-                }
-            });
-
-            appState.data.errors = disabledTemplateSets.reduce((acc, curr) => {
-                if (curr.error) {
-                    acc.push(curr.error);
-                }
-                return acc;
-            }, []);
-        })
-        .then(() => dispOutput(''));
-
-    const reloadTemplates = () => Promise.resolve()
-        .then(() => {
-            appState.busy = true;
-        })
-        .then(() => renderTemplates())
-        .then(() => {
+        .catch(e => dispOutput(e.message))
+        .finally(() => {
             appState.busy = false;
         });
-
-    document.getElementById('btn-add-ts').onclick = () => {
-        document.getElementById('input-ts-file').click();
-    };
-    document.getElementById('input-ts-file').onchange = () => {
-        const file = document.getElementById('input-ts-file').files[0];
-        const tsName = file.name.slice(0, -4);
-        appState.busy = true;
-        dispOutput(`Uploading file: ${file.name}`);
-        multipartUpload(file)
-            .then(() => dispOutput(`Installing template set ${tsName}`))
-            .then(() => safeFetch('/mgmt/shared/fast/templatesets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: file.name.slice(0, -4)
-                })
-            }))
-            .then(() => {
-                dispOutput(`${tsName} installed successfully`);
-            })
-            .then(() => reloadTemplates())
-            .catch((e) => {
-                appState.busy = false;
-                dispOutput(`Failed to install ${tsName}:\n${e.message}`);
-            });
-    };
-    document.getElementById('btn-delete-all-ts').onclick = () => {
-        vueApp.showModal(
-            'warning',
-            'All Template Sets will be removed!',
-            () => {
-                appState.busy = true;
-                dispOutput('Deleting All Template Sets');
-                return safeFetch(`${endPointUrl}/templatesets`, {
-                    method: 'DELETE'
-                })
-                    .then(() => {
-                        dispOutput('All Template Sets deleted successfully');
-                    })
-                    .then(() => reloadTemplates())
-                    .catch((e) => {
-                        appState.busy = false;
-                        dispOutput(`Failed to delete all Template Sets. Error: ${e.message}`);
-                    });
-            }
-        );
-    };
-
-    vueApp.$refs.page.setFilter = (filter) => {
-        currentFilter = filter;
-        appState.data.currentFilter = filter;
-        UiWorker.store(templatesFilterKey, filter);
-        document.getElementById('templates-filter').classList.remove('active'); // Collapse the drop down
-        reloadTemplates();
-    };
-
-    vueApp.$refs.page.removeSet = (setName) => {
-        vueApp.showModal(
-            'warning',
-            `Template Set '${setName}' will be removed!`,
-            () => {
-                appState.busy = true;
-                dispOutput(`Deleting ${setName}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/templatesets/${setName}`, {
-                        method: 'DELETE'
-                    }))
-                    .then(() => {
-                        dispOutput(`${setName} deleted successfully`);
-                    })
-                    .then(() => reloadTemplates())
-                    .catch((err) => {
-                        appState.busy = false;
-                        dispOutput(`Failed to delete ${setName}:\n${err.message}`);
-                    });
-            }
-        );
-    };
-
-    vueApp.$refs.page.installSet = (setName) => {
-        vueApp.showModal(
-            'info',
-            `Template Set '${setName}' will be enabled.`,
-            () => {
-                appState.busy = true;
-                dispOutput(`Enabling ${setName}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: setName
-                        })
-                    }))
-                    .then(() => {
-                        dispOutput(`${setName} enabled successfully`);
-                    })
-                    .then(() => reloadTemplates())
-                    .catch((err) => {
-                        appState.busy = false;
-                        dispOutput(`Failed to enable ${setName}:\n${err.message}`);
-                    });
-            }
-        );
-    };
-
-    vueApp.$refs.page.updateSet = (setName) => {
-        vueApp.showModal(
-            'warning',
-            `Template Set '${setName}' will be updated!`,
-            () => {
-                appState.busy = true;
-                dispOutput(`Updating ${setName}`);
-                return Promise.resolve()
-                    .then(() => safeFetch(`${endPointUrl}/templatesets`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: setName
-                        })
-                    }))
-                    .then(() => {
-                        dispOutput(`${setName} installed successfully`);
-                    })
-                    .then(() => reloadTemplates())
-                    .catch((err) => {
-                        appState.busy = false;
-                        dispOutput(`Failed to install ${setName}:\n${err.message}`);
-                    });
-            }
-        );
-    };
-
-    appState.data = {
-        filters,
-        currentFilter,
-        sets: [],
-        apps: {},
-        errors: []
-    };
-
-    return renderTemplates();
 });
+
+// Create and mount Vue app
+vueApp = new Vue({
+    data: appState,
+    router,
+    methods: {
+        safeFetch(uri, opts, numAttempts) {
+            return safeFetch(uri, opts, numAttempts);
+        },
+        getJSON(path) {
+            return getJSON(path);
+        },
+        dispOutput(msg) {
+            return dispOutput(msg);
+        },
+        getSubmissionData() {
+            return getSubmissionData();
+        },
+        storeSubmissionData(data) {
+            return storeSubmissionData(data);
+        },
+        newEditor(tmplid, view, existingApp) {
+            return newEditor(tmplid, view, existingApp);
+        },
+        destroyEditor() {
+            if (editor) {
+                editor.destroy();
+            }
+        },
+        multipartUpload(file) {
+            return multipartUpload(file);
+        }
+    }
+});
+vueApp.$mount('#vue-app');

@@ -7,7 +7,7 @@
   "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint nodejs lib presentation/app.js test scripts stand-alone",
+    "lint": "eslint --ext .js,.vue nodejs lib presentation/app.js presentation/pages presentation/components test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
@@ -35,7 +35,9 @@
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
+    "css-loader": "^5.2.4",
     "eslint": "^7.25.0",
+    "eslint-plugin-vue": "^7.9.0",
     "express": "^4.17.1",
     "marked": "^2.0.3",
     "mocha": "^8.3.0",
@@ -46,13 +48,25 @@
     "nyc": "^15.1.0",
     "redoc-cli": "^0.10.4",
     "sinon": "^10.0.0",
+    "vue": "^2.6.12",
+    "vue-loader": "^15.9.6",
+    "vue-router": "^3.5.1",
+    "vue-template-compiler": "^2.6.12",
     "webpack": "^5.36.2",
     "webpack-cli": "^4.7.0"
   },
   "eslintConfig": {
-    "extends": "@f5devcentral/eslint-config-f5-atg",
+    "extends": [
+      "@f5devcentral/eslint-config-f5-atg",
+      "plugin:vue/recommended"
+    ],
     "rules": {
-      "no-control-regex": "off"
+      "no-control-regex": "off",
+      "strict": "off",
+      "vue/html-indent": [
+        "error",
+        4
+      ]
     }
   },
   "nyc": {
@@ -63,7 +77,18 @@
     ]
   },
   "watch": {
-    "buildgui": "presentation/app.js",
+    "buildgui": {
+      "patterns": [
+        "presentation/app.js",
+        "presentation/pages/",
+        "presentation/components/",
+        "webpack.config.js"
+      ],
+      "extensions": [
+        "js",
+        "vue"
+      ]
+    },
     "start": {
       "patterns": [
         "lib",
