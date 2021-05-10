@@ -80,4 +80,4 @@ The following table lists the template set, the corresponding template(s) and a 
 
 .. NOTE:: The ADFS template is a Beta version.
 
-Please report any issues or an RFE on the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > Issues tab, click New Issue.
+Please report any issues or an RFE on the `FAST GitHub page <https://github.com/F5Networks/f5-appsvcs-templates>`_ > Issues tab, click New Issue.

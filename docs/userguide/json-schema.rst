@@ -5,7 +5,7 @@ Templating with FAST
 
 This chapter is dedicated to explaining the relationship of schema vs templates. 
 FAST makes use of Mustache, JSON schema and JSONPath, therefore FAST may be familiar if you already understand any of these syntaxes.  
-Fast combines these technologies to provide a complete templating solution. At the foundation, FAST uses a templating specification called mustache to convert parameters into a fully rendered API body. 
+FAST combines these technologies to provide a complete templating solution. At the foundation, FAST uses a templating specification called mustache to convert parameters into a fully rendered API body. 
 Parameter types can be specified in JSON schema, and are used to validate template inputs when the template is rendered. 
 FAST will auto generate a schema for each template based off the template and json-schema provided.
 Schema is generated from template text, combined with definitions, and used to validate template parameters.  
@@ -38,18 +38,26 @@ Using the *person* section example from above, 2 types of lists can be created: 
 If the *person* key exists, and has a value of false, or an empty list, the text between the pound and slash will not be displayed.
 In the following example, *person* has a ``parameter: false``, therefore RED will not be displayed, resulting in the ``Rendered Output: BLUE``.
 
-.. code-block:: mustache
+.. code-block:: yaml
 
-   {{#person}}
-    "RED"],
+    {{#person}}
+        "RED"],
     {{/person}
     {{^person}}
-    "BLUE",
+        "BLUE",
     {{/person}}
-    parameters:
-		person: false
-			
-	Rendered Output: BLUE
+
+Parameters:
+
+.. code-block:: json
+
+    person: false
+
+Output:
+
+.. code-block:: none
+
+ BLUE
 
 **Non-Empty Lists**
 
@@ -58,7 +66,7 @@ The context of the block will be set to the current item for each iteration. In 
 
 Template:
 
-.. code-block:: mustache
+.. code-block:: yaml
 
     {{#repo}}
          <b>{{name}}</b>
@@ -69,10 +77,14 @@ Template:
       { "name": "rip" }
      ]
     }
-   Output:
-   <b>resque</b>
-   <b>hub</b>
-   <b>rip</b>
+
+Outputs:
+
+.. code-block:: none
+
+ <b>resque</b>
+ <b>hub</b>
+ <b>rip</b>
 
 
 .. seealso:: `Mustache Manual <https://mustache.github.io/mustache.5.html>`_ for more information on Sections.
@@ -85,9 +97,7 @@ The syntax for including a partial uses curley braces and an angle bracket {{> }
 
 For FAST, a partial definition must contain template text, i.e., define a template property
 
-The following example is taken from the FAST Microsoft Exchange template, POP3 section.
-
-.. code-block:: none
+.. code-block:: yaml
 
   definitions:
     partialDef:
@@ -97,16 +107,25 @@ The following example is taken from the FAST Microsoft Exchange template, POP3 s
         {{/useVar}}
     useVar:
       type: boolean
-  template: |
-  {{> partialDef}}
-  {{> partialDef}}
-  parameters:
-  {
+    template: |
+    {{> partialDef}}
+    {{> partialDef}}
+
+
+Parameters:
+
+.. code-block:: json
+
+    {
     "useVar": true,
     "var": "sample"
-  }
+    }
 
- outputs:
+
+Outputs:
+
+.. code-block:: none
+    
  sample
  sample
 

@@ -48,9 +48,8 @@ Yes, beginning with v1.0 FAST is supported with the following requirements:
 What does this mean for iApp templates?
 ---------------------------------------
 
-iApp templates will not be removed or disabled and users are free to continue using iApp templates, subject to the EoL timeline.
-
-For additional information, see `K13422: F5-supported and F5-contributed iApp templates <https://support.f5.com/csp/article/K13422/>`_.
+| iApp templates will not be removed or disabled and users are free to continue using iApp templates, subject to the EoL timeline.
+| For additional information, see `K13422: F5-supported and F5-contributed iApp templates <https://support.f5.com/csp/article/K13422/>`_.
 
 How are secrets handled in FAST templates?
 ------------------------------------------
@@ -73,6 +72,5 @@ A ``DELETE`` to the ``/templatesets`` endpoint will remove all installed Templat
 Where can I find a list of known issues with FAST?
 --------------------------------------------------
 
-All known issues are now on GitHub as Issues for better tracking and visibility.
-
-See issues with a label of **Known Issue** at https://github.com/F5Networks/f5-appsvcs-templates/issues
+| All known issues are now on GitHub as Issues for better tracking and visibility.
+| See issues with a label of **Known Issue** at `FAST GitHub <https://github.com/F5Networks/f5-appsvcs-templates/issues>`_.

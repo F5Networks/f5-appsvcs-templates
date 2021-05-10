@@ -33,17 +33,14 @@ Usage Quick Start
 #. The extension's UI can be found by navigating to **iApps > Application Services > Applications LX**
 #. Click **F5 Application Services Templates** to start using FAST.
    There is a navigation menu at the top, and the initial tab displays a list of FAST applications on the BIG-IP, which will likely be empty on a fresh installation.
-#. To create an application, first click on the Deploy tab.
-   This will display a list of available templates that are ready to deploy.
+#. To create an application, first click the FAST Templates tab to display a list of available templates that are ready to deploy.
 #. Click one of the template names, fill out the required fields, and then click **Submit**.
-#. Upon successful submission, the page will redirect to the Deploy Log, where there current status of the deploy action can be seen.
-#. After the task is successful, return to the Applications tab to see the deployed application.
+#. Upon submission, the page will redirect to the History tab, where there current status of the deploy action can be seen.
+#. After the deployment is successful, select to the Applications tab to see the deployed application.
    From here the application can be modified or deleted.
 
-   .. NOTE::
-
-      Modifying FAST applications outside of FAST (e.g., via TMSH or with AS3 declarations) can result in those changes getting overwritten the next time FAST modifies the application.
-      See :ref:`faq` for more information.
+.. NOTE:: Modifying FAST applications outside of FAST (e.g., via TMSH or with AS3 declarations) can result in those changes getting overwritten the next time FAST modifies the application.
+         See :ref:`faq` for more information.
 
 Next Steps
 ----------
