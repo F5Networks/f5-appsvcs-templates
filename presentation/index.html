@@ -19,7 +19,7 @@
                 <img src="img/fastrobot.png" height="48px"/>
                 F5 Application Services Templates
             </div>
-            <div id="nav-bar" v-cloak :class="{ 'nav-disabled': busy }">
+            <div id="nav-bar" ref="nav" v-cloak :class="{ 'nav-disabled': busy }">
                 <router-link to="/templates">FAST Templates</router-link>
                 <router-link to="/applications">Applications</router-link>
                 <router-link to="/tasks">History</router-link>

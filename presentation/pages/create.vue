@@ -1,5 +1,22 @@
 <template>
     <div id="page-create">
+        <div id="form-header">
+            <button
+                id="btn-form-submit"
+                type="button"
+                class="btn btn-primary"
+                disabled
+            >
+                Deploy
+            </button>
+            <router-link
+                :to="backTo"
+                tag="button"
+                class="btn"
+            >
+                Cancel
+            </router-link>
+        </div>
         <div id="form-div" />
         <div class="text-right">
             <button
@@ -34,14 +51,6 @@
             >
                 View Rendered
             </button>
-            <button
-                id="btn-form-submit"
-                type="button"
-                class="btn"
-                disabled
-            >
-                SUBMIT
-            </button>
         </div>
     </div>
 </template>
@@ -49,6 +58,10 @@
 <script>
 export default {
     name: 'PageCreate',
+    beforeRouteLeave(to, from, next) {
+        this.$root.forceNav();
+        next();
+    },
     watch: {
         $route(to) {
             this.update(to.params);
@@ -81,6 +94,8 @@ export default {
             if (params.appid) {
                 // Modify
                 const appid = params.appid;
+                this.$root.forceNav('applications');
+                this.backTo = '/applications';
                 promiseChain = promiseChain
                     .then(() => this.$root.dispOutput(`Fetching app data for ${appid}`))
                     .then(() => this.$root.getJSON(`applications/${appid}`))
@@ -99,10 +114,14 @@ export default {
                     return Promise.resolve();
                 }
 
+                this.$root.forceNav('tasks');
+                this.backTo = '/tasks';
                 template = submissionData[taskid].template;
                 parameters = submissionData[taskid].parameters;
             } else {
                 // Create
+                this.$root.forceNav('templates');
+                this.backTo = '/templates';
                 template = params.tmplid;
             }
 
@@ -113,3 +132,14 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+#form-header {
+  background-color: #eae9e5;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: right;
+  padding: 0.5em;
+}
+</style>

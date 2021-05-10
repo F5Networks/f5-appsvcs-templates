@@ -497,6 +497,18 @@ vueApp = new Vue({
         },
         multipartUpload(file) {
             return multipartUpload(file);
+        },
+        forceNav(tab) {
+            this.$nextTick(() => {
+                const hash = `#/${tab}`;
+                Array.from(this.$refs.nav.children).forEach((anchor) => {
+                    if (anchor.hash === hash) {
+                        anchor.classList.add('force-link-active');
+                    } else {
+                        anchor.classList.remove('force-link-active');
+                    }
+                });
+            });
         }
     }
 });

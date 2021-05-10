@@ -98,7 +98,8 @@ hr {
   width: 120px;
 }
 
-.router-link-exact-active {
+.router-link-exact-active,
+.force-link-active {
   height: 39px;
   pointer-events: none;
   font-weight: bold;
@@ -106,6 +107,7 @@ hr {
 }
 
 .router-link-exact-active,
+.force-link-active,
 #nav-bar a:hover {
   border-bottom: 4px solid #1d98d0;
 }
