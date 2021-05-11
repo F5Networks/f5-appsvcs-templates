@@ -66,7 +66,11 @@ export default {
                         task.status = 'N/A';
                     }
 
-                    task.edit = (submissionData[task.id]) ? 'Edit / Resubmit' : '';
+                    const allowResubmit = (
+                        submissionData[task.id]
+                        && task.status !== 'In Progress'
+                    );
+                    task.edit = (allowResubmit) ? 'Edit / Resubmit' : '';
 
                     if (task.operation === 'delete-all') {
                         task.operation = 'Delete All';
