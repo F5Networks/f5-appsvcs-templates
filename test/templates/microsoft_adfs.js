@@ -136,6 +136,7 @@ const expected = {
                 ],
                 virtualPort: 443,
                 redirect80: false,
+                pool: 'app1_pool',
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
                 profileHTTP: {

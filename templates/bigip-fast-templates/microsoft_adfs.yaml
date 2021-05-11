@@ -41,7 +41,8 @@ allOf:
             {{/client_cert}}
             "{{app_name}}": {
               "virtualAddresses": ["{{virtual_address}}"],
-              "virtualPort": {{virtual_port}}
+              "virtualPort": {{virtual_port}},
+              "pool": "{{app_name}}_pool"
             }
           }
         }
@@ -95,6 +96,55 @@ allOf:
       }
   - $ref: "_snat.yaml#"
   - contentType: application/json
+    bigipHideTemplate: true
+    definitions:
+      client_cert:
+        type: boolean
+        dependencies: []
+      enable_snat:
+        type: boolean
+        dependencies: []
+      snat_automap:
+        type: boolean
+        dependencies: []
+      make_snatpool:
+        type: boolean
+        dependencies: []
+      snatpool_name:
+        type: string
+        dependencies: []
+    template: |
+      {
+        "{{tenant_name}}": {
+          "{{app_name}}": {
+            {{#client_cert}}
+            "{{app_name}}_tcp_vs": {
+              {{#enable_snat}}
+              {{#snat_automap}}
+                "snat": "auto"
+              {{/snat_automap}}
+              {{^snat_automap}}
+              {{#make_snatpool}}
+                "snat": {
+                  "use": "{{app_name}}_snatpool"
+                }
+              {{/make_snatpool}}
+              {{^make_snatpool}}
+                "snat": {
+                  "bigip": "{{snatpool_name}}"
+                }
+              {{/make_snatpool}}
+              {{/snat_automap}}
+              {{/enable_snat}}
+              {{^enable_snat}}
+                "snat": "none"
+              {{/enable_snat}}
+            }
+            {{/client_cert}}
+          }
+        }
+      }
+  - contentType: application/json
     title: ADFS Virtuals
     definitions:
       enable_tls_client:
@@ -144,7 +194,7 @@ allOf:
         description: Add the addresses of the Active Directory servers in the pool.
       pool_port:
         title: Port for Active Directory Services
-        default: 80
+        default: 443
       load_balancing_mode:
         title: Load Balancing Method
         description: A *load balancing method* is an algorithm that the BIG-IP system uses
