@@ -291,7 +291,7 @@ const createCommonEditor = (schema, defaults) => {
     return newEd;
 };
 
-const newEditor = (tmplid, view, existingApp) => {
+const newEditor = (tmplid, view, existingApp, component) => {
     if (editor) {
         editor.destroy();
     }
@@ -303,6 +303,15 @@ const newEditor = (tmplid, view, existingApp) => {
         .then((tmpl) => {
             // Get schema and modify it work better with JSON Editor
             const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
+
+            // Bring the title and description into the header
+            if (component) {
+                component.title = schema.title || '';
+                component.description = schema.description || '';
+
+                delete schema.title;
+                delete schema.description;
+            }
 
             // Prep IPAM fields for existing applications
             if (existingApp) {
@@ -487,8 +496,8 @@ vueApp = new Vue({
         storeSubmissionData(data) {
             return storeSubmissionData(data);
         },
-        newEditor(tmplid, view, existingApp) {
-            return newEditor(tmplid, view, existingApp);
+        newEditor(tmplid, view, existingApp, component) {
+            return newEditor(tmplid, view, existingApp, component);
         },
         destroyEditor() {
             if (editor) {

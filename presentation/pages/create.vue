@@ -1,27 +1,34 @@
 <template>
     <div id="page-create">
-        <div id="form-header">
-            <button
-                id="btn-form-submit"
-                type="button"
-                class="btn btn-primary"
-                disabled
-            >
-                Deploy
-            </button>
-            <router-link
-                v-slot="{ navigate }"
-                :to="backTo"
-            >
+        <div
+            id="form-header"
+            class="clearfix"
+        >
+            <div id="header-btns">
                 <button
+                    id="btn-form-submit"
                     type="button"
-                    class="btn"
-                    @click="navigate"
-                    @keypress.enter="navigate"
+                    class="btn btn-primary"
+                    disabled
                 >
-                    Cancel
+                    Deploy
                 </button>
-            </router-link>
+                <router-link
+                    v-slot="{ navigate }"
+                    :to="backTo"
+                >
+                    <button
+                        type="button"
+                        class="btn"
+                        @click="navigate"
+                        @keypress.enter="navigate"
+                    >
+                        Cancel
+                    </button>
+                </router-link>
+            </div>
+            <h4>{{ title }}</h4>
+            <p>{{ description }}</p>
         </div>
         <div id="form-div" />
         <div class="text-right">
@@ -66,6 +73,8 @@ export default {
     },
     data() {
         return {
+            title: '',
+            description: '',
             backTo: ''
         };
     },
@@ -133,7 +142,7 @@ export default {
             }
 
             return promiseChain
-                .then(() => this.$root.newEditor(template, parameters, existingApp))
+                .then(() => this.$root.newEditor(template, parameters, existingApp, this))
                 .catch(e => this.$root.dispOutput(e.message));
         }
     }
@@ -146,7 +155,11 @@ export default {
   position: sticky;
   top: 0;
   z-index: 1;
-  text-align: right;
   padding: 0.5em;
+  border-bottom: 2px solid #c4c4c4;
+}
+
+#header-btns {
+  float: right;
 }
 </style>
