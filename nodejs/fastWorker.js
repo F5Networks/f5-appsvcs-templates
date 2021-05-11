@@ -1348,7 +1348,7 @@ class FASTWorker {
                 .catch(e => this.genRestResponse(restOperation, 500, e.stack));
         }
 
-        const as3Version = this.as3Info.version;
+        const as3Version = this.as3Info && this.as3Info.version;
         const reverseTaskList = (
             as3Version === '3.26.0'
             || as3Version === '3.27.0'
