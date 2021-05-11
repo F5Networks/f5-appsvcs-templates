@@ -34,12 +34,37 @@ hr {
 
 .btn {
   border-radius: 3px;
+  background-color: #efefef;
+  color: black;
+}
+
+.btn:hover,
+.btn:active,
+.btn:focus {
+  background-color: #ccc;
+  color: black;
+  border: 1px solid black;
+}
+
+.btn.btn-primary {
+  background-color: #5180ae;
+  color: white;
+}
+
+.btn.btn-primary:hover,
+.btn.btn-primary:active {
+  background-color: #3070ac;
+  color: white;
 }
 
 .btn:disabled,
-.btn:disabled:hover {
-  background-color: #888;
+.btn:disabled:hover,
+.btn:disabled:active {
+  background-color: #ccc;
+  color: black;
+  border: 1px solid black;
 }
+
 
 .btn-icon {
   cursor: pointer !important;

@@ -22,7 +22,7 @@
             @change="installSet"
         >
         <button
-            class="btn float-right"
+            class="float-right"
             @click="$refs.fileInput.click()"
         >
             Add Template Set
@@ -35,7 +35,7 @@
         >
             <div class="clearfix">
                 <button
-                    class="btn float-right"
+                    class="float-right"
                     @click="removeSet(setData.name)"
                 >
                     Remove

@@ -14,6 +14,7 @@
                 :to="backTo"
             >
                 <button
+                    type="button"
                     class="btn"
                     @click="navigate"
                     @keypress.enter="navigate"
@@ -27,7 +28,6 @@
             <button
                 id="view-tmpl-btn"
                 type="button"
-                class="btn"
                 disabled
             >
                 View Template
@@ -35,7 +35,6 @@
             <button
                 id="view-schema-btn"
                 type="button"
-                class="btn"
                 disabled
             >
                 View Schema
@@ -43,7 +42,6 @@
             <button
                 id="view-view-btn"
                 type="button"
-                class="btn"
                 disabled
             >
                 View Inputs
@@ -51,7 +49,6 @@
             <button
                 id="view-render-btn"
                 type="button"
-                class="btn"
                 disabled
             >
                 View Rendered
