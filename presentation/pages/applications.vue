@@ -7,7 +7,7 @@
             :checkboxes="true"
         />
         <button
-            class="btn btn-primary"
+            class="btn"
             :disabled="!$refs.table || $refs.table.selectedRows.length === 0"
             @click="deleteApplications()"
         >

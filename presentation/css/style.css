@@ -36,6 +36,11 @@ hr {
   border-radius: 3px;
 }
 
+.btn:disabled,
+.btn:disabled:hover {
+  background-color: #888;
+}
+
 .btn-icon {
   cursor: pointer !important;
 }

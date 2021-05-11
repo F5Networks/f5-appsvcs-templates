@@ -7,7 +7,7 @@
             class="btn btn-primary"
             disabled
         >
-            SAVE
+            Save
         </button>
     </div>
 </template>
