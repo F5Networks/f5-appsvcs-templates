@@ -10,11 +10,16 @@
                 Deploy
             </button>
             <router-link
+                v-slot="{ navigate }"
                 :to="backTo"
-                tag="button"
-                class="btn"
             >
-                Cancel
+                <button
+                    class="btn"
+                    @click="navigate"
+                    @keypress.enter="navigate"
+                >
+                    Cancel
+                </button>
             </router-link>
         </div>
         <div id="form-div" />
@@ -61,6 +66,11 @@ export default {
     beforeRouteLeave(to, from, next) {
         this.$root.forceNav();
         next();
+    },
+    data() {
+        return {
+            backTo: ''
+        };
     },
     watch: {
         $route(to) {
