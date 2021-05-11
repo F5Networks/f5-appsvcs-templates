@@ -37,7 +37,7 @@
                     >
                 </td>
                 <td
-                    v-for="prop in columns"
+                    v-for="prop in filteredColumns"
                     :key="prop.property || prop"
                 >
                     <span v-if="typeof(prop) === 'object'">
@@ -90,8 +90,17 @@ export default {
         };
     },
     computed: {
+        filteredColumns() {
+            return Object.keys(this.columns).reduce((acc, key) => {
+                const value = this.columns[key];
+                if (!value.hidden) {
+                    acc[key] = value;
+                }
+                return acc;
+            }, {});
+        },
         columnNames() {
-            return Object.keys(this.columns);
+            return Object.keys(this.filteredColumns);
         },
         sortedRows() {
             return this.tableData.slice().sort((a, b) => {

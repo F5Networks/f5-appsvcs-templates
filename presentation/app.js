@@ -98,7 +98,6 @@ let editor = null;
 const appState = {
     debugOutput: '',
     foundAS3: true,
-    as3Version: undefined,
     data: {},
     modal: {
         message: '',
@@ -418,9 +417,6 @@ const newEditor = (tmplid, view, existingApp, component) => {
 
 // Check that AS3 is available
 safeFetch('/mgmt/shared/appsvcs/info')
-    .then((res) => {
-        appState.as3Version = res.version;
-    })
     .catch((e) => {
         appState.foundAS3 = false;
         appState.busy = false;
