@@ -150,7 +150,6 @@ allOf:
       enable_tls_client:
         type: boolean
         dependencies: []
-        default: false
       enable_tls_server:
         type: boolean
         dependencies: []
@@ -248,6 +247,7 @@ allOf:
     definitions:
       enable_tls_client:
         type: boolean
+        dependencies: []
       make_monitor:
         title: FAST-Generated Pool Monitor
         description: Uncheck to use an existing BIG-IP Pool Monitor.
