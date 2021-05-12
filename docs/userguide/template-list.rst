@@ -58,8 +58,8 @@ The following table lists the template set, the corresponding template(s) and a 
         - Simple UDP template wuth parameters defined outside of the template
 
       * - examples
-        - Simple UDP Application with IPAM
-        - Simple UDP template with IPAM options
+        - Simple UDP Application with IPAM (experimental/beta)
+        - Simple UDP template with IPAM options, see note below
    
       * - examples
         - simple_http
@@ -81,5 +81,6 @@ The following table lists the template set, the corresponding template(s) and a 
         - simple_waf
         - Example of an HTTPS application using an ASM Policy
 
+.. NOTE:: Before the UDP Application with IPAM template can be used, an IPAM provider must be configured on the **Settings** tab.
 
 Please report any issues or an RFE on the `FAST GitHub page <https://github.com/F5Networks/f5-appsvcs-templates>`_ > Issues tab, click New Issue.

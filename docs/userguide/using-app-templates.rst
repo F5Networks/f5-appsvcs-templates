@@ -194,7 +194,7 @@ The information includes:
 
 Settings
 --------
-Settings is where optional deployment parameters are set.  For example, setting up log forwarding for Telemetry Streaming when deploying FAST Applications. 
+Settings is where optional deployment parameters are set.  For example, setting up log forwarding for Telemetry Streaming or adding an IPAM provider when deploying FAST Applications.
 See the `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for configuring logging.
 
 .. _apitab:
