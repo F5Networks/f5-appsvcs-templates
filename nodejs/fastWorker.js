@@ -299,7 +299,7 @@ class FASTWorker {
                     }
                 },
                 ipamProviders: {
-                    title: 'IPAM Providers',
+                    title: 'IPAM Providers (Experimental/Beta)',
                     description: 'Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses',
                     format: 'table',
                     type: 'array',
