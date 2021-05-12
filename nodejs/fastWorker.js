@@ -470,7 +470,7 @@ class FASTWorker {
             .then(() => this.recordTransaction(
                 0, 'sync AS3 driver settings',
                 Promise.resolve()
-                    .then(() => this.gatherProvisionData(0, false))
+                    .then(() => this.gatherProvisionData(0, false, true))
                     .then(provisionData => this.driver.setSettings(config, provisionData, true))
                     .then(() => this.saveConfig(config, 0))
             ))
@@ -699,7 +699,7 @@ class FASTWorker {
             .then(() => info);
     }
 
-    gatherProvisionData(requestId, clearCache) {
+    gatherProvisionData(requestId, clearCache, skipAS3) {
         if (clearCache) {
             this.provisionData = null;
             this._provisionConfigCache = null;
@@ -750,7 +750,7 @@ class FASTWorker {
                 });
             })
             .then(() => {
-                if (this.as3Info !== null && this.as3Info.version) {
+                if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
                     return Promise.resolve(this.as3Info);
                 }
                 return this.recordTransaction(
