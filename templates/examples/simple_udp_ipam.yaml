@@ -4,7 +4,9 @@
 # The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration
 # suitable for submission to BIG-IP.
 title: Simple UDP Application with IPAM
-description: Simple UDP template with IPAM options
+description: |
+    Simple UDP template with IPAM options.
+    ** At least one IPAM provider must be specified in settings before this template will load**
 definitions:
   use_ipam_addrs:
     title: Use address from IPAM provider
