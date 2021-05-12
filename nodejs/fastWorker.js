@@ -369,10 +369,24 @@ class FASTWorker {
 
     saveConfig(config, reqid) {
         reqid = reqid || 0;
+        let prevConfig;
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'saving config data'))
+            .then(() => this.configStorage.getItem(configKey, config))
+            .then((data) => {
+                prevConfig = data;
+            })
             .then(() => this.configStorage.setItem(configKey, config))
-            .then(() => this.configStorage.persist())
+            .then(() => {
+                if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
+                    return this.recordTransaction(
+                        reqid, 'persisting config',
+                        this.configStorage.persist()
+                    );
+                }
+
+                return Promise.resolve();
+            })
             .then(() => this.exitTransaction(reqid, 'saving config data'))
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
@@ -504,7 +518,7 @@ class FASTWorker {
             })
             .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
-            .then(() => saveState && this.recordTransaction(0, 'persist data store', this.storage.persist()))
+            .then(() => saveState && this.recordTransaction(0, 'persist template data store', this.storage.persist()))
             // Done
             .then(() => {
                 const dt = Date.now() - startTime;
