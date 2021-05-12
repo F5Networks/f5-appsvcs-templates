@@ -66,7 +66,7 @@ The FAST Templates tab is where you create new AS3 applications using a FAST tem
 
 To open a template, click the template name. The template loads into the interface, with required fields marked by a red asterisk. 
 
-At the bottom of the template, you see the following options for what to do once the template is complete.
+The template displays the following buttons for what to do once the template is complete.
 
 .. list-table::
       :widths: 55 240
@@ -74,6 +74,12 @@ At the bottom of the template, you see the following options for what to do once
 
       * - Action
         - Summary
+
+      * - Deploy
+        - Submits the application to AS3 for deployment.
+
+      * - Cancel
+        - Cancels the application returning to the template list.
 
       * - View Template
         - Displays the original template text.
@@ -87,11 +93,8 @@ At the bottom of the template, you see the following options for what to do once
       * - View Rendered
         - View a sample of the rendered output of the template.
 
-      * - Submit
-        - Submits the application to AS3 for deployment.
 
-Filling out the form with the requested values, and clicking **Submit** will submit
-the declaration for deployment. 
+Filling out the form with the requested values, and clicking **Deploy** will submit the declaration for deployment. 
 
 .. .. image:: deployed-application.png
   :width: 300
@@ -136,7 +139,7 @@ On this tab, the application can be deleted or modified.
 ..   :width: 300
 ..   :alt: The application's parameters are recalled for modification
 
-* Clicking the template name loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Submit** to redeploy the application.
+* Clicking the template name loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Deploy** to redeploy the application.
 
 .. .. image:: delete-result.png
 ..   :width: 300

@@ -28,7 +28,7 @@ Clicking on the View Rendered button displays a sample of the rendered output of
 .. image:: View_Rendered.png
    :width: 350
 |
-| Clicking on Submit will start a deployment job.
+| Clicking on Deploy will start a deployment job.
 | The current status of the job can be found on the *History* tab.
 
 Deploy using the FAST API

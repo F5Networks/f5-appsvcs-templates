@@ -238,11 +238,11 @@ cwd = os.getcwd()
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))
 if not os.path.exists('node_modules'):
     subprocess.check_call(['npm', 'ci'])
- subprocess.check_call([
+subprocess.check_call([
     'npx',
     'redoc-cli',
     'bundle',
     '-o', 'docs/_static/apidocs.html',
     'docs/openapi.yml'
- ])
+])
 os.chdir(cwd)
