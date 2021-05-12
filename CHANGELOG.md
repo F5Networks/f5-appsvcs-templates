@@ -7,12 +7,13 @@
 * Add support for query IPAM (IP Address Management) providers from templates
 
 ## Fixed
-* GUI: Fix task order in the Deploy Log when using AS3 versions 3.26.0 and 3.27.0
 * bigip-fast-templates: Replace external URL monitor script references with inline scripts
+* Fix potential issue where FAST could prevent AS3 (and some other iApps LX plugins) from starting
 
 ## Changed
 * bigip-fast-templates: Make tenant and application names immutable
 * Automatically update bundled template sets
+* Overhaul GUI to better streamline the user experience
 
 # 1.8.1
 ## Fixed
