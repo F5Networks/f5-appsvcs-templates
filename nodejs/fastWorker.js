@@ -300,6 +300,7 @@ class FASTWorker {
                 },
                 ipamProviders: {
                     title: 'IPAM Providers',
+                    description: 'Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses',
                     format: 'table',
                     type: 'array',
                     items: {
