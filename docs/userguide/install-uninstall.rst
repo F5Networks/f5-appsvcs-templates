@@ -49,8 +49,8 @@ Items such as *Settings*, deployed *Applications* and *custom templates* will pe
 
 **Notes:** 
 
-* TMUI caches iApp GUIs and the cache needs to be cleared on FAST upgrades to get the GUI changes (i.e., use a cache-clearing refresh or reset depending on the browser)
-* FAST follows semantic versioning and that all releases of FAST, and bundled template sets, are backward compatible with previous releases in the same major version
+* TMUI caches iApps LX GUIs and the cache needs to be cleared on FAST upgrades to get the GUI changes (i.e., use a cache-clearing refresh or reset depending on the browser)
+* FAST follows semantic versioning and all releases of FAST, and bundled template sets, are backward compatible with previous releases in the same major version
 
 
 Uninstalling FAST
