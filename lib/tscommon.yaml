@@ -22,6 +22,7 @@ parameters:
     enable_telemetry: false
 template: |
   {
+    {{#enable_telemetry}}
     "class": "ADC",
     "schemaVersion": "3.0.0",
     "Common": {
@@ -29,7 +30,6 @@ template: |
         "Shared": {
             "class": "Application",
             "template": "shared",
-            {{#enable_telemetry}}
             "fast_telemetry_local_rule": {
                 "class": "iRule",
                 "iRule": "when CLIENT_ACCEPTED {\n  node 127.0.0.1 6514\n}"
@@ -143,7 +143,7 @@ template: |
                 }
             }
             {{/log_asm}}
-            {{/enable_telemetry}}
         }
     }
+    {{/enable_telemetry}}
   }
