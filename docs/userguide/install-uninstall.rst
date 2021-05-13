@@ -34,18 +34,8 @@ Once the package is imported, **f5-appsvcs-templates** will appear in the list o
 Upgrading FAST
 --------------
 
-Best practice to upgrade FAST is to uninstall then install the new version. 
-Items such as *Settings*, deployed *Applications* and *custom templates* will persist through this process.
-
-1. To uninstall, from the BIG-IP, navigate to **iApps> Package Management LX** select f5-appsvcs-templates, click **Uninstall** then **Yes** to confirm
-2. Download the FAST extension RPM from `FAST GitHub <https://github.com/F5networks/f5-appsvcs-templates>`_
-
-   * Click the **tags** tab
-   * Choose the most current version
-   * Under the **Assets** section, click the .rpm file, downloading to a location accessible from the BIG-IP
-3. From the BIG-IP management GUI, install the extension by navigating to **iApps > Package Management LX**
-4. Click **Import** then select the RPM you downloaded
-5. Click **Upload**
+When F5 releases a new version of FAST, use the same procedure you used to initially install the RPM. 
+See the *Installation* instructions above.
 
 **Notes:** 
 
