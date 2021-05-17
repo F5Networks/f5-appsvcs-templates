@@ -1,3 +1,10 @@
+# 1.10.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.9.0
 ## Added
 * bigip-fast-templates: Add supported version of the Microsoft ADFS template
