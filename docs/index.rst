@@ -31,6 +31,7 @@ Previous buttons to explore the documentation.
    userguide/install-uninstall
    userguide/getting-started
    userguide/using-app-templates
+   userguide/settings.rst
    userguide/faq
    userguide/application-deployment
    userguide/template-authoring
