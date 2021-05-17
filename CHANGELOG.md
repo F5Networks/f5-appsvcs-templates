@@ -1,5 +1,6 @@
 # 1.9.0
 ## Added
+* bigip-fast-templates: Add supported version of the Microsoft ADFS template
 * templates: Add "immutable" property for parameters that should not be edited on application updates
 * Allow sending a list of applications to delete when sending a DELETE to /applications
 * driver: Add timestamps to tasks
@@ -7,7 +8,7 @@
 * Add support for query IPAM (IP Address Management) providers from templates
 
 ## Fixed
-* bigip-fast-templates: Replace external URL monitor script references with inline scripts
+* bigip-fast-templates: Replace external Microsoft template URL monitor script references with inline scripts
 * Fix potential issue where FAST could prevent AS3 (and some other iApps LX plugins) from starting
 
 ## Changed
