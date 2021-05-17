@@ -4,9 +4,8 @@ Deploying a FAST Application
 Deploy using the GUI
 --------------------
 
-From the BIG-IP, Launch FAST from **iApps > Application Services > Applications LX.**
-You will be presented with 4 tabs, select **Deploy.**
-Under Available Templates, expand the section containing the template to deploy.  
+| From the BIG-IP, Launch FAST from **iApps > Application Services > Applications LX.**
+| You will be presented with 5 tabs, select **FAST Templates** for a new deployment, or **Applications** to redeploy an application.
 
 For this example we are using **examples/simple_udp.** Fields noted with an asterisk * are required.
 
@@ -16,7 +15,7 @@ For this example we are using **examples/simple_udp.** Fields noted with an aste
 | 4. Enter the virtual_address.
 | 5. Enter the server_port.
 | 6. Enter a server_address for each server. This field is not required.
-
+|
 See the image below for example field entries.
 
 .. image:: Example_template.png
@@ -28,9 +27,9 @@ Clicking on the View Rendered button displays a sample of the rendered output of
 
 .. image:: View_Rendered.png
    :width: 350
-
-Clicking on Submit will start a deployment job.
-The current status of the job can be found on the *Deploy Log* tab.
+|
+| Clicking on Deploy will start a deployment job.
+| The current status of the job can be found on the *History* tab.
 
 Deploy using the FAST API
 -------------------------
@@ -63,4 +62,4 @@ The response payload contains an `id` that can be used to query `mgmt/shared/fas
 Submitting another task while a previous one is still in progress can result in an error from AS3.
 It is recommended to either wait on the result of a previous deployment task before submitting another one or to enable `Burst Handling <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/burst-handling.html>`_ for AS3.
 
-A reference for the FAST REST API can be found in :ref:`api-ref`.
+.. seealso:: :ref:`api-ref` for a reference of the FAST REST API.

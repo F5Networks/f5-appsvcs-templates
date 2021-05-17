@@ -16,8 +16,10 @@ using loaded templates as well as a short Overview video.
 FAST Menu Tabs
 --------------
 
-When launching FAST, the Applications List tab is selected. If you have never used FAST before
-the application list will likely be empty. See the :ref:`deploytab` tab for deploying a new application.
+When launching FAST, the **FAST Templates** tab is selected. 
+The page is divided into 2 sections: *bigip-fast-templates* and *examples*.
+If new template sets are added in the future, those will be displayed here as well. 
+See `Creating New Templates <https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/userguide/template-authoring.html>`_ for information on creating templates sets.
 
 The tabs in the FAST interface:
 
@@ -26,9 +28,6 @@ The tabs in the FAST interface:
 .. :alt: The FAST menu
 
 
-
-|
-
 .. list-table::
       :widths: 40 250
       :header-rows: 1
@@ -36,17 +35,14 @@ The tabs in the FAST interface:
       * - Tab
         - Summary
 
-      * - :ref:`applisttab`
-        - A list of AS3 applications currently deployed onto the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with, if deployed using a FAST Template. Applications can be modified or deleted from this page.
-
       * - :ref:`deploytab`
         - This is where you create a new application. Use this tab to choose a template and provide parameters to submit a new application to AS3.
 
-      * - :ref:`templatetab`
-        - This is a list of installed templates, along with any applications using them.
+      * - :ref:`applisttab`
+        - A list of AS3 applications currently deployed onto the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with, if deployed using a FAST Template. Applications can be modified or deleted from this page.
 
-      * - :ref:`deploylogtab`
-        - The deploy log is a summary of AS3's async task results.
+      * - :ref:`historytab`
+        - This is a list of installed templates, along with any applications using them and timestamp information.
 
       * - :ref:`settingstab`
         - Settings is where optional deployment parameters are set.
@@ -54,60 +50,23 @@ The tabs in the FAST interface:
       * - :ref:`apitab`
         - This tab contains documentation on how to use FAST's REST API.
 
-|
+Expanded definitions the FAST Menu tabs are below.
 
-.. _applisttab:
-
-Application List
-^^^^^^^^^^^^^^^^
-Use this tab to view existing FAST/AS3 applications currently deployed on this BIG-IP. 
-
-Each application is identified by its Tenant and Application name. It also shows the Template used to deploy the application.
-
-.. .. image:: application-list.png
-..   :width: 300
-..   :alt: The application list
-
-
-
-On this tab, there are two Action buttons for each application: **Modify Application** and **Delete Application**.
-
-.. .. image:: modify-application.png
-..   :width: 300
-..   :alt: The application's parameters are recalled for modification
-
-
-
-* Clicking **Modify Application** loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Submit** to redeploy the application.
-
-.. .. image:: delete-result.png
-..   :width: 300
-..   :alt: The result of deleting an application.
-
-
-
-* Clicking **Delete Application** deletes the application from the BIG-IP. 
-
-.. WARNING:: Once you delete an application, there is no easy way to recall an application's deployment parameters
-
-Selecting either the Tenant or Application name loads the template with the values last used to deploy.
 
 .. _deploytab:
 
-Deploy
-^^^^^^
+FAST Templates
+^^^^^^^^^^^^^^
 
-The Deploy tab is where you create new AS3 applications using a FAST template.
+The FAST Templates tab is where you create new AS3 applications using a FAST template.
 
 .. .. image:: deploy-view.png
 ..   :width: 300
 ..   :alt: The deploy view
 
-At the top of the Deploy pane, there is a button for each installed template. 
+To open a template, click the template name. The template loads into the interface, with required fields marked by a red asterisk. 
 
-To open a template, click the template button. The template loads into the interface, with required fields marked by a red asterisk. 
-
-At the bottom of the template, you see the following options for what to do once the template is complete.
+The template displays the following buttons for what to do once the template is complete.
 
 .. list-table::
       :widths: 55 240
@@ -115,6 +74,12 @@ At the bottom of the template, you see the following options for what to do once
 
       * - Action
         - Summary
+
+      * - Deploy
+        - Submits the application to AS3 for deployment.
+
+      * - Cancel
+        - Cancels the application returning to the template list.
 
       * - View Template
         - Displays the original template text.
@@ -128,40 +93,19 @@ At the bottom of the template, you see the following options for what to do once
       * - View Rendered
         - View a sample of the rendered output of the template.
 
-      * - Submit
-        - Submits the application to AS3 for deployment.
 
-Filling out the form with the requested values, and clicking **Submit** will submit
-the declaration for deployment. 
+Filling out the form with the requested values, and clicking **Deploy** will submit the declaration for deployment. 
 
 .. .. image:: deployed-application.png
   :width: 300
   :alt: The result of a deployed application
 
-
-After a successful deployment, you can navigate back to the Applications tab to see the application
-in the list view.
+After a successful deployment, you can navigate to the Applications tab to see the application in the list view.
 
 .. .. image:: deployed-application-list-view.png
   :width: 300
   :alt: The application list showing our new application
 
-
-.. _templatetab:
-
-Templates
----------
-
-.. .. image:: template-list.png
-  :width: 300
-  :alt: The application list
-
-
-The Templates tab shows a list of installed template sets, the templates in each set,
-and which applications are deployed using them.
-
-FAST comes pre-installed with base template sets satisfying common use cases, which are identified by the F5 logo.
-Included are templates to deploy virtual servers for basic HTTP and HTTPS applications, as well as simple TCP and UDP applications. 
 
 New Templates and Template Sets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -170,22 +114,87 @@ A template is a parameterized AS3 declaration while a template set is a grouping
 
 FAST can be extended beyond the included templates. New templates can be self-authored and installed for any AS3 use case. 
 Template sets are templates packaged into a single .zip file that can be loaded into the system via the REST API. They may be provided by F5, sourced from the community, or custom written. 
-Template sets can be added or removed via the user interface by clicking either the **Add Template Set** or **Remove Template Set** buttons. 
+Template sets can be added or removed via the user interface by clicking either the **Add Template Set** or **Remove** buttons. 
 
 .. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of FAST installed templates.
 
-.. _deploylogtab:
+.. _applisttab:
 
-Deploy Log
-----------
-The deploy log is a summary of AS3's async task results, newer jobs are nearer to the top. The output includes the Task ID, the Tenant (BIG-IP partition), and the result.
+Applications
+^^^^^^^^^^^^
+Use this tab to view existing FAST/AS3 applications currently deployed on this BIG-IP. 
+
+Each application is identified by its Tenant and Application name. It also shows the Template used to deploy the application.
+
+.. .. image:: application-list.png
+..   :width: 300
+..   :alt: The application list
+
+
+On this tab, the application can be deleted or modified. 
+
+* To Delete one, or multiple applications, check the box next to the application(s) and press **Delete**. A confirmation dialog will display with the options to **Cancel** or **Continue** the deletion.
+
+.. .. image:: modify-application.png
+..   :width: 300
+..   :alt: The application's parameters are recalled for modification
+
+* Clicking the template name loads the application template form with the values last used to deploy. This enables changing configuration parameters for operations such as adding and removing pool members.  Click **Deploy** to redeploy the application.
+
+.. .. image:: delete-result.png
+..   :width: 300
+..   :alt: The result of deleting an application.
+
+
+.. WARNING:: Once you delete an application, there is no easy way to recall an application's deployment parameters
+
+
+.. _historytab:
+
+History
+-------
+
+The History tab displays a list of deployments. 
+The list is a summary of AS3's async task results with newer jobs nearer to the top. 
+The information includes:
+
+* Application name - the name given to the application 
+* Template used  - the name of the template used for deployment including the template set and template name
+* Operation 
+
+  * Create operation shows the initial deployment
+  * Update operation shows any updates to the application in order of deployment
+  * Delete
+  * Delete All
+
+* Status
+
+  * In Progress - application deployment is processing
+  * Success - deployment succeeded
+  * No Change
+  * Error - See Info column
+  * Declaration is Invalid - See Info column
+  * Declaration Failed - See Info column
+  
+* App Template - allows for eding and resubmitting of the template
+* Timestamp - the date and time of deployment
+
+* Info - displays information such as a reason for an invalid declaration.
+
+  * invalid: failed AS3 schema validation (e.g., undefined /Tenant01/Application01/Application01_pool/members: should be array)
+  * failed: passed validation but still failed to apply (e.g.,  ip addr conflict)
+  * error: generic error from AS3
+
+.. .. image:: template-list.png
+  :width: 300
+  :alt: The application list
+
 
 .. _settingstab:
 
 Settings
 --------
-Settings is where optional deployment parameters are set.  For example, setting up log forwarding for Telemetry Streaming when deploying FAST Applications. 
-See the `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for configuring logging.
+Settings is where optional deployment parameters are set. See `FAST Settings <https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/userguide/settings.html>`_ for a list of currently supported optional deployment settings.
 
 .. _apitab:
 

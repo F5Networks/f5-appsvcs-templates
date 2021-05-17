@@ -14,7 +14,7 @@ You can also see the FAST Introduction video:
 
 .. |video| raw:: html
  
-   <iframe width="560" height="315" src="https://www.youtube.com/embed/jjGlv4d7-c4" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+   <iframe width="560" height="315" src="https://www.youtube.com/watch?v=JAmxneodtoI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 
 Table of Contents
@@ -31,6 +31,7 @@ Previous buttons to explore the documentation.
    userguide/install-uninstall
    userguide/getting-started
    userguide/using-app-templates
+   userguide/settings.rst
    userguide/faq
    userguide/application-deployment
    userguide/template-authoring
@@ -50,7 +51,7 @@ Previous buttons to explore the documentation.
 
 .. |as3| raw:: html
 
-   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/" target="_blank">AS3</a>
+   <a href="https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/" target="_blank">AS3</a>
 
 .. |sf| raw:: html
 

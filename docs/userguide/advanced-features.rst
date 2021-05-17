@@ -55,7 +55,7 @@ However, specifying a *contentType* in the template can enable some additional f
 *	Smarter merges
 *	Smarter handling of some data types
 
-    .. NOTE:: Since FAST relies on AS3 for templating, a *contentType* of *application/json* should be declared indicating that the body format is JSON. 
+.. NOTE:: Since FAST relies on AS3 for templating, a *contentType* of *application/json* should be declared indicating that the body format is JSON. 
         See `What is the correct JSON Content Type <https://stackoverflow.com/questions/477816/what-is-the-correct-json-content-type>`_ for additional information.
 
 .. _multichoice:
@@ -157,9 +157,9 @@ HTTP Calls to External Resources
 Markdown in Schema Descriptions
 -------------------------------
 
-Using Markdown code in the description for a parameter will be rendered in the GUI.
-An example would be using an asterisk on each side of a word to make it italic. 
-
+| Using Markdown code in the description for a parameter will be rendered in the GUI.
+| An example would be using an asterisk on each side of a word to make it italic. 
+|
 description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server. Would be written as:
 :: 
 

@@ -12,9 +12,9 @@ In order to use the FAST CLI, which provides template validation and previewing,
 FAST CLI is a community-supported authoring tool that template authors may use.
 It is installed onto the client PC/laptop, not on BIG-IP, and is used to validate templates as they are being built or modified.
 
-For more information on the npm tool and community, visit `<https://www.npmjs.com/>`_.
+For more information on the npm tool and community, visit `npm <https://www.npmjs.com/>`_.
 
-Some familiarity with the command line is assumed, and we recommend the FAST npm module (``@f5devcentral/f5-fast-core``) is installed globally.
+Some familiarity with the command line is assumed, and we recommend the FAST npm module, ``@f5devcentral/f5-fast-core``, is installed globally.
 This provides the FAST command line tools to validate and render templates during authoring.
 
 Help text is provided and accessed via:  ``fast --help``.
@@ -27,7 +27,7 @@ For more information on a given command use the ``--help`` flag combined with a 
 | Use the following command to install the npm module:  ``npm install -g @f5devcentral/f5-fast-core``
 | Use the following command to validate your template ``fast validate <filename>``
 | Use one of the following commands to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` or  ``fast packageTemplateSet <templateSetPath>``
-| Upload and install your zip file using steps 8 and 9 from the example below
+| Upload and install your zip file using steps 8 and 9 from the *Hello World example* below
 |
 | For VSCode users, installing the F5 Automated Toolchain Extension helps with managing templates/declarations.
 | 1. Download and install the `VSCode Microsoft extension <https://marketplace.visualstudio.com/items?itemName=DumpySquare.vscode-f5-fast>`_
@@ -43,7 +43,7 @@ Hello World example
 
 Choose an example AS3 declaration that fits your use case.  See `Example declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/examples.html>`_ for AS3 examples.
 
-For our example we are creating a simple Hello World template using `Example 1: Simple HTTP application <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/examples.html>`_ then uploading it to FAST.
+For our example we are creating a simple Hello World template using the `Example 1: Simple HTTP application <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/examples.html>`_ then uploading it to FAST.
 
 | This basic declaration creates an HTTP Virtual IP with the following parameters:
 
@@ -152,7 +152,7 @@ For this example, the following items are changed:
 
 Once the declaration is parameterized to fit your needs, it is the template you use to deploy your BIG-IP(s).  
 
-4. If the FAST NPM module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
+4. If the FAST npm module is installed globally on your system, we can validate it and try rendering it with the following command:  ``fast validate hello.mst``
 5. Create the following file named **params.json**:
 
    .. code-block:: json
@@ -212,7 +212,7 @@ Once the declaration is parameterized to fit your needs, it is the template you 
         "message":""
       }
 
-The template will validate and be added to the system. When navigating to the Deploy tab, the new template set should be available, with the Hello World template ready for use.
+The template will validate and be added to the system. When navigating to the **FAST Templates** tab, the new template set should be available, with the **Hello World** template ready for use.
 The rest of this page explains more about what the templating system can do.
 By using JSON schema alongside the templates, FAST provides a powerful system for validating template parameters ensuring applications get deployed as expected.
 
@@ -409,7 +409,7 @@ Up-front validation using the schema will help to prevent failed deployments by 
 Therefore, when designing a template, the appropriate schema definition should be used for each variable.
 For example, if the virtual IP address is a variable, use schema to validate if the input is an IPv4 or IPv6 address.
 
-| For more information on writing schema, see https://json-schema.org/.
+| For more information on writing schema, see `JSON Schema <https://json-schema.org/>`_.
 
 .. IMPORTANT::
 
@@ -423,7 +423,8 @@ AS3 Secrets
 -----------
 
 Secrets are things such as passphrases, ssl certificate/keys, etc.
-AS3 declarations made for FAST templates should follow best practices for AS3 secrets outside of FAST.
+AS3 declarations made for FAST templates should follow best practices for AS3 secrets outside of FAST. 
+See the `F5 AS3 JSON schema <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/understanding-the-json-schema.html>`_ documentation for additional information.
 
 Keeping a Variable Hidden
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -447,7 +448,7 @@ A schema example showing hidden password text in the GUI:
 Keeping Template Text Secret
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The template may be viewed from the FAST UI via the View Template button located on the :ref:`deploytab` tab.
+The template may be viewed from the FAST UI via the :ref:`deploytab` tab, select the template then the **View Template** button, which is located at the bottom of the template.
 If there is a static, plain text passphrase in the template, it will be displayed.
 For cases where the passphrase is part of an AS3 declaration, the template author may wish to substitute an encrypted passphrase to prevent leaking the password when sharing or backing up the template files.
 To obtain the encrypted value, submit the declaration directly to AS3, and retrieve the passphrase object that is returned by AS3 into the FAST template.
@@ -485,4 +486,4 @@ In the body of the response, you will find:
 In the response, the value of “protected” has changed to indicate SecureVault encryption (literally {"alg":"dir","enc":"f5sv"}), and “ciphertext” is the encrypted secret.
 These examples are directly tied to AS3, and works only for protected ciphertext elements in a declaration.
 
-See `Secrets in AS3 Declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/declaration-purpose-function.html?highlight=secret#secrets-in-as3-declarations>`_ for a more expanded definition of AS3 secrets.
+.. seealso:: `Secrets in AS3 Declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/declaration-purpose-function.html?highlight=secret#secrets-in-as3-declarations>`_ for a more expanded definition of AS3 secrets.

@@ -10,7 +10,7 @@ Appendix C: FAST Available Templates
 The following table lists the template set, the corresponding template(s) and a brief description:
 
 .. list-table::
-      :widths: 50 40 250
+      :widths: 50 100 200
       :header-rows: 1
 
       * - Template Set
@@ -18,41 +18,49 @@ The following table lists the template set, the corresponding template(s) and a 
         - Description
 
       * - bigip-fast-templates
-        - http
-        - A template that can be used to manage HTTP and HTTPS deployments
+        - DNS Application Template
+        - Configure high availability and optimization for DNS implementations
 
       * - bigip-fast-templates
-        - tcp
-        - A template that can be used to manage TCP deployments
+        - HTTP Application Template
+        - Configure high availability and optimization for HTTP and HTTPS implementations
 
       * - bigip-fast-templates
-        - dns
-        - A template that can be used to load balance DNS servers
+        - LDAP Application Template
+        - Configure high availability and optimization for LDAP implementations
 
       * - bigip-fast-templates
-        - ldap
-        - A template that can be used to manage LDAP servers
+        - Microsoft ADFS Application Template
+        - Configure high availability and optimization for Microsoft ADFS implementations
 
       * - bigip-fast-templates
-        - smtp
-        - A template that can be used to manage SMTP
+        - Microsoft Exchange Application Template
+        - Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations
 
       * - bigip-fast-templates
-        - microsoft_iis
-        - A template that can be used to manage Microsoft IIS servers
-
-      * - bigip-fast-templates
-        - microsoft_exchange
-        - A template that can be used to manage Exchange servers
+        - Microsoft IIS Application Template
+        - Configure high availability and optimization for HTTP and HTTPS implementations
       
       * - bigip-fast-templates
-        - microsoft_sharepoint
-        - A template that can be used to manage SharePoint servers
+        - Microsoft Sharepoint Application Template
+        - Configure high availability and optimization for Microsoft Sharepoint 2013 and 2016 implementations
 
       * - bigip-fast-templates
-        - microsoft_adfs (beta)
-        - A template that can be used to manage Active Directory
+        - SMTP Application Template
+        - Configure high availability and optimization for SMTP implementations
 
+      * - bigip-fast-templates
+        - TCP Application Template
+        - Configure high availability and optimization for TCP implementations
+
+      * - examples
+        - Simple UDP Application
+        - Simple UDP template wuth parameters defined outside of the template
+
+      * - examples
+        - Simple UDP Application with IPAM (experimental/beta)
+        - Simple UDP template with IPAM options, see note below
+   
       * - examples
         - simple_http
         - A simple HTTP application with load balancing
@@ -67,17 +75,12 @@ The following table lists the template set, the corresponding template(s) and a 
 
       * - examples
         - simple_udp
-        - Simple UDP application
-
-      * - examples
-        - simple_udp_defaults
         - Simple UDP load balancer using the same port on client and server side
 
       * - examples
         - simple_waf
         - Example of an HTTPS application using an ASM Policy
 
+.. NOTE:: Before the UDP Application with IPAM template can be used, an IPAM provider must be configured on the **Settings** tab.
 
-.. NOTE:: The ADFS template is a Beta version.
-
-Please report any issues or an RFE on the [FAST GitHub page](https://github.com/F5Networks/f5-appsvcs-templates) > Issues tab, click New Issue.
+Please report any issues or an RFE on the `FAST GitHub page <https://github.com/F5Networks/f5-appsvcs-templates>`_ > Issues tab, click New Issue.
