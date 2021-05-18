@@ -1,5 +1,6 @@
 # 1.10.0
 ## Added
+* Add option for disabling AS3 declaration caching
 
 ## Fixed
 
