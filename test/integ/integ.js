@@ -59,39 +59,8 @@ function waitForCompletedTask(taskid) {
         });
 }
 
-function deployApplication(templateName, parameters) {
-    parameters = parameters || {};
+function getAuthToken() {
     return Promise.resolve()
-        .then(() => endpoint.post('/mgmt/shared/fast/applications', {
-            name: templateName,
-            parameters
-        }))
-        .then((response) => {
-            const taskid = response.data.message[0].id;
-            if (!taskid) {
-                console.log(response.data);
-                assert(false, 'failed to get a taskid');
-            }
-            return waitForCompletedTask(taskid);
-        })
-        .then((task) => {
-            if (task.code !== 200) {
-                console.log(task);
-            }
-            assert.strictEqual(task.code, 200);
-            assert.strictEqual(task.message, 'success');
-        })
-        .catch((e) => {
-            if (e.response) {
-                console.error(e.response.data);
-            }
-            return Promise.reject(e);
-        });
-}
-
-describe('Applications', function () {
-    this.timeout(120000);
-    before('Generate auth token', () => Promise.resolve()
         .then(() => endpoint.post('/mgmt/shared/authn/login', {
             username: bigipCreds.split(':')[0],
             password: bigipCreds.split(':')[1],
@@ -101,7 +70,43 @@ describe('Applications', function () {
             const token = response.data.token.token;
             endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
         })
-        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`))));
+        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`)));
+}
+
+describe('Applications', function () {
+    this.timeout(120000);
+    before(() => getAuthToken());
+
+    function deployApplication(templateName, parameters) {
+        parameters = parameters || {};
+        return Promise.resolve()
+            .then(() => endpoint.post('/mgmt/shared/fast/applications', {
+                name: templateName,
+                parameters
+            }))
+            .then((response) => {
+                const taskid = response.data.message[0].id;
+                if (!taskid) {
+                    console.log(response.data);
+                    assert(false, 'failed to get a taskid');
+                }
+                return waitForCompletedTask(taskid);
+            })
+            .then((task) => {
+                if (task.code !== 200) {
+                    console.log(task);
+                }
+                assert.strictEqual(task.code, 200);
+                assert.strictEqual(task.message, 'success');
+            })
+            .catch((e) => {
+                if (e.response) {
+                    console.error(e.response.data);
+                }
+                return Promise.reject(e);
+            });
+    }
+
     before('Delete all applications', () => Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
@@ -197,4 +202,99 @@ describe('Applications', function () {
             '10.0.0.9'
         ]
     }));
+});
+
+describe('Settings', function () {
+    this.timeout(120000);
+    const url = '/mgmt/shared/fast/settings';
+
+    function assertResponse(actual, expected) {
+        return Promise.resolve()
+            .then(() => {
+                assert.strictEqual(actual.status, expected.status);
+                assert.deepStrictEqual(actual.data, expected.data);
+            })
+            .catch((e) => {
+                if (e.response) {
+                    console.error(e.response.data);
+                }
+                return Promise.reject(e);
+            });
+    }
+
+    before(() => getAuthToken());
+    before('DELETE existing settings', () => Promise.resolve()
+        .then(() => endpoint.delete(url))
+        .then(actual => assert(actual, {
+            data: { code: 200, message: 'success' },
+            status: 200
+        })));
+    it('GET default settings', () => Promise.resolve()
+        .then(() => endpoint.get(url))
+        .then(actual => assertResponse(actual, {
+            data: {
+                deletedTemplateSets: [],
+                ipamProviders: []
+            },
+            status: 200
+        })));
+    it('POST then GET settings', () => {
+        const postBody = {
+            enable_telemetry: false,
+            deletedTemplateSets: [],
+            ipamProviders: [{
+                name: 'testProvider',
+                host: '10.10.10.11',
+                username: 'testuser',
+                password: 'testpwd',
+                retrieveUrl: '/getips',
+                retrieveBody: '{ num: 1 }',
+                retrievePathQuery: '$testQuery',
+                releaseUrl: '/releaseips',
+                releaseBody: '{ ip: $testIp }',
+                apiVersion: '1.2.3',
+                network: 'testnetwork'
+            }],
+            log_afm: false,
+            log_asm: false
+        };
+        const expected = {
+            data: { code: 200, message: '' },
+            status: 200
+        };
+        return endpoint.post(url, postBody)
+            .then(actual => assertResponse(actual, expected))
+            .then(() => endpoint.get(url))
+            .then((actual) => {
+                const actualIpam = actual.data.ipamProviders[0];
+                assert.strictEqual(actualIpam.password.indexOf('$M$'), 0, 'password must be encrypted');
+                delete actualIpam.password;
+                delete postBody.ipamProviders[0].password;
+                expected.data = postBody;
+                return assertResponse(actual, expected);
+            });
+    });
+    it('PATCH settings', () => {
+        const patchBody = {
+            deletedTemplateSets: ['examples'],
+            ipamProviders: []
+        };
+        const expected = {
+            data: { code: 200, message: '' },
+            status: 200
+        };
+        return endpoint.patch(url, patchBody)
+            .then(actual => assertResponse(actual, expected))
+            .then(() => {
+                expected.data = {
+                    enable_telemetry: false,
+                    deletedTemplateSets: ['examples'],
+                    ipamProviders: [],
+                    log_afm: false,
+                    log_asm: false
+                };
+                return endpoint.get(url)
+                    .then(res => assertResponse(res, expected));
+            });
+    });
 });
