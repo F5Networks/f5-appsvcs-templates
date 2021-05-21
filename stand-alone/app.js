@@ -42,5 +42,21 @@ console.log([
     'for development and debug purposes. It is not suitable for production environments.'
 ].join(' '));
 
-expressAdapter.generateApp(worker)
+let strictCerts = process.env.FAST_BIGIP_STRICT_CERT;
+if (typeof strictCerts === 'string') {
+    strictCerts = (
+        strictCerts.toLowerCase() === 'true'
+        || strictCerts === '1'
+    );
+}
+
+expressAdapter.generateApp(worker, {
+    bigip: {
+        host: process.env.FAST_BIGIP_HOST,
+        user: process.env.FAST_BIGIP_USER,
+        password: process.env.FAST_BIGIP_PASSWORD,
+        strictCerts
+    },
+    staticFiles: path.join(__dirname, '../presentation')
+})
     .then(app => app.listen(port));

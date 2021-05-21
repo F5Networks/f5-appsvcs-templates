@@ -18,7 +18,6 @@
 
 'use strict';
 
-const path = require('path');
 const url = require('url');
 
 const axios = require('axios');
@@ -85,50 +84,54 @@ function getWorkerResponse(worker, req, res) {
         });
 }
 
-function generateApp(worker) {
-    // Patch up the worker
-    worker.logger = {
-        severe: console.error,
-        error: console.error,
-        info: console.log,
-        fine: console.log,
-        finest: console.log,
-        log: console.log
-    };
-    worker.completeRestOperation = () => {};
+function generateApp(workers, options) {
+    if (!Array.isArray(workers)) {
+        workers = [workers];
+    }
+
+    // Create an express app
+    const app = express();
+    if (options.staticFiles) {
+        app.use(express.static(options.staticFiles));
+    }
+    app.use(express.json());
+
+    // Patch up the workers
+    workers.forEach((worker) => {
+        worker.logger = {
+            severe: console.error,
+            error: console.error,
+            info: console.log,
+            fine: console.log,
+            finest: console.log,
+            log: console.log
+        };
+        worker.completeRestOperation = () => {};
+        worker.restHelper = {
+            makeRestjavadUri() {}
+        };
+        worker.dependencies = [];
+        app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
+            .then(() => getWorkerResponse(worker, req, res))
+            .catch(next));
+    });
 
     // Create an endpoint to forward remaining requests to BIG-IP
-    let strictCerts = process.env.FAST_BIGIP_STRICT_CERT || true;
-    if (typeof strictCerts === 'string') {
-        strictCerts = (
-            strictCerts.toLowerCase() === 'true'
-            || strictCerts === '1'
-        );
-    }
     const endpoint = axios.create({
-        baseURL: process.env.FAST_BIGIP_HOST,
+        baseURL: options.bigip.host,
         auth: {
-            username: process.env.FAST_BIGIP_USER,
-            password: process.env.FAST_BIGIP_PASSWORD
+            username: options.bigip.user,
+            password: options.bigip.password
         },
         maxBodyLength: 'Infinity',
         httpAgent: new http.Agent({
             keepAlive: false
         }),
         httpsAgent: new https.Agent({
-            rejectUnauthorized: strictCerts,
+            rejectUnauthorized: options.bigip.strictCerts,
             keepAlive: false
         })
     });
-
-
-    // Create an express app
-    const app = express();
-    app.use(express.static(path.join(__dirname, '../presentation')));
-    app.use(express.json());
-    app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
-        .then(() => getWorkerResponse(worker, req, res))
-        .catch(next));
     app.all('/*', (req, res, next) => Promise.resolve()
         .then(() => {
             console.log(`forwarding request ${req.method}: ${req.url}`);
@@ -142,7 +145,8 @@ function generateApp(worker) {
             .status(epRsp.status)
             .send(epRsp.data))
         .catch(next));
-    return Promise.resolve()
+
+    return Promise.all(workers.map(worker => Promise.resolve()
         .then(() => worker.onStart(
             () => {}, // success
             () => Promise.reject() // error
@@ -152,7 +156,7 @@ function generateApp(worker) {
             () => Promise.reject(), // error
             '', // loadedState
             '' // errMsg
-        ))
+        ))))
         .then(() => app);
 }
 
