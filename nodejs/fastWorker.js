@@ -107,10 +107,10 @@ class FASTWorker {
             bigipPassword,
             strictCerts: bigipStrictCert
         });
-        this.storage = new StorageDataGroup(dataGroupPath);
-        this.configStorage = new StorageDataGroup(configDGPath);
+        this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
+        this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
-        this.fsTemplateProvider = new FsTemplateProvider(templatesPath);
+        this.fsTemplateProvider = new FsTemplateProvider(templatesPath, options.fsTemplateList);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version

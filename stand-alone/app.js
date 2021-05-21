@@ -32,11 +32,10 @@ const { SecretsBase64 } = require('../lib/secrets');
 const port = 8080;
 
 const worker = new FastWorker({
+    templateStorage: new fast.dataStores.StorageMemory(),
+    configStorage: new fast.dataStores.StorageMemory(),
     secretsManager: new SecretsBase64()
 });
-worker.storage = new fast.dataStores.StorageMemory();
-worker.templateProvider.storage = worker.storage;
-worker.configStorage = new fast.dataStores.StorageMemory();
 
 console.log([
     'Warning: running FAST as a stand-alone application is only supported',
@@ -44,5 +43,4 @@ console.log([
 ].join(' '));
 
 expressAdapter.generateApp(worker)
-
     .then(app => app.listen(port));
