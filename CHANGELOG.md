@@ -4,6 +4,8 @@
 ## Fixed
 
 ## Changed
+* Fix error when using ipFromIpamProvider and there are no configured providers
+* Disable editor for enums with null as the only value
 
 # 1.9.0
 ## Added
