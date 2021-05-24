@@ -920,7 +920,11 @@ class FASTWorker {
             .then(() => {
                 const config = this._hydrateCache.__config;
                 Object.values(ipFromIpamProps).forEach((prop) => {
-                    prop.enum = config.ipamProviders.map(x => x.name);
+                    if (config.ipamProviders.length === 0) {
+                        prop.enum = [null];
+                    } else {
+                        prop.enum = config.ipamProviders.map(x => x.name);
+                    }
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {

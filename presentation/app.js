@@ -332,13 +332,15 @@ const newEditor = (tmplid, view, existingApp, component) => {
                 document.getElementById('view-render-btn').disabled = false;
                 document.getElementById('btn-form-submit').disabled = false;
 
-                if (existingApp) {
-                    Object.values(editor.editors).forEach((ed) => {
-                        if (ed.schema.immutable) {
-                            ed.disable();
-                        }
-                    });
-                }
+                Object.values(editor.editors).forEach((ed) => {
+                    if (existingApp && ed.schema.immutable) {
+                        ed.disable();
+                    }
+
+                    if (ed.schema.enum && ed.schema.enum[0] === null) {
+                        ed.disable();
+                    }
+                });
             });
 
             editor.on('change', () => {
