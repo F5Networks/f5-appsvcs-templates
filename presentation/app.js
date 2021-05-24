@@ -261,8 +261,7 @@ const createCommonEditor = (schema, defaults) => {
         disable_collapse: true,
         array_controls_top: true,
         keep_oneof_values: false,
-        theme: 'spectre',
-        iconlib: 'fontawesome5'
+        theme: 'spectre'
     });
 
     newEd.on('ready', () => {
