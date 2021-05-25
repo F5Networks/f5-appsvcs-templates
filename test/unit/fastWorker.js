@@ -141,17 +141,16 @@ class TeemDeviceMock {
 
 function createWorker() {
     const worker = new FASTWorker({
-        secretsManager: new SecretsBase64()
+        templateStorage: testStorage,
+        configStorage: new fast.dataStores.StorageMemory(),
+        secretsManager: new SecretsBase64(),
+        fsTemplateList: [
+            'examples',
+            'bigip-fast-templates'
+        ]
     });
     patchWorker(worker);
 
-    worker.storage = testStorage;
-    worker.configStorage = new fast.dataStores.StorageMemory();
-    worker.templateProvider.storage = testStorage;
-    worker.fsTemplateProvider = new fast.FsTemplateProvider(process.AFL_TW_TS, [
-        'examples',
-        'bigip-fast-templates'
-    ]);
     worker.teemDevice = new TeemDeviceMock();
 
     worker.hookCompleteRestOp();

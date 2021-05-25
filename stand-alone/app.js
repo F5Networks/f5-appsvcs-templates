@@ -32,17 +32,31 @@ const { SecretsBase64 } = require('../lib/secrets');
 const port = 8080;
 
 const worker = new FastWorker({
+    templateStorage: new fast.dataStores.StorageMemory(),
+    configStorage: new fast.dataStores.StorageMemory(),
     secretsManager: new SecretsBase64()
 });
-worker.storage = new fast.dataStores.StorageMemory();
-worker.templateProvider.storage = worker.storage;
-worker.configStorage = new fast.dataStores.StorageMemory();
 
 console.log([
     'Warning: running FAST as a stand-alone application is only supported',
     'for development and debug purposes. It is not suitable for production environments.'
 ].join(' '));
 
-expressAdapter.generateApp(worker)
+let strictCerts = process.env.FAST_BIGIP_STRICT_CERT;
+if (typeof strictCerts === 'string') {
+    strictCerts = (
+        strictCerts.toLowerCase() === 'true'
+        || strictCerts === '1'
+    );
+}
 
+expressAdapter.generateApp(worker, {
+    bigip: {
+        host: process.env.FAST_BIGIP_HOST,
+        user: process.env.FAST_BIGIP_USER,
+        password: process.env.FAST_BIGIP_PASSWORD,
+        strictCerts
+    },
+    staticFiles: path.join(__dirname, '../presentation')
+})
     .then(app => app.listen(port));

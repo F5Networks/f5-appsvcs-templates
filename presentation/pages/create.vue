@@ -30,6 +30,7 @@
             <h4>{{ title }}</h4>
             <p>{{ description }}</p>
         </div>
+        <editor ref="editor" />
         <div id="form-div" />
         <div class="text-right">
             <button
@@ -65,8 +66,17 @@
 </template>
 
 <script>
+/* eslint-disable no-console */
+
+import Editor from '../components/Editor.vue';
+
+const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
+
 export default {
     name: 'PageCreate',
+    components: {
+        Editor
+    },
     beforeRouteLeave(to, from, next) {
         this.$root.forceNav();
         next();
@@ -90,9 +100,6 @@ export default {
             });
     },
     methods: {
-        newEditor(tmplid) {
-            this.$root.newEditor(tmplid);
-        },
         currentSet(setName) {
             this.sets.forEach((set) => {
                 set.expanded = set.name === setName;
@@ -100,7 +107,6 @@ export default {
         },
         update(params) {
             this.sets = [];
-            this.$root.destroyEditor();
 
             let promiseChain = Promise.resolve();
             let template;
@@ -142,8 +148,133 @@ export default {
             }
 
             return promiseChain
-                .then(() => this.$root.newEditor(template, parameters, existingApp, this))
+                .then(() => this.newEditor(template, parameters, existingApp, this))
                 .catch(e => this.$root.dispOutput(e.message));
+        },
+        newEditor(tmplid, view, existingApp, component) {
+            const editorComponent = this.$refs.editor;
+            this.$root.dispOutput(`Loading template: ${tmplid}`);
+            this.$root.getJSON(`templates/${tmplid}`)
+                .catch(e => Promise.reject(new Error(`Error loading template "${tmplid}":\n${e.message}`)))
+                .then(data => Template.fromJson(data))
+                .then((tmpl) => {
+                    // Get schema and modify it work better with JSON Editor
+                    const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
+
+                    // Bring the title and description into the header
+                    if (component) {
+                        component.title = schema.title || '';
+                        component.description = schema.description || '';
+
+                        delete schema.title;
+                        delete schema.description;
+                    }
+
+                    // Prep IPAM fields for existing applications
+                    if (existingApp) {
+                        Object.entries(schema.properties || {}).forEach(([propName, prop]) => {
+                            if (prop.ipFromIpam && !prop.immutable) {
+                                prop.description = `${prop.description} | Current: ${view[propName]}`;
+                                delete view[propName];
+                            }
+                        });
+                    }
+
+                    // Create a new editor
+                    editorComponent.init(schema, tmpl.getCombinedParameters(view));
+                    const editor = editorComponent.editor;
+
+                    editor.on('ready', () => {
+                        // Enable form button now that the form is ready
+                        document.getElementById('view-tmpl-btn').disabled = false;
+                        document.getElementById('view-schema-btn').disabled = false;
+                        document.getElementById('view-view-btn').disabled = false;
+                        document.getElementById('view-render-btn').disabled = false;
+                        document.getElementById('btn-form-submit').disabled = false;
+
+
+                        Object.values(editor.editors).forEach((ed) => {
+                            if (existingApp && ed.schema.immutable) {
+                                ed.disable();
+                            }
+
+                            if (ed.schema.enum && ed.schema.enum[0] === null) {
+                                ed.disable();
+                            }
+                        });
+                    });
+
+                    editor.on('change', () => {
+                        document.getElementById('btn-form-submit').disabled = editor.validation_results.length !== 0;
+                    });
+
+                    // Hook up buttons
+                    document.getElementById('view-tmpl-btn').onclick = () => {
+                        this.$root.dispOutput(tmpl.sourceText);
+                    };
+                    document.getElementById('view-schema-btn').onclick = () => {
+                        this.$root.dispOutput(JSON.stringify(schema, null, 2));
+                    };
+                    document.getElementById('view-view-btn').onclick = () => {
+                        this.$root.dispOutput(JSON.stringify(tmpl.getCombinedParameters(editor.getValue()), null, 2));
+                    };
+                    document.getElementById('view-render-btn').onclick = () => {
+                        const rendered = tmpl.render(editor.getValue());
+                        const msg = [
+                            'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
+                            'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
+                            'submit this declaration through FAST.\n\n',
+                            rendered
+                        ].join('');
+                        this.$root.dispOutput(msg);
+                    };
+                    document.getElementById('btn-form-submit').onclick = () => {
+                        const parameters = editor.getValue();
+                        const data = {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: tmplid,
+                                parameters,
+                                previousDef: existingApp
+                            })
+                        };
+                        this.$root.busy = true;
+                        console.log(JSON.stringify(data, null, 2));
+                        Promise.resolve()
+                            .then(() => this.$root.safeFetch(`${this.$root.endPointUrl}/applications`, data))
+                            .then((result) => {
+                                console.log(JSON.stringify(result, null, 2));
+
+                                const submissionData = this.$root.getSubmissionData();
+                                const taskid = result.message[0].id;
+                                submissionData[taskid] = {
+                                    template: tmplid,
+                                    parameters
+                                };
+                                this.$root.storeSubmissionData(submissionData);
+                            })
+                            .then(() => {
+                                this.$root.$router.push('/tasks');
+                            })
+                            .catch((e) => {
+                                this.$root.busy = false;
+                                this.$root.dispOutput(`Failed to submit application:\n${e.message}`);
+                            });
+                    };
+
+                    console.log('Editor loaded'); // Clear text on new editor load
+                })
+                .catch((e) => {
+                    const versionError = e.message.match(/^.*since it requires AS3.*$/m);
+                    if (versionError) {
+                        this.$root.dispOutput(versionError[0].replace('&gt;', '>'));
+                    } else {
+                        this.$root.dispOutput(`Error loading editor:\n${e.message}`);
+                    }
+                });
         }
     }
 };

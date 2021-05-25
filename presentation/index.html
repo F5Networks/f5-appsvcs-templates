@@ -35,14 +35,13 @@
                         Please check that AS3 is properly installed.
                         AS3 can be downloaded <a href="https://f5.com/getas3">here</a>.
                     </h1>
-                    <router-view ref="page" :data="data" :class="{ 'd-none': busy }"></router-view>
+                    <router-view ref="page" :class="{ 'd-none': busy }"></router-view>
                     <pre id="output">{{debugOutput}}</pre>
                 </div>
             </div>
         </div>
 
         <!-- Scripts -->
-        <script src="js/jsoneditor.min.js"></script>
         <script src="bundle.js" charset="utf-8"></script>
     </body>
 </html>

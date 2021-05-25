@@ -107,10 +107,10 @@ class FASTWorker {
             bigipPassword,
             strictCerts: bigipStrictCert
         });
-        this.storage = new StorageDataGroup(dataGroupPath);
-        this.configStorage = new StorageDataGroup(configDGPath);
+        this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
+        this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
-        this.fsTemplateProvider = new FsTemplateProvider(templatesPath);
+        this.fsTemplateProvider = new FsTemplateProvider(templatesPath, options.fsTemplateList);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version
@@ -920,7 +920,11 @@ class FASTWorker {
             .then(() => {
                 const config = this._hydrateCache.__config;
                 Object.values(ipFromIpamProps).forEach((prop) => {
-                    prop.enum = config.ipamProviders.map(x => x.name);
+                    if (config.ipamProviders.length === 0) {
+                        prop.enum = [null];
+                    } else {
+                        prop.enum = config.ipamProviders.map(x => x.name);
+                    }
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
