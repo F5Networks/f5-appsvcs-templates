@@ -92,6 +92,23 @@ To correct this condition:
 * Delete the affected FAST applications 
 * Re-deploy the FAST template
 
+FAST UI not Updating after Config-sync
+----------------------------------------
+
+FAST stores all config in data-groups, which are synched via device-groups. 
+When a FAST app is deployed on device A, the resulting BIG-IP config appears device B, including the data-groups. 
+On device B, FAST has the information it needs, however the FAST UI has not been notified to reload. 
+Restarting the restnoded daemon forces a reload and causes all apps to sync in FAST.
+
+To restart the daemon, run the following command in a BIG-IP terminal:
+
+``bigstart restart restnoded``
+
+The restart should only take a few seconds with the BIG-IP having limited REST access to the control plane during the process.
+
+See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for information on BIG-IP daemons.
+
+
 Known Issues
 ------------
 
