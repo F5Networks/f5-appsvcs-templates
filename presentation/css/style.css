@@ -156,35 +156,3 @@ hr {
   height: 3rem;
   width: 3rem;
 }
-/*********************************
-    JSON Editor Tweaks
-**********************************/
-.form-checkbox, .form-radio, .form-switch {
-    font-weight: 600;
-}
-
-#form-div h4 {
-	font-size: revert;
-	font-weight: 600;
-	display: block;
-	line-height: 1.2rem;
-	padding: .3rem 0;
-}
-
-.form-select, .form-input {
-	line-height: initial;
-	font-size: inherit;
-	height: initial;
-	padding: 2px 5px 1px 5px;
-}
-
-/* Hide first title (we handle this ourselves) */
-#form-div > .je-object__container > .je-object__title {
-  display: none !important;
-}
-
-/* Fixes for Markdown in descriptions */
-.je-desc a {
-    text-decoration: revert;
-    color: revert;
-}
