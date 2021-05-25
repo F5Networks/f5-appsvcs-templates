@@ -33,6 +33,7 @@
     "@babel/plugin-transform-runtime": "^7.14.2",
     "@babel/preset-env": "^7.14.2",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
+    "@json-editor/json-editor": "^2.5.4",
     "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
     "css-loader": "^5.2.4",

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-/* global JSONEditor */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -25,6 +24,8 @@ const marked = require('marked');
 const VueRouter = require('vue-router').default;
 // eslint-disable-next-line import/no-extraneous-dependencies
 const Vue = require('vue').default;
+// eslint-disable-next-line import/no-extraneous-dependencies
+const { JSONEditor } = require('@json-editor/json-editor');
 
 const { Template, guiUtils } = require('@f5devcentral/f5-fast-core');
 
@@ -259,7 +260,6 @@ const createCommonEditor = (schema, defaults) => {
         disable_edit_json: true,
         disable_properties: true,
         disable_collapse: true,
-        array_controls_top: true,
         keep_oneof_values: false,
         theme: 'spectre'
     });
