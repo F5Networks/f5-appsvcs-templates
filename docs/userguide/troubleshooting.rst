@@ -96,7 +96,7 @@ FAST UI not Updating after Config-sync
 ----------------------------------------
 
 FAST stores all config in data-groups, which are synched via device-groups. 
-When a FAST app is deployed on device A, the resulting BIG-IP config appears device B, including the data-groups. 
+When a FAST app is deployed on device A, the resulting BIG-IP config appears on device B, including the data-groups. 
 On device B, FAST has the information it needs, however the FAST UI has not been notified to reload. 
 Restarting the restnoded daemon forces a reload and causes all apps to sync in FAST.
 
