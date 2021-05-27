@@ -73,6 +73,66 @@ function getAuthToken() {
         .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`)));
 }
 
+
+describe('Template Sets', function () {
+    this.timeout(120000);
+    const url = '/mgmt/shared/fast/templatesets';
+
+    function assertGet(expected, templateSetId) {
+        const fullUrl = templateSetId ? `${url}/${templateSetId}` : url;
+        return Promise.resolve()
+            .then(() => endpoint.get(fullUrl))
+            .then((actual) => {
+                assert.strictEqual(actual.status, expected.status);
+                if (Array.isArray(expected.data)) {
+                    expected.data.forEach((expTemplateSet) => {
+                        const templateSet = templateSetId ? actual.data
+                            : actual.data.find(ts => ts.name === expTemplateSet.name);
+                        assert.ok(templateSet, `Template with name ${expTemplateSet.name} must exist`);
+                        assert.ok(templateSet.templates.length > 0, 'Template set must contain templates');
+                        assert.ok(templateSet.hash, 'Template set must contain a hash');
+                        assert.strictEqual(templateSet.supported, expTemplateSet.supported, 'Template set must show correct supported flag');
+                    });
+                } else {
+                    assert.deepStrictEqual(actual.data, expected.data);
+                }
+            })
+            .catch((e) => {
+                if (e.response && !expected.error) {
+                    console.error(e.response.data);
+                    return Promise.reject(e);
+                }
+                assert.deepStrictEqual(e.response.data, expected.error);
+                assert.strictEqual(e.response.status, expected.status);
+                return Promise.resolve();
+            });
+    }
+
+    before(() => getAuthToken());
+    it('GET built-in template sets', () => Promise.resolve()
+        .then(() => assertGet({
+            data: [
+                { name: 'bigip-fast-templates', supported: true },
+                { name: 'examples', supported: false }
+            ],
+            status: 200
+        })));
+    it('DELETE template set by ID', () => Promise.resolve()
+        .then(() => endpoint.delete(`${url}/examples`))
+        .then((actual) => {
+            assert.strictEqual(actual.status, 200);
+            assert.deepStrictEqual(actual.data, { code: 200, message: 'success' });
+            return assertGet({ error: { code: 404, message: 'Template set examples does not exist' }, status: 404 }, 'examples');
+        }));
+    it('POST re-install template set and GET by ID', () => Promise.resolve()
+        .then(() => endpoint.post(url, { name: 'examples' }))
+        .then((actual) => {
+            assert.strictEqual(actual.status, 200);
+            assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+            return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
+        }));
+});
+
 describe('Applications', function () {
     this.timeout(120000);
     before(() => getAuthToken());
