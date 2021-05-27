@@ -131,7 +131,7 @@ export default {
 }
 
 /* Hide required asterisks */
-.je-label.required::after {
+.required::after {
   content: "" !important;
 }
 
