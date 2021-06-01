@@ -3,6 +3,7 @@
 * Add option for disabling AS3 declaration caching
 
 ## Fixed
+* gui: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI
 
 ## Changed
 * Fix error when using ipFromIpamProvider and there are no configured providers
