@@ -298,6 +298,17 @@ class FASTWorker {
                         hidden: true
                     }
                 },
+                disableDeclarationCache: {
+                    title: 'Disable AS3 Declaration Cache',
+                    type: 'boolean',
+                    description: [
+                        'Do not cache AS3 declarations.',
+                        'This ensures FAST is always using up-to-date declarations from AS3,',
+                        'which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config.',
+                        'Disabling declaration caching will negatively impact FAST performance.'
+                    ].join(' '),
+                    format: 'checkbox'
+                },
                 ipamProviders: {
                     title: 'IPAM Providers (Experimental/Beta)',
                     description: 'Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses',
