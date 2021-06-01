@@ -1,3 +1,4 @@
+title: Monitor HTTP
 contentType: application/json
 bigipHideTemplate: true
 definitions:
