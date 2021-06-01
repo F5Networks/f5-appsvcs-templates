@@ -93,9 +93,14 @@
     "start": {
       "patterns": [
         "lib",
-        "nodejs"
+        "nodejs",
+        "templates"
       ],
-      "extensions": "js"
+      "extensions": [
+        "js",
+        "json",
+        "yaml"
+      ]
     }
   },
   "dependencies": {
