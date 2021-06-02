@@ -73,6 +73,26 @@ function getAuthToken() {
         .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`)));
 }
 
+function deleteAllApplications() {
+    return Promise.resolve()
+        .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
+        .then((response) => {
+            const taskid = response.data.id;
+            if (!taskid) {
+                console.log(response.data);
+                assert(false, 'failed to get a taskid');
+            }
+            return waitForCompletedTask(taskid);
+        })
+        .then((task) => {
+            if (task.code !== 200) {
+                console.log(task);
+            }
+            assert.strictEqual(task.code, 200);
+        })
+        .catch(err => Promise.reject(new Error(`Failed to delete applications: ${err.message}`)));
+}
+
 
 describe('Template Sets', function () {
     this.timeout(120000);
@@ -109,6 +129,8 @@ describe('Template Sets', function () {
     }
 
     before(() => getAuthToken());
+    before('Delete all applications', deleteAllApplications);
+
     it('GET built-in template sets', () => Promise.resolve()
         .then(() => assertGet({
             data: [
@@ -136,6 +158,7 @@ describe('Template Sets', function () {
 describe('Applications', function () {
     this.timeout(120000);
     before(() => getAuthToken());
+    before('Delete all applications', deleteAllApplications);
 
     function deployApplication(templateName, parameters) {
         parameters = parameters || {};
@@ -166,24 +189,6 @@ describe('Applications', function () {
                 return Promise.reject(e);
             });
     }
-
-    before('Delete all applications', () => Promise.resolve()
-        .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
-        .then((response) => {
-            const taskid = response.data.id;
-            if (!taskid) {
-                console.log(response.data);
-                assert(false, 'failed to get a taskid');
-            }
-            return waitForCompletedTask(taskid);
-        })
-        .then((task) => {
-            if (task.code !== 200) {
-                console.log(task);
-            }
-            assert.strictEqual(task.code, 200);
-        })
-        .catch(err => Promise.reject(new Error(`Failed to delete applications: ${err.message}`))));
 
     it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
 
