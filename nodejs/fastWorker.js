@@ -68,6 +68,11 @@ ajv.addFormat('password', /.*/);
 ajv.addFormat('text', /.*/);
 ajv.addFormat('grid-strict', /.*/);
 
+// Disable HTML escaping
+Mustache.escape = function escape(text) {
+    return text;
+};
+
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
 const scratchPath = `${configPath}/scratch`;
