@@ -18,12 +18,6 @@ definitions:
     description: Select the persistence profile.
     enumFromBigip:
       - ltm/persistence/cookie
-      - ltm/persistence/dest-addr
-      - ltm/persistence/global-settings
-      - ltm/persistence/hash
-      - ltm/persistence/host
-      - ltm/persistence/msrdp
-      - ltm/persistence/sip
       - ltm/persistence/source-addr
       - ltm/persistence/ssl
       - ltm/persistence/universal
