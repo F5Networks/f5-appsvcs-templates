@@ -951,38 +951,41 @@ class FASTWorker {
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
-                const endPoint = `/mgmt/tm/${prop.enumFromBigip}?$select=fullPath`;
+                const epStubs = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
+                const endPoints = epStubs.map(x => `/mgmt/tm/${x}?$select=fullPath`);
                 return Promise.resolve()
-                    .then(() => {
-                        if (this._hydrateCache[endPoint]) {
-                            return this._hydrateCache[endPoint];
-                        }
+                    .then(() => Promise.all(endPoints.map(endPoint => Promise.resolve()
+                        .then(() => {
+                            if (this._hydrateCache[endPoint]) {
+                                return this._hydrateCache[endPoint];
+                            }
 
-                        return this.recordTransaction(
-                            requestId, `fetching data from ${endPoint}`,
-                            this.endpoint.get(endPoint)
-                        )
-                            .then((response) => {
-                                const items = response.data.items;
-                                this._hydrateCache[endPoint] = items;
-                                return items;
-                            });
-                    })
-                    .then((items) => {
-                        if (items) {
-                            return Promise.resolve(items.map(x => x.fullPath));
-                        }
-                        return Promise.resolve([]);
-                    })
-                    .catch(e => this.handleResponseError(e, `GET to ${endPoint}`))
+                            return this.recordTransaction(
+                                requestId, `fetching data from ${endPoint}`,
+                                this.endpoint.get(endPoint)
+                            )
+                                .then((response) => {
+                                    const items = response.data.items;
+                                    this._hydrateCache[endPoint] = items;
+                                    return items;
+                                });
+                        })
+                        .then((items) => {
+                            if (items) {
+                                return Promise.resolve(items.map(x => x.fullPath));
+                            }
+                            return Promise.resolve([]);
+                        })
+                        .catch(e => this.handleResponseError(e, `GET to ${endPoint}`))
+                        .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`))))))
+                    .then(itemsArrays => itemsArrays.flat())
                     .then((items) => {
                         if (items.length !== 0) {
                             prop.enum = items;
                         } else {
                             prop.enum = [null];
                         }
-                    })
-                    .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`)));
+                    });
             })))
             .then(() => schema);
     }

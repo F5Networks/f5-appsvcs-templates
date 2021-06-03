@@ -1130,6 +1130,13 @@ describe('template worker tests', function () {
                         enumFromBigip: 'ltm/profile/http-compression'
                     }
                 },
+                multipleEndpoints: {
+                    type: 'string',
+                    enumFromBigip: [
+                        'ltm/profile/http-compression',
+                        'ltm/profile/http-compression2'
+                    ]
+                },
                 fooIpam: {
                     type: 'string',
                     ipFromIpam: true
@@ -1145,13 +1152,22 @@ describe('template worker tests', function () {
         };
         nock('http://localhost:8100')
             .persist()
-            .get(/mgmt\/tm\/.*/)
+            .get('/mgmt/tm/ltm/profile/http-compression?$select=fullPath')
             .reply(200, {
                 kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
                 selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression?$select=fullPath&ver=15.0.1.1',
                 items: [
                     { fullPath: '/Common/httpcompression' },
                     { fullPath: '/Common/wan-optimized-compression' }
+                ]
+            })
+            .get('/mgmt/tm/ltm/profile/http-compression2?$select=fullPath')
+            .reply(200, {
+                kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression2?$select=fullPath&ver=15.0.1.1',
+                items: [
+                    { fullPath: '/Common/httpcompression2' },
+                    { fullPath: '/Common/wan-optimized-compression2' }
                 ]
             });
 
@@ -1168,6 +1184,12 @@ describe('template worker tests', function () {
                 assert.deepEqual(schema.properties.fooItems.items.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
+                ]);
+                assert.deepEqual(schema.properties.multipleEndpoints.enum, [
+                    '/Common/httpcompression',
+                    '/Common/wan-optimized-compression',
+                    '/Common/httpcompression2',
+                    '/Common/wan-optimized-compression2'
                 ]);
                 assert.deepEqual(schema.properties.fooIpam.enum, [
                     'bar'
