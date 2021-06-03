@@ -25,25 +25,20 @@ definitions:
       of 0 for unlimited connections.
     type: array
     uniqueItems: true
-    default: [
-        {}
-    ]
+    default:
+      - serverAddresses: ['10.0.0.1']
+        servicePort: 80
+        connectionLimit: 0
+        priorityGroup: 0
+        shareNodes: true
+    minItems: 1
     items:
       type: object
       properties:
         serverAddresses:
           title: Server Address
-          type: array
-          uniqueItems: true
-          default: ['10.0.0.1']
-          items:
-            type: string
-            default: '10.0.0.2'
         servicePort:
           title: Server Port
-          type: integer
-          minimum: 0
-          maximum: 65535
           default: 80
         connectionLimit:
           title: Connection Limit
@@ -85,7 +80,17 @@ template: |
           {{#make_pool}}
             "{{app_name}}_pool": {
               "class": "Pool",
-              "members": {{pool_members}},
+              "members": [
+              {{#pool_members}}
+                {
+                  "serverAddresses": [{{serverAddresses:f5:ipv4_ipv6_array}}],
+                  "servicePort": {{servicePort:f5:port}},
+                  "connectionLimit": {{connectionLimit}},
+                  "priorityGroup": {{priorityGroup}},
+                  "shareNodes": {{shareNodes::boolean}}
+                },
+              {{/pool_members}}
+              ],
               "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
               "slowRampTime": {{slow_ramp_time}}
             },
