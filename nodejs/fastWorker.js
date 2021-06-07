@@ -103,12 +103,15 @@ class FASTWorker {
         options = options || {};
         this.state = {};
 
+        this.baseUserAgent = `${pkg.name}/${pkg.version}`;
+        this.incomingUserAgent = '';
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
         this.driver = new AS3Driver({
             endPointUrl: `${bigipHost}/mgmt/shared/appsvcs`,
-            userAgent: `${pkg.name}/${pkg.version}`,
+            userAgent: this.baseUserAgent,
             bigipUser,
             bigipPassword,
             strictCerts: bigipStrictCert
@@ -565,7 +568,10 @@ class FASTWorker {
      */
     sendTeemReport(reportName, reportVersion, data) {
         const documentName = `${projectName}: ${reportName}`;
-        return this.teemDevice.report(documentName, `${reportVersion}`, {}, data)
+        const baseData = {
+            userAgent: this.incomingUserAgent
+        };
+        return this.teemDevice.report(documentName, `${reportVersion}`, baseData, data)
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
@@ -1230,9 +1236,17 @@ class FASTWorker {
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
+        // Update driver's user agent if one was provided with the request
+        const userAgent = restOp.getUri().query.useragent;
+        this.incomingUserAgent = userAgent || '';
+        this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+
+        // Record the time we received the request
         this.requestTimes[restOp.requestId] = Date.now();
+
+        // Dump information to the log
         this.logger.fine(
-            `FAST Worker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().pathname}`
+            `FAST Worker [${restOp.requestId}]: received request method=${restOp.getMethod()}; path=${restOp.getUri().pathname}; userAgent=${this.incomingUserAgent}`
         );
     }
 

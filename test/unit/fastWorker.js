@@ -1448,4 +1448,19 @@ describe('template worker tests', function () {
                 assert(Array.isArray(op.body.message));
             });
     });
+    it('record_user_agent', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications?useragent=test/v1.1');
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(
+                    worker.incomingUserAgent,
+                    'test/v1.1'
+                );
+                assert.strictEqual(
+                    worker.driver.userAgent,
+                    `test/v1.1;${worker.baseUserAgent}`
+                );
+            });
+    });
 });
