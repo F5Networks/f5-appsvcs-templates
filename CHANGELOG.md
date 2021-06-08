@@ -3,7 +3,7 @@
 * Add option for disabling AS3 declaration caching
 * bigip-fast-templates: Consistently support IPv4 or IPV6 addresses for IP address fields
 * bigip-fast-templates: Allow route domain suffixes in IP address fields
-* Add optional useragent query parameter to all endpoints
+* Add optional userAgent query parameter to all endpoints
 
 ## Fixed
 * gui: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI

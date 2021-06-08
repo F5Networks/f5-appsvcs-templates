@@ -1450,7 +1450,7 @@ describe('template worker tests', function () {
     });
     it('record_user_agent', function () {
         const worker = createWorker();
-        const op = new RestOp('applications?useragent=test/v1.1');
+        const op = new RestOp('applications?userAgent=test/v1.1');
         return worker.onGet(op)
             .then(() => {
                 assert.strictEqual(

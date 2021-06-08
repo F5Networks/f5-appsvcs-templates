@@ -45,7 +45,7 @@ const safeFetch = (uri, opts, numAttempts) => {
     }
 
     if (uri.startsWith(endPointUrl)) {
-        uri = uri.includes('?') ? `${uri}&useragent=${userAgent}` : `${uri}?useragent=${userAgent}`;
+        uri = uri.includes('?') ? `${uri}&userAgent=${userAgent}` : `${uri}?userAgent=${userAgent}`;
     }
 
     return fetch(uri, opts)

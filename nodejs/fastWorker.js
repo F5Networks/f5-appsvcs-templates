@@ -1237,7 +1237,7 @@ class FASTWorker {
      */
     recordRestRequest(restOp) {
         // Update driver's user agent if one was provided with the request
-        const userAgent = restOp.getUri().query.useragent;
+        const userAgent = restOp.getUri().query.userAgent;
         this.incomingUserAgent = userAgent || '';
         this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
 
