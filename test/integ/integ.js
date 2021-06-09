@@ -197,7 +197,7 @@ describe('Applications', function () {
         app_name: 'HTTP_App',
         virtual_address: '10.0.0.1',
         pool_members: [
-            { serverAddresses: ['10.0.0.1'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.1'] }
         ]
     }));
     it('Deploy bigip-fast-templates/tcp', () => deployApplication('bigip-fast-templates/tcp', {
@@ -205,7 +205,7 @@ describe('Applications', function () {
         app_name: 'TCP-App',
         virtual_address: '10.0.0.2',
         pool_members: [
-            { serverAddresses: ['10.0.0.2'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.2'] }
         ]
     }));
     it('Deploy bigip-fast-templates/dns', () => deployApplication('bigip-fast-templates/dns', {
@@ -213,7 +213,7 @@ describe('Applications', function () {
         app_name: 'DNS-App',
         virtual_address: '10.0.0.3',
         pool_members: [
-            { serverAddresses: ['10.0.0.3'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.3'] }
         ],
         monitor_queryName: 'example.com'
     }));
@@ -229,7 +229,7 @@ describe('Applications', function () {
         tenant_name: 't-5',
         virtual_address: '10.0.0.5',
         pool_members: [
-            { serverAddresses: ['10.0.0.5'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.5'] }
         ],
         app_fqdn: 'example.com',
         monitor_fqdn: 'example.com'
@@ -239,7 +239,7 @@ describe('Applications', function () {
         app_name: 'LDAP-App',
         virtual_address: '10.0.0.6',
         pool_members: [
-            { serverAddresses: ['10.0.0.6'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.6'] }
         ],
         monitor_passphrase: 'aa'
     }));
@@ -248,7 +248,7 @@ describe('Applications', function () {
         app_name: 'IIS_App',
         virtual_address: '10.0.0.7',
         pool_members: [
-            { serverAddresses: ['10.0.0.7'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.7'] }
         ]
     }));
     it('Deploy bigip-fast-templates/smtp', () => deployApplication('bigip-fast-templates/smtp', {
@@ -256,7 +256,7 @@ describe('Applications', function () {
         app_name: 'SMTP-App',
         virtual_address: '10.0.0.8',
         pool_members: [
-            { serverAddresses: ['10.0.0.8'], servicePort: 80 }
+            { serverAddresses: ['10.0.0.8'] }
         ],
         monitor_domain: 'example.com'
     }));

@@ -194,6 +194,10 @@ export default {
 
 
                         Object.values(editor.editors).forEach((ed) => {
+                            if (!ed) {
+                                return;
+                            }
+
                             if (existingApp && ed.schema.immutable) {
                                 ed.disable();
                             }

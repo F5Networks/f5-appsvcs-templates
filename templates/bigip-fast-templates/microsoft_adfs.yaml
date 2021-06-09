@@ -19,6 +19,7 @@ allOf:
         title: Microsoft Alternate Port Client Certificate Authentication
         description: Choose whether you want to configure BIG-IP to support client certificate authentication. If you select Yes, FAST creates the objects needed for client certificate authentication. This uses port 49443, which is based on Microsoft's alternate port configuration.
         type: boolean
+        default: false
     template: |
       {
         "{{tenant_name}}": {

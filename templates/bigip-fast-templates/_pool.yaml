@@ -26,11 +26,7 @@ definitions:
     type: array
     uniqueItems: true
     default:
-      - serverAddresses: ['10.0.0.1']
-        servicePort: 80
-        connectionLimit: 0
-        priorityGroup: 0
-        shareNodes: true
+      - {}
     minItems: 1
     items:
       type: object

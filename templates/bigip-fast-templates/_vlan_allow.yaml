@@ -6,6 +6,7 @@ definitions:
     title: Enable VLAN Filtering
     description: Select to enable VLANs.
     type: boolean
+    default: false
   vlans_allow:
     title: Allow Specified VLANs
     description: Names of existing VLANs to add to this virtual server to allow. Check to ALLOW all VLANs in this list. Uncheck to REJECT all VLANs in this list.

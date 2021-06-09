@@ -71,6 +71,7 @@ definitions:
       in a request to a translation address defined on the BIG-IP device."
     type: boolean
     dependencies: []
+    default: false
   snat_automap:
     title: SNAT Automap
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
@@ -151,6 +152,7 @@ definitions:
     title: HSTS Header
     description: Enforces HTTP Strict Transport Security (HSTS).
     type: boolean
+    default: false
   owa:
     title: Outlook Web App
     description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
