@@ -14,6 +14,7 @@
 ## Changed
 * Fix error when using ipFromIpamProvider and there are no configured providers
 * Disable editor for enums with null as the only value
+* Improve error messages when IPAM operations fail
 
 # 1.9.0
 ## Added
