@@ -7,6 +7,7 @@
 * Add optional userAgent query parameter to all endpoints
 * Allow an array of endpoints for enumFromBigip
 * bigip-fast-templates: Allow selecting an existing persistence profile
+* Add builtin Infoblox IPAM provider type
 
 ## Fixed
 * gui: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI
