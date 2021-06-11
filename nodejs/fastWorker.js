@@ -60,7 +60,9 @@ if (typeof bigipStrictCert === 'string') {
     );
 }
 
-const ajv = new Ajv();
+const ajv = new Ajv({
+    useDefaults: true
+});
 ajv.addFormat('checkbox', /.*/);
 ajv.addFormat('table', /.*/);
 ajv.addFormat('password', /.*/);
@@ -163,6 +165,21 @@ class FASTWorker {
             this.recordRestResponse(restOperation);
             return this._prevCompleteRestOp(restOperation);
         };
+    }
+
+    validateConfig(config) {
+        return Promise.resolve()
+            .then(() => ajv.compile(this.getConfigSchema()))
+            .then((validate) => {
+                const valid = validate(config);
+                if (!valid) {
+                    return Promise.reject(new Error(
+                        `invalid config: ${validate.errors}`
+                    ));
+                }
+
+                return Promise.resolve(config);
+            });
     }
 
     getConfig(reqid) {
@@ -1462,18 +1479,11 @@ class FASTWorker {
         const reqid = restOperation.requestId;
 
         return Promise.resolve()
-            .then(() => ajv.compile(this.getConfigSchema()))
-            .then((validate) => {
-                const valid = validate(config);
-                if (!valid) {
-                    return Promise.reject(this.genRestResponse(
-                        restOperation, 422,
-                        `supplied settings were not valid:\n${validate.errors}`
-                    ));
-                }
-
-                return Promise.resolve();
-            })
+            .then(() => this.validateConfig(config))
+            .catch(e => Promise.reject(this.genRestResponse(
+                restOperation, 422,
+                `supplied settings were not valid:\n${e.message}`
+            )))
             .then(() => this.getConfig(reqid))
             .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
             .then(() => this.gatherProvisionData(reqid, true))
@@ -1744,18 +1754,11 @@ class FASTWorker {
             .then((prevConfig) => {
                 combinedConfig = Object.assign({}, prevConfig, config);
             })
-            .then(() => ajv.compile(this.getConfigSchema()))
-            .then((validate) => {
-                const valid = validate(combinedConfig);
-                if (!valid) {
-                    return Promise.reject(this.genRestResponse(
-                        restOperation, 422,
-                        `supplied settings were not valid:\n${validate.errors}`
-                    ));
-                }
-
-                return Promise.resolve();
-            })
+            .then(() => this.validateConfig(combinedConfig))
+            .catch(e => Promise.reject(this.genRestResponse(
+                restOperation, 422,
+                `supplied settings were not valid:\n${e.message}`
+            )))
             .then(() => this.gatherProvisionData(reqid, true))
             .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
             .then(() => this.saveConfig(combinedConfig, reqid))
