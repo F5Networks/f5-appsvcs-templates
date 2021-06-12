@@ -19,12 +19,12 @@
 
 'use strict';
 
-const mockfs = require('mock-fs');
 const path = require('path');
 const url = require('url');
 
 process.AFL_TW_ROOT = path.join(process.cwd(), './templates');
 process.AFL_TW_TS = path.join(process.cwd(), './templates');
+process.env.FAST_UPLOAD_DIR = './test/unit/mockDir';
 delete process.env.FAST_BIGIP_HOST; // Never try targeting a remote BIG-IP
 
 const fs = require('fs');
@@ -249,13 +249,16 @@ describe('template worker tests', function () {
 
     afterEach(function () {
         nock.cleanAll();
-        mockfs.restore();
         this.clock.restore();
 
         const scratchPath = path.join(process.cwd(), 'templates', 'scratch');
         if (fs.existsSync(scratchPath)) {
             fs.rmdirSync(scratchPath, { recursive: true });
         }
+    });
+
+    after(() => {
+        delete process.env.FAST_UPLOAD_DIR;
     });
 
     it('get_info', function () {
@@ -869,8 +872,6 @@ describe('template worker tests', function () {
         op.setBody({
             name: 'badname'
         });
-        mockfs({
-        });
 
         return worker.onPost(op)
             .then(() => assert.equal(op.status, 404))
@@ -890,12 +891,6 @@ describe('template worker tests', function () {
 
         op.setBody({
             name: 'testset'
-        });
-        mockfs({
-            '/var/config/rest/downloads': {
-                'testset.zip': fs.readFileSync('./test/unit/testset.zip')
-            },
-            [tsPath]: {}
         });
 
         nock('http://localhost:8100')
