@@ -75,8 +75,8 @@ Mustache.escape = function escape(text) {
 
 const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
 const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
+const uploadPath = process.env.FAST_UPLOAD_DIR || '/var/config/rest/downloads';
 const scratchPath = `${configPath}/scratch`;
-const uploadPath = '/var/config/rest/downloads';
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
 const configDGPath = `/Common/${projectName}/config`;
