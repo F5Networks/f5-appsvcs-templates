@@ -24,6 +24,7 @@ const VueRouter = require('vue-router').default;
 const Vue = require('vue').default;
 
 const endPointUrl = '/mgmt/shared/fast';
+const userAgent = 'FASTGUI/NA';
 
 const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
 
@@ -41,6 +42,10 @@ const safeFetch = (uri, opts, numAttempts) => {
             opts.headers = {};
         }
         opts.headers['X-F5-Auth-Token'] = authToken;
+    }
+
+    if (uri.startsWith(endPointUrl)) {
+        uri = uri.includes('?') ? `${uri}&userAgent=${userAgent}` : `${uri}?userAgent=${userAgent}`;
     }
 
     return fetch(uri, opts)
