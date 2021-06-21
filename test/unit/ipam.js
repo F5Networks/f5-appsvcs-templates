@@ -133,7 +133,12 @@ describe('ipam providers tests', function () {
                     anotherProp: true
                 }
             };
-            const expectedAddrs = { testProvider1: ['10.10.1.1'] };
+            const expectedAddrs = {
+                testProvider1: [{
+                    address: '10.10.1.1',
+                    ref: ''
+                }]
+            };
             return assertPopulate(ipamProps, templateData, expectedAddrs);
         });
         it('address_array_same_provider', () => {
@@ -155,7 +160,18 @@ describe('ipam providers tests', function () {
                     anotherProp: true
                 }
             };
-            const expectedAddrs = { testProvider1: ['10.10.1.1', '10.10.1.2'] };
+            const expectedAddrs = {
+                testProvider1: [
+                    {
+                        address: '10.10.1.1',
+                        ref: ''
+                    },
+                    {
+                        address: '10.10.1.2',
+                        ref: ''
+                    }
+                ]
+            };
             return assertPopulate(ipamProps, templateData, expectedAddrs);
         });
         it('address_array_different_providers', () => {
@@ -177,7 +193,10 @@ describe('ipam providers tests', function () {
                     anotherProp: true
                 }
             };
-            const expectedAddrs = { testProvider1: ['10.10.1.1'], testProvider2: ['10.10.2.1'] };
+            const expectedAddrs = {
+                testProvider1: [{ address: '10.10.1.1', ref: '' }],
+                testProvider2: [{ address: '10.10.2.1', ref: '' }]
+            };
             return assertPopulate(ipamProps, templateData, expectedAddrs);
         });
     });
