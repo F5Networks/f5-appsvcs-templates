@@ -186,7 +186,8 @@ class FASTWorker {
         reqid = reqid || 0;
         const defaultConfig = {
             deletedTemplateSets: [],
-            ipamProviders: []
+            ipamProviders: [],
+            disableDeclarationCache: false
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
@@ -259,8 +260,7 @@ class FASTWorker {
                 }
             },
             required: [
-                'deletedTemplateSets',
-                'disableDeclarationCache'
+                'deletedTemplateSets'
             ]
         };
 
