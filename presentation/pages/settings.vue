@@ -36,6 +36,7 @@ export default {
                 this.$root.getJSON('settings')
             ]))
             .then(([schema, defaults]) => {
+                console.log(schema);
                 editor.init(schema, defaults);
 
                 const ed = editor.editor;

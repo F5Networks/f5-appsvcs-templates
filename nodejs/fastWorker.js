@@ -259,7 +259,8 @@ class FASTWorker {
                 }
             },
             required: [
-                'deletedTemplateSets'
+                'deletedTemplateSets',
+                'disableDeclarationCache'
             ]
         };
 
