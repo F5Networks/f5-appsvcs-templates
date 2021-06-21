@@ -4,6 +4,8 @@
 * bigip-fast-templates: Consistently support IPv4 or IPV6 addresses for IP address fields
 * bigip-fast-templates: Allow route domain suffixes in IP address fields
 * Add optional userAgent query parameter to all endpoints
+* Allow an array of endpoints for enumFromBigip
+* bigip-fast-templates: Allow selecting an existing persistence profile
 
 ## Fixed
 * gui: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI
