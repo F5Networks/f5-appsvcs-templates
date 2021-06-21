@@ -227,6 +227,7 @@ const multipartUpload = (file) => {
 const vueApp = new Vue({
     data: appState,
     router,
+    filter: '',
     methods: {
         safeFetch(uri, opts, numAttempts) {
             return safeFetch(uri, opts, numAttempts);
