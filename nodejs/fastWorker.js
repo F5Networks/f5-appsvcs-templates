@@ -28,8 +28,6 @@ const axios = require('axios');
 const Ajv = require('ajv');
 const merge = require('deepmerge');
 const Mustache = require('mustache');
-const JSONPath = require('jsonpath-plus').JSONPath;
-
 const semver = require('semver');
 
 const fast = require('@f5devcentral/f5-fast-core');
@@ -43,6 +41,7 @@ const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
+const IpamProviders = require('../lib/ipam');
 
 const pkg = require('../package.json');
 
@@ -136,6 +135,7 @@ class FASTWorker {
                 this.logger.fine(`FAST Worker [${id}]: ${text} took ${deltaTime}ms to complete`);
             }
         );
+        this.ipamProviders = options.ipamProviders;
 
         this.endpoint = axios.create({
             baseURL: bigipHost,
@@ -204,93 +204,6 @@ class FASTWorker {
             });
     }
 
-    createIPAMProviderSchema(service, overrides) {
-        overrides = overrides || {};
-
-        return {
-            type: 'object',
-            title: service,
-            format: 'grid-strict',
-            properties: merge({
-                name: {
-                    title: 'Name',
-                    type: 'string',
-                    options: {
-                        grid_columns: 2,
-                        grid_break: true
-                    }
-                },
-                host: {
-                    title: 'Host',
-                    type: 'string',
-                    options: {
-                        grid_columns: 4
-                    }
-                },
-                username: {
-                    title: 'Username',
-                    type: 'string',
-                    options: {
-                        grid_columns: 4
-                    }
-                },
-                password: {
-                    title: 'Password',
-                    type: 'string',
-                    format: 'password',
-                    options: {
-                        grid_columns: 4,
-                        grid_break: true
-                    }
-                },
-                retrieveUrl: {
-                    title: 'Retrieve URL',
-                    type: 'string',
-                    format: 'text',
-                    options: {
-                        grid_columns: 4
-                    }
-                },
-                retrieveBody: {
-                    title: 'Retrieve Body',
-                    type: 'string',
-                    format: 'text',
-                    default: '{}',
-                    options: {
-                        grid_columns: 4
-                    }
-                },
-                retrievePathQuery: {
-                    title: 'Retrieve Path Query',
-                    type: 'string',
-                    format: 'text',
-                    default: '$',
-                    options: {
-                        grid_columns: 4,
-                        grid_break: true
-                    }
-                },
-                releaseUrl: {
-                    title: 'Release URL',
-                    type: 'string',
-                    format: 'text',
-                    options: {
-                        grid_columns: 4
-                    }
-                },
-                releaseBody: {
-                    title: 'Release Body',
-                    type: 'string',
-                    format: 'text',
-                    default: '{}',
-                    options: {
-                        grid_columns: 4
-                    }
-                }
-            }, overrides)
-        };
-    }
-
     getConfigSchema() {
         const baseSchema = {
             $schema: 'http://json-schema.org/schema#',
@@ -324,59 +237,7 @@ class FASTWorker {
                     format: 'table',
                     type: 'array',
                     items: {
-                        anyOf: [
-                            // Infoblox support is untested
-                            // this.createIPAMProviderSchema('Infoblox', {
-                            //     apiVersion: {
-                            //         title: 'API Version',
-                            //         type: 'string',
-                            //         default: 'V2.11',
-                            //         options: {
-                            //             grid_columns: 2
-                            //         }
-                            //     },
-                            //     network: {
-                            //         title: 'Network Name',
-                            //         type: 'string',
-                            //         options: {
-                            //             grid_columns: 3,
-                            //             grid_break: true
-                            //         }
-                            //     },
-                            //     retrieveUrl: {
-                            // eslint-disable-next-line max-len
-                            //         const: '{{host}}/wapi/{{apiVersion}}/network/{{network}}?_function=next_available_ip&_return_as_object=1',
-                            //         options: {
-                            //             hidden: true
-                            //         }
-                            //     },
-                            //     retrieveBody: {
-                            //         const: '{ "num": 1 }',
-                            //         options: {
-                            //             hidden: true
-                            //         }
-                            //     },
-                            //     retrievePathQuery: {
-                            //         const: '$.ipv4addrs[0].ipv4addr',
-                            //         options: {
-                            //             hidden: true
-                            //         }
-                            //     },
-                            //     releaseUrl: {
-                            //         const: '{{host}}/wapi/{{apiVersion}}/ipv4address/{{network}}:{{addr}}',
-                            //         options: {
-                            //             hidden: true
-                            //         }
-                            //     },
-                            //     releaseBody: {
-                            //         const: '{}',
-                            //         options: {
-                            //             hidden: true
-                            //         }
-                            //     }
-                            // }),
-                            this.createIPAMProviderSchema('Generic')
-                        ]
+                        anyOf: this.ipamProviders.getSchemas()
                     }
                 }
             },
@@ -450,6 +311,12 @@ class FASTWorker {
      */
     onStart(success, error) {
         this.hookCompleteRestOp();
+        // instantiate here to ensure logger instance is ready
+        this.ipamProviders = new IpamProviders({
+            secretsManager: this.secretsManager,
+            transactionLogger: this.transactionLogger,
+            logger: this.logger
+        });
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
@@ -890,8 +757,15 @@ class FASTWorker {
                 if (value[childName]) {
                     acc[key] = value;
                 }
-                if (value.items && value.items[childName]) {
-                    acc[`${key}.items`] = value.items;
+                if (value.items) {
+                    if (value.items[childName]) {
+                        acc[`${key}.items`] = value.items;
+                    } else if (value.items.oneOf) {
+                        const prop = value.items.oneOf.find(i => i[childName]);
+                        if (typeof prop !== 'undefined') {
+                            acc[key] = prop;
+                        }
+                    }
                 }
                 return acc;
             }, {});
@@ -1039,89 +913,6 @@ class FASTWorker {
             .then(() => apps);
     }
 
-    populateIPAMAddress(template, templateData, config, reqid, ipamAddrs) {
-        let ipamChain = Promise.resolve();
-        const schema = template.getParametersSchema();
-        const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
-        Object.entries(ipFromIpamProps).forEach(([name, prop]) => {
-            const providerName = templateData.parameters[name];
-            const provider = config.ipamProviders
-                .find(p => p.name === providerName);
-            if (provider) {
-                delete prop.enum;
-                if (!ipamAddrs[providerName]) {
-                    ipamAddrs[providerName] = [];
-                }
-                ipamChain = ipamChain
-                    .then(() => this.secretsManager.decrypt(provider.password))
-                    .then(providerPassword => this.recordTransaction(
-                        reqid, `fetching address from IPAM provider: ${providerName}`,
-                        axios.post(
-                            Mustache.render(provider.retrieveUrl, provider),
-                            JSON.parse(Mustache.render(provider.retrieveBody, provider)),
-                            {
-                                auth: {
-                                    username: provider.username,
-                                    password: providerPassword
-                                }
-                            }
-                        )
-                    ))
-                    .catch(e => Promise.reject(new Error(
-                        `failed to get IP address from IPAM provider (${providerName}): ${e.stack}`
-                    )))
-                    .then((res) => {
-                        let value = '';
-                        try {
-                            value = JSON.parse(res.data);
-                        } catch (e) {
-                            value = res.data;
-                        }
-                        value = JSONPath(provider.retrievePathQuery, value)[0];
-                        templateData.parameters[name] = value;
-                        ipamAddrs[providerName].push(value);
-                    });
-            }
-        });
-        return ipamChain;
-    }
-
-    releaseIPAMAddress(reqid, config, appData, excludeAddrs) {
-        if (!appData.ipamAddrs) {
-            return Promise.resolve();
-        }
-        const promises = [];
-        Object.entries(appData.ipamAddrs).forEach(([providerName, addrs]) => {
-            const provider = config.ipamProviders
-                .filter(p => p.name === providerName)[0];
-            addrs.forEach((address) => {
-                if (!excludeAddrs || !excludeAddrs[provider] || !excludeAddrs[provider].find(a => a === address)) {
-                    const view = Object.assign({}, provider, { address });
-                    promises.push(Promise.resolve()
-                        .then(() => this.secretsManager.decrypt(provider.password))
-                        .then(providerPassword => this.recordTransaction(
-                            reqid, `releasing ${address} from IPAM provider: ${providerName}`,
-                            axios.post(
-                                Mustache.render(provider.releaseUrl, view),
-                                JSON.parse(Mustache.render(provider.releaseBody, view)),
-                                {
-                                    auth: {
-                                        username: provider.username,
-                                        password: providerPassword
-                                    }
-                                }
-                            )
-                        ))
-                        .catch(e => this.logger.error(
-                            `failed to release IP address from IPAM provider (${providerName}): ${e.stack}`
-                        )));
-                }
-            });
-        });
-
-        return Promise.all(promises);
-    }
-
     releaseIPAMAddressesFromApps(reqid, appsData) {
         let config;
         const promises = [];
@@ -1146,7 +937,7 @@ class FASTWorker {
                     return this.getConfig(reqid)
                         .then((c) => { config = c; });
                 })
-                .then(() => this.releaseIPAMAddress(reqid, config, view)));
+                .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, view)));
         });
 
         return Promise.all(promises);
@@ -1194,8 +985,12 @@ class FASTWorker {
                     this.templateProvider.fetch(tmplData.name)
                 ))
                 .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
-                .then(tmpl => this.populateIPAMAddress(tmpl, tmplData, config, reqid, ipamAddrs)
-                    .then(() => tmpl))
+                .then((tmpl) => {
+                    const schema = tmpl.getParametersSchema();
+                    const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+                    return this.ipamProviders.populateIPAMAddress(ipFromIpamProps, tmplData, config, reqid, ipamAddrs)
+                        .then(() => tmpl);
+                })
                 .then(tmpl => this.recordTransaction(
                     reqid, `rendering template (${tmplData.name})`,
                     tmpl.fetchAndRender(tmplData.parameters)
@@ -1203,7 +998,7 @@ class FASTWorker {
                 .then(rendered => JSON.parse(rendered))
                 .catch(e => Promise.resolve()
                     // Release any IPAM IP addrs
-                    .then(() => this.releaseIPAMAddress(reqid, config, { ipamAddrs }))
+                    .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, { ipamAddrs }))
                     // Now re-reject
                     .then(() => Promise.reject(new Error(`failed to render template: ${tmplData.name}\n${e.stack}`))))
                 .then((decl) => {
@@ -1221,7 +1016,7 @@ class FASTWorker {
 
                     const oldAppData = tmplData.previousDef || {};
                     if (oldAppData.ipamAddrs) {
-                        this.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
+                        this.ipamProviders.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
                     }
                 });
         });
@@ -1621,7 +1416,7 @@ class FASTWorker {
                 reqid, 'validate template set',
                 this._validateTemplateSet(scratchPath)
             ))
-            .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}`)))
+            .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)))
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))

@@ -38,6 +38,7 @@ const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey
 const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker.js');
+const IpamProviders = require('../../lib/ipam');
 
 class RestOp {
     constructor(uri) {
@@ -101,6 +102,11 @@ const patchWorker = (worker) => {
         fine: console.log,
         log: console.log
     };
+    worker.ipamProviders = new IpamProviders({
+        secretsManager: worker.secretsManager,
+        logger: worker.logger,
+        transactionLogger: worker.transactionLogger
+    });
     worker.completedRestOp = false;
     worker.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
