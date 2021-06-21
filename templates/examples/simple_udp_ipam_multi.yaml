@@ -3,31 +3,35 @@
 # It allows the user to provide a virtual IP address and port along with a list of UDP server addresses.
 # The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration
 # suitable for submission to BIG-IP.
-title: Simple UDP Application with IPAM
+title: Simple UDP Application with IPAM (Multiple Addresses)
 description: |
-    Simple UDP template with IPAM options.
+    Simple UDP template with option to select or specify multiple addresses.
     ** At least one IPAM provider must be specified in settings**
 definitions:
-  use_ipam_addrs:
-    title: Use address from IPAM provider
-    description: Uncheck to manually specify an address instead of fetching from IPAM provider
-    type: boolean
-    default: true
-  virtual_address_ipam:
-    title: Virtual Address IPAM Provider
-    description: One or more IPAM providers must be configured using the Settings tab.
-    ipFromIpam: true
-  virtual_address:
-    title: Virtual Address
-    type: string
+  virtual_addresses_arr:
+    title: Virtual Addresses
+    type: array
+    items:
+      oneOf:
+        - title: Select IPAM Provider...
+          description: One or more IPAM providers must be configured using the Settings tab.
+          ipFromIpam: true
+          type: string
+          not:
+            oneOf:
+              - format: ipv4
+              - format: ipv6
+        - title: Manually enter address...
+          type: string
+          oneOf:
+            - format: ipv4
+            - format: ipv6
 parameters:
-  tenant_name: foo
-  application_name: bar
-  virtual_address: 192.0.2.1
-  virtual_address_ipam: 'testing'
+  tenant_name: ipam_multi
+  application_name: ipam_multi_app
   virtual_port: 5555
   server_addresses:
-    - 192.0.2.2
+    - 192.0.3.3
   service_port: 5555
 template: |
   {
@@ -38,16 +42,9 @@ template: |
       "{{application_name}}": {
         "class": "Application",
         "template": "udp",
-            "serviceMain": {
-              "class": "Service_UDP",
-              "virtualAddresses": [
-                  {{#use_ipam_addrs}}
-                    "{{virtual_address_ipam}}"
-                  {{/use_ipam_addrs}}
-                  {{^use_ipam_addrs}}
-                    "{{virtual_address}}"
-                  {{/use_ipam_addrs}}
-              ],
+        "serviceMain": {
+          "class": "Service_UDP",
+          "virtualAddresses": {{virtual_addresses_arr}},
           "virtualPort": {{virtual_port:types:port}},
           "pool": "{{application_name}}_Pool1"
         },

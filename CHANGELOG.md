@@ -1,5 +1,6 @@
 # 1.10.0
 ## Added
+* Add support for IPAM addresses in arrays
 * Add option for disabling AS3 declaration caching
 * bigip-fast-templates: Consistently support IPv4 or IPV6 addresses for IP address fields
 * bigip-fast-templates: Allow route domain suffixes in IP address fields
