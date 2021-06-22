@@ -299,7 +299,8 @@ describe('Settings', function () {
         .then(actual => assertResponse(actual, {
             data: {
                 deletedTemplateSets: [],
-                ipamProviders: []
+                ipamProviders: [],
+                disableDeclarationCache: false
             },
             status: 200
         })));
@@ -321,7 +322,8 @@ describe('Settings', function () {
                 network: 'testnetwork'
             }],
             log_afm: false,
-            log_asm: false
+            log_asm: false,
+            disableDeclarationCache: false
         };
         const expected = {
             data: { code: 200, message: '' },
@@ -356,7 +358,8 @@ describe('Settings', function () {
                     deletedTemplateSets: ['examples'],
                     ipamProviders: [],
                     log_afm: false,
-                    log_asm: false
+                    log_asm: false,
+                    disableDeclarationCache: false
                 };
                 return endpoint.get(url)
                     .then(res => assertResponse(res, expected));
