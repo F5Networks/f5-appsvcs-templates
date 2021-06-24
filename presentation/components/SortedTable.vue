@@ -1,5 +1,10 @@
 <template>
     <div class="sorted-table">
+        <input
+            v-model="filter"
+            type="search"
+            placeholder="Filter rows..."
+        >
         <table>
             <thead>
                 <tr>
@@ -86,7 +91,8 @@ export default {
             currentKey: '',
             currentDir: 'asc',
             selectedRows: [],
-            selAll: false
+            selAll: false,
+            filter: ''
         };
     },
     computed: {
@@ -99,11 +105,40 @@ export default {
                 return acc;
             }, {});
         },
+        filteredRows() {
+            const allRows = this.tableData;
+            if (this.filter) {
+                const matchedRows = [];
+                allRows.forEach((row) => {
+                    let matched = false;
+                    Object.values(this.columns).forEach((c) => {
+                        if (!matched) {
+                            const key = c.property || c;
+                            const val = row[key].toString();
+                            matched = val.toLowerCase().includes(this.filter);
+                            if (!matched) {
+                                try {
+                                    const filterRegex = new RegExp(this.filter, 'i');
+                                    matched = filterRegex.test(val);
+                                } catch {
+                                    // don't error if not valid regex
+                                }
+                            }
+                            if (matched) {
+                                matchedRows.push(row);
+                            }
+                        }
+                    });
+                });
+                return matchedRows;
+            }
+            return allRows;
+        },
         columnNames() {
             return Object.keys(this.filteredColumns);
         },
         sortedRows() {
-            return this.tableData.slice().sort((a, b) => {
+            return this.filteredRows.slice().sort((a, b) => {
                 const dir = (this.currentDir === 'asc') ? 1 : -1;
                 const column = this.columns[this.currentKey];
                 const prop = column.property || column;

@@ -55,6 +55,7 @@ const view = {
     make_tls_client_profile: true,
 
     // services
+    hsts_insert: false,
     owa: true,
     ews: true,
     outlook: true,
@@ -271,7 +272,10 @@ const expected = {
             },
             app1_http: {
                 class: 'HTTP_Profile',
-                xForwardedFor: true
+                xForwardedFor: true,
+                hstsInsert: false,
+                hstsIncludeSubdomains: true,
+                hstsPreload: true
             },
             'app1_cache-optimize': {
                 parentProfile: {

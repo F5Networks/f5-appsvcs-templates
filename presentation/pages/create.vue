@@ -173,9 +173,25 @@ export default {
                     // Prep IPAM fields for existing applications
                     if (existingApp) {
                         Object.entries(schema.properties || {}).forEach(([propName, prop]) => {
-                            if (prop.ipFromIpam && !prop.immutable) {
-                                prop.description = `${prop.description} | Current: ${view[propName]}`;
-                                delete view[propName];
+                            if (!prop.immutable) {
+                                if (prop.type === 'array' && prop.items.oneOf) {
+                                    const ipamProp = prop.items.oneOf.find(i => i.ipFromIpam === true);
+                                    if (typeof ipamProp !== 'undefined') {
+                                        let ipamAddrs = [];
+                                        Object.values(existingApp.ipamAddrs).forEach((addrs) => {
+                                            ipamAddrs = ipamAddrs.concat(addrs);
+                                        });
+                                        view[propName] = view[propName].map((item) => {
+                                            if (ipamAddrs.indexOf(item) > -1) {
+                                                return null;
+                                            }
+                                            return item;
+                                        });
+                                    }
+                                } else if (prop.ipFromIpam) {
+                                    prop.description = `${prop.description} | Current: ${view[propName]}`;
+                                    delete view[propName];
+                                }
                             }
                         });
                     }
@@ -194,6 +210,10 @@ export default {
 
 
                         Object.values(editor.editors).forEach((ed) => {
+                            if (!ed) {
+                                return;
+                            }
+
                             if (existingApp && ed.schema.immutable) {
                                 ed.disable();
                             }

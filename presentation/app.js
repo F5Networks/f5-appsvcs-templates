@@ -24,8 +24,11 @@ const VueRouter = require('vue-router').default;
 const Vue = require('vue').default;
 
 const endPointUrl = '/mgmt/shared/fast';
+const userAgent = 'FASTGUI/NA';
 
 const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
+
+let authToken = null;
 
 const safeFetch = (uri, opts, numAttempts) => {
     numAttempts = numAttempts || 0;
@@ -33,6 +36,17 @@ const safeFetch = (uri, opts, numAttempts) => {
     opts = Object.assign({
         // Add any defaults here
     }, opts);
+
+    if (authToken) {
+        if (!opts.headers) {
+            opts.headers = {};
+        }
+        opts.headers['X-F5-Auth-Token'] = authToken;
+    }
+
+    if (uri.startsWith(endPointUrl)) {
+        uri = uri.includes('?') ? `${uri}&userAgent=${userAgent}` : `${uri}?userAgent=${userAgent}`;
+    }
 
     return fetch(uri, opts)
         .then(response => Promise.all([
@@ -77,7 +91,45 @@ const safeFetch = (uri, opts, numAttempts) => {
             return data;
         });
 };
+
 const getJSON = endPoint => safeFetch(`${endPointUrl}/${endPoint}`);
+
+const getAuthToken = () => Promise.resolve()
+    .then(() => {
+        // Hacky way to get digest and timenow information. This usually gets passed around in
+        // form data or as query parameters. However, this doesn't seem to get passed to a custom
+        // iApps LX presentation layer. So, we pull it out of a link from the root XUI GUI.
+        // eslint-disable-next-line no-restricted-globals
+        const xui = parent.Xui;
+        if (!xui) {
+            return Promise.reject(new Error('FAST is not running embedded in the BIG-IP GUI'));
+        }
+        const parentLinks = Array.from(xui.getDocument().links);
+        const iAppsLXLink = parentLinks.filter(x => x.href.match(/applications\?_bufval/))[0];
+        const params = iAppsLXLink.href.split('?')[1]
+            .split('&')
+            .reduce((acc, curr) => {
+                const [name, val] = curr.split('=');
+                acc[name] = decodeURIComponent(val);
+                return acc;
+            }, {});
+        return params;
+    })
+    .then(params => safeFetch('/mgmt/shared/authn/login', {
+        method: 'POST',
+        body: JSON.stringify({
+            digest: params._bufval,
+            timeNow: params._timenow,
+            loginProviderName: 'tmos',
+            needsToken: true
+        })
+    }))
+    .then(results => results.token.token)
+    .catch((e) => {
+        console.log(`Could not aqcuire BIG-IP auth token: ${e.message}`);
+        return Promise.resolve(null);
+    });
+
 
 const storeSubmissionData = (data) => {
     localStorage.setItem('submission-data', JSON.stringify(data));
@@ -176,14 +228,6 @@ const multipartUpload = (file) => {
     return uploadPart(0, file.size - 1);
 };
 
-// Check that AS3 is available
-safeFetch('/mgmt/shared/appsvcs/info')
-    .catch((e) => {
-        appState.foundAS3 = false;
-        appState.busy = false;
-        console.log(`Error reaching AS3: ${e.message}`);
-    });
-
 // Create and mount Vue app
 const vueApp = new Vue({
     data: appState,
@@ -221,4 +265,17 @@ const vueApp = new Vue({
         }
     }
 });
-vueApp.$mount('#vue-app');
+
+Promise.resolve()
+    .then(() => getAuthToken())
+    .then((token) => {
+        authToken = token;
+    })
+    // Check that AS3 is available
+    .then(() => safeFetch('/mgmt/shared/appsvcs/info')
+        .catch((e) => {
+            appState.foundAS3 = false;
+            console.log(`Error reaching AS3: ${e.message}`);
+        }))
+    // Always attempt to mount the Vue app
+    .finally(() => vueApp.$mount('#vue-app'));

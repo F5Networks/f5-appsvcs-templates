@@ -29,11 +29,8 @@ const RestOperation = require('./restOperation');
 
 function restOpFromRequest(req) {
     const restOp = new RestOperation();
-    const uri = url.parse(req.url.replace('/mgmt/', '/'));
-    if (!uri.query) {
-        uri.query = {};
-    }
-    restOp.setUri(url.parse(uri))
+    const uri = url.parse(req.url.replace('/mgmt/', '/'), true);
+    restOp.setUri(uri)
         .setBody(req.body)
         .setMethod(RestOperation.Methods[req.method]);
 

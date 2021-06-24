@@ -1,6 +1,6 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.10.0-rc.1",
+  "version": "1.10.0-rc.7",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
@@ -28,32 +28,31 @@
     "api"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.13.16",
-    "@babel/core": "^7.14.2",
-    "@babel/plugin-transform-runtime": "^7.14.2",
-    "@babel/preset-env": "^7.14.2",
+    "@babel/cli": "^7.14.3",
+    "@babel/core": "^7.14.3",
+    "@babel/plugin-transform-runtime": "^7.14.3",
+    "@babel/preset-env": "^7.14.4",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
     "@json-editor/json-editor": "^2.5.4",
     "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
-    "css-loader": "^5.2.4",
-    "eslint": "^7.26.0",
-    "eslint-plugin-vue": "^7.9.0",
+    "css-loader": "^5.2.6",
+    "eslint": "^7.27.0",
+    "eslint-plugin-vue": "^7.10.0",
     "express": "^4.17.1",
-    "marked": "^2.0.3",
+    "marked": "^2.0.7",
     "mocha": "^8.4.0",
-    "mock-fs": "^4.14.0",
-    "nock": "^13.0.11",
+    "nock": "^13.1.0",
     "node-polyfill-webpack-plugin": "^1.1.2",
     "npm-watch": "^0.9.0",
     "nyc": "^15.1.0",
     "redoc-cli": "^0.10.4",
-    "sinon": "^10.0.0",
-    "vue": "^2.6.12",
+    "sinon": "^11.1.1",
+    "vue": "^2.6.13",
     "vue-loader": "^15.9.7",
     "vue-router": "^3.5.1",
-    "vue-template-compiler": "^2.6.12",
-    "webpack": "^5.37.0",
+    "vue-template-compiler": "^2.6.13",
+    "webpack": "^5.38.1",
     "webpack-cli": "^4.7.0"
   },
   "eslintConfig": {
@@ -93,19 +92,24 @@
     "start": {
       "patterns": [
         "lib",
-        "nodejs"
+        "nodejs",
+        "templates"
       ],
-      "extensions": "js"
+      "extensions": [
+        "js",
+        "json",
+        "yaml"
+      ]
     }
   },
   "dependencies": {
     "@babel/runtime": "^7.14.0",
     "@f5devcentral/atg-shared-utilities": "^0.2.1",
-    "@f5devcentral/f5-fast-core": "^0.13.0",
+    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#5147e4eb5d3703144fff52807a3b40ca94732f13",
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
     "axios": "^0.21.1",
-    "core-js": "^3.12.1",
+    "core-js": "^3.13.1",
     "deepmerge": "^4.2.2",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",

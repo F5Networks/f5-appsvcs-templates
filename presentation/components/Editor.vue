@@ -130,6 +130,11 @@ export default {
   padding: 2px 5px 1px 5px;
 }
 
+/* Hide required asterisks */
+.required::after {
+  content: "" !important;
+}
+
 /* Hide first title (we handle this ourselves) */
 #form-div > .je-object__container > .je-object__title {
   display: none !important;

@@ -1,3 +1,4 @@
+title: Redirect HTTP
 contentType: application/json
 bigipHideTemplate: true
 definitions:

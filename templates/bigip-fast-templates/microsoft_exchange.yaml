@@ -21,16 +21,10 @@ definitions:
     description: This IP address, combined with the port you specify below, becomes
       the BIG-IP virtual server address and port, which clients use to access the application.
       The system uses this IP:Port for distributing requests to the web servers.
-    oneOf:
-    - format: ipv4
-    - format: ipv6
     dependencies:
     - single_vip
   virtual_port:
     title: Virtual Server Port
-    type: integer
-    minimum: 0
-    maximum: 65535
     default: 443
   enable_redirect:
     title: HTTP Redirect
@@ -77,6 +71,7 @@ definitions:
       in a request to a translation address defined on the BIG-IP device."
     type: boolean
     dependencies: []
+    default: false
   snat_automap:
     title: SNAT Automap
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
@@ -153,6 +148,11 @@ definitions:
     title: Connection Multiplexing
     description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
     type: boolean
+  hsts_insert:
+    title: HSTS Header
+    description: Enforces HTTP Strict Transport Security (HSTS).
+    type: boolean
+    default: false
   owa:
     title: Outlook Web App
     description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
@@ -256,7 +256,7 @@ definitions:
         "exchangeVS_owa_pool": {
         "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
             "shareNodes": true
           }],
@@ -325,7 +325,7 @@ definitions:
         "exchangeVS_ews_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
             "shareNodes": true
           }],
@@ -395,7 +395,7 @@ definitions:
         "exchangeVS_mapi_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
             "shareNodes": true
           }],
@@ -468,7 +468,7 @@ definitions:
         "exchangeVS_oa_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
             "shareNodes": true
           }],
@@ -540,7 +540,7 @@ definitions:
         "exchangeVS_as_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
             "shareNodes": true
           }],
@@ -609,7 +609,7 @@ definitions:
         "exchangeVS_ad_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
             "shareNodes": true
           }],
@@ -678,7 +678,7 @@ definitions:
         "exchangeVS_pop3_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": 995,
             "shareNodes": true
           }],
@@ -737,7 +737,7 @@ definitions:
         "exchangeVS_imap4_pool": {
           "class": "Pool",
           "members": [{
-            "serverAddresses": {{pool_members:f5:ipv4_array}},
+            "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": 993,
             "shareNodes": true
           }],
@@ -794,7 +794,10 @@ definitions:
     template: |
         "{{app_name}}_http": {
           "class": "HTTP_Profile",
-          "xForwardedFor": true
+          "xForwardedFor": true,
+          "hstsInsert": {{hsts_insert}},
+          "hstsIncludeSubdomains": true,
+          "hstsPreload": true
         },
   app_snatpool_def:
     template: |
@@ -803,7 +806,7 @@ definitions:
           {{#make_snatpool}}
             "{{app_name}}_snatpool": {
               "class": "SNAT_Pool",
-              "snatAddresses": {{snat_addresses:f5:ipv4_array}}
+              "snatAddresses": {{snat_addresses:f5:ipv4_ipv6_array}}
             },
           {{/make_snatpool}}
         {{/snat_automap}}
@@ -1019,10 +1022,10 @@ definitions:
       {{#pop3}}
         "{{app_name}}_pop3_vs": {
           {{#single_vip}}
-            "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+            "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
           {{/single_vip}}
           {{^single_vip}}
-            "virtualAddresses": ["{{pop3_virtual_address:f5:ipv4}}"],
+            "virtualAddresses": ["{{pop3_virtual_address:f5:ipv4_ipv6}}"],
           {{/single_vip}}
           "pool": "exchangeVS_pop3_pool",
           "virtualPort": 995,
@@ -1038,10 +1041,10 @@ definitions:
       {{#imap4}}
         "{{app_name}}_imap4_vs": {
           {{#single_vip}}
-            "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+            "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
           {{/single_vip}}
           {{^single_vip}}
-            "virtualAddresses": ["{{imap4_virtual_address:f5:ipv4}}"],
+            "virtualAddresses": ["{{imap4_virtual_address:f5:ipv4_ipv6}}"],
           {{/single_vip}}
           "pool": "exchangeVS_imap4_pool",
           "virtualPort": 993,
@@ -1059,7 +1062,7 @@ definitions:
       {{^single_vip}}
         {{#owa}}  
           "{{app_name}}_owa_vs": {
-          "virtualAddresses": ["{{owa_virtual_address:f5:ipv4}}"],
+          "virtualAddresses": ["{{owa_virtual_address:f5:ipv4_ipv6}}"],
           "pool": "exchangeVS_owa_pool",
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_type_def}}
@@ -1084,7 +1087,7 @@ definitions:
       {{^single_vip}}
         {{#ews}}  
           "{{app_name}}_ews_vs": {
-          "virtualAddresses": ["{{ews_virtual_address:f5:ipv4}}"],
+          "virtualAddresses": ["{{ews_virtual_address:f5:ipv4_ipv6}}"],
           "pool": "exchangeVS_ews_pool",
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_type_def}}
@@ -1108,7 +1111,7 @@ definitions:
         {{#outlook}}     
           {{#outlookMAPI}}  
             "{{app_name}}_mapi_vs": {
-            "virtualAddresses": ["{{mapi_virtual_address:f5:ipv4}}"],
+            "virtualAddresses": ["{{mapi_virtual_address:f5:ipv4_ipv6}}"],
             "pool": "exchangeVS_mapi_pool",
             "virtualPort": {{virtual_port:f5:port}},
             {{> service_type_def}}
@@ -1133,7 +1136,7 @@ definitions:
         {{#outlook}}     
           {{#outlookRPC}}  
             "{{app_name}}_oa_vs": {
-              "virtualAddresses": ["{{oa_virtual_address:f5:ipv4}}"],
+              "virtualAddresses": ["{{oa_virtual_address:f5:ipv4_ipv6}}"],
               "pool": "exchangeVS_oa_pool",
               "virtualPort": {{virtual_port:f5:port}},
               {{> service_type_def}}
@@ -1157,7 +1160,7 @@ definitions:
       {{^single_vip}}
         {{#activesync}}  
           "{{app_name}}_as_vs": {
-          "virtualAddresses": ["{{as_virtual_address:f5:ipv4}}"],
+          "virtualAddresses": ["{{as_virtual_address:f5:ipv4_ipv6}}"],
           "pool": "exchangeVS_as_pool",
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_type_def}}
@@ -1179,7 +1182,7 @@ definitions:
       {{^single_vip}}
         {{#autodiscover}}  
           "{{app_name}}_ad_vs": {
-          "virtualAddresses": ["{{ad_virtual_address:f5:ipv4}}"],
+          "virtualAddresses": ["{{ad_virtual_address:f5:ipv4_ipv6}}"],
           "pool": "exchangeVS_ad_pool",
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_type_def}}
@@ -1200,7 +1203,7 @@ definitions:
     template: |
       {{#single_vip}}
         "{{app_name}}_vs": {
-          "virtualAddresses": ["{{virtual_address:f5:ipv4}}"],
+          "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
           "virtualPort": {{virtual_port:f5:port}},
           {{> service_type_def}}
           {{> service_tls_server_def}}
