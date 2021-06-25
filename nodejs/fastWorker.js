@@ -255,7 +255,7 @@ class FASTWorker {
                     format: 'table',
                     type: 'array',
                     items: {
-                        anyOf: this.ipamProviders.getSchemas()
+                        oneOf: this.ipamProviders.getSchemas()
                     }
                 }
             },

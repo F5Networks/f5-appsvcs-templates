@@ -17,6 +17,7 @@
 * Fix error when using ipFromIpamProvider and there are no configured providers
 * Disable editor for enums with null as the only value
 * Improve error messages when IPAM operations fail
+* Settings for IPAM providers now include serviceType for backwards compatibility
 
 # 1.9.0
 ## Added
