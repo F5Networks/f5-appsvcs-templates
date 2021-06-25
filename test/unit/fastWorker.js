@@ -714,7 +714,7 @@ describe('template worker tests', function () {
                 'foo'
             ],
             ipamProviders: [
-                { name: 'test', password: 'foobar' }
+                { name: 'test', password: 'foobar', serviceType: 'Generic' }
             ]
         });
         return worker.onPost(op)
@@ -838,7 +838,7 @@ describe('template worker tests', function () {
                 'foo'
             ],
             ipamProviders: [
-                { name: 'test', password: 'foobar' }
+                { name: 'test', password: 'foobar', serviceType: 'Generic' }
             ]
         });
         return worker.onPatch(op)

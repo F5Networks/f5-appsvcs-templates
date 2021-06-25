@@ -309,6 +309,7 @@ describe('Settings', function () {
             enable_telemetry: false,
             deletedTemplateSets: [],
             ipamProviders: [{
+                serviceType: 'Generic',
                 name: 'testProvider',
                 host: '10.10.10.11',
                 username: 'testuser',
