@@ -1,3 +1,10 @@
+# 1.11.0
+## Added
+
+## Fixed
+
+## Change
+
 # 1.10.0
 ## Added
 * Add support for IPAM addresses in arrays
