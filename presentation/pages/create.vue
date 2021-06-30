@@ -258,7 +258,8 @@ export default {
                             body: JSON.stringify({
                                 name: tmplid,
                                 parameters,
-                                previousDef: existingApp
+                                previousDef: existingApp,
+                                allowOverwrite: !!existingApp
                             })
                         };
                         this.$root.busy = true;

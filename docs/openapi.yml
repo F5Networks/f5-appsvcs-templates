@@ -560,6 +560,10 @@ components:
         parameters:
           description: object must conform to specified template's schema
           type: object
+        allowOverwrite:
+          description: do not error if an application with the same name already exists in the tenant
+          type: boolean
+          default: true
     ApplicationDefinitionList:
       type: array
       items:

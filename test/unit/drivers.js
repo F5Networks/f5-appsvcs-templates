@@ -113,6 +113,13 @@ describe('AS3 Driver tests', function () {
 
         return assert.becomes(driver._getDecl(), as3stub);
     });
+    it('get_tenant_and_app_from_decl', function () {
+        const driver = new AS3Driver();
+        return assert.becomes(
+            driver.getTenantAndAppFromDecl(as3WithApp),
+            ['tenantName', 'appName']
+        );
+    });
     it('list_app_names_empty', function () {
         const driver = new AS3Driver();
         nock(host)
