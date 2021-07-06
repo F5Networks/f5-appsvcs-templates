@@ -10,6 +10,9 @@ OUTPUT_DIR=${MAINDIR}/dist
 
 rm -rf "$MAINDIR/rpmbuild"
 
+npx webpack -c "${MAINDIR}/workerWebpack.config.js"
+echo '/* jshint ignore: start */' | cat - "${MAINDIR}/nodejs/bundle.js" > temp && mv temp "${MAINDIR}/nodejs/bundle.js"
+
 rpmbuild -bb \
     --define "main ${MAINDIR}" \
     --define '_topdir %{main}/rpmbuild' \
