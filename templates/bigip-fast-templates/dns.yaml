@@ -6,11 +6,24 @@ allOf:
   - contentType: application/json
     title: DNS Virtuals
     definitions:
+      use_ipam:
+        title: Use IPAM Provider
+        description: Use an IP Address Management service to get an IP address
+        type: boolean
+        default: false
       virtual_address:
         title: Virtual Server IP Address
         description: This IP address, combined with the port you specify below, becomes
           the BIG-IP virtual server address and port, which clients use to access the application.
           The system uses this IP:Port for distributing requests to the web servers.
+      virtual_address_ipam:
+        title: Virtual Server IP Address from IPAM
+        description: Select an IPAM Provider to get an IP address from.
+          This IP address, combined with the port you specify below, becomes
+          the BIG-IP virtual server address and port, which clients use to access the application.
+          The system uses this IP:Port for distributing requests to the web servers.
+        ipFromIpam: true
+        default: ''
       virtual_port:
         title: Virtual Server Port
         default: 53
@@ -19,11 +32,21 @@ allOf:
         "{{tenant_name}}": {
           "{{app_name}}": {
             "{{app_name}}_tcp": {
-              "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
+              {{#use_ipam}}
+                "virtualAddresses": ["{{virtual_address_ipam}}"],
+              {{/use_ipam}}
+              {{^use_ipam}}
+                "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
+              {{/use_ipam}}
               "virtualPort": {{virtual_port:f5:port}}
             },
             "{{app_name}}_udp": {
-              "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
+              {{#use_ipam}}
+                "virtualAddresses": ["{{virtual_address_ipam}}"],
+              {{/use_ipam}}
+              {{^use_ipam}}
+                "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
+              {{/use_ipam}}
               "virtualPort": {{virtual_port:f5:port}}
             }
           }
