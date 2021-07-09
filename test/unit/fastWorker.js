@@ -615,6 +615,37 @@ describe('template worker tests', function () {
                 assert.match(op.body.message, /parameters property is missing/);
             });
     });
+    it('post_apps_no_overwrite', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {},
+            allowOverwrite: false
+        });
+
+        resetScope(as3Scope)
+            .get(as3ep)
+            .query(true)
+            .reply(200, Object.assign({}, as3stub, {
+                foo: {
+                    class: 'Tenant',
+                    bar: {
+                        class: 'Application',
+                        constants: {
+                            [AS3DriverConstantsKey]: {}
+                        }
+                    }
+                }
+            }));
+
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /application foo\/bar already exists/);
+            });
+    });
     it('post_apps_ipam', function () {
         const worker = createWorker();
         const ipamProvider = {

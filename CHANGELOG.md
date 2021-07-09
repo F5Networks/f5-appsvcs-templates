@@ -5,6 +5,7 @@
 
 ## Change
 * gui: Add option to show/hide debug buttons on app create/modify page (hidden by default)
+* gui: Do not overwrite existing applications when creating new ones
 
 # 1.10.0
 ## Added
