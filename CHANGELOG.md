@@ -4,6 +4,7 @@
 ## Fixed
 
 ## Change
+* gui: Add option to show/hide debug buttons on app create/modify page (hidden by default)
 
 # 1.10.0
 ## Added

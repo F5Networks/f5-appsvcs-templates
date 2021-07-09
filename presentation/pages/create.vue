@@ -32,7 +32,10 @@
         </div>
         <editor ref="editor" />
         <div id="form-div" />
-        <div class="text-right">
+        <div
+            v-if="showDebug"
+            class="text-right"
+        >
             <button
                 id="view-tmpl-btn"
                 type="button"
@@ -85,7 +88,8 @@ export default {
         return {
             title: '',
             description: '',
-            backTo: ''
+            backTo: '',
+            showDebug: false
         };
     },
     watch: {
@@ -149,6 +153,10 @@ export default {
 
             return promiseChain
                 .then(() => this.newEditor(template, parameters, existingApp, this))
+                .then(() => this.$root.getJSON('settings'))
+                .then((config) => {
+                    this.showDebug = config.showTemplateDebug;
+                })
                 .catch(e => this.$root.dispOutput(e.message));
         },
         newEditor(tmplid, view, existingApp, component) {
@@ -202,10 +210,12 @@ export default {
 
                     editor.on('ready', () => {
                         // Enable form button now that the form is ready
-                        document.getElementById('view-tmpl-btn').disabled = false;
-                        document.getElementById('view-schema-btn').disabled = false;
-                        document.getElementById('view-view-btn').disabled = false;
-                        document.getElementById('view-render-btn').disabled = false;
+                        if (this.showDebug) {
+                            document.getElementById('view-tmpl-btn').disabled = false;
+                            document.getElementById('view-schema-btn').disabled = false;
+                            document.getElementById('view-view-btn').disabled = false;
+                            document.getElementById('view-render-btn').disabled = false;
+                        }
                         document.getElementById('btn-form-submit').disabled = false;
 
 
@@ -229,25 +239,31 @@ export default {
                     });
 
                     // Hook up buttons
-                    document.getElementById('view-tmpl-btn').onclick = () => {
-                        this.$root.dispOutput(tmpl.sourceText);
-                    };
-                    document.getElementById('view-schema-btn').onclick = () => {
-                        this.$root.dispOutput(JSON.stringify(schema, null, 2));
-                    };
-                    document.getElementById('view-view-btn').onclick = () => {
-                        this.$root.dispOutput(JSON.stringify(tmpl.getCombinedParameters(editor.getValue()), null, 2));
-                    };
-                    document.getElementById('view-render-btn').onclick = () => {
-                        const rendered = tmpl.render(editor.getValue());
-                        const msg = [
-                            'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
-                            'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
-                            'submit this declaration through FAST.\n\n',
-                            rendered
-                        ].join('');
-                        this.$root.dispOutput(msg);
-                    };
+                    if (this.showDebug) {
+                        document.getElementById('view-tmpl-btn').onclick = () => {
+                            this.$root.dispOutput(tmpl.sourceText);
+                        };
+                        document.getElementById('view-schema-btn').onclick = () => {
+                            this.$root.dispOutput(JSON.stringify(schema, null, 2));
+                        };
+                        document.getElementById('view-view-btn').onclick = () => {
+                            this.$root.dispOutput(JSON.stringify(
+                                tmpl.getCombinedParameters(editor.getValue()),
+                                null,
+                                2
+                            ));
+                        };
+                        document.getElementById('view-render-btn').onclick = () => {
+                            const rendered = tmpl.render(editor.getValue());
+                            const msg = [
+                                'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
+                                'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
+                                'submit this declaration through FAST.\n\n',
+                                rendered
+                            ].join('');
+                            this.$root.dispOutput(msg);
+                        };
+                    }
                     document.getElementById('btn-form-submit').onclick = () => {
                         const parameters = editor.getValue();
                         const data = {
