@@ -107,6 +107,7 @@ module.exports = {
     ],
     externals: [
         nodeExternals({
+            // need to investigate this further as it behaves differently than modulesFromFile
             allowlist: Object.keys(packageDeps.dependencies).concat(['']),
             importType: 'commonjs'
             // modulesFromFile: {
@@ -118,7 +119,8 @@ module.exports = {
     ],
     externalsType: 'commonjs',
     externalsPresets: { node: true }
-    // latest error - cannot 
+    // latest error - cannot resolve some babel-runtime modules
+    // had this before when using babel/runtime/*
 //     Tue, 13 Jul 2021 02:08:47 GMT - severe: [LoaderWorker] '/var/config/rest/iapps/f5-appsvcs-templates/nodejs/FASTWorkermain.js' failed to load JS File into node.js, skipping: Cannot find module '@babel/runtime-corejs3/core-js/array/is-array'
 // Tue, 13 Jul 2021 02:08:47 GMT - finest: [LoaderWorker] '/var/config/rest/iapps/f5-appsvcs-templates/nodejs/FASTWorkerruntime.js' is not a worker, skipping
 // Tue, 13 Jul 2021 02:08:47 GMT - config: [RestWorker] /shared/appsvcs has started. Name:RestWorker
