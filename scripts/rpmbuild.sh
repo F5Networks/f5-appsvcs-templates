@@ -11,7 +11,10 @@ OUTPUT_DIR=${MAINDIR}/dist
 rm -rf "$MAINDIR/rpmbuild"
 
 npx webpack -c "${MAINDIR}/workerWebpack.config.js"
-echo '/* jshint ignore: start */' | cat - "${MAINDIR}/nodejs/bundle.js" > temp && mv temp "${MAINDIR}/nodejs/bundle.js"
+echo '/* jshint ignore: start */' | cat - "${MAINDIR}/nodejs/FASTWorkermain.js" > temp && mv temp "${MAINDIR}/nodejs/FASTWorkermain.js"
+echo '/* jshint ignore: start */' | cat - "${MAINDIR}/nodejs/FASTWorkerruntime.js" > temp && mv temp "${MAINDIR}/nodejs/FASTWorkerruntime.js"
+# echo '/* jshint ignore: start */' | cat - "${MAINDIR}/nodejs/FASTWorkerBundle.js" > temp && mv temp "${MAINDIR}/nodejs/FASTWorkerBundle.js"
+
 
 rpmbuild -bb \
     --define "main ${MAINDIR}" \

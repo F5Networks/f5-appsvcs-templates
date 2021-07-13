@@ -17,7 +17,8 @@ Framework for deploying configuration on BIG-IP using mustache templates
 echo -n %{version}-%{release} > %{_builddir}/version
 # REST worker
 mkdir -p %{_builddir}/nodejs
-cp %{main}/nodejs/bundle.js %{_builddir}/nodejs
+cp %{main}/nodejs/FASTWorkermain.js %{_builddir}/nodejs
+cp %{main}/nodejs/FASTWorkerruntime.js %{_builddir}/nodejs
 # npx babel %{main}/nodejs -d %{_builddir}/nodejs --copy-files --config-file %{main}/babel.config.js
 mkdir -p %{_builddir}/lib
 cp %{main}/lib/tscommon.yaml %{_builddir}/nodejs

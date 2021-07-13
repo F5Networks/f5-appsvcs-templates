@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+    sourceType: 'unambiguous',
     presets: [
         ['@babel/preset-env', {
             targets: { node: '4.8.0' },
