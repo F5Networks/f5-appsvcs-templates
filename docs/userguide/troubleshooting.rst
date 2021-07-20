@@ -92,6 +92,27 @@ To correct this condition:
 * Delete the affected FAST applications 
 * Re-deploy the FAST template
 
+FAST UI not Updating after Config-sync
+----------------------------------------
+
+FAST stores all config in data-groups, which are synched via device-groups. 
+When a FAST app is deployed on device A, the resulting BIG-IP config appears on device B, including the data-groups. 
+On device B, FAST has the information it needs, however the FAST UI has not been notified to reload. 
+
+Beginning with FAST version 1.10, a checkbox has been added to the **Settings** tab to **Disable AS3 Declaration Cache**. 
+By disabling AS3 caching, FAST uses the most up-to-date declarations from AS3 which can affect the UI updating when config-sync is modifying an AS3 declaration.
+Be aware that by checking **Disable AS3 Declaration Cache**, FAST will check more frequently for application state which may slow performance, but solves the config-sync issue. 
+
+Versions prior to 1.10, restarting the restnoded daemon forces a reload and causes all apps to sync in FAST.
+
+To restart the daemon, run the following command in a BIG-IP terminal:
+
+``bigstart restart restnoded``
+
+The restart should only take a few seconds with the BIG-IP having limited REST access to the control plane during the process.
+
+See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for information on BIG-IP daemons.
+
 Known Issues
 ------------
 
