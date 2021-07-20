@@ -19,12 +19,12 @@
 
 'use strict';
 
-const mockfs = require('mock-fs');
 const path = require('path');
 const url = require('url');
 
 process.AFL_TW_ROOT = path.join(process.cwd(), './templates');
 process.AFL_TW_TS = path.join(process.cwd(), './templates');
+process.env.FAST_UPLOAD_DIR = './test/unit/mockDir';
 delete process.env.FAST_BIGIP_HOST; // Never try targeting a remote BIG-IP
 
 const fs = require('fs');
@@ -38,6 +38,7 @@ const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey
 const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker.js');
+const IpamProviders = require('../../lib/ipam');
 
 class RestOp {
     constructor(uri) {
@@ -101,6 +102,11 @@ const patchWorker = (worker) => {
         fine: console.log,
         log: console.log
     };
+    worker.ipamProviders = new IpamProviders({
+        secretsManager: worker.secretsManager,
+        logger: worker.logger,
+        transactionLogger: worker.transactionLogger
+    });
     worker.completedRestOp = false;
     worker.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
@@ -249,13 +255,16 @@ describe('template worker tests', function () {
 
     afterEach(function () {
         nock.cleanAll();
-        mockfs.restore();
         this.clock.restore();
 
         const scratchPath = path.join(process.cwd(), 'templates', 'scratch');
         if (fs.existsSync(scratchPath)) {
             fs.rmdirSync(scratchPath, { recursive: true });
         }
+    });
+
+    after(() => {
+        delete process.env.FAST_UPLOAD_DIR;
     });
 
     it('get_info', function () {
@@ -705,7 +714,7 @@ describe('template worker tests', function () {
                 'foo'
             ],
             ipamProviders: [
-                { name: 'test', password: 'foobar' }
+                { name: 'test', password: 'foobar', serviceType: 'Generic' }
             ]
         });
         return worker.onPost(op)
@@ -829,7 +838,7 @@ describe('template worker tests', function () {
                 'foo'
             ],
             ipamProviders: [
-                { name: 'test', password: 'foobar' }
+                { name: 'test', password: 'foobar', serviceType: 'Generic' }
             ]
         });
         return worker.onPatch(op)
@@ -869,8 +878,6 @@ describe('template worker tests', function () {
         op.setBody({
             name: 'badname'
         });
-        mockfs({
-        });
 
         return worker.onPost(op)
             .then(() => assert.equal(op.status, 404))
@@ -890,12 +897,6 @@ describe('template worker tests', function () {
 
         op.setBody({
             name: 'testset'
-        });
-        mockfs({
-            '/var/config/rest/downloads': {
-                'testset.zip': fs.readFileSync('./test/unit/testset.zip')
-            },
-            [tsPath]: {}
         });
 
         nock('http://localhost:8100')
@@ -1135,6 +1136,13 @@ describe('template worker tests', function () {
                         enumFromBigip: 'ltm/profile/http-compression'
                     }
                 },
+                multipleEndpoints: {
+                    type: 'string',
+                    enumFromBigip: [
+                        'ltm/profile/http-compression',
+                        'ltm/profile/http-compression2'
+                    ]
+                },
                 fooIpam: {
                     type: 'string',
                     ipFromIpam: true
@@ -1150,13 +1158,22 @@ describe('template worker tests', function () {
         };
         nock('http://localhost:8100')
             .persist()
-            .get(/mgmt\/tm\/.*/)
+            .get('/mgmt/tm/ltm/profile/http-compression?$select=fullPath')
             .reply(200, {
                 kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
                 selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression?$select=fullPath&ver=15.0.1.1',
                 items: [
                     { fullPath: '/Common/httpcompression' },
                     { fullPath: '/Common/wan-optimized-compression' }
+                ]
+            })
+            .get('/mgmt/tm/ltm/profile/http-compression2?$select=fullPath')
+            .reply(200, {
+                kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression2?$select=fullPath&ver=15.0.1.1',
+                items: [
+                    { fullPath: '/Common/httpcompression2' },
+                    { fullPath: '/Common/wan-optimized-compression2' }
                 ]
             });
 
@@ -1173,6 +1190,12 @@ describe('template worker tests', function () {
                 assert.deepEqual(schema.properties.fooItems.items.enum, [
                     '/Common/httpcompression',
                     '/Common/wan-optimized-compression'
+                ]);
+                assert.deepEqual(schema.properties.multipleEndpoints.enum, [
+                    '/Common/httpcompression',
+                    '/Common/wan-optimized-compression',
+                    '/Common/httpcompression2',
+                    '/Common/wan-optimized-compression2'
                 ]);
                 assert.deepEqual(schema.properties.fooIpam.enum, [
                     'bar'
@@ -1451,6 +1474,21 @@ describe('template worker tests', function () {
                 console.log(JSON.stringify(op.body, null, 3));
                 assert.equal(op.status, 200);
                 assert(Array.isArray(op.body.message));
+            });
+    });
+    it('record_user_agent', function () {
+        const worker = createWorker();
+        const op = new RestOp('applications?userAgent=test/v1.1');
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(
+                    worker.incomingUserAgent,
+                    'test/v1.1'
+                );
+                assert.strictEqual(
+                    worker.driver.userAgent,
+                    `test/v1.1;${worker.baseUserAgent}`
+                );
             });
     });
 });

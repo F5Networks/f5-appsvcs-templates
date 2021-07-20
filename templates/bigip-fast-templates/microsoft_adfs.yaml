@@ -12,21 +12,14 @@ allOf:
         description: This IP address, combined with the port you specify below, becomes
           the BIG-IP virtual server address and port, which clients use to access the application.
           The system uses this IP:Port for distributing requests to the web servers.
-        type: string
-        oneOf:
-        - format: ipv4
-        - format: ipv6
-        default: '10.1.1.1'
       virtual_port:
         title: Virtual Server Port
-        type: integer
-        minimum: 0
-        maximum: 65535
         default: 443
       client_cert:
         title: Microsoft Alternate Port Client Certificate Authentication
         description: Choose whether you want to configure BIG-IP to support client certificate authentication. If you select Yes, FAST creates the objects needed for client certificate authentication. This uses port 49443, which is based on Microsoft's alternate port configuration.
         type: boolean
+        default: false
     template: |
       {
         "{{tenant_name}}": {
@@ -34,14 +27,14 @@ allOf:
             {{#client_cert}}
               "{{app_name}}_tcp_vs": {
                 "class": "Service_L4",
-                "virtualAddresses": ["{{virtual_address}}"],
+                "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
                 "virtualPort": 49443,
                 "pool": "{{app_name}}_tcp_pool"
               },
             {{/client_cert}}
             "{{app_name}}": {
-              "virtualAddresses": ["{{virtual_address}}"],
-              "virtualPort": {{virtual_port}},
+              "virtualAddresses": ["{{virtual_address:f5:ipv4_ipv6}}"],
+              "virtualPort": {{virtual_port:f5:port}},
               "pool": "{{app_name}}_pool"
             }
           }
@@ -220,7 +213,7 @@ allOf:
               "{{app_name}}_tcp_pool": {
                 "class": "Pool",
                 "members": [{
-                  "serverAddresses": {{pool_members:f5:ipv4_array}},
+                  "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
                   "servicePort": 49443,
                   "shareNodes": true
                 }],
@@ -232,7 +225,7 @@ allOf:
             "{{app_name}}_pool": {
               "class": "Pool",
               "members": [{
-                "serverAddresses": {{pool_members:f5:ipv4_array}},
+                "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
                 "servicePort": {{pool_port:f5:port}},
                 "shareNodes": true
               }],

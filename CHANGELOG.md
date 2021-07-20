@@ -1,11 +1,30 @@
-# 1.10.0
+# 1.11.0
 ## Added
 
 ## Fixed
 
+## Change
+
+# 1.10.0
+## Added
+* Add support for IPAM addresses in arrays
+* Add option for disabling AS3 declaration caching
+* bigip-fast-templates: Consistently support IPv4 or IPV6 addresses for IP address fields
+* bigip-fast-templates: Allow route domain suffixes in IP address fields
+* Add optional userAgent query parameter to all endpoints
+* Allow an array of endpoints for enumFromBigip
+* bigip-fast-templates: Allow selecting an existing persistence profile
+* Add builtin Infoblox IPAM provider type
+* GUI: Add filter option for tables
+
+## Fixed
+* gui: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI
+
 ## Changed
 * Fix error when using ipFromIpamProvider and there are no configured providers
 * Disable editor for enums with null as the only value
+* Improve error messages when IPAM operations fail
+* Settings for IPAM providers now include serviceType for backwards compatibility
 
 # 1.9.0
 ## Added

@@ -1,3 +1,4 @@
+title: Persist
 contentType: application/json
 bigipHideTemplate: true
 definitions:
@@ -7,6 +8,20 @@ definitions:
       the life of a session or during subsequent sessions.
     type: boolean
     default: true
+  use_existing_persistence_profile:
+    title: Use Existing Persistence Profile
+    description: Select persistence profiles from those available on the BIG-IP
+    type: boolean
+    default: false
+  persistence_profile:
+    title: Persistence Profiles
+    description: Select the persistence profile.
+    enumFromBigip:
+      - ltm/persistence/cookie
+      - ltm/persistence/source-addr
+      - ltm/persistence/ssl
+      - ltm/persistence/universal
+    default: /Common/cookie
   persistence_type:
     title: Persistence Type
     description: Select the type of persistence.
@@ -26,10 +41,15 @@ template: |
       "{{app_name}}": {
         "{{app_name}}": {
           {{#enable_persistence}}
-            "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
-            {{#enable_fallback_persistence}}
-              "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
-            {{/enable_fallback_persistence}}
+            {{#use_existing_persistence_profile}}
+              "persistenceMethods": [{{persistence_profile}}],
+            {{/use_existing_persistence_profile}}
+            {{^use_existing_persistence_profile}}
+              "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
+              {{#enable_fallback_persistence}}
+                "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
+              {{/enable_fallback_persistence}}
+            {{/use_existing_persistence_profile}}
           {{/enable_persistence}}
           {{^enable_persistence}}
             "persistenceMethods": [],
