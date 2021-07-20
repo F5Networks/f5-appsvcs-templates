@@ -187,7 +187,8 @@ class FASTWorker {
         const defaultConfig = {
             deletedTemplateSets: [],
             ipamProviders: [],
-            disableDeclarationCache: false
+            disableDeclarationCache: false,
+            showTemplateDebug: false
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
@@ -247,6 +248,12 @@ class FASTWorker {
                         'which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config.',
                         'Disabling declaration caching will negatively impact FAST performance.'
                     ].join(' '),
+                    format: 'checkbox'
+                },
+                showTemplateDebug: {
+                    title: 'Show Template Debug Buttons',
+                    description: 'Show template view debug buttons on the application deploy/modify page.',
+                    type: 'boolean',
                     format: 'checkbox'
                 },
                 ipamProviders: {
@@ -968,11 +975,17 @@ class FASTWorker {
         const appsData = [];
         const lastModified = new Date().toISOString();
         let config = {};
+        let appsList = [];
         let promiseChain = Promise.resolve()
             .then(() => this.getConfig(reqid))
             .then((configData) => {
                 config = configData;
+            })
+            .then(() => this.driver.listApplicationNames())
+            .then((listData) => {
+                appsList = listData.map(x => `${x[0]}/${x[1]}`);
             });
+
         data.forEach((tmplData) => {
             if (!tmplData.name) {
                 promiseChain = promiseChain
@@ -983,6 +996,9 @@ class FASTWorker {
                 promiseChain = promiseChain
                     .then(() => Promise.reject(new Error('parameters property is missing')));
                 return;
+            }
+            if (typeof tmplData.allowOverwrite === 'undefined') {
+                tmplData.allowOverwrite = true;
             }
             const tsData = {};
             const [setName, templateName] = tmplData.name.split('/');
@@ -1017,6 +1033,18 @@ class FASTWorker {
                     tmpl.fetchAndRender(tmplData.parameters)
                 ))
                 .then(rendered => JSON.parse(rendered))
+                .then(decl => Promise.resolve()
+                    .then(() => this.driver.getTenantAndAppFromDecl(decl))
+                    .then(([tenantName, appName]) => `${tenantName}/${appName}`)
+                    .then((tenantAndApp) => {
+                        if (!tmplData.allowOverwrite && appsList.includes(tenantAndApp)) {
+                            return Promise.reject(new Error(
+                                `application ${tenantAndApp} already exists and "allowOverwrite" is false`
+                            ));
+                        }
+                        return Promise.resolve();
+                    })
+                    .then(() => decl))
                 .catch(e => Promise.resolve()
                     // Release any IPAM IP addrs
                     .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, { ipamAddrs }))

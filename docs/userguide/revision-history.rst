@@ -11,6 +11,10 @@ Document Revision History
         - Description
         - Date
 
+      * - 14.0 
+        - Updated the documentation for FAST v1.10. This release contains the following changes:  |br| |br| Added: |br| * Add support for IPAM addresses in arrays |br| * Add option for disabling AS3 declaration caching |br| * bigip-fast-templates: Consistently support IPv4 or IPV6 addresses for IP address fields |br| * bigip-fast-templates: Allow route domain suffixes in IP address fields |br| * Add optional userAgent query parameter to all endpoints |br| * Allow an array of endpoints for enumFromBigip |br| * bigip-fast-templates: Allow selecting an existing persistence profile |br| * Add builtin Infoblox IPAM provider type |br| * GUI: Add filter option for tables |br| |br| Fixed: |br| * GUI: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI |br| |br| Changed: |br| * Fix error when using ipFromIpamProvider and there are no configured providers |br| * Disable editor for enums with null as the only value |br| * Improve error messages when IPAM operations fail
+        - 06-25-21
+      
       * - 13.0
         - Updated the documentation for FAST v1.9. This release contains the following changes:  |br| |br| Added: |br| * bigip-fast-templates: Add supported version of the Microsoft ADFS template |br| * templates: Add "immutable" property for parameters that should not be edited on application updates |br| * Allow sending a list of applications to delete when sending a DELETE to /applications |br| * driver: Add timestamps to tasks |br| * Return applications using a template when querying the /templatesets endpoint |br| * Add support for query IPAM (IP Address Management) providers from templates |br| |br| Fixed: |br| * bigip-fast-templates: Replace external URL monitor script references with inline scripts |br| * Fix potential issue where FAST could prevent AS3, and some other iApps LX plugins, from starting |br| |br| Changed: |br| * bigip-fast-templates: Make tenant and application names immutable |br| * Automatically update bundled template sets |br| * Overhaul GUI to better streamline the user experience
         - 05-18-21
