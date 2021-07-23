@@ -12,11 +12,16 @@ allOf:
         description: Use an IP Address Management service to get an IP address
         type: boolean
         default: false
+        dependencies: []
       virtual_address:
         title: Virtual Server IP Address
         description: This IP address, combined with the port you specify below, becomes
           the BIG-IP virtual server address and port, which clients use to access the application.
           The system uses this IP:Port for distributing requests to the web servers.
+        dependencies:
+          - use_ipam
+        invertDependency:
+          - use_ipam
       virtual_address_ipam:
         title: Virtual Server IP Address from IPAM
         description: Select an IPAM Provider to get an IP address from.
@@ -25,6 +30,8 @@ allOf:
           The system uses this IP:Port for distributing requests to the web servers.
         ipFromIpam: true
         default: ''
+        dependencies:
+          - use_ipam
       virtual_port:
         title: Virtual Server Port
         default: 443
