@@ -1,5 +1,6 @@
 # 1.11.0
 ## Added
+* bigip-fast-templates: Allow using IPAM for virtual address
 
 ## Fixed
 
