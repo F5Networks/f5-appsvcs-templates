@@ -32,38 +32,52 @@
         </div>
         <editor ref="editor" />
         <div id="form-div" />
+        <div class="divider" />
         <div
-            v-if="showDebug"
-            class="text-right"
+            v-show="showDebug"
+            id="debug-panel"
+            class="p-1 column col-auto"
         >
-            <button
-                id="view-tmpl-btn"
-                type="button"
-                disabled
-            >
-                View Template
-            </button>
-            <button
-                id="view-schema-btn"
-                type="button"
-                disabled
-            >
-                View Schema
-            </button>
-            <button
-                id="view-view-btn"
-                type="button"
-                disabled
-            >
-                View Inputs
-            </button>
-            <button
-                id="view-render-btn"
-                type="button"
-                disabled
-            >
-                View Rendered
-            </button>
+            <div class="accordion">
+                <input
+                    id="debug-collapse"
+                    type="checkbox"
+                    name="accordion-checkbox"
+                    hidden
+                    @click="debugCollapsed = !debugCollapsed"
+                >
+                <label
+                    class="accordion-header c-hand"
+                    for="debug-collapse"
+                >
+                    <i :class="[debugCollapsed ? 'fa-chevron-down' : 'fa-chevron-up', 'fas']" />
+                    <div id="panel-header">Debug View</div>
+                </label>
+                <div class="accordion-body panel">
+                    <nav class="panel-nav">
+                        <ul class="tab">
+                            <li
+                                v-for="(tab) in ['Template', 'Schema', 'Inputs', 'Rendered']"
+                                :id="'view-' + tab.toLowerCase() + '-tab'"
+                                :key="tab"
+                                class="tab-item c-hand"
+                                :class="{active: activeDebugTab === tab}"
+                            >
+                                <a class="text-bold">
+                                    {{ tab }}
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <div class="panel-body">
+                        <div>
+                            <pre class="code">
+                                <code id="debug-output-text" />
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -89,7 +103,9 @@ export default {
             title: '',
             description: '',
             backTo: '',
-            showDebug: false
+            showDebug: false,
+            debugCollapsed: true,
+            activeDebugTab: 'Template'
         };
     },
     watch: {
@@ -152,11 +168,11 @@ export default {
             }
 
             return promiseChain
-                .then(() => this.newEditor(template, parameters, existingApp, this))
                 .then(() => this.$root.getJSON('settings'))
                 .then((config) => {
                     this.showDebug = config.showTemplateDebug;
                 })
+                .then(() => this.newEditor(template, parameters, existingApp, this))
                 .catch(e => this.$root.dispOutput(e.message));
         },
         newEditor(tmplid, view, existingApp, component) {
@@ -210,15 +226,7 @@ export default {
 
                     editor.on('ready', () => {
                         // Enable form button now that the form is ready
-                        if (this.showDebug) {
-                            document.getElementById('view-tmpl-btn').disabled = false;
-                            document.getElementById('view-schema-btn').disabled = false;
-                            document.getElementById('view-view-btn').disabled = false;
-                            document.getElementById('view-render-btn').disabled = false;
-                        }
                         document.getElementById('btn-form-submit').disabled = false;
-
-
                         Object.values(editor.editors).forEach((ed) => {
                             if (!ed) {
                                 return;
@@ -232,36 +240,48 @@ export default {
                                 ed.disable();
                             }
                         });
+                        this.$root.dispOutput('');
                     });
 
                     editor.on('change', () => {
                         document.getElementById('btn-form-submit').disabled = editor.validation_results.length !== 0;
+                        if (this.showDebug) {
+                            // refresh debug content, ensure default tab selected
+                            this.activeDebugTab = this.activeDebugTab || 'Template';
+                            document.getElementById(`view-${this.activeDebugTab.toLowerCase()}-tab`).click();
+                        }
                     });
 
-                    // Hook up buttons
+                    // Hook up debug panel
                     if (this.showDebug) {
-                        document.getElementById('view-tmpl-btn').onclick = () => {
-                            this.$root.dispOutput(tmpl.sourceText);
+                        const debugPanel = document.getElementById('debug-output-text');
+                        const setTabElements = (name, output) => {
+                            debugPanel.innerText = output;
+                            this.activeDebugTab = name;
                         };
-                        document.getElementById('view-schema-btn').onclick = () => {
-                            this.$root.dispOutput(JSON.stringify(schema, null, 2));
-                        };
-                        document.getElementById('view-view-btn').onclick = () => {
-                            this.$root.dispOutput(JSON.stringify(
+                        document.getElementById('view-template-tab').onclick = () => setTabElements.call(this, 'Template', tmpl.sourceText);
+                        document.getElementById('view-schema-tab').onclick = () => setTabElements.call(this, 'Schema', JSON.stringify(schema, null, 2));
+                        document.getElementById('view-inputs-tab').onclick = () => setTabElements.call(this, 'Inputs',
+                            JSON.stringify(
                                 tmpl.getCombinedParameters(editor.getValue()),
                                 null,
                                 2
                             ));
-                        };
-                        document.getElementById('view-render-btn').onclick = () => {
-                            const rendered = tmpl.render(editor.getValue());
-                            const msg = [
-                                'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
-                                'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
-                                'submit this declaration through FAST.\n\n',
-                                rendered
-                            ].join('');
-                            this.$root.dispOutput(msg);
+                        document.getElementById('view-rendered-tab').onclick = () => {
+                            let msg;
+                            try {
+                                const rendered = tmpl.render(editor.getValue());
+                                msg = [
+                                    'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
+                                    'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
+                                    'submit this declaration through FAST.\n\n',
+                                    rendered
+                                ].join('');
+                            } catch (error) {
+                                msg = `ERROR: Failed to render template. Details: ${error.message}`;
+                            }
+
+                            setTabElements.call(this, 'Rendered', msg);
                         };
                     }
                     document.getElementById('btn-form-submit').onclick = () => {
@@ -329,5 +349,15 @@ export default {
 
 #header-btns {
   float: right;
+}
+
+#panel-header {
+    display: inline-block;
+    color: inherit;
+    font-weight: 500;
+    line-height: 1.2;
+    margin-bottom: .5em;
+    margin-top: 0;
+    font-size: 0.8rem;
 }
 </style>

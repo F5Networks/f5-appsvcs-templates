@@ -251,8 +251,8 @@ class FASTWorker {
                     format: 'checkbox'
                 },
                 showTemplateDebug: {
-                    title: 'Show Template Debug Buttons',
-                    description: 'Show template view debug buttons on the application deploy/modify page.',
+                    title: 'Show Template Debug View',
+                    description: 'Show template debug menu on the application deploy/modify page.',
                     type: 'boolean',
                     format: 'checkbox'
                 },
