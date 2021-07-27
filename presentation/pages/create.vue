@@ -72,7 +72,7 @@
                     <div class="panel-body">
                         <div>
                             <pre class="code">
-                                <code id="debug-output-text" />
+                                <code id="debug-output-text">{{ debugText }}</code>
                             </pre>
                         </div>
                     </div>
@@ -105,6 +105,7 @@ export default {
             backTo: '',
             showDebug: false,
             debugCollapsed: true,
+            debugText: '',
             activeDebugTab: 'Template'
         };
     },
@@ -254,9 +255,8 @@ export default {
 
                     // Hook up debug panel
                     if (this.showDebug) {
-                        const debugPanel = document.getElementById('debug-output-text');
                         const setTabElements = (name, output) => {
-                            debugPanel.innerText = output;
+                            this.debugText = output;
                             this.activeDebugTab = name;
                         };
                         document.getElementById('view-template-tab').onclick = () => setTabElements.call(this, 'Template', tmpl.sourceText);
@@ -269,19 +269,30 @@ export default {
                             ));
                         document.getElementById('view-rendered-tab').onclick = () => {
                             let msg;
-                            try {
-                                const rendered = tmpl.render(editor.getValue());
-                                msg = [
-                                    'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
-                                    'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
-                                    'submit this declaration through FAST.\n\n',
-                                    rendered
-                                ].join('');
-                            } catch (error) {
-                                msg = `ERROR: Failed to render template. Details: ${error.message}`;
-                            }
-
-                            setTabElements.call(this, 'Rendered', msg);
+                            setTabElements('Rendered', 'Rendering...');
+                            this.$root.safeFetch(`${this.$root.endPointUrl}/render`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    name: tmplid,
+                                    parameters: editor.getValue()
+                                })
+                            })
+                                .then(data => JSON.stringify(data.message[0].appDef, null, 2))
+                                .then((rendered) => {
+                                    msg = [
+                                        'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
+                                        'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
+                                        'submit this declaration through FAST.\n\n',
+                                        rendered
+                                    ].join('');
+                                })
+                                .catch((e) => {
+                                    msg = `ERROR: Failed to render template. Details:\n${e.message}`;
+                                })
+                                .finally(() => setTabElements('Rendered', msg));
                         };
                     }
                     document.getElementById('btn-form-submit').onclick = () => {
