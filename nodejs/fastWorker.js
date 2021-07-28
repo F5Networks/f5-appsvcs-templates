@@ -68,6 +68,7 @@ ajv.addFormat('table', /.*/);
 ajv.addFormat('password', /.*/);
 ajv.addFormat('text', /.*/);
 ajv.addFormat('grid-strict', /.*/);
+ajv.addFormat('textarea', /.*/);
 
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
@@ -224,7 +225,7 @@ class FASTWorker {
     }
 
     getConfigSchema() {
-        const baseSchema = {
+        let baseSchema = {
             $schema: 'http://json-schema.org/schema#',
             title: 'FAST Settings',
             type: 'object',
@@ -247,13 +248,11 @@ class FASTWorker {
                         'This ensures FAST is always using up-to-date declarations from AS3,',
                         'which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config.',
                         'Disabling declaration caching will negatively impact FAST performance.'
-                    ].join(' '),
-                    format: 'checkbox'
+                    ].join(' ')
                 },
                 ipamProviders: {
                     title: 'IPAM Providers (Experimental/Beta)',
                     description: 'Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses',
-                    format: 'table',
                     type: 'array',
                     items: {
                         oneOf: this.ipamProviders.getSchemas()
@@ -264,6 +263,8 @@ class FASTWorker {
                 'deletedTemplateSets'
             ]
         };
+
+        baseSchema = fast.guiUtils.modSchemaForJSONEditor(baseSchema);
 
         return merge(this.driver.getSettingsSchema(), baseSchema);
     }
