@@ -188,8 +188,7 @@ class FASTWorker {
         const defaultConfig = {
             deletedTemplateSets: [],
             ipamProviders: [],
-            disableDeclarationCache: false,
-            showTemplateDebug: false
+            disableDeclarationCache: false
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
@@ -249,12 +248,6 @@ class FASTWorker {
                         'which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config.',
                         'Disabling declaration caching will negatively impact FAST performance.'
                     ].join(' '),
-                    format: 'checkbox'
-                },
-                showTemplateDebug: {
-                    title: 'Show Template Debug View',
-                    description: 'Show template debug menu on the application deploy/modify page.',
-                    type: 'boolean',
                     format: 'checkbox'
                 },
                 ipamProviders: {
