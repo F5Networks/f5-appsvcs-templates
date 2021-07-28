@@ -360,6 +360,65 @@ describe('template worker tests', function () {
                 assert.notEqual(tmpl, {});
             });
     });
+    it('get_template_ipam', function () {
+        const worker = createWorker();
+        const op = new RestOp('templates/bigip-fast-templates/dns');
+
+        worker.configStorage.data.config = {
+            enableIpam: false
+        };
+
+        nock('http://localhost:8100')
+            .persist()
+            .get(/\/mgmt\/tm\/.*/)
+            .reply(200, {
+                items: []
+            });
+        return Promise.resolve()
+            // IPAM disabled
+            .then(() => worker.onGet(op))
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+                return fast.Template.fromJson(op.body);
+            })
+            .then((tmpl) => {
+                const schema = fast.guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
+                const props = schema.properties;
+
+                assert.strictEqual(
+                    props.use_ipam,
+                    undefined,
+                    'use_ipam is still available when IPAM is disabled'
+                );
+                assert.strictEqual(
+                    props.virtual_address_ipam,
+                    undefined,
+                    'virtual_address_ipam is still available when IPAM is disabled'
+                );
+            })
+            // IPAM enabled
+            .then(() => {
+                worker.configStorage.data.config.enableIpam = true;
+            })
+            .then(() => worker.onGet(op))
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+                return fast.Template.fromJson(op.body);
+            })
+            .then((tmpl) => {
+                const schema = fast.guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
+                const props = schema.properties;
+
+                assert.ok(
+                    props.use_ipam,
+                    'use_ipam is not available when IPAM is enabled'
+                );
+                assert.ok(
+                    props.virtual_address_ipam,
+                    'virtual_address_ipam is not available when IPAM is enabled'
+                );
+            });
+    });
     it('get_template_item_with_schema', function () {
         const worker = createWorker();
         const op = new RestOp('templates/bigip-fast-templates/http');
@@ -744,6 +803,7 @@ describe('template worker tests', function () {
             deletedTemplateSets: [
                 'foo'
             ],
+            enableIpam: true,
             ipamProviders: [
                 { name: 'test', password: 'foobar', serviceType: 'Generic' }
             ]
@@ -868,6 +928,7 @@ describe('template worker tests', function () {
             deletedTemplateSets: [
                 'foo'
             ],
+            enableIpam: true,
             ipamProviders: [
                 { name: 'test', password: 'foobar', serviceType: 'Generic' }
             ]

@@ -2,6 +2,7 @@
 ## Added
 * bigip-fast-templates: Allow using IPAM for virtual address
 * bigip-fast-templates: Add blue-green template modeled after https://github.com/f5devcentral/as3-bluegreen/tree/master/fast
+* bigip-fast-templates: Allow using IPAM for virtual addresses (feature must be enabled first)
 
 ## Fixed
 * bigip-fast-templates: Fix virtual server IP missing on ADFS template unless Certificate Authentication was selected
