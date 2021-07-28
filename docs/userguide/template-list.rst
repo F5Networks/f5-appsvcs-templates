@@ -53,6 +53,10 @@ The following table lists the template set, the corresponding template(s) and a 
         - TCP Application Template
         - Configure high availability and optimization for TCP implementations
 
+      * - bigip-fast-templates
+        - Blue/Green Template
+        - Divide application traffic between pools by percentage        
+
       * - examples
         - Simple UDP Application
         - Simple UDP template wuth parameters defined outside of the template
