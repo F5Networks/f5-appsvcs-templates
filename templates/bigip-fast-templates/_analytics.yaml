@@ -1,0 +1,99 @@
+title: Analytics
+contentType: application/json
+bigipHideTemplate: true
+bigipDependencies:
+  - avr
+definitions:
+  enable_analytics:
+    title: Analytics
+    description: Use Analytics
+    type: boolean
+    default: false
+  make_analytics_profile:
+    title: FAST-Generated Analytics Profiles
+    description: Uncheck to use an existing BIG-IP Analytics profile.
+    type: boolean
+    default: true
+  analytics_existingHttpProfile:
+    title: HTTP Analytics Profile
+    description: Select an existing HTTP Analytcs profile.
+    type: string
+    enumFromBigip: ltm/profile/analytics
+    default: ''
+  analytics_existingTcpProfile:
+    title: TCP Analytics Profile
+    description: Select an existing TCP Analytcs profile.
+    type: string
+    enumFromBigip: ltm/profile/tcp-analytics
+    default: ''
+template: |
+  {
+    "{{tenant_name}}": {      
+      "class": "Tenant",
+      "{{app_name}}": {
+        "class": "Application",
+        {{#enable_analytics}}
+          {{#make_analytics_profile}}
+            "{{app_name}}_analytics": {
+              "class": "Analytics_Profile",
+              "collectedStatsInternalLogging": "true",
+              "collectedStatsExternalLogging": "true",
+              "externalLoggingPublisher": {
+                "bigip": "/Common/default-ipsec-log-publisher"
+              },
+              "capturedTrafficInternalLogging": "true",
+              "notificationBySyslog": "true",
+              "publishIruleStatistics": "true",
+              "collectMaxTpsAndThroughput": "true",
+              "collectPageLoadTime": "true",
+              "collectClientSideStatistics": "true",
+              "collectUserSession": "true",
+              "sessionTimeoutMinutes": "ssl-only",
+              "sessionCookieSecurity": "5",
+              "collectUrl": "true",
+              "collectGeo": "true",
+              "countriesForStatCollection": "true",
+              "collectIp": "true",
+              "collectSubnet": "true",
+              "collectResponseCode": "true",
+              "collectUserAgent": "true",
+              "collectMethod": "true",
+              "collectOsAndBrowser": "true"
+            },
+            "{{app_name}}_tcpAnalytics": {
+              "class": "Analytics_TCP_Profile",
+              "collectedStatsInternalLogging": "true",
+              "collectedStatsExternalLogging": "true",
+              "externalLoggingPublisher": {
+                "bigip": "/Common/default-ipsec-log-publisher"
+              },
+              "collectedByClientSide": "true",
+              "collectedByServerSide": "true",
+              "collectRemoteHostIp": "true",
+              "collectRemoteHostSubnet": "true",
+              "collectNexthop": "true",
+              "collectContinent": "true",
+              "collectCountry": "true",
+              "collectRegion": "true",
+              "collectCity": "true",
+              "collectPostCode": "true"
+            }
+            "{{app_name}}": {
+              "profileAnalytics": "{{app_name}}_analytics"
+              "profileAnalyticsTcp": "{{app_name}}_tcpAnalytics"
+            },
+          {{/make_analytics_profile}}
+          {{^make_analytics_profile}}
+            "{{app_name}}": {
+              "profileAnalytics": {
+                "bigip": "{{analytics_existingHttpProfile}}"
+              },
+              "profileAnalyticsTcp": {
+                "bigip": "{{analytics_existingTcpProfile}}"
+              }
+            }
+          {{/make_analytics_profile}}
+        {{/enable_analytics}}
+      }
+    }
+  }
