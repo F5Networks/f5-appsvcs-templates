@@ -79,7 +79,7 @@ template: |
               "collectPostCode": "true"
             }
             "{{app_name}}": {
-              "profileAnalytics": "{{app_name}}_analytics"
+              "profileAnalytics": "{{app_name}}_analytics",
               "profileAnalyticsTcp": "{{app_name}}_tcpAnalytics"
             },
           {{/make_analytics_profile}}
