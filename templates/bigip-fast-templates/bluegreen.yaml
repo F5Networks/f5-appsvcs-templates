@@ -1,0 +1,100 @@
+contentType: application/json
+title: Blue-Green Deployment Template
+description: Divide application traffic between pools by percentage. Add and remove pool members Event-Driven Service Discovery.
+allOf:
+  - $ref: "_as3.yaml#"
+  - $ref: "_virtual.yaml#"
+  - $ref: "_snat.yaml#"
+definitions:
+  enable_bluegreen:
+    title: Enable
+    description: Check to enable blue-green traffic distribution. When disabled, all traffic is sent to the blue pool.
+    type: boolean
+  distribution:
+    title: Percentage
+    description: Specify the fraction of traffic to send to blue or green. 0 will send all traffic to blue, 1 will send all traffic to green. 0.5 will send 50% to blue and 50% to green.
+    type: number
+    minimum: 0
+    maximum: 1
+  blue_pool:
+    title: Blue Pool Name
+    minLength: 2
+  green_pool:
+    title: Green Pool Name
+    minLength: 2
+parameters:
+  virtual_port: 80
+  enable_bluegreen: true
+  distribution: "0.5"
+  blue_pool: blue
+  green_pool: green
+template: |
+  {
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{app_name}}": {
+        "class": "Application",
+        "{{app_name}}": {
+          "class": "Service_L4",
+          "persistenceMethods": [],
+          "profileL4": {
+            "bigip":"/Common/fastL4"
+          },
+          {{#enable_bluegreen}}
+            "iRules": [
+              "bluegreen_irule"
+            ],
+          {{/enable_bluegreen}}
+          "pool": "{{blue_pool}}"
+        },
+        "{{blue_pool}}": {
+          "class": "Pool",
+          "loadBalancingMode": "round-robin",
+          "members": [
+            {
+              "servicePort": 80,
+              "addressDiscovery": "event",
+              "shareNodes": true
+            }
+          ],
+          "monitors": ['tcp']
+        },
+        "{{green_pool}}": {
+          "class": "Pool",
+          "loadBalancingMode": "round-robin",
+          "members": [
+            {
+              "servicePort": 80,
+              "addressDiscovery": "event",
+              "shareNodes": true
+            }
+          ],
+          "monitors": ['tcp']
+        },
+        "bluegreen_datagroup": {
+          "class": "Data_Group",
+          "keyDataType": "string",
+          "records": [
+            {
+              "key": "distribution",
+              "value": "{{distribution}}"
+            },
+            {
+              "key": "blue_pool",
+              "value": "/{{tenant_name}}/{{app_name}}/{{blue_pool}}"
+            },
+            {
+              "key": "green_pool",
+              "value": "/{{tenant_name}}/{{app_name}}/{{green_pool}}"
+            }
+          ]
+        },
+        "bluegreen_irule": {
+          "class": "iRule",
+          "iRule": {
+            "base64": "d2hlbiBDTElFTlRfQUNDRVBURUQgewogICAgICAgIHNldCBkaXN0cmlidXRpb24gW2NsYXNzIG1hdGNoIC12YWx1ZSAiZGlzdHJpYnV0aW9uIiBlcXVhbHMgYmx1ZWdyZWVuX2RhdGFncm91cF0KICAgICAgICBzZXQgYmx1ZV9wb29sIFtjbGFzcyBtYXRjaCAtdmFsdWUgImJsdWVfcG9vbCIgZXF1YWxzIGJsdWVncmVlbl9kYXRhZ3JvdXBdCiAgICAgICAgc2V0IGdyZWVuX3Bvb2wgW2NsYXNzIG1hdGNoIC12YWx1ZSAiZ3JlZW5fcG9vbCIgZXF1YWxzIGJsdWVncmVlbl9kYXRhZ3JvdXBdCiAgICAgICAgIHNldCByYW5kIFtleHByIHsgcmFuZCgpIH1dCiAgICAgICAgIGlmIHsgJHJhbmQgPiAkZGlzdHJpYnV0aW9uIH0geyAKICAgICAgICAgICAgIHBvb2wgJGJsdWVfcG9vbAogICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgcG9vbCAkZ3JlZW5fcG9vbAogICAgICAgICB9Cn0="
+          }
+        }
+      }
+    }
+  }
