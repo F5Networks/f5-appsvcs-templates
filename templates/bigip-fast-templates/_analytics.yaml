@@ -14,7 +14,7 @@ definitions:
     description: Uncheck to use an existing BIG-IP Analytics profile.
     type: boolean
     default: true
-  make_http_analytics_profile:
+  use_http_analytics_profile:
     title: Use HTTP Analytics
     description: Check to select an existing HTTP Analytics profile to use
     type: boolean
@@ -25,7 +25,7 @@ definitions:
     type: string
     enumFromBigip: ltm/profile/analytics
     default: '/Common/analytics'
-  make_tcp_analytics_profile:
+  use_tcp_analytics_profile:
     title: Use TCP Analytics
     description: Check to select an existing TCP Analytics profile to use
     type: boolean
@@ -92,16 +92,16 @@ template: |
           {{/make_analytics_profile}}
           {{^make_analytics_profile}}
             "{{app_name}}": {
-              {{#make_http_analytics_profile}}
+              {{#use_http_analytics_profile}}
                 "profileAnalytics": {
                   "bigip": "{{analytics_existingHttpProfile}}"
-                }{{#make_tcp_analytics_profile}},{{/make_tcp_analytics_profile}}
-              {{/make_http_analytics_profile}}
-              {{#make_tcp_analytics_profile}}
+                }{{#use_tcp_analytics_profile}},{{/use_tcp_analytics_profile}}
+              {{/use_http_analytics_profile}}
+              {{#use_tcp_analytics_profile}}
                 "profileAnalyticsTcp": {
                   "bigip": "{{analytics_existingTcpProfile}}"
                 }
-              {{/make_tcp_analytics_profile}}
+              {{/use_tcp_analytics_profile}}
             }
           {{/make_analytics_profile}}
         {{/enable_analytics}}
