@@ -776,8 +776,13 @@ class FASTWorker {
             });
     }
 
-    getPropsWithChild(schema, childName) {
-        return Object.entries(schema.properties || {})
+    getPropsWithChild(schema, childName, recurse) {
+        const subSchemas = [
+            ...schema.allOf || [],
+            ...schema.oneOf || [],
+            ...schema.anyOf || []
+        ];
+        const props = Object.entries(schema.properties || {})
             .reduce((acc, curr) => {
                 const [key, value] = curr;
                 if (value[childName]) {
@@ -795,6 +800,12 @@ class FASTWorker {
                 }
                 return acc;
             }, {});
+
+        if (recurse) {
+            subSchemas.map(subSchema => Object.assign(props, this.getPropsWithChild(subSchema, childName)));
+        }
+
+        return props;
     }
 
     hydrateSchema(tmpl, requestId, clearCache) {
@@ -1079,7 +1090,7 @@ class FASTWorker {
                 .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
-                    const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+                    const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam', true);
                     return this.ipamProviders.populateIPAMAddress(ipFromIpamProps, tmplData, config, reqid, ipamAddrs)
                         .then(() => tmpl);
                 })
