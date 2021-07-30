@@ -11,6 +11,10 @@ Document Revision History
         - Description
         - Date
 
+      * - 15.0 
+        - Updated the documentation for FAST v1.11. This release contains the following changes:  |br| |br| Added: |br|
+        - 08-06-21
+
       * - 14.0 
         - Updated the documentation for FAST v1.10. This release contains the following changes:  |br| |br| Added: |br| * Add support for IPAM addresses in arrays |br| * Add option for disabling AS3 declaration caching |br| * bigip-fast-templates: Consistently support IPv4 or IPV6 addresses for IP address fields |br| * bigip-fast-templates: Allow route domain suffixes in IP address fields |br| * Add optional userAgent query parameter to all endpoints |br| * Allow an array of endpoints for enumFromBigip |br| * bigip-fast-templates: Allow selecting an existing persistence profile |br| * Add builtin Infoblox IPAM provider type |br| * GUI: Add filter option for tables |br| |br| Fixed: |br| * GUI: Stop prompting for basic auth credentials when embedded in the BIG-IP GUI |br| |br| Changed: |br| * Fix error when using ipFromIpamProvider and there are no configured providers |br| * Disable editor for enums with null as the only value |br| * Improve error messages when IPAM operations fail
         - 06-25-21

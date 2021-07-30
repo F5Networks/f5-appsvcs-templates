@@ -75,10 +75,14 @@ See `Bug ID 894593 <https://cdn.f5.com/product/bugtracker/ID894593.html>`_ and `
 
 **Workaround** |br|
 Increase the memory allocated for the restjavad daemon (e.g. 2 GB), by running the following commands in a BIG-IP terminal.
+If your device is a member of config-sync group (HA pair), the following commands need to be run on all peers at the same time. 
+See Note below.
  
 ``tmsh modify sys db restjavad.useextramb value true`` |br|
 ``tmsh modify sys db provision.extramb value 2048`` |br|
 ``bigstart restart restjavad``
+
+.. NOTE:: If your device is a member of a config-sync group, you must ensure that the provision.extramb value is the same on all units in the synchronization group prior to performing a ConfigSync to avoid a possible outage. See `K31326690: Provisioning the mgmt plane to large and performing a ConfigSync might cause an outage on the peer unit <https://support.f5.com/csp/article/K31326690>`_ for more information.
 
 Module Provision Dependencies
 -----------------------------

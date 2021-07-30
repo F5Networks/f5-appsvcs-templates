@@ -23,7 +23,7 @@ See the image below for example field entries.
 
 
 
-Clicking on the View Rendered button displays a sample of the rendered output of the template.
+From the Debug View buttons, select View Rendered to display a sample of the rendered output of the template.
 
 .. image:: View_Rendered.png
    :width: 350
@@ -43,7 +43,7 @@ Using cURL to do this would look like:
 
    .. code-block:: shell
 
-      curl -sku <BIG-IP username>:<BIG-IP password> -H "Content-Type: application/json" -X POST https::/<IP address of BIG-IP>/mgmt/shared/fast/applications -d " \
+      curl -sku <BIG-IP username>:<BIG-IP password> -H "Content-Type: application/json" -X POST https://<IP address of BIG-IP>/mgmt/shared/fast/applications -d " \
       { \
          "name": "examples/simple_http", \
          "parameters": { \
