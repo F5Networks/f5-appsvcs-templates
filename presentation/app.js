@@ -68,6 +68,7 @@ const safeFetch = (uri, opts, numAttempts) => {
                     && (
                         data.errorStack
                         || (data.message && data.message.match(/Public URI path not registered/))
+                        || (data.error && data.error.innererror && data.error.innererror.referer === 'restnoded')
                     )
                     && (!numAttempts || numAttempts < 5)
                 );
