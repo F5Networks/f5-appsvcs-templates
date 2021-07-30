@@ -243,7 +243,7 @@ const expected = {
                 collectedStatsInternalLogging: true,
                 collectedStatsExternalLogging: true,
                 externalLoggingPublisher: {
-                  bigip: '/Common/default-ipsec-log-publisher'
+                    bigip: '/Common/default-ipsec-log-publisher'
                 },
                 collectedByClientSide: true,
                 collectedByServerSide: true,
@@ -386,7 +386,7 @@ describe(template, function () {
             view.make_acceleration_profile = true;
             expected.t1.app1.app1.profileHTTPAcceleration = 'basic';
             delete view.compression_profile_name;
-            view.make_compression_profile = true;   
+            view.make_compression_profile = true;
             expected.t1.app1.app1.profileHTTPCompression = 'basic';
             delete view.multiplex_profile_name;
             view.make_multiplex_profile = true;

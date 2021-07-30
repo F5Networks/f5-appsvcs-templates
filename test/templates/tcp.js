@@ -136,7 +136,7 @@ const expected = {
                 collectedStatsInternalLogging: true,
                 collectedStatsExternalLogging: true,
                 externalLoggingPublisher: {
-                  bigip: '/Common/default-ipsec-log-publisher'
+                    bigip: '/Common/default-ipsec-log-publisher'
                 },
                 collectedByClientSide: true,
                 collectedByServerSide: true,
