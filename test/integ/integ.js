@@ -300,8 +300,7 @@ describe('Settings', function () {
             data: {
                 deletedTemplateSets: [],
                 ipamProviders: [],
-                disableDeclarationCache: false,
-                showTemplateDebug: false
+                disableDeclarationCache: false
             },
             status: 200
         })));
@@ -325,8 +324,7 @@ describe('Settings', function () {
             }],
             log_afm: false,
             log_asm: false,
-            disableDeclarationCache: false,
-            showTemplateDebug: false
+            disableDeclarationCache: false
         };
         const expected = {
             data: { code: 200, message: '' },
@@ -362,8 +360,7 @@ describe('Settings', function () {
                     ipamProviders: [],
                     log_afm: false,
                     log_asm: false,
-                    disableDeclarationCache: false,
-                    showTemplateDebug: false
+                    disableDeclarationCache: false
                 };
                 return endpoint.get(url)
                     .then(res => assertResponse(res, expected));
