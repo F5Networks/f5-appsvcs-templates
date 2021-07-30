@@ -1,0 +1,61 @@
+title: Analytics
+contentType: application/json
+bigipHideTemplate: true
+bigipDependencies:
+  - avr
+definitions:
+  enable_analytics:
+    title: Analytics
+    description: Use Analytics
+    type: boolean
+    default: false
+  make_analytics_profile:
+    title: FAST-Generated Analytics Profiles
+    description: Uncheck to use an existing BIG-IP Analytics profile.
+    type: boolean
+    default: true
+  analytics_existingTcpProfile:
+    title: TCP Analytics Profile
+    description: Select an existing TCP Analytcs profile.
+    type: string
+    enumFromBigip: ltm/profile/tcp-analytics
+    default: '/Common/tcp-analytics'
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_analytics}}
+          {{#make_analytics_profile}}
+            "{{app_name}}_tcp_analytics": {
+              "class": "Analytics_TCP_Profile",
+              "collectedStatsInternalLogging": true,
+              "collectedStatsExternalLogging": true,
+              "externalLoggingPublisher": {
+                "bigip": "/Common/default-ipsec-log-publisher"
+              },
+              "collectedByClientSide": true,
+              "collectedByServerSide": true,
+              "collectRemoteHostIp": true,
+              "collectRemoteHostSubnet": true,
+              "collectNexthop": true,
+              "collectContinent": true,
+              "collectCountry": true,
+              "collectRegion": true,
+              "collectCity": true,
+              "collectPostCode": true
+            },
+            "{{app_name}}": {
+              "profileAnalyticsTcp": { "use": "{{app_name}}_tcp_analytics" }
+            }
+          {{/make_analytics_profile}}
+          {{^make_analytics_profile}}
+            "{{app_name}}": {
+                "profileAnalyticsTcp": {
+                  "bigip": "{{analytics_existingTcpProfile}}"
+                }
+            }
+          {{/make_analytics_profile}}
+        {{/enable_analytics}}
+      }
+    }
+  }
