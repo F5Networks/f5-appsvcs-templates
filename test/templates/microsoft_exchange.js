@@ -54,6 +54,10 @@ const view = {
     enable_tls_client: true,
     make_tls_client_profile: true,
 
+    // analytics
+    enable_analytics: true,
+    make_analytics_profile: true,
+
     // services
     hsts_insert: false,
     owa: true,
@@ -270,6 +274,25 @@ const expected = {
             app1_tls_client: {
                 class: 'TLS_Client'
             },
+            app1_analytics: {
+                class: 'Analytics_Profile',
+                collectedStatsExternalLogging: true,
+                externalLoggingPublisher: {
+                    bigip: '/Common/default-ipsec-log-publisher'
+                },
+                capturedTrafficInternalLogging: true,
+                notificationBySyslog: true,
+                publishIruleStatistics: true,
+                collectMaxTpsAndThroughput: true,
+                collectPageLoadTime: true,
+                collectClientSideStatistics: true,
+                collectUserSession: true,
+                collectUrl: true,
+                collectGeo: true,
+                collectIp: true,
+                collectSubnet: true,
+                collectUserAgent: true
+            },
             app1_http: {
                 class: 'HTTP_Profile',
                 xForwardedFor: true,
@@ -342,6 +365,7 @@ const expected = {
                 class: 'Service_HTTPS',
                 serverTLS: 'app1_tls_server',
                 clientTLS: 'app1_tls_client',
+                profileAnalytics: { use: 'app1_analytics' },
                 profileHTTP: {
                     use: 'app1_http'
                 },
@@ -375,6 +399,21 @@ const expected = {
 describe(template, function () {
     describe('tls bridging with a common virtual address', function () {
         util.assertRendering(template, view, expected);
+    });
+
+    describe('use existing analytics profile', function () {
+        before(() => {
+            // existing analytics profiles
+            view.make_analytics_profile = false;
+            view.use_http_analytics_profile = true;
+            view.analytics_existingHttpProfile = '/Common/analytics';
+            expected.t1.app1.app1.profileAnalytics = { bigip: '/Common/analytics' };
+            delete expected.t1.app1.app1_analytics;
+            view.use_tcp_analytics_profile = true;
+            view.analytics_existingTcpProfile = '/Common/tcp-analytics';
+            expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
+            delete expected.t1.app1.app1_tcp_analytics;
+        });
     });
 
     describe('clean up', function () {

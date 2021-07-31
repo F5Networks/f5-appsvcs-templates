@@ -133,19 +133,12 @@ const expected = {
             },
             app1_tcp_analytics: {
                 class: 'Analytics_TCP_Profile',
-                collectedStatsInternalLogging: true,
                 collectedStatsExternalLogging: true,
                 externalLoggingPublisher: {
                     bigip: '/Common/default-ipsec-log-publisher'
                 },
-                collectedByClientSide: true,
-                collectedByServerSide: true,
                 collectRemoteHostIp: true,
-                collectRemoteHostSubnet: true,
                 collectNexthop: true,
-                collectContinent: true,
-                collectCountry: true,
-                collectRegion: true,
                 collectCity: true,
                 collectPostCode: true
             },

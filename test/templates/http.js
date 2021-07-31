@@ -215,7 +215,6 @@ const expected = {
             },
             app1_analytics: {
                 class: 'Analytics_Profile',
-                collectedStatsInternalLogging: true,
                 collectedStatsExternalLogging: true,
                 externalLoggingPublisher: {
                     bigip: '/Common/default-ipsec-log-publisher'
@@ -227,32 +226,20 @@ const expected = {
                 collectPageLoadTime: true,
                 collectClientSideStatistics: true,
                 collectUserSession: true,
-                sessionTimeoutMinutes: 5,
-                sessionCookieSecurity: 'ssl-only',
                 collectUrl: true,
                 collectGeo: true,
                 collectIp: true,
                 collectSubnet: true,
-                collectResponseCode: true,
-                collectUserAgent: true,
-                collectMethod: true,
-                collectOsAndBrowser: true
+                collectUserAgent: true
             },
             app1_tcp_analytics: {
                 class: 'Analytics_TCP_Profile',
-                collectedStatsInternalLogging: true,
                 collectedStatsExternalLogging: true,
                 externalLoggingPublisher: {
                     bigip: '/Common/default-ipsec-log-publisher'
                 },
-                collectedByClientSide: true,
-                collectedByServerSide: true,
                 collectRemoteHostIp: true,
-                collectRemoteHostSubnet: true,
                 collectNexthop: true,
-                collectContinent: true,
-                collectCountry: true,
-                collectRegion: true,
                 collectCity: true,
                 collectPostCode: true
             },
