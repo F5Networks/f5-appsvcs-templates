@@ -1,16 +1,17 @@
 # 1.11.0
 ## Added
-* bigip-fast-templates: Allow using IPAM for virtual address
 * bigip-fast-templates: Add blue-green template modeled after https://github.com/f5devcentral/as3-bluegreen/tree/master/fast
 * bigip-fast-templates: Allow Analytics profile creation/selection on relevant templates
+* bigip-fast-templates: Allow using IPAM for virtual addresses (feature must be enabled first)
 
 ## Fixed
 * bigip-fast-templates: Fix virtual server IP missing on ADFS template unless Certificate Authentication was selected
+* gui: Fix 404 error on BIG-IP 13.1 when loading pages immediately after installation or upgrade
+* gui: Fix 401 Unauthorized Error when idle timeout is longer than default
 
 ## Change
-* gui: Add option to show/hide debug buttons on app create/modify page (hidden by default)
-* gui: Change debug buttons to a menu with window for code output
-* gui: Do not overwrite existing applications when creating new ones
+* gui: Change template debug buttons to a menu with window for code output
+* gui: Do not allow overwriting existing applications when creating new ones
 
 # 1.10.0
 ## Added

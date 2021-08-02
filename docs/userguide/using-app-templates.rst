@@ -81,6 +81,9 @@ The template displays the following buttons for what to do once the template is 
       * - Cancel
         - Cancels the application returning to the template list.
 
+      * - Debug View
+        - Opens a panel of option buttons to view template text, JSON schema, inputs and sample rendered output.
+
       * - View Template
         - Displays the original template text.
 

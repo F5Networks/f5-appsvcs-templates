@@ -28,7 +28,7 @@ const userAgent = 'FASTGUI/NA';
 
 const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
 
-let authToken = null;
+const auth = {};
 
 const safeFetch = (uri, opts, numAttempts) => {
     numAttempts = numAttempts || 0;
@@ -37,14 +37,14 @@ const safeFetch = (uri, opts, numAttempts) => {
         // Add any defaults here
     }, opts);
 
-    if (authToken) {
+    if (auth.token) {
         if (!opts.headers) {
             opts.headers = {};
         }
-        opts.headers['X-F5-Auth-Token'] = authToken;
+        opts.headers['X-F5-Auth-Token'] = auth.token;
     }
 
-    if (uri.startsWith(endPointUrl)) {
+    if (uri.startsWith(endPointUrl) && !uri.includes('userAgent=')) {
         uri = uri.includes('?') ? `${uri}&userAgent=${userAgent}` : `${uri}?userAgent=${userAgent}`;
     }
 
@@ -68,6 +68,7 @@ const safeFetch = (uri, opts, numAttempts) => {
                     && (
                         data.errorStack
                         || (data.message && data.message.match(/Public URI path not registered/))
+                        || (data.error && data.error.innererror && data.error.innererror.referer === 'restnoded')
                     )
                     && (!numAttempts || numAttempts < 5)
                 );
@@ -126,7 +127,7 @@ const getAuthToken = () => Promise.resolve()
     }))
     .then(results => results.token.token)
     .catch((e) => {
-        console.log(`Could not aqcuire BIG-IP auth token: ${e.message}`);
+        console.log(`Could not acquire BIG-IP auth token: ${e.message}`);
         return Promise.resolve(null);
     });
 
@@ -232,6 +233,29 @@ const multipartUpload = (file) => {
 const vueApp = new Vue({
     data: appState,
     router,
+    mounted() {
+        // by default token is 1200s/20min
+        if (auth.timeout > 1200) {
+            const extendToken = () => safeFetch(`/mgmt/shared/authz/tokens/${auth.token}`, {
+                method: 'PATCH',
+                headers: {
+                    'X-F5-Auth-Token': auth.token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ timeout: auth.timeout })
+            })
+                .catch((err) => {
+                    console.log(`Error extending token timeout: ${err.message}`);
+                });
+            extendToken();
+            auth.tokenExtension = setInterval(extendToken, ((auth.timeout - 120) * 1000));
+        }
+    },
+    beforeUnmount() {
+        if (auth.tokenExtension) {
+            clearInterval(auth.tokenExtension);
+        }
+    },
     methods: {
         safeFetch(uri, opts, numAttempts) {
             return safeFetch(uri, opts, numAttempts);
@@ -269,13 +293,22 @@ const vueApp = new Vue({
 Promise.resolve()
     .then(() => getAuthToken())
     .then((token) => {
-        authToken = token;
+        auth.token = token;
     })
-    // Check that AS3 is available
-    .then(() => safeFetch('/mgmt/shared/appsvcs/info')
-        .catch((e) => {
-            appState.foundAS3 = false;
-            console.log(`Error reaching AS3: ${e.message}`);
-        }))
+    .then(() => {
+        const checkAS3 = safeFetch('/mgmt/shared/appsvcs/info')
+            .catch((e) => {
+                appState.foundAS3 = false;
+                console.log(`Error reaching AS3: ${e.message}`);
+            });
+        const getIdleTimeout = safeFetch('/mgmt/tm/sys/httpd', { headers: { 'X-F5-Auth-Token': auth.token } })
+            .then((resp) => {
+                auth.timeout = resp.authPamIdleTimeout;
+            })
+            .catch((e) => {
+                console.log(`Error retrieving idle screen timeout ${e.message}`);
+            });
+        return Promise.all([checkAS3, getIdleTimeout]);
+    })
     // Always attempt to mount the Vue app
     .finally(() => vueApp.$mount('#vue-app'));

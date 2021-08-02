@@ -68,6 +68,7 @@ ajv.addFormat('table', /.*/);
 ajv.addFormat('password', /.*/);
 ajv.addFormat('text', /.*/);
 ajv.addFormat('grid-strict', /.*/);
+ajv.addFormat('textarea', /.*/);
 
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
@@ -187,9 +188,9 @@ class FASTWorker {
         reqid = reqid || 0;
         const defaultConfig = {
             deletedTemplateSets: [],
+            enableIpam: false,
             ipamProviders: [],
-            disableDeclarationCache: false,
-            showTemplateDebug: false
+            disableDeclarationCache: false
         };
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
@@ -225,7 +226,7 @@ class FASTWorker {
     }
 
     getConfigSchema() {
-        const baseSchema = {
+        let baseSchema = {
             $schema: 'http://json-schema.org/schema#',
             title: 'FAST Settings',
             type: 'object',
@@ -248,19 +249,16 @@ class FASTWorker {
                         'This ensures FAST is always using up-to-date declarations from AS3,',
                         'which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config.',
                         'Disabling declaration caching will negatively impact FAST performance.'
-                    ].join(' '),
-                    format: 'checkbox'
+                    ].join(' ')
                 },
-                showTemplateDebug: {
-                    title: 'Show Template Debug View',
-                    description: 'Show template debug menu on the application deploy/modify page.',
-                    type: 'boolean',
-                    format: 'checkbox'
+                enableIpam: {
+                    title: 'Enable IPAM Support (Experimental/Beta)',
+                    description: 'Enable IPAM features in official F5 FAST templates',
+                    type: 'boolean'
                 },
                 ipamProviders: {
                     title: 'IPAM Providers (Experimental/Beta)',
                     description: 'Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses',
-                    format: 'table',
                     type: 'array',
                     items: {
                         oneOf: this.ipamProviders.getSchemas()
@@ -271,6 +269,8 @@ class FASTWorker {
                 'deletedTemplateSets'
             ]
         };
+
+        baseSchema = fast.guiUtils.modSchemaForJSONEditor(baseSchema);
 
         return merge(this.driver.getSettingsSchema(), baseSchema);
     }
@@ -776,8 +776,13 @@ class FASTWorker {
             });
     }
 
-    getPropsWithChild(schema, childName) {
-        return Object.entries(schema.properties || {})
+    getPropsWithChild(schema, childName, recurse) {
+        const subSchemas = [
+            ...schema.allOf || [],
+            ...schema.oneOf || [],
+            ...schema.anyOf || []
+        ];
+        const props = Object.entries(schema.properties || {})
             .reduce((acc, curr) => {
                 const [key, value] = curr;
                 if (value[childName]) {
@@ -795,6 +800,12 @@ class FASTWorker {
                 }
                 return acc;
             }, {});
+
+        if (recurse) {
+            subSchemas.map(subSchema => Object.assign(props, this.getPropsWithChild(subSchema, childName)));
+        }
+
+        return props;
     }
 
     hydrateSchema(tmpl, requestId, clearCache) {
@@ -888,6 +899,60 @@ class FASTWorker {
                     });
             })))
             .then(() => schema);
+    }
+
+    removeIpamProps(tmpl, requestId) {
+        const subTemplates = [
+            ...tmpl._allOf || [],
+            ...tmpl._oneOf || [],
+            ...tmpl._anyOf || []
+        ];
+
+        if (!this._hydrateCache) {
+            this._hydrateCache = {};
+        }
+
+        return Promise.resolve()
+            .then(() => Promise.all(subTemplates.map(x => this.removeIpamProps(x, requestId))))
+            .then(() => {
+                if (this._hydrateCache.__config) {
+                    return Promise.resolve(this._hydrateCache.__config);
+                }
+
+                return this.getConfig(requestId)
+                    .then((config) => {
+                        this._hydrateCache.__config = config;
+                        return Promise.resolve(config);
+                    });
+            })
+            .then((config) => {
+                if (config.enableIpam) {
+                    return Promise.resolve();
+                }
+
+
+                const schema = tmpl._parametersSchema;
+                const props = schema.properties;
+
+                const ipamProps = Object.keys(props).filter(x => x.endsWith('_ipam'));
+
+                ipamProps.forEach((propName) => {
+                    delete props[propName];
+                });
+
+                if (schema.dependencies) {
+                    Object.entries(schema.dependencies).forEach(([key, value]) => {
+                        value = value.filter(x => !x.endsWith('use_ipam'));
+                        if (value.length === 0) {
+                            delete schema.dependencies[key];
+                        } else {
+                            schema.dependencies[key] = value;
+                        }
+                    });
+                }
+
+                return Promise.resolve();
+            });
     }
 
     convertPoolMembers(reqid, apps) {
@@ -1025,7 +1090,7 @@ class FASTWorker {
                 .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
-                    const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam');
+                    const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam', true);
                     return this.ipamProviders.populateIPAMAddress(ipFromIpamProps, tmplData, config, reqid, ipamAddrs)
                         .then(() => tmpl);
                 })
@@ -1164,6 +1229,14 @@ class FASTWorker {
                     return Promise.resolve()
                         .then(() => this.checkDependencies(tmpl, reqid, true))
                         .then(() => this.hydrateSchema(tmpl, reqid, true))
+                        .then(() => {
+                            // Remove IPAM features in official templates if not enabled
+                            if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
+                                return Promise.resolve();
+                            }
+
+                            return this.removeIpamProps(tmpl, reqid);
+                        })
                         .then(() => {
                             restOperation.setBody(tmpl);
                             this.completeRestOperation(restOperation);

@@ -34,7 +34,6 @@
         <div id="form-div" />
         <div class="divider" />
         <div
-            v-show="showDebug"
             id="debug-panel"
             class="p-1 column col-auto"
         >
@@ -103,7 +102,6 @@ export default {
             title: '',
             description: '',
             backTo: '',
-            showDebug: false,
             debugCollapsed: true,
             debugText: '',
             activeDebugTab: 'Template'
@@ -169,10 +167,6 @@ export default {
             }
 
             return promiseChain
-                .then(() => this.$root.getJSON('settings'))
-                .then((config) => {
-                    this.showDebug = config.showTemplateDebug;
-                })
                 .then(() => this.newEditor(template, parameters, existingApp, this))
                 .catch(e => this.$root.dispOutput(e.message));
         },
@@ -246,55 +240,52 @@ export default {
 
                     editor.on('change', () => {
                         document.getElementById('btn-form-submit').disabled = editor.validation_results.length !== 0;
-                        if (this.showDebug) {
-                            // refresh debug content, ensure default tab selected
-                            this.activeDebugTab = this.activeDebugTab || 'Template';
-                            document.getElementById(`view-${this.activeDebugTab.toLowerCase()}-tab`).click();
-                        }
+                        // refresh debug content, ensure default tab selected
+                        this.activeDebugTab = this.activeDebugTab || 'Template';
+                        document.getElementById(`view-${this.activeDebugTab.toLowerCase()}-tab`).click();
                     });
 
                     // Hook up debug panel
-                    if (this.showDebug) {
-                        const setTabElements = (name, output) => {
-                            this.debugText = output;
-                            this.activeDebugTab = name;
-                        };
-                        document.getElementById('view-template-tab').onclick = () => setTabElements.call(this, 'Template', tmpl.sourceText);
-                        document.getElementById('view-schema-tab').onclick = () => setTabElements.call(this, 'Schema', JSON.stringify(schema, null, 2));
-                        document.getElementById('view-inputs-tab').onclick = () => setTabElements.call(this, 'Inputs',
-                            JSON.stringify(
-                                tmpl.getCombinedParameters(editor.getValue()),
-                                null,
-                                2
-                            ));
-                        document.getElementById('view-rendered-tab').onclick = () => {
-                            let msg;
-                            setTabElements('Rendered', 'Rendering...');
-                            this.$root.safeFetch(`${this.$root.endPointUrl}/render`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    name: tmplid,
-                                    parameters: editor.getValue()
-                                })
+                    const setTabElements = (name, output) => {
+                        this.debugText = output;
+                        this.activeDebugTab = name;
+                    };
+                    document.getElementById('view-template-tab').onclick = () => setTabElements.call(this, 'Template', tmpl.sourceText);
+                    document.getElementById('view-schema-tab').onclick = () => setTabElements.call(this, 'Schema', JSON.stringify(schema, null, 2));
+                    document.getElementById('view-inputs-tab').onclick = () => setTabElements.call(this, 'Inputs',
+                        JSON.stringify(
+                            tmpl.getCombinedParameters(editor.getValue()),
+                            null,
+                            2
+                        ));
+                    document.getElementById('view-rendered-tab').onclick = () => {
+                        let msg;
+                        setTabElements('Rendered', 'Rendering...');
+                        this.$root.safeFetch(`${this.$root.endPointUrl}/render`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                name: tmplid,
+                                parameters: editor.getValue()
                             })
-                                .then(data => JSON.stringify(data.message[0].appDef, null, 2))
-                                .then((rendered) => {
-                                    msg = [
-                                        'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
-                                        'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
-                                        'submit this declaration through FAST.\n\n',
-                                        rendered
-                                    ].join('');
-                                })
-                                .catch((e) => {
-                                    msg = `ERROR: Failed to render template. Details:\n${e.message}`;
-                                })
-                                .finally(() => setTabElements('Rendered', msg));
-                        };
-                    }
+                        })
+                            .then(data => JSON.stringify(data.message[0].appDef, null, 2))
+                            .then((rendered) => {
+                                msg = [
+                                    'WARNING: The below declaration is only for inspection and debug purposes. Submitting the ',
+                                    'below ouput to AS3 directly can result in loss of tenants\nand applications. Please only ',
+                                    'submit this declaration through FAST.\n\n',
+                                    rendered
+                                ].join('');
+                            })
+                            .catch((e) => {
+                                msg = `ERROR: Failed to render template. Details:\n${e.message}`;
+                            })
+                            .finally(() => setTabElements('Rendered', msg));
+                    };
+
                     document.getElementById('btn-form-submit').onclick = () => {
                         const parameters = editor.getValue();
                         const data = {

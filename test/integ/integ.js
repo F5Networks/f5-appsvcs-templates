@@ -300,8 +300,8 @@ describe('Settings', function () {
             data: {
                 deletedTemplateSets: [],
                 ipamProviders: [],
-                disableDeclarationCache: false,
-                showTemplateDebug: false
+                enableIpam: false,
+                disableDeclarationCache: false
             },
             status: 200
         })));
@@ -323,10 +323,10 @@ describe('Settings', function () {
                 apiVersion: '1.2.3',
                 network: 'testnetwork'
             }],
+            enableIpam: false,
             log_afm: false,
             log_asm: false,
-            disableDeclarationCache: false,
-            showTemplateDebug: false
+            disableDeclarationCache: false
         };
         const expected = {
             data: { code: 200, message: '' },
@@ -360,10 +360,10 @@ describe('Settings', function () {
                     enable_telemetry: false,
                     deletedTemplateSets: ['examples'],
                     ipamProviders: [],
+                    enableIpam: false,
                     log_afm: false,
                     log_asm: false,
-                    disableDeclarationCache: false,
-                    showTemplateDebug: false
+                    disableDeclarationCache: false
                 };
                 return endpoint.get(url)
                     .then(res => assertResponse(res, expected));
