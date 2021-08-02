@@ -8,6 +8,7 @@
 ## Fixed
 * bigip-fast-templates: Fix virtual server IP missing on ADFS template unless Certificate Authentication was selected
 * gui: Fix 404 error on BIG-IP 13.1 when loading pages immediately after installation or upgrade
+* gui: Fix 401 Unauthorized Error when idle timeout is longer than default
 
 ## Change
 * gui: Add option to show/hide debug buttons on app create/modify page (hidden by default)
