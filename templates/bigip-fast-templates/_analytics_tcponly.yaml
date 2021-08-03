@@ -16,7 +16,7 @@ definitions:
     default: true
   analytics_existingTcpProfile:
     title: TCP Analytics Profile
-    description: Select an existing TCP Analytcs profile.
+    description: Select an existing TCP Analytics profile.
     type: string
     enumFromBigip: ltm/profile/tcp-analytics
     default: '/Common/tcp-analytics'
