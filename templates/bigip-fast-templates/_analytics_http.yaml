@@ -14,28 +14,12 @@ definitions:
     description: Uncheck to use an existing BIG-IP Analytics profile.
     type: boolean
     default: true
-  use_http_analytics_profile:
-    title: Use HTTP Analytics
-    description: Check to select an existing HTTP Analytics profile to use
-    type: boolean
-    default: true
   analytics_existingHttpProfile:
     title: HTTP Analytics Profile
     description: Select an existing HTTP Analytics profile.
     type: string
     enumFromBigip: ltm/profile/analytics
     default: '/Common/analytics'
-  use_tcp_analytics_profile:
-    title: Use TCP Analytics
-    description: Check to select an existing TCP Analytics profile to use
-    type: boolean
-    default: true
-  analytics_existingTcpProfile:
-    title: TCP Analytics Profile
-    description: Select an existing TCP Analytics profile.
-    type: string
-    enumFromBigip: ltm/profile/tcp-analytics
-    default: '/Common/tcp-analytics'
 template: |
   {
     "{{tenant_name}}": {
@@ -61,34 +45,15 @@ template: |
               "collectSubnet": true,
               "collectUserAgent": true
             },
-            "{{app_name}}_tcp_analytics": {
-              "class": "Analytics_TCP_Profile",
-              "collectedStatsExternalLogging": true,
-              "externalLoggingPublisher": {
-                "bigip": "/Common/default-ipsec-log-publisher"
-              },
-              "collectRemoteHostIp": true,
-              "collectNexthop": true,
-              "collectCity": true,
-              "collectPostCode": true
-            },
             "{{app_name}}": {
-              "profileAnalytics": { "use": "{{app_name}}_analytics" },
-              "profileAnalyticsTcp": {"use": "{{app_name}}_tcp_analytics" }
+              "profileAnalytics": { "use": "{{app_name}}_analytics" }
             }
           {{/make_analytics_profile}}
           {{^make_analytics_profile}}
             "{{app_name}}": {
-              {{#use_http_analytics_profile}}
-                "profileAnalytics": {
-                  "bigip": "{{analytics_existingHttpProfile}}"
-                }{{#use_tcp_analytics_profile}},{{/use_tcp_analytics_profile}}
-              {{/use_http_analytics_profile}}
-              {{#use_tcp_analytics_profile}}
-                "profileAnalyticsTcp": {
-                  "bigip": "{{analytics_existingTcpProfile}}"
-                }
-              {{/use_tcp_analytics_profile}}
+              "profileAnalytics": {
+                "bigip": "{{analytics_existingHttpProfile}}"
+              }
             }
           {{/make_analytics_profile}}
         {{/enable_analytics}}

@@ -15,7 +15,8 @@ allOf:
   - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
-  - $ref: "_analytics.yaml#"
+  - $ref: "_analytics_http.yaml#"
+  - $ref: "_analytics_tcp.yaml#"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_security_dos.yaml#"
   - $ref: "_telemetry.yaml#"

@@ -176,22 +176,6 @@ allOf:
       enable_tls_server:
         type: boolean
         dependencies: []
-      enable_analytics:
-        title: Analytics
-        description: Use Analytics
-        type: boolean
-        default: false
-      make_analytics_profile:
-        title: FAST-Generated Analytics Profiles
-        description: Uncheck to use an existing BIG-IP Analytics profile.
-        type: boolean
-        default: true
-      analytics_existingHttpProfile:
-        title: HTTP Analytics Profile
-        description: Select an existing HTTP Analytcs profile.
-        type: string
-        enumFromBigip: ltm/profile/analytics
-        default: '/Common/analytics'
     template: |
       {
         "{{tenant_name}}": {
@@ -209,51 +193,10 @@ allOf:
                   "use": "{{app_name}}_http"
                 },
                 "clientTLS": "{{app_name}}_tls_client"
-                {{#enable_analytics}}
-                  ,
-                  {{#make_analytics_profile}}
-                    "profileAnalytics": { "use": "{{app_name}}_analytics" }
-                  {{/make_analytics_profile}}
-                  {{^make_analytics_profile}}
-                    "profileAnalytics": {
-                      "bigip": "{{analytics_existingHttpProfile}}"
-                    }
-                  {{/make_analytics_profile}}
-                {{/enable_analytics}}
               },
               "{{app_name}}_tls_client": {
                 "class": "TLS_Client"
               }
-              {{#enable_analytics}}
-                ,
-                {{#make_analytics_profile}}
-                  {{app_name}}_analytics: {
-                    "class": "Analytics_Profile",
-                    "collectedStatsInternalLogging": true,
-                    "collectedStatsExternalLogging": true,
-                    "externalLoggingPublisher": {
-                      "bigip": "/Common/default-ipsec-log-publisher"
-                    },
-                    "capturedTrafficInternalLogging": true,
-                    "notificationBySyslog": true,
-                    "publishIruleStatistics": true,
-                    "collectMaxTpsAndThroughput": true,
-                    "collectPageLoadTime": true,
-                    "collectClientSideStatistics": true,
-                    "collectUserSession": true,
-                    "sessionTimeoutMinutes": 5,
-                    "sessionCookieSecurity": "ssl-only",
-                    "collectUrl": true,
-                    "collectGeo": true,
-                    "collectIp": true,
-                    "collectSubnet": true,
-                    "collectResponseCode": true,
-                    "collectUserAgent": true,
-                    "collectMethod": true,
-                    "collectOsAndBrowser": true
-                  }
-                {{/make_analytics_profile}}
-              {{/enable_analytics}}
             {{/enable_tls_client}}
             {{^enable_tls_client}}
             {{^enable_tls_server}}
@@ -407,6 +350,7 @@ allOf:
       }
 anyOf:
   - {}
+  - $ref: "_analytics_http.yaml#"
   - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "ADFS"
