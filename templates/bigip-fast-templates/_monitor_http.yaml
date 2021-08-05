@@ -4,7 +4,7 @@ bigipHideTemplate: true
 definitions:
   enable_tls_client:
     type: boolean
-    default: false
+    dependencies: []
   enable_pool:
     type: boolean
     default: true
