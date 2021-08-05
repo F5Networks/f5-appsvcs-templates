@@ -252,8 +252,8 @@ class FASTWorker {
                     ].join(' ')
                 },
                 enableIpam: {
-                    title: 'Enable IPAM Support (Experimental/Beta)',
-                    description: 'Enable IPAM features in official F5 FAST templates',
+                    title: 'Enable IPAM for Official F5 FAST Templates (Experimental/Beta)',
+                    description: '**NOTE: An IPAM provider must be configured to deploy a valid application using IPAM.**',
                     type: 'boolean'
                 },
                 ipamProviders: {
