@@ -76,6 +76,15 @@ describe('AS3 Driver tests', function () {
         this.clock.restore();
     });
 
+    const mockAS3 = (body, code) => {
+        code = code || 200;
+        nock(host)
+            .persist()
+            .get(as3ep)
+            .query(true)
+            .reply(code, body);
+    };
+
     it('app_stitching', function () {
         const driver = new AS3Driver();
         const decl = Object.assign({}, as3stub);
@@ -85,19 +94,13 @@ describe('AS3 Driver tests', function () {
     });
     it('get_decl', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
+        mockAS3(as3stub);
 
         return assert.becomes(driver._getDecl(), as3stub);
     });
     it('get_decl_empty_204', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(204, '');
+        mockAS3('', 204);
 
         return assert.becomes(driver._getDecl(), as3stub);
     });
@@ -122,50 +125,30 @@ describe('AS3 Driver tests', function () {
     });
     it('list_app_names_empty', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
+        mockAS3(as3stub);
         return assert.becomes(driver.listApplicationNames(), []);
     });
     it('list_app_names', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3WithApp);
+        mockAS3(as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplicationNames(), [['tenantName', 'appName']]);
     });
     it('list_apps', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3WithApp);
+        mockAS3(as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplications(), [appMetadata]);
     });
     it('get_app', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3WithApp);
+        mockAS3(as3WithApp);
         return assert.becomes(driver.getApplication('tenantName', 'appName'), appMetadata);
     });
     it('create_app', function () {
         const driver = new AS3Driver();
         driver._static_id = 'STATIC';
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
+        mockAS3(as3stub);
 
         nock(host)
             .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
@@ -177,11 +160,7 @@ describe('AS3 Driver tests', function () {
     it('create_app_user_agent', function () {
         const driver = new AS3Driver({ userAgent: 'foo-bar/1.0' });
         driver._static_id = 'STATIC';
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
+        mockAS3(as3stub);
 
         nock(host)
             .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, {
@@ -235,11 +214,8 @@ describe('AS3 Driver tests', function () {
                 }
             }
         };
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
+
+        mockAS3(as3stub);
 
         nock(host)
             .post(`${as3ep}/tenantName,otherTenant`, as3WithMultipleApps)
@@ -286,11 +262,7 @@ describe('AS3 Driver tests', function () {
     });
     it('delete_app', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3WithApp);
+        mockAS3(as3WithApp);
 
         nock(host)
             .persist()
@@ -302,11 +274,7 @@ describe('AS3 Driver tests', function () {
     });
     it('delete_all_apps', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3WithApp);
+        mockAS3(as3WithApp);
 
         nock(host)
             .persist()
@@ -319,10 +287,7 @@ describe('AS3 Driver tests', function () {
     it('create_app_bad', function () {
         const driver = new AS3Driver();
 
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3stub);
+        mockAS3(as3stub);
 
         return assert.isRejected(driver.createApplication(appDef, { class: 'Application' }), /cannot contain the class key/)
             .then(() => assert.isRejected(driver.createApplication({
@@ -357,22 +322,13 @@ describe('AS3 Driver tests', function () {
     });
     it('get_app_bad', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .persist()
-            .get(as3ep)
-            .query(true)
-            .reply(200, as3WithApp);
-
+        mockAS3(as3WithApp);
         return assert.isRejected(driver.getApplication('badTenent', 'appName'), /no tenant found/)
             .then(() => assert.isRejected(driver.getApplication('tenantName', 'badApp'), /could not find app/));
     });
     it('get_app_unmanaged', function () {
         const driver = new AS3Driver();
-        nock(host)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, appDef));
-
+        mockAS3(Object.assign({}, as3stub, appDef));
         return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);
     });
     it('get_empty_tasks', function () {
