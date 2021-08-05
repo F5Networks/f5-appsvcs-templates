@@ -235,7 +235,7 @@ const vueApp = new Vue({
     router,
     mounted() {
         // by default token is 1200s/20min
-        if (auth.timeout > 1200) {
+        if (auth.token && auth.timeout > 1200) {
             const extendToken = () => safeFetch(`/mgmt/shared/authz/tokens/${auth.token}`, {
                 method: 'PATCH',
                 headers: {
