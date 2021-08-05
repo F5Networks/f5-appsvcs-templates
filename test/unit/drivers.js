@@ -361,12 +361,14 @@ describe('AS3 Driver tests', function () {
                         results: [{
                             code: 200,
                             message: 'no change',
-                            tenant: 'other'
+                            tenant: 'other',
+                            host: 'foobar'
                         },
                         {
                             code: 200,
                             message: 'success',
-                            tenant: 'tenantName'
+                            tenant: 'tenantName',
+                            host: 'foobar'
                         }],
                         declaration: Object.assign({}, as3WithApp, {
                             id: `${AS3DriverConstantsKey}%update%tenantName%appName%0-0-0-0-0`,
@@ -395,7 +397,8 @@ describe('AS3 Driver tests', function () {
                 parameters: {},
                 tenant: 'tenantName',
                 operation: 'delete',
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                host: 'localhost'
             },
             {
                 application: 'appName',
@@ -406,7 +409,8 @@ describe('AS3 Driver tests', function () {
                 parameters: appMetadata.view,
                 tenant: 'tenantName',
                 operation: 'update',
-                timestamp: '2021-05-05T17:14:24.794Z'
+                timestamp: '2021-05-05T17:14:24.794Z',
+                host: 'foobar'
             }
         ]);
     });
