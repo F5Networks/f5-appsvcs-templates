@@ -14,7 +14,7 @@ definitions:
     description: Uncheck to use an existing BIG-IP Analytics profile.
     type: boolean
     default: true
-  analytics_existingTcpProfile:
+  analytics_existing_tcp_profile:
     title: TCP Analytics Profile
     description: Select an existing TCP Analytics profile.
     type: string
@@ -44,7 +44,7 @@ template: |
           {{^make_analytics_profile}}
             "{{app_name}}": {
                 "profileAnalyticsTcp": {
-                  "bigip": "{{analytics_existingTcpProfile}}"
+                  "bigip": "{{analytics_existing_tcp_profile}}"
                 }
             }
           {{/make_analytics_profile}}

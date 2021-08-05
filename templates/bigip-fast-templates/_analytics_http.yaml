@@ -14,7 +14,7 @@ definitions:
     description: Uncheck to use an existing BIG-IP Analytics profile.
     type: boolean
     default: true
-  analytics_existingHttpProfile:
+  analytics_existing_http_profile:
     title: HTTP Analytics Profile
     description: Select an existing HTTP Analytics profile.
     type: string
@@ -52,7 +52,7 @@ template: |
           {{^make_analytics_profile}}
             "{{app_name}}": {
               "profileAnalytics": {
-                "bigip": "{{analytics_existingHttpProfile}}"
+                "bigip": "{{analytics_existing_http_profile}}"
               }
             }
           {{/make_analytics_profile}}

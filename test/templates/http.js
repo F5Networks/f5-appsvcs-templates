@@ -337,7 +337,7 @@ describe(template, function () {
             expected.t1.app1.app1.profileAnalytics = { bigip: '/Common/analytics' };
             delete expected.t1.app1.app1_analytics;
             view.use_tcp_analytics_profile = true;
-            view.analytics_existingTcpProfile = '/Common/tcp-analytics';
+            view.analytics_existing_tcp_profile = '/Common/tcp-analytics';
             expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
             delete expected.t1.app1.app1_tcp_analytics;
 
