@@ -114,34 +114,36 @@ function generateApp(workers, options) {
     });
 
     // Create an endpoint to forward remaining requests to BIG-IP
-    const endpoint = axios.create({
-        baseURL: options.bigip.host,
-        auth: {
-            username: options.bigip.user,
-            password: options.bigip.password
-        },
-        maxBodyLength: 'Infinity',
-        httpAgent: new http.Agent({
-            keepAlive: false
-        }),
-        httpsAgent: new https.Agent({
-            rejectUnauthorized: options.bigip.strictCerts,
-            keepAlive: false
-        })
-    });
-    app.all('/*', (req, res, next) => Promise.resolve()
-        .then(() => {
-            console.log(`forwarding request ${req.method}: ${req.url}`);
-        })
-        .then(() => endpoint.request({
-            method: req.method,
-            url: req.url,
-            validateStatus: () => true // pass on failures
-        }))
-        .then(epRsp => res
-            .status(epRsp.status)
-            .send(epRsp.data))
-        .catch(next));
+    if (options.bigip) {
+        const endpoint = axios.create({
+            baseURL: options.bigip.host,
+            auth: {
+                username: options.bigip.user,
+                password: options.bigip.password
+            },
+            maxBodyLength: 'Infinity',
+            httpAgent: new http.Agent({
+                keepAlive: false
+            }),
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: options.bigip.strictCerts,
+                keepAlive: false
+            })
+        });
+        app.all('/*', (req, res, next) => Promise.resolve()
+            .then(() => {
+                console.log(`forwarding request ${req.method}: ${req.url}`);
+            })
+            .then(() => endpoint.request({
+                method: req.method,
+                url: req.url,
+                validateStatus: () => true // pass on failures
+            }))
+            .then(epRsp => res
+                .status(epRsp.status)
+                .send(epRsp.data))
+            .catch(next));
+    }
 
     return Promise.all(workers.map(worker => Promise.resolve()
         .then(() => worker.onStart(
