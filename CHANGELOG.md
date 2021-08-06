@@ -1,3 +1,10 @@
+# 1.12.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.11.0
 ## Added
 * bigip-fast-templates: Add blue-green template modeled after https://github.com/f5devcentral/as3-bluegreen/tree/master/fast
@@ -9,7 +16,7 @@
 * gui: Fix error with missing TLS Client when not using a FAST-Generated pool member
 * gui: Fix 401 Unauthorized Error when idle timeout is longer than default
 
-## Change
+## Changed
 * gui: Change template debug buttons to a menu with window for code output
 * gui: Do not allow overwriting existing applications when creating new ones
 
