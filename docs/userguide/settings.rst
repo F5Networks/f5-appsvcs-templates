@@ -16,6 +16,10 @@ See the `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-te
 IPAM
 ----
 
+| In order to view the IPAM section of the FAST templates, the IPAM enable/disable checkbox must be selected (checked). This option is off by default.
+| 
+| If IPAM is enabled, an IPAM provider **must** be defined to avoid an invalid configuration.
+|
 | Setting up an IPAM provider when deploying FAST Applications. 
 |
 | Currently, we only have builtin support for a *“Generic”* service that attempts to be flexible enough to target any arbitrary IPAM service.
