@@ -184,7 +184,7 @@ allOf:
               "{{app_name}}_http": {
                 "class": "HTTP_Profile",
                 "xForwardedFor": true
-              },        
+              },
               "{{app_name}}": {
                 "class": "Service_HTTPS",
                 "redirect80": false,
@@ -350,6 +350,7 @@ allOf:
       }
 anyOf:
   - {}
+  - $ref: "_analytics.yaml#/http_only"
   - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "ADFS"
