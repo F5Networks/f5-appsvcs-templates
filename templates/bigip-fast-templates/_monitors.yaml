@@ -128,39 +128,39 @@ ldap:
       type: string
       enumFromBigip: ltm/monitor/ldap
       default: /Common/ldap
-  monitor_username:
-    title: User Name
-    description: Set the credentials to be used by the monitor during each health check.
-    type: string
-    default: ''
-  monitor_passphrase:
-    title: Password
-    type: string
-    format: password
-    contentEncoding: base64
-    minLength: 2
-  monitor_ldap_base:
-    title: Directory Level
-    description: Enter the directory level to be searched in the health check.
-    type: string
-    default: ''
-  monitor_filter:
-    title: Search Query
-    description: Enter the search query to be used in the health check.
-    type: string
-    default: ''
-  monitor_partial_type:
-    template: >-
-      "monitorType": "ldap",
-  monitor_partial_type_specifics:
-    template: >-
-      "username": "{{monitor_username}}",
-      "passphrase": {
-        "ciphertext": "{{monitor_passphrase}}",
-        "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
-      },
-      "base": "{{monitor_ldap_base}}",
-      "filter": "{{monitor_filter}}"
+    monitor_username:
+      title: User Name
+      description: Set the credentials to be used by the monitor during each health check.
+      type: string
+      default: ''
+    monitor_passphrase:
+      title: Password
+      type: string
+      format: password
+      contentEncoding: base64
+      minLength: 2
+    monitor_ldap_base:
+      title: Directory Level
+      description: Enter the directory level to be searched in the health check.
+      type: string
+      default: ''
+    monitor_filter:
+      title: Search Query
+      description: Enter the search query to be used in the health check.
+      type: string
+      default: ''
+    monitor_partial_type:
+      template: >-
+        "monitorType": "ldap",
+    monitor_partial_type_specifics:
+      template: >-
+        "username": "{{monitor_username}}",
+        "passphrase": {
+          "ciphertext": "{{monitor_passphrase}}",
+          "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+        },
+        "base": "{{monitor_ldap_base}}",
+        "filter": "{{monitor_filter}}"
   template: |
     {{> monitor_partial_template}}
 
@@ -204,65 +204,65 @@ http:
       description: The presence of this string anywhere in the HTTP response implies availability.
       type: string
       default: ''
-  monitor_partial_type:
-    template: >-
-      {{#enable_tls_client}}
-        "monitorType": "https",
-      {{/enable_tls_client}}
-      {{^enable_tls_client}}
-        "monitorType": "http",
-      {{/enable_tls_client}}
-  monitor_partial_type_specifics:
-    template: >-
-      {{#monitor_credentials}}
-        "username": "{{monitor_username}}",
-        "passphrase": {
-          "ciphertext": "{{monitor_passphrase}}",
-          "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
-        },
-      {{/monitor_credentials}}
-      "send": "{{monitor_send_string}}",
-      "receive": "{{monitor_receive}}"
+    monitor_partial_type:
+      template: >-
+        {{#enable_tls_client}}
+          "monitorType": "https",
+        {{/enable_tls_client}}
+        {{^enable_tls_client}}
+          "monitorType": "http",
+        {{/enable_tls_client}}
+    monitor_partial_type_specifics:
+      template: >-
+        {{#monitor_credentials}}
+          "username": "{{monitor_username}}",
+          "passphrase": {
+            "ciphertext": "{{monitor_passphrase}}",
+            "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
+          },
+        {{/monitor_credentials}}
+        "send": "{{monitor_send_string}}",
+        "receive": "{{monitor_receive}}"
   template: |
     {{> monitor_partial_template}}
 
 dns:
   definitions: 
     <<: *monitor_base
-  monitor_name:
-    title: Monitor
-    description: Select an existing BIG-IP pool monitor. Monitors are used to determine the health of the application on each
-      server. If an application instance does not respond or responds incorrectly, the
-      system will cease to send client requests to that web server. The system will
-      continue to monitor the instance and will begin sending requests once the application responds correctly.
-    type: string
-    enumFromBigip: ltm/monitor/dns
-    default: /Common/dns
-  monitor_queryName:
-    title: Host Name
-    description: Enter the host name for the DNS request (queryName).
-    type: string
-    default: ''
-  monitor_queryType:
-    title: Record Type
-    description: Select the DNS record type (queryType).
-    type: string
-    enum:
-      - 'a'
-      - 'aaaa'
-    default: 'a'
-  monitor_receive:
-    title: Expected Response
-    description: Specify the IP address that is expected to be returned when the pool member is polled.
-    type: string
-    default: ''
-  monitor_partial_type:
-    template: >-
-      "monitorType": "dns",
-  monitor_partial_type_specifics:
-    template: >-
-      "queryName": "{{monitor_queryName}}",
-      "queryType": "{{monitor_queryType}}",
-      "receive": "{{monitor_receive}}"
+    monitor_name:
+      title: Monitor
+      description: Select an existing BIG-IP pool monitor. Monitors are used to determine the health of the application on each
+        server. If an application instance does not respond or responds incorrectly, the
+        system will cease to send client requests to that web server. The system will
+        continue to monitor the instance and will begin sending requests once the application responds correctly.
+      type: string
+      enumFromBigip: ltm/monitor/dns
+      default: /Common/dns
+    monitor_queryName:
+      title: Host Name
+      description: Enter the host name for the DNS request (queryName).
+      type: string
+      default: ''
+    monitor_queryType:
+      title: Record Type
+      description: Select the DNS record type (queryType).
+      type: string
+      enum:
+        - 'a'
+        - 'aaaa'
+      default: 'a'
+    monitor_receive:
+      title: Expected Response
+      description: Specify the IP address that is expected to be returned when the pool member is polled.
+      type: string
+      default: ''
+    monitor_partial_type:
+      template: >-
+        "monitorType": "dns",
+    monitor_partial_type_specifics:
+      template: >-
+        "queryName": "{{monitor_queryName}}",
+        "queryType": "{{monitor_queryType}}",
+        "receive": "{{monitor_receive}}"
   template: |
     {{> monitor_partial_template}}
