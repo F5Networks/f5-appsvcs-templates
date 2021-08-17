@@ -57,7 +57,7 @@ const view = {
     snat_addresses: ['10.3.1.1', '10.3.1.2'],
 
     // irule
-    tcp_irule_names: ['example_tcp_irule'],
+    irule_names: ['example_tcp_irule'],
     udp_irule_names: ['example_udp_irule'],
 
     // firewall

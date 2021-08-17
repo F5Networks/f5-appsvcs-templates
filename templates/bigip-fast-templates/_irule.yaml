@@ -1,16 +1,19 @@
 title: iRule
 contentType: application/json
 bigipHideTemplate: true
-definitions:
-  irule_names:
-    title: iRules
-    description: Hold the *control* key to select or deselect multiple iRules to attach to the TCP virtual server.
-    type: array
-    uniqueItems: true
-    items:
-      type: string
-      enumFromBigip: ltm/rule
-    default: []
+irule_base:
+  definitions: &irule_base
+    irule_names:
+      title: iRules
+      description: Hold the *control* key to select or deselect multiple iRules to attach to the virtual server.
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+        enumFromBigip: ltm/rule
+      default: []
+
+definitions: *irule_base
 template: |
   {
     "{{tenant_name}}": {
@@ -18,10 +21,53 @@ template: |
         "{{app_name}}": {
           "iRules": [
             {{#irule_names}}
-            { "bigip": {{ . }} },
+              { "bigip": {{ . }} },
             {{/irule_names}}
           ]
         }
       }
     }
   }
+
+dns:
+  definitions: 
+    <<: *irule_base
+    irule_names:
+      title: TCP iRules
+      description: Hold the *control* key to select or deselect multiple iRules to attach to the TCP virtual server.
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+        enumFromBigip: ltm/rule
+      default: []
+    udp_irule_names:
+      title: UDP iRules
+      description: Hold the *control* key to select or deselect multiple iRules to attach to the UDP virtual server.
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+        enumFromBigip: ltm/rule
+      default: []
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          "{{app_name}}_tcp": {
+            "iRules": [
+              {{#irule_names}}
+              { "bigip": {{ . }} },
+              {{/irule_names}}
+            ]
+          },
+          "{{app_name}}_udp": {
+            "iRules": [
+              {{#udp_irule_names}}
+              { "bigip": {{ . }} },
+              {{/udp_irule_names}}
+            ]
+          }
+        }
+      }
+    }
