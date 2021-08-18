@@ -2,6 +2,7 @@
 ## Added
 
 ## Fixed
+* bigip-fast-templates: Fix pool members missing on ADFS template unless Certificate Authentication was selected
 
 ## Changed
 
