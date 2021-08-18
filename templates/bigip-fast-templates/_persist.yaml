@@ -42,7 +42,9 @@ template: |
         "{{app_name}}": {
           {{#enable_persistence}}
             {{#use_existing_persistence_profile}}
-              "persistenceMethods": [{{persistence_profile}}],
+              "persistenceMethods": [
+                {"bigip": {{persistence_profile}} }
+              ],
             {{/use_existing_persistence_profile}}
             {{^use_existing_persistence_profile}}
               "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
