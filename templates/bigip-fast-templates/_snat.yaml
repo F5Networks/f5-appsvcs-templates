@@ -87,6 +87,7 @@ snat_base:
             }
           }
         }
+
 definitions: *snat_base
 template: |
   {{> snat_partial_template}}
