@@ -91,6 +91,7 @@ smtp:
       description: Specify the domain name for the SMTP server to accept mail.
       type: string
       format: hostname
+      default: ''
     monitor_username:
       title: Username
       type: string
@@ -139,6 +140,7 @@ ldap:
       format: password
       contentEncoding: base64
       minLength: 2
+      default: ''
     monitor_ldap_base:
       title: Directory Level
       description: Enter the directory level to be searched in the health check.
