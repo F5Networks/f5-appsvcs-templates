@@ -244,6 +244,7 @@ dns:
       title: Host Name
       description: Enter the host name for the DNS request (queryName).
       type: string
+      minLength: 1
       default: ''
     monitor_queryType:
       title: Record Type
