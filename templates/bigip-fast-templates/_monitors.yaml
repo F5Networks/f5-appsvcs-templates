@@ -141,7 +141,7 @@ ldap:
       contentEncoding: base64
       minLength: 2
       default: ''
-    monitor_ldap_base:
+    monitor_base:
       title: Directory Level
       description: Enter the directory level to be searched in the health check.
       type: string
@@ -161,7 +161,7 @@ ldap:
           "ciphertext": "{{monitor_passphrase}}",
           "protected": "eyJhbGciOiJkaXIiLCJlbmMiOiJub25lIn0"
         },
-        "base": "{{monitor_ldap_base}}",
+        "base": "{{monitor_base}}",
         "filter": "{{monitor_filter}}"
   template: |
     {{> monitor_partial_template}}
