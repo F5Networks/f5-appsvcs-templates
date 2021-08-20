@@ -6,7 +6,6 @@ bigipDependencies:
 analytics_base: &analytics_base
   title: Analytics
   contentType: application/json
-  bigipHideTemplate: true
   bigipDependencies: 
     - avr
   definitions: &analytics_base_def
@@ -130,15 +129,15 @@ analytics_base: &analytics_base
       enumFromBigip: ltm/profile/tcp-analytics
       default: '/Common/tcp-analytics'
       
-http_only: *analytics_base
-  definitions: 
+http_only: 
+  <<: *analytics_base
+  definitions:
     <<: *analytics_base_def
     analytics_existing_http_profile: *existing_analytics_http
   template: |
     {{> http_partial_tcp_analytics}}
-
-http: *analytics_base
-  definitions: 
+http:
+  definitions:
     <<: *analytics_base_def
     use_existing_analytics_http_profile: *use_existing_analytics_http
     analytics_existing_http_profile: *existing_analytics_http
@@ -155,15 +154,13 @@ http: *analytics_base
         {{/make_analytics_profile}}
   template: |
     {{> http_partial_tcp_analytics}}
-
-tcp_only: *analytics_base
+tcp_only:
   definitions: 
     <<: *analytics_base_def
     analytics_existing_tcp_profile: *existing_analytics_tcp
   template: |
     {{> tcp_partial_template_analytics}}
-
-tcp: *analytics_base
+tcp:
   definitions: 
     <<: *analytics_base_def
     use_existing_analytics_tcp_profile: *use_existing_analytics_tcp
@@ -181,8 +178,7 @@ tcp: *analytics_base
         {{/make_analytics_profile}}
   template: |
     {{> tcp_partial_template_analytics}}
-
-dns: *analytics_base
+dns:
   definitions: 
     <<: *analytics_base_def
     analytics_existing_tcp_profile: *existing_analytics_tcp
