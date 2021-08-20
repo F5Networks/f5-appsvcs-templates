@@ -136,7 +136,9 @@ http_only:
     analytics_existing_http_profile: *existing_analytics_http
   template: |
     {{> http_partial_tcp_analytics}}
+
 http:
+  <<: *analytics_base
   definitions:
     <<: *analytics_base_def
     use_existing_analytics_http_profile: *use_existing_analytics_http
@@ -154,13 +156,17 @@ http:
         {{/make_analytics_profile}}
   template: |
     {{> http_partial_tcp_analytics}}
+
 tcp_only:
+  <<: *analytics_base
   definitions: 
     <<: *analytics_base_def
     analytics_existing_tcp_profile: *existing_analytics_tcp
   template: |
     {{> tcp_partial_template_analytics}}
+
 tcp:
+  <<: *analytics_base
   definitions: 
     <<: *analytics_base_def
     use_existing_analytics_tcp_profile: *use_existing_analytics_tcp
@@ -178,7 +184,9 @@ tcp:
         {{/make_analytics_profile}}
   template: |
     {{> tcp_partial_template_analytics}}
+
 dns:
+  <<: *analytics_base
   definitions: 
     <<: *analytics_base_def
     analytics_existing_tcp_profile: *existing_analytics_tcp
