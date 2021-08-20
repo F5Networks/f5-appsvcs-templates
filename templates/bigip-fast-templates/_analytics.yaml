@@ -3,8 +3,13 @@ contentType: application/json
 bigipHideTemplate: true
 bigipDependencies: 
   - avr
-analytics_base: 
-  definitions: &analytics_base
+analytics_base: &analytics_base
+  title: Analytics
+  contentType: application/json
+  bigipHideTemplate: true
+  bigipDependencies: 
+    - avr
+  definitions: &analytics_base_def
     enable_analytics:
       title: Analytics
       description: Use Analytics
@@ -124,15 +129,17 @@ analytics_base:
       type: string
       enumFromBigip: ltm/profile/tcp-analytics
       default: '/Common/tcp-analytics'
-http_only:
-  definitions:
-    <<: *analytics_base
+      
+http_only: *analytics_base
+  definitions: 
+    <<: *analytics_base_def
     analytics_existing_http_profile: *existing_analytics_http
   template: |
     {{> http_partial_tcp_analytics}}
-http:
-  definitions:
-    <<: *analytics_base
+
+http: *analytics_base
+  definitions: 
+    <<: *analytics_base_def
     use_existing_analytics_http_profile: *use_existing_analytics_http
     analytics_existing_http_profile: *existing_analytics_http
     http_partial_existing_tcp_analytics:
@@ -148,15 +155,17 @@ http:
         {{/make_analytics_profile}}
   template: |
     {{> http_partial_tcp_analytics}}
-tcp_only:
+
+tcp_only: *analytics_base
   definitions: 
-    <<: *analytics_base
+    <<: *analytics_base_def
     analytics_existing_tcp_profile: *existing_analytics_tcp
   template: |
     {{> tcp_partial_template_analytics}}
-tcp:
+
+tcp: *analytics_base
   definitions: 
-    <<: *analytics_base
+    <<: *analytics_base_def
     use_existing_analytics_tcp_profile: *use_existing_analytics_tcp
     analytics_existing_tcp_profile: *existing_analytics_tcp
     tcp_partial_existing_tcp_analytics:
@@ -172,9 +181,10 @@ tcp:
         {{/make_analytics_profile}}
   template: |
     {{> tcp_partial_template_analytics}}
-dns:
+
+dns: *analytics_base
   definitions: 
-    <<: *analytics_base
+    <<: *analytics_base_def
     analytics_existing_tcp_profile: *existing_analytics_tcp
     analytics_partial_vs_name:
       template: >-
