@@ -19,7 +19,7 @@ analytics_base:
       template: >-
         {{app_name}}
     http_partial_existing_analytics:
-      template: >-
+      template: |
         {{^make_analytics_profile}}
           "{{> analytics_partial_vs_name}}": {
             "profileAnalytics": {
@@ -28,7 +28,7 @@ analytics_base:
           }
         {{/make_analytics_profile}}
     http_partial_tcp_analytics:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -63,7 +63,7 @@ analytics_base:
           }
         }
     tcp_partial_existing_tcp_analytics:
-      template: >-
+      template: |
         {{^make_analytics_profile}}
           "{{> analytics_partial_vs_name}}": {
             "profileAnalyticsTcp": {
@@ -72,7 +72,7 @@ analytics_base:
           }
         {{/make_analytics_profile}}
     tcp_partial_template_analytics:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -136,7 +136,7 @@ http:
     use_existing_analytics_http_profile: *use_existing_analytics_http
     analytics_existing_http_profile: *existing_analytics_http
     http_partial_existing_tcp_analytics:
-      template: >-
+      template: |
         {{^make_analytics_profile}}
           {{#use_existing_analytics_http_profile}}
             "{{> analytics_partial_vs_name}}": {
@@ -160,7 +160,7 @@ tcp:
     use_existing_analytics_tcp_profile: *use_existing_analytics_tcp
     analytics_existing_tcp_profile: *existing_analytics_tcp
     tcp_partial_existing_tcp_analytics:
-      template: >-
+      template: |
         {{^make_analytics_profile}}
           {{#use_existing_analytics_tcp_profile}}
             "{{> analytics_partial_vs_name}}": {
