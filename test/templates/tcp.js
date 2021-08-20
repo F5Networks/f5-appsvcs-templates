@@ -130,9 +130,9 @@ const expected = {
             app1_monitor: {
                 class: 'Monitor',
                 monitorType: 'tcp',
-                "interval": 30,
-                "timeout": 91,
-                "receive": ""
+                interval: 30,
+                timeout: 91,
+                receive: ''
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
@@ -203,7 +203,7 @@ describe(template, function () {
             view.make_monitor = false;
             view.monitor_name = '/Common/monitor1';
             expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
-            delete expected.t1.app1.app1_monitor
+            delete expected.t1.app1.app1_monitor;
 
             // no firewall
             view.enable_firewall = false;
@@ -228,7 +228,7 @@ describe(template, function () {
             view.make_pool = false;
             view.pool_name = '/Common/pool1';
             delete expected.t1.app1.app1_pool;
-            delete expected.t1.app1.app1_monitor
+            delete expected.t1.app1.app1_monitor;
             expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
 
             // snat automap
