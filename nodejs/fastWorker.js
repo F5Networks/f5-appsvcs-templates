@@ -567,7 +567,22 @@ class FASTWorker {
     gatherTemplateSet(tsid) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
-                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined))),
+                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
+                .then((tsData) => {
+                    if (tsData) {
+                        return Promise.resolve(tsData);
+                    }
+
+                    return Promise.resolve()
+                        .then(() => this.fsTemplateProvider.hasSet(tsid))
+                        .then(result => (result ? this.fsTemplateProvider.getSetData(tsid) : undefined))
+                        .then((fsTsData) => {
+                            if (fsTsData) {
+                                fsTsData.enabled = false;
+                            }
+                            return fsTsData;
+                        });
+                }),
             this.driver.listApplications()
         ])
             .then(([tsData, appsList]) => {
@@ -575,7 +590,9 @@ class FASTWorker {
                     return Promise.reject(new Error(`Template set ${tsid} does not exist`));
                 }
 
-                tsData.enabled = true;
+                if (typeof tsData.enabled === 'undefined') {
+                    tsData.enabled = true;
+                }
                 tsData.templates.forEach((tmpl) => {
                     tmpl.appsList = appsList
                         .filter(x => x.template === tmpl.name)
