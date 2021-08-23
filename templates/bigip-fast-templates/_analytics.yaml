@@ -1,8 +1,5 @@
-title: Analytics
-contentType: application/json
 bigipHideTemplate: true
-bigipDependencies: 
-  - avr
+
 analytics_base: &analytics_base
   title: Analytics
   contentType: application/json
@@ -31,7 +28,7 @@ analytics_base: &analytics_base
             }
           }
         {{/make_analytics_profile}}
-    http_partial_tcp_analytics:
+    http_partial_template_analytics:
       template: |
         {
           "{{tenant_name}}": {
@@ -66,7 +63,7 @@ analytics_base: &analytics_base
             }
           }
         }
-    tcp_partial_existing_tcp_analytics:
+    tcp_partial_existing_analytics:
       template: |
         {{^make_analytics_profile}}
           "{{> analytics_partial_vs_name}}": {
@@ -99,7 +96,7 @@ analytics_base: &analytics_base
                     }
                   }
                 {{/make_analytics_profile}}
-                {{> tcp_partial_existing_tcp_analytics}}
+                {{> tcp_partial_existing_analytics}}
               {{/enable_analytics}}
             }
           }
@@ -135,7 +132,7 @@ http_only:
     <<: *analytics_base_def
     analytics_existing_http_profile: *existing_analytics_http
   template: |
-    {{> http_partial_tcp_analytics}}
+    {{> http_partial_template_analytics}}
 
 http:
   <<: *analytics_base
@@ -143,7 +140,7 @@ http:
     <<: *analytics_base_def
     use_existing_analytics_http_profile: *use_existing_analytics_http
     analytics_existing_http_profile: *existing_analytics_http
-    http_partial_existing_tcp_analytics:
+    http_partial_existing_analytics:
       template: |
         {{^make_analytics_profile}}
           {{#use_existing_analytics_http_profile}}
@@ -155,7 +152,7 @@ http:
           {{/use_existing_analytics_http_profile}}
         {{/make_analytics_profile}}
   template: |
-    {{> http_partial_tcp_analytics}}
+    {{> http_partial_template_analytics}}
 
 tcp_only:
   <<: *analytics_base
@@ -171,7 +168,7 @@ tcp:
     <<: *analytics_base_def
     use_existing_analytics_tcp_profile: *use_existing_analytics_tcp
     analytics_existing_tcp_profile: *existing_analytics_tcp
-    tcp_partial_existing_tcp_analytics:
+    tcp_partial_existing_analytics:
       template: |
         {{^make_analytics_profile}}
           {{#use_existing_analytics_tcp_profile}}

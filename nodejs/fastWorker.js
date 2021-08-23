@@ -86,7 +86,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '34fc6e145c98af2a0da6664049d68b4fa9a05d15c1c8b80eab8bfe2ef02674e0', // 1.11
+        '3214ad14094d002321d469f2d797bf6aa9470464745c1c8c2838d8ddd68efbaa', // 1.11
         '64d9692bdab5f1e2ba835700df4d719662b9976b9ff094fe7879f74d411fe00b', // 1.10
         '89f6d8fb68435c93748de3f175f208714dcbd75de37d9286a923656971c939f0', // v1.9
         'fbaee3fd9ecce14a2d90df8c155998749b49126e0eb80267e9b426c58677a164', // v1.8.1
