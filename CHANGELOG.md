@@ -7,6 +7,7 @@
 * Fix errors when deleting builtin template sets
 
 ## Changed
+* gui: Stop showing appended userAgent query parameter on URIs for error messages
 
 # 1.11.0
 ## Added
