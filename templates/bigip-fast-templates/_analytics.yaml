@@ -103,25 +103,23 @@ analytics_base: &analytics_base
         }
   http:
     use_existing_analytics_http_profile: &use_existing_analytics_http
-      title: Use HTTP Analytics Profile
-      description: Select existing HTTP Analytics profile from those available on the BIG-IP
+      title: Use HTTP Analytics
       type: boolean
       default: true
     analytics_existing_http_profile: &existing_analytics_http
-      title: HTTP Analytics Profile
-      description: Select an existing HTTP Analytics profile.
+      title: Existing HTTP Analytics Profiles
+      description: Select existing HTTP Analytics profile from those available on the BIG-IP
       type: string
       enumFromBigip: ltm/profile/analytics
       default: '/Common/analytics'
   tcp:
     use_existing_analytics_tcp_profile: &use_existing_analytics_tcp
-      title: Use TCP Analytics Profile
-      description: Select existing TCP Analytics profile from those available on the BIG-IP
+      title: Use TCP Analytics
       type: boolean
       default: true
     analytics_existing_tcp_profile: &existing_analytics_tcp
-      title: TCP Analytics Profile
-      description: Select an existing TCP Analytics profile.
+      title: Existing TCP Analytics Profiles
+      description: Select existing TCP Analytics profile from those available on the BIG-IP
       type: string
       enumFromBigip: ltm/profile/tcp-analytics
       default: '/Common/tcp-analytics'
