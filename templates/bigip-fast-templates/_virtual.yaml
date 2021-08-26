@@ -1,7 +1,8 @@
-contentType: application/json
 bigipHideTemplate: true
-virtual_base:
-  definitions: &virtual_base
+
+virtual_base: &virtual_base
+  contentType: application/json
+  definitions: &virtual_base_def
     use_ipam:
       title: Use IPAM Provider
       description: Use an IP Address Management service to get an IP address
@@ -24,7 +25,7 @@ virtual_base:
       title: Virtual Server Port
       default: 443
 
-definitions: *virtual_base
+<<: *virtual_base
 template: |
         {
           "{{tenant_name}}": {
@@ -45,8 +46,9 @@ template: |
         }
 
 dns:
+  <<: *virtual_base
   definitions: 
-    <<: *virtual_base
+    <<: *virtual_base_def
     virtual_port:
       title: Virtual Server Port
       default: 53

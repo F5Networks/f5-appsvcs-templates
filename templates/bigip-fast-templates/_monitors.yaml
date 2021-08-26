@@ -1,8 +1,9 @@
-title: Pool Monitor
-contentType: application/json
 bigipHideTemplate: true
-monitor_base:
-  definitions: &monitor_base
+
+monitor_base: &monitor_base
+  title: Pool Monitor
+  contentType: application/json
+  definitions: &monitor_base_def
     enable_pool:
       type: boolean
       default: true
@@ -43,7 +44,7 @@ monitor_base:
       template: >-
         "receive": ""
     monitor_partial_template:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -79,13 +80,14 @@ monitor_base:
         }
 
 tcp:
-  definitions: *monitor_base
+  <<: *monitor_base
   template: |
     {{> monitor_partial_template}}
 
 smtp:
+  <<: *monitor_base
   definitions: 
-    <<: *monitor_base
+    <<: *monitor_base_def
     monitor_domain:
       title: Domain Name
       description: Specify the domain name for the SMTP server to accept mail.
@@ -107,7 +109,7 @@ smtp:
       template: >-
         "monitorType": "smtp",
     monitor_partial_type_specifics:
-      template: >-
+      template: |
         "domain": "{{monitor_domain}}",
         "username": "{{monitor_username}}",
         "passphrase": {
@@ -118,8 +120,9 @@ smtp:
     {{> monitor_partial_template}}
 
 ldap:
+  <<: *monitor_base
   definitions: 
-    <<: *monitor_base
+    <<: *monitor_base_def
     monitor_name:
       title: Monitor
       description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine the health of the application on each
@@ -155,7 +158,7 @@ ldap:
       template: >-
         "monitorType": "ldap",
     monitor_partial_type_specifics:
-      template: >-
+      template: |
         "username": "{{monitor_username}}",
         "passphrase": {
           "ciphertext": "{{monitor_passphrase}}",
@@ -167,8 +170,9 @@ ldap:
     {{> monitor_partial_template}}
 
 http:
+  <<: *monitor_base
   definitions: 
-    <<: *monitor_base
+    <<: *monitor_base_def
     enable_tls_client:
       type: boolean
       dependencies: []
@@ -207,7 +211,7 @@ http:
       type: string
       default: ''
     monitor_partial_type:
-      template: >-
+      template: |
         {{#enable_tls_client}}
           "monitorType": "https",
         {{/enable_tls_client}}
@@ -215,7 +219,7 @@ http:
           "monitorType": "http",
         {{/enable_tls_client}}
     monitor_partial_type_specifics:
-      template: >-
+      template: |
         {{#monitor_credentials}}
           "username": "{{monitor_username}}",
           "passphrase": {
@@ -229,8 +233,9 @@ http:
     {{> monitor_partial_template}}
 
 dns:
+  <<: *monitor_base
   definitions: 
-    <<: *monitor_base
+    <<: *monitor_base_def
     monitor_name:
       title: Monitor
       description: Select an existing BIG-IP pool monitor. Monitors are used to determine the health of the application on each
@@ -263,7 +268,7 @@ dns:
       template: >-
         "monitorType": "dns",
     monitor_partial_type_specifics:
-      template: >-
+      template: |
         "queryName": "{{monitor_queryName}}",
         "queryType": "{{monitor_queryType}}",
         "receive": "{{monitor_receive}}"

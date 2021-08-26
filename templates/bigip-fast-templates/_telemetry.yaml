@@ -1,23 +1,26 @@
-title: Telemetry
-contentType: application/json
 bigipHideTemplate: true
-bigipDependencies:
-  - ts
-ts_base: 
-  definitions: &ts_base
+
+ts_base: &ts_base
+  title: Telemetry
+  contentType: application/json
+  bigipDependencies:
+    - ts
+    - asm
+    - afm
+  definitions: &ts_base_def
     enable_telemetry:
       title: Forward logs to Telemetry Streaming
       type: boolean
       default: false
     ts_partial_vs:
-      template: >-
+      template: |
         "{{app_name}}": {
           "profileTrafficLog": {
             "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
           }
         }
     ts_partial_template:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -37,14 +40,14 @@ asm: &ts_asm
     enable_telemetry:
       type: boolean
     ts_partial_asm_vs:
-      template: >-
+      template: |
         "{{app_name}}": {
           "securityLogProfiles": [
             { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
           ]
         }
     ts_partial_asm_template:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -65,14 +68,14 @@ afm: &ts_afm
     enable_telemetry:
       type: boolean
     ts_partial_afm_vs:
-      template: >-
+      template: |
         "{{app_name}}": {
           "securityLogProfiles": [
             { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
           ]
         }
     ts_partial_afm_template:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -83,7 +86,7 @@ afm: &ts_afm
           }
         }
 
-definitions: *ts_base
+<<: *ts_base
 anyOf:
   - {}
   - <<: *ts_asm
@@ -95,27 +98,37 @@ anyOf:
 template: |
     {{> ts_partial_template}}
 
-dns:
-  title: Telemetry
-  contentType: application/json
-  bigipHideTemplate: true
-  bigipDependencies:
-    - ts
+dns: 
+  <<: *ts_base
+  definitions: 
+    <<: *ts_base_def
+    ts_partial_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "profileTrafficLog": {
+            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
+          }
+        },
+        "{{app_name}}_udp": {
+          "profileTrafficLog": {
+            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
+          }
+        }
   anyOf:
     - {}
     - <<: *ts_asm
       definitions: 
         <<: *ts_asm_def
         ts_partial_asm_vs:
-          template: >-
+          template: |
             "{{app_name}}_tcp": {
               "securityLogProfiles": [
-                { "use": "fast_telemetry_asm_security_log_profile" }
+                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
               ]
             },
             "{{app_name}}_udp": {
               "securityLogProfiles": [
-                { "use": "fast_telemetry_asm_security_log_profile" }
+                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
               ]
             }
       template: |
@@ -124,32 +137,18 @@ dns:
       definitions: 
         <<: *ts_afm_def
         ts_partial_afm_vs:
-          template: >-
+          template: |
             "{{app_name}}_tcp": {
               "securityLogProfiles": [
-                { "use": "fast_telemetry_afm_security_log_profile" }
+                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
               ]
             },
             "{{app_name}}_udp": {
               "securityLogProfiles": [
-                { "use": "fast_telemetry_afm_security_log_profile" }
+                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
               ]
             }
       template: |
         {{> ts_partial_afm_template}}
-  definitions: 
-    <<: *ts_base
-    ts_partial_vs:
-      template: >-
-        "{{app_name}}_tcp": {
-          "profileTrafficLog": {
-            "use": "fast_telemetry_traffic_log_profile"
-          }
-        },
-        "{{app_name}}_udp": {
-          "profileTrafficLog": {
-            "use": "fast_telemetry_traffic_log_profile"
-          }
-        }
   template: |
       {{> ts_partial_template}}

@@ -1,10 +1,11 @@
-title: Security Firewall
-contentType: application/json
 bigipHideTemplate: true
-bigipDependencies:
-  - afm
-fw_base:
-  definitions: &fw_base
+
+fw_base: &fw_base
+  title: Security Firewall
+  contentType: application/json
+  bigipDependencies:
+    - afm
+  definitions: &fw_base_def
     enable_firewall:
       title: Firewall
       type: boolean
@@ -27,7 +28,7 @@ fw_base:
         enumFromBigip: security/log/profile
       default: []
     fw_partial_rules:
-      template: >-
+      template: |s
         {
           "protocol": "tcp",
           "name": "acceptTcpPackets",
@@ -55,7 +56,7 @@ fw_base:
           "action": "drop"
         }
     fw_partial_vs:
-      template: >-
+      template: |
         "{{app_name}}": {
           "policyFirewallEnforced": {
             "use": "{{app_name}}_fw_policy"
@@ -67,7 +68,7 @@ fw_base:
           ]
         }
     fw_partial_template:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -100,8 +101,9 @@ fw_base:
           }
         }
 
+<<: *fw_base
 definitions: 
-  <<: *fw_base
+  <<: *fw_base_def
   enable_firewall_staging_policy:
     title: Staging Policy
     type: boolean
@@ -122,7 +124,7 @@ definitions:
       enumFromBigip: security/log/profile
     default: []
   fw_partial_vs:
-    template: >-
+    template: |
       "{{app_name}}": {
         "policyFirewallEnforced": {
           "use": "{{app_name}}_fw_policy"
@@ -142,8 +144,9 @@ template: |
   {{> fw_partial_template}}
 
 dns:
+  <<: *fw_base
   definitions:
-    <<: *fw_base
+    <<: *fw_base_def
     firewall_allow_list:
       title: Allowed Networks
       description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
@@ -153,7 +156,7 @@ dns:
         type: string
       default: []
     fw_partial_rules:
-      template: >-
+      template: |
         {
           "protocol": "udp",
           "name": "acceptUdpPackets",
@@ -194,7 +197,7 @@ dns:
           "action": "drop"
         }
     fw_partial_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "policyFirewallEnforced": {
             "use": "{{app_name}}_fw_policy"

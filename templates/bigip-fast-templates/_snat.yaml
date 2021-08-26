@@ -1,8 +1,9 @@
-title: SNAT
-contentType: application/json
 bigipHideTemplate: true
-snat_base:
-  definitions: &snat_base
+
+snat_base: &snat_base
+  title: SNAT
+  contentType: application/json
+  definitions: &snat_base_def
     enable_snat:
       title: SNAT
       description: "*Secure Network Address Translation* maps the source client IP address
@@ -34,31 +35,31 @@ snat_base:
         type: string
         default: '10.0.1.2'
     snat_partial_automap_vs: 
-      template: >-
+      template: |
         "{{app_name}}": {
           "snat": "auto"
         }
     snat_partial_make_snatpool_vs: 
-      template: >-
+      template: |
         "{{app_name}}": {
           "snat": {
             "use": "{{app_name}}_snatpool"
           }
         }
     snat_partial_existing_snatpool_vs: 
-      template: >-
+      template: |
         "{{app_name}}": {
           "snat": {
             "bigip": "{{snatpool_name}}"
           }
         }
     snat_partial_disable_vs: 
-      template: >-
+      template: |
         "{{app_name}}": {
           "snat": "none"
         }
     snat_partial_template: 
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -88,15 +89,17 @@ snat_base:
           }
         }
 
-definitions: *snat_base
+
+<<: *snat_base
 template: |
   {{> snat_partial_template}}
 
 dns:
+  <<: *snat_base
   definitions: 
-    <<: *snat_base
+    <<: *snat_base_def
     snat_partial_automap_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "snat": "auto"
         },
@@ -104,7 +107,7 @@ dns:
           "snat": "auto"
         }
     snat_partial_make_snatpool_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "snat": {
             "use": "{{app_name}}_snatpool"
@@ -116,7 +119,7 @@ dns:
           }
         }
     snat_partial_existing_snatpool_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "snat": {
             "bigip": "{{snatpool_name}}"
@@ -128,7 +131,7 @@ dns:
           }
         }
     snat_partial_disable_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "snat": "none"
         },

@@ -1,8 +1,9 @@
-title: Pool
-contentType: application/json
 bigipHideTemplate: true
-pool_base:
-  definitions: &pool_base
+
+pool_base: &pool_base
+  title: Pool
+  contentType: application/json
+  definitions: &pool_base_def
     enable_pool:
       title: Create Pool
       description: A *pool* is a logical set of devices, such as web servers, that you
@@ -70,19 +71,19 @@ pool_base:
       maximum: 65535
       default: 300
     pool_partials_new_vs:
-      template: >-
+      template: |
         "{{app_name}}": {
           "pool": "{{app_name}}_pool"
         }
     pool_partials_existing_vs:
-      template: >-
+      template: |
         "{{app_name}}": {
           "pool": {
             "bigip": "{{pool_name}}"
           }
         }
     pool_partials_template:
-      template: >-
+      template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
@@ -114,15 +115,16 @@ pool_base:
           }
         }
 
-definitions: *pool_base
+<<: *pool_base
 template: |
   {{> pool_partials_template}}
 
 dns:
-  definitions:
-    <<: *pool_base
+  <<: *pool_base
+  definitions: 
+    <<: *pool_base_def
     pool_partials_new_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "pool": "{{app_name}}_pool",
         },
@@ -130,7 +132,7 @@ dns:
           "pool": "{{app_name}}_pool",
         }
     pool_partials_existing_vs:
-      template: >-
+      template: |
         "{{app_name}}_tcp": {
           "pool": {
             "bigip": "{{pool_name}}"
