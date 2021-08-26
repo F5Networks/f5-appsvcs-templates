@@ -14,7 +14,6 @@ allOf:
   - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
-  - $ref: "_analytics.yaml#/tcp_only"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"
 definitions:

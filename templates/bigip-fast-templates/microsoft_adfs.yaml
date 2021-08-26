@@ -350,7 +350,6 @@ allOf:
       }
 anyOf:
   - {}
-  - $ref: "_analytics.yaml#/http_only"
   - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "ADFS"
