@@ -28,7 +28,7 @@ fw_base: &fw_base
         enumFromBigip: security/log/profile
       default: []
     fw_partial_rules:
-      template: |s
+      template: |
         {
           "protocol": "tcp",
           "name": "acceptTcpPackets",
