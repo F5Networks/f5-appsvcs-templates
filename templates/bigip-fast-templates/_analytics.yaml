@@ -107,7 +107,7 @@ analytics_base: &analytics_base
       type: boolean
       default: true
     analytics_existing_http_profile: &existing_analytics_http
-      title: Existing HTTP Analytics Profiles
+      title: HTTP Analytics Profiles
       description: Select existing HTTP Analytics profile from those available on the BIG-IP
       type: string
       enumFromBigip: ltm/profile/analytics
@@ -118,7 +118,7 @@ analytics_base: &analytics_base
       type: boolean
       default: true
     analytics_existing_tcp_profile: &existing_analytics_tcp
-      title: Existing TCP Analytics Profiles
+      title: TCP Analytics Profiles
       description: Select existing TCP Analytics profile from those available on the BIG-IP
       type: string
       enumFromBigip: ltm/profile/tcp-analytics
