@@ -39,7 +39,7 @@ Usage Quick Start
 #. After the deployment is successful, select to the Applications tab to see the deployed application.
    From here the application can be modified or deleted.
 
-.. WARNING::  It strongly recommend **not** using both FAST AND iApp templates together as these templating solutions are incompatible with each other. Using both FAST and iApps is likely to create configuration and source-of-truth conflicts, resulting in an undesirable end-state. 
+.. WARNING::  We strongly recommend **not** using both FAST AND iApp templates together as these templating solutions are incompatible with each other. Using both FAST and iApps is likely to create configuration and source-of-truth conflicts, resulting in an undesirable end-state. 
 
 .. NOTE:: Modifying FAST applications outside of FAST (e.g., via TMSH or with AS3 declarations) can result in those changes getting overwritten the next time FAST modifies the application.
          See :ref:`faq` for more information.
