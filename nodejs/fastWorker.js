@@ -1055,6 +1055,31 @@ class FASTWorker {
         return Promise.all(promises);
     }
 
+    fetchTemplate(reqid, tmplid) {
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'fetching template',
+                this.templateProvider.fetch(tmplid)
+            ))
+            // Copy the template to avoid modifying the stored template
+            .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
+            .then((tmpl) => {
+                tmpl.title = tmpl.title || tmplid;
+                return Promise.resolve()
+                    .then(() => this.checkDependencies(tmpl, reqid, true))
+                    .then(() => this.hydrateSchema(tmpl, reqid, true))
+                    .then(() => {
+                        // Remove IPAM features in official templates if not enabled
+                        if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
+                            return Promise.resolve();
+                        }
+
+                        return this.removeIpamProps(tmpl, reqid);
+                    })
+                    .then(() => tmpl);
+            });
+    }
+
     renderTemplates(reqid, data) {
         const appsData = [];
         const lastModified = new Date().toISOString();
@@ -1101,10 +1126,7 @@ class FASTWorker {
                     this.templateProvider.getSetData(setName)
                 ))
                 .then(setData => Object.assign(tsData, setData))
-                .then(() => this.recordTransaction(
-                    reqid, `loading template (${tmplData.name})`,
-                    this.templateProvider.fetch(tmplData.name)
-                ))
+                .then(() => this.fetchTemplate(reqid, tmplData.name))
                 .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
@@ -1236,29 +1258,10 @@ class FASTWorker {
             tmplid = pathElements.slice(4, 6).join('/');
 
             return Promise.resolve()
-                .then(() => this.recordTransaction(
-                    reqid, 'fetching template',
-                    this.templateProvider.fetch(tmplid)
-                ))
-                // Copy the template to avoid modifying the stored template
-                .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
+                .then(() => this.fetchTemplate(reqid, tmplid))
                 .then((tmpl) => {
-                    tmpl.title = tmpl.title || tmplid;
-                    return Promise.resolve()
-                        .then(() => this.checkDependencies(tmpl, reqid, true))
-                        .then(() => this.hydrateSchema(tmpl, reqid, true))
-                        .then(() => {
-                            // Remove IPAM features in official templates if not enabled
-                            if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
-                                return Promise.resolve();
-                            }
-
-                            return this.removeIpamProps(tmpl, reqid);
-                        })
-                        .then(() => {
-                            restOperation.setBody(tmpl);
-                            this.completeRestOperation(restOperation);
-                        });
+                    restOperation.setBody(tmpl);
+                    this.completeRestOperation(restOperation);
                 })
                 .catch((e) => {
                     if (e.message.match(/Could not find template/)) {
