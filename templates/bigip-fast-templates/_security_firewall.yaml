@@ -25,15 +25,6 @@ definitions:
     description: Select an AFM Staging Policy.
     type: string
     enumFromBigip: security/firewall/policy
-  log_profile_names:
-    title: Security Log Profiles
-    description: Hold the *control* key to select or deselect multiple log profiles.
-    type: array
-    uniqueItems: true
-    items:
-      type: string
-      enumFromBigip: security/log/profile
-    default: []
 template: |
   {
     "{{tenant_name}}": {
@@ -89,17 +80,12 @@ template: |
           "{{app_name}}": {
             "policyFirewallEnforced": {
               "use": "{{app_name}}_fw_policy"
-            },
-            {{#enable_firewall_staging_policy}}
+            }
+            {{#enable_firewall_staging_policy}},
               "policyFirewallStaged": {
                 "bigip": "{{firewall_staging_policy}}"
-              },
+              }
             {{/enable_firewall_staging_policy}}
-            "securityLogProfiles": [
-              {{#log_profile_names}}
-                { "bigip": {{ . }} },
-              {{/log_profile_names}}
-            ]
           }
         {{/enable_firewall}}
       }
