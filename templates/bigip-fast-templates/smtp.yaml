@@ -14,7 +14,9 @@ allOf:
   - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
+  - $ref: "_security_policy.yaml#"
   - $ref: "_security_firewall.yaml#"
+  - $ref: "_security_logging.yaml#"
   - $ref: "_telemetry.yaml#"
 definitions:
   virtual_port:
