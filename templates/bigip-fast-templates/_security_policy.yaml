@@ -1,0 +1,31 @@
+title: WAF Security Policy
+contentType: application/json
+bigipHideTemplate: true
+bigipDependencies:
+  - asm
+definitions:
+  enable_waf_policy:
+    title: WAF Security Policy
+    type: boolean
+    default: false
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        {{#enable_waf_policy}}
+          "{{app_name}}": {
+            "policyWAF": {
+              "use": "{{app_name}}_waf_policy"
+            }
+          },
+          "{{app_name}}_waf_policy": {
+            "class": "WAF_Policy", 
+            "policy": { 
+              "text": "{ \"policy\": { \"name\": \"app_name\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+            },
+            "ignoreChanges": false
+          }
+        {{/enable_waf_policy}}
+      }
+    }
+  }
