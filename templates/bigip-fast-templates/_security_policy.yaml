@@ -28,4 +28,4 @@ template: |
         {{/enable_waf_policy}}
       }
     }
-  }
+  } 

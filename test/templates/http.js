@@ -99,11 +99,15 @@ const view = {
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
-    log_profile_names: ['log local'],
 
     // firewall
     enable_dos: false,
-    enable_firewall_staging_policy: false
+    enable_firewall_staging_policy: false,
+
+    //asm
+    enable_waf_policy: true,
+    enable_asm_logging: true,
+    asm_log_profile_names: ['log local']
 };
 
 const expected = {
@@ -140,6 +144,9 @@ const expected = {
                 profileMultiplex: 'basic',
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
+                },
+                policyWAF: {
+                    use: 'app1_waf_policy'
                 },
                 securityLogProfiles: [
                     {
