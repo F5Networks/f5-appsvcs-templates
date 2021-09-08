@@ -180,6 +180,13 @@ const expected = {
                         use: 'app1_fw_rules'
                     }
                 ]
+            },
+            app1_waf_policy: {
+                class: "WAF_Policy", 
+                policy: { 
+                    text: "{ \"policy\": { \"name\": \"app_name\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                },
+                ignoreChanges: false
             }
         }
     }
@@ -199,12 +206,16 @@ describe(template, function () {
 
             // no firewall
             view.enable_firewall = false;
-            delete expected.t1.app1.app1.securityLogProfiles;
             delete expected.t1.app1.app1.policyFirewallEnforced;
             delete expected.t1.app1.app1_fw_policy;
             delete expected.t1.app1.app1_fw_rules;
             delete expected.t1.app1.app1_fw_allow_list;
             delete expected.t1.app1.default_fw_deny_list;
+            view.enable_asm_logging = false;
+            delete expected.t1.app1.app1.securityLogProfiles;
+            view.enable_waf_policy = false;
+            delete expected.t1.app1.app1.policyWAF;
+            delete expected.t1.app1.app1_waf_policy;
         });
         util.assertRendering(template, view, expected);
     });

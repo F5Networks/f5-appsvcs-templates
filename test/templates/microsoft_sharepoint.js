@@ -77,7 +77,12 @@ const view = {
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
-    log_profile_names: ['log local']
+
+    // \
+    enable_waf_policy: true,
+    enable_asm_logging: true,
+    asm_log_profile_names: ['log local']
+
 };
 
 const expected = {
@@ -115,6 +120,9 @@ const expected = {
                 profileMultiplex: 'basic',
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
+                },
+                policyWAF: {
+                    use: 'app1_waf_policy'
                 },
                 securityLogProfiles: [
                     {
@@ -236,6 +244,13 @@ const expected = {
                         use: 'app1_fw_rules'
                     }
                 ]
+            },
+            app1_waf_policy: {
+                class: "WAF_Policy", 
+                policy: { 
+                    text: "{ \"policy\": { \"name\": \"app_name\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                },
+                ignoreChanges: false
             }
         }
     }

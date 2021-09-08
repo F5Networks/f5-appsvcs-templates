@@ -257,6 +257,13 @@ const expected = {
                         use: 'app1_fw_rules'
                     }
                 ]
+            },
+            app1_waf_policy: {
+                class: "WAF_Policy", 
+                policy: { 
+                  text: "{ \"policy\": { \"name\": \"app_name\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                },
+                ignoreChanges: false
             }
         }
     }
