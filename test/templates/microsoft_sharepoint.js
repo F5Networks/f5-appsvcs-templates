@@ -246,9 +246,9 @@ const expected = {
                 ]
             },
             app1_waf_policy: {
-                class: "WAF_Policy", 
-                policy: { 
-                    text: "{ \"policy\": { \"name\": \"app_name\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                class: 'WAF_Policy',
+                policy: {
+                    text: '{ "policy": { "name": "app_name", "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
                 },
                 ignoreChanges: false
             }
