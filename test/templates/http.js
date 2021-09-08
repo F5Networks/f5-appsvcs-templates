@@ -104,7 +104,7 @@ const view = {
     enable_dos: false,
     enable_firewall_staging_policy: false,
 
-    //asm
+    // asm
     enable_waf_policy: true,
     enable_asm_logging: true,
     asm_log_profile_names: ['log local']

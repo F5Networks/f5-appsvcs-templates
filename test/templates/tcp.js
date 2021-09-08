@@ -62,7 +62,7 @@ const view = {
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
 
-    //asm
+    // asm
     enable_waf_policy: true,
     enable_asm_logging: true,
     asm_log_profile_names: ['log local']
