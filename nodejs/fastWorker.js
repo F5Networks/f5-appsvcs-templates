@@ -86,8 +86,9 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '6243d6e452988376ed99bdf88112e9cdb107662dcf2a858bc9dc5566c8d470a1', // 1.11
-        '64d9692bdab5f1e2ba835700df4d719662b9976b9ff094fe7879f74d411fe00b', // 1.10
+        '24ceb1559ad54a6b6f0814892665c1861597899187d366f22f8af2880ba68910', // v1.12
+        '84904385ccc31f336b240ba1caa17dfab134d08efed7766fbcaea4eb61dae463', // v1.11
+        '64d9692bdab5f1e2ba835700df4d719662b9976b9ff094fe7879f74d411fe00b', // v1.10
         '89f6d8fb68435c93748de3f175f208714dcbd75de37d9286a923656971c939f0', // v1.9
         'fbaee3fd9ecce14a2d90df8c155998749b49126e0eb80267e9b426c58677a164', // v1.8.1
         '42650496f8e1b00a7e8e6a7c148a781bb4204e95f09f66d7d89af5793ae0b8b7', // v1.8
@@ -566,7 +567,22 @@ class FASTWorker {
     gatherTemplateSet(tsid) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
-                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined))),
+                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
+                .then((tsData) => {
+                    if (tsData) {
+                        return Promise.resolve(tsData);
+                    }
+
+                    return Promise.resolve()
+                        .then(() => this.fsTemplateProvider.hasSet(tsid))
+                        .then(result => (result ? this.fsTemplateProvider.getSetData(tsid) : undefined))
+                        .then((fsTsData) => {
+                            if (fsTsData) {
+                                fsTsData.enabled = false;
+                            }
+                            return fsTsData;
+                        });
+                }),
             this.driver.listApplications()
         ])
             .then(([tsData, appsList]) => {
@@ -574,7 +590,9 @@ class FASTWorker {
                     return Promise.reject(new Error(`Template set ${tsid} does not exist`));
                 }
 
-                tsData.enabled = true;
+                if (typeof tsData.enabled === 'undefined') {
+                    tsData.enabled = true;
+                }
                 tsData.templates.forEach((tmpl) => {
                     tmpl.appsList = appsList
                         .filter(x => x.template === tmpl.name)
@@ -1037,6 +1055,31 @@ class FASTWorker {
         return Promise.all(promises);
     }
 
+    fetchTemplate(reqid, tmplid) {
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'fetching template',
+                this.templateProvider.fetch(tmplid)
+            ))
+            // Copy the template to avoid modifying the stored template
+            .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
+            .then((tmpl) => {
+                tmpl.title = tmpl.title || tmplid;
+                return Promise.resolve()
+                    .then(() => this.checkDependencies(tmpl, reqid, true))
+                    .then(() => this.hydrateSchema(tmpl, reqid, true))
+                    .then(() => {
+                        // Remove IPAM features in official templates if not enabled
+                        if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
+                            return Promise.resolve();
+                        }
+
+                        return this.removeIpamProps(tmpl, reqid);
+                    })
+                    .then(() => tmpl);
+            });
+    }
+
     renderTemplates(reqid, data) {
         const appsData = [];
         const lastModified = new Date().toISOString();
@@ -1083,10 +1126,7 @@ class FASTWorker {
                     this.templateProvider.getSetData(setName)
                 ))
                 .then(setData => Object.assign(tsData, setData))
-                .then(() => this.recordTransaction(
-                    reqid, `loading template (${tmplData.name})`,
-                    this.templateProvider.fetch(tmplData.name)
-                ))
+                .then(() => this.fetchTemplate(reqid, tmplData.name))
                 .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
@@ -1218,29 +1258,10 @@ class FASTWorker {
             tmplid = pathElements.slice(4, 6).join('/');
 
             return Promise.resolve()
-                .then(() => this.recordTransaction(
-                    reqid, 'fetching template',
-                    this.templateProvider.fetch(tmplid)
-                ))
-                // Copy the template to avoid modifying the stored template
-                .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
+                .then(() => this.fetchTemplate(reqid, tmplid))
                 .then((tmpl) => {
-                    tmpl.title = tmpl.title || tmplid;
-                    return Promise.resolve()
-                        .then(() => this.checkDependencies(tmpl, reqid, true))
-                        .then(() => this.hydrateSchema(tmpl, reqid, true))
-                        .then(() => {
-                            // Remove IPAM features in official templates if not enabled
-                            if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
-                                return Promise.resolve();
-                            }
-
-                            return this.removeIpamProps(tmpl, reqid);
-                        })
-                        .then(() => {
-                            restOperation.setBody(tmpl);
-                            this.completeRestOperation(restOperation);
-                        });
+                    restOperation.setBody(tmpl);
+                    this.completeRestOperation(restOperation);
                 })
                 .catch((e) => {
                     if (e.message.match(/Could not find template/)) {

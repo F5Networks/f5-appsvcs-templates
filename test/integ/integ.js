@@ -109,16 +109,29 @@ describe('Template Sets', function () {
                         const templateSet = templateSetId ? actual.data
                             : actual.data.find(ts => ts.name === expTemplateSet.name);
                         assert.ok(templateSet, `Template with name ${expTemplateSet.name} must exist`);
-                        assert.ok(templateSet.templates.length > 0, 'Template set must contain templates');
+                        if (templateSet.enabled) {
+                            assert.ok(templateSet.templates.length > 0, 'Template set must contain templates');
+                        }
                         assert.ok(templateSet.hash, 'Template set must contain a hash');
                         assert.strictEqual(templateSet.supported, expTemplateSet.supported, 'Template set must show correct supported flag');
+                        if (typeof expTemplateSet.enabled !== 'undefined') {
+                            assert.strictEqual(
+                                templateSet.enabled,
+                                expTemplateSet.enabled,
+                                'Template set must show currect enabled flag'
+                            );
+                        }
                     });
                 } else {
                     assert.deepStrictEqual(actual.data, expected.data);
                 }
             })
             .catch((e) => {
-                if (e.response && !expected.error) {
+                if (!e.response) {
+                    return Promise.reject(e);
+                }
+
+                if (!expected.error) {
                     console.error(e.response.data);
                     return Promise.reject(e);
                 }
@@ -144,7 +157,7 @@ describe('Template Sets', function () {
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
             assert.deepStrictEqual(actual.data, { code: 200, message: 'success' });
-            return assertGet({ error: { code: 404, message: 'Template set examples does not exist' }, status: 404 }, 'examples');
+            return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST re-install template set and GET by ID', () => Promise.resolve()
         .then(() => endpoint.post(url, { name: 'examples' }))

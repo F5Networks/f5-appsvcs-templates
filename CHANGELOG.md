@@ -2,8 +2,13 @@
 ## Added
 
 ## Fixed
+* bigip-fast-templates: Fix pool members missing on ADFS template unless Certificate Authentication was selected
+* bigip-fast-templates: Fix AS3 declaration when using custom persistence profiles
+* Fix errors when deleting builtin template sets
+* Fix POST to /render and /application endpoints not using hydrated schemas
 
 ## Changed
+* gui: Stop showing appended userAgent query parameter on URIs for error messages
 
 # 1.11.0
 ## Added
