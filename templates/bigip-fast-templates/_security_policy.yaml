@@ -57,20 +57,20 @@ template: |
             ]
           {{/enable_asm_logging}}
           {{#enable_waf_policy}}
-            {{#asm_log_profile_names}},{{/asm_log_profile_names}}
+            {{#enable_asm_logging}},{{/enable_asm_logging}}
             "policyWAF": {
               "use": "{{app_name}}_waf_policy"
             }
           {{/enable_waf_policy}}
           {{#enable_asm_bot_defense}}
-            {{#asm_log_profile_names}},{{/asm_log_profile_names}}
+            {{#enable_asm_logging}},{{/enable_asm_logging}}
             "profileBotDefense":
               {{#asm_bot_defense_profiles}}
                 { "bigip": {{ . }} }
               {{/asm_bot_defense_profiles}}
           {{/enable_asm_bot_defense}}
-        },
-        {{#enable_waf_policy}}
+        }
+        {{#enable_waf_policy}},
           "{{app_name}}_waf_policy": {
             "class": "WAF_Policy",
             "policy": {
