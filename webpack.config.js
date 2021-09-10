@@ -36,7 +36,8 @@ module.exports = {
             'original-fs': false,
             path: false,
             vm: false,
-            zlib: false
+            zlib: false,
+            dgram: false
         },
         alias: {
             'vue$': 'vue/dist/vue.esm.js'

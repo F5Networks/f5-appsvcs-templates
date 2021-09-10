@@ -39,6 +39,9 @@ const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker.js');
 const IpamProviders = require('../../lib/ipam');
+const { Tracer } = require('../../lib/tracer');
+const { Tags } = require('../../lib/tracer');
+const pkg = require('../../package.json');
 
 class RestOp {
     constructor(uri) {
@@ -106,6 +109,12 @@ const patchWorker = (worker) => {
         secretsManager: worker.secretsManager,
         logger: worker.logger,
         transactionLogger: worker.transactionLogger
+    });
+    worker.tracer = new Tracer(pkg.name, {
+        logger: worker.logger,
+        tags: {
+            [Tags.APP.VERSION]: pkg.version
+        }
     });
     worker.completedRestOp = false;
     worker.completeRestOperation = function (op) {
