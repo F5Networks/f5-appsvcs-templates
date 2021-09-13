@@ -1,5 +1,6 @@
 # 1.12.0
 ## Added
+* bigip-fast-templates: Add new or existing TCP or HTTP Analytics profiles on relevant templates
 
 ## Fixed
 * bigip-fast-templates: Fix pool members missing on ADFS template unless Certificate Authentication was selected
@@ -13,7 +14,6 @@
 # 1.11.0
 ## Added
 * bigip-fast-templates: Add blue-green template modeled after https://github.com/f5devcentral/as3-bluegreen/tree/master/fast
-* bigip-fast-templates: Allow Analytics profile creation/selection on relevant templates
 * bigip-fast-templates: Allow using IPAM for virtual addresses (feature must be enabled first)
 
 ## Fixed
