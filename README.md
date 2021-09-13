@@ -87,6 +87,7 @@ A `finest` is also available, but already gets spammed with a lot of socket info
 All requests and responses are logged at a `fine` log level by default.
 Any response that contains an error status code (>=400) will default to an `error`.
 
+**NOTE:** FAST is the next-generation successor to the now deprecated iApps templates. We strongly recommend **not** using both FAST AND iApp templates together as these templating solutions are incompatible with each other. Using both FAST and iApps is likely to create configuration and source-of-truth conflicts, resulting in an undesirable end-state. 
 
 ## License
 

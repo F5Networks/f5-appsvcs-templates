@@ -229,6 +229,8 @@ class RestOperation {
         copy.httpsRejectUnauthorized = this.httpsRejectUnauthorized;
         return copy;
     }
+
+    complete() {}
 }
 
 RestOperation.Methods = {

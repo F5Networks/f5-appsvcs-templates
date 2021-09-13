@@ -514,7 +514,8 @@ describe('template worker tests', function () {
                     parameters: {},
                     tenant: 'tenant',
                     operation: 'update',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    host: 'localhost'
                 }]);
             });
     });
@@ -549,7 +550,8 @@ describe('template worker tests', function () {
                     parameters: {},
                     tenant: 'tenant',
                     operation: 'update',
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    host: 'localhost'
                 });
             });
     });

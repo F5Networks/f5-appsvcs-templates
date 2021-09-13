@@ -214,6 +214,7 @@ allOf:
       pool_members:
         title: Pool Members
         description: Add the addresses of the Active Directory servers in the pool.
+        dependencies: []
       pool_port:
         title: Port for Active Directory Services
         default: 443

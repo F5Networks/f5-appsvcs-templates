@@ -1,3 +1,15 @@
+# 1.12.0
+## Added
+
+## Fixed
+* bigip-fast-templates: Fix pool members missing on ADFS template unless Certificate Authentication was selected
+* bigip-fast-templates: Fix AS3 declaration when using custom persistence profiles
+* Fix errors when deleting builtin template sets
+* Fix POST to /render and /application endpoints not using hydrated schemas
+
+## Changed
+* gui: Stop showing appended userAgent query parameter on URIs for error messages
+
 # 1.11.0
 ## Added
 * bigip-fast-templates: Add blue-green template modeled after https://github.com/f5devcentral/as3-bluegreen/tree/master/fast
@@ -7,9 +19,10 @@
 ## Fixed
 * bigip-fast-templates: Fix virtual server IP missing on ADFS template unless Certificate Authentication was selected
 * gui: Fix 404 error on BIG-IP 13.1 when loading pages immediately after installation or upgrade
+* gui: Fix error with missing TLS Client when not using a FAST-Generated pool member
 * gui: Fix 401 Unauthorized Error when idle timeout is longer than default
 
-## Change
+## Changed
 * gui: Change template debug buttons to a menu with window for code output
 * gui: Do not allow overwriting existing applications when creating new ones
 

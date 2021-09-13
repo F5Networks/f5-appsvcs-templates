@@ -7,7 +7,7 @@
             <h3>Template errors were found:</h3>
             <ul>
                 <li
-                    v-for="error in data.errors"
+                    v-for="error in templateErrors"
                     :key="error"
                 >
                     {{ error }}
