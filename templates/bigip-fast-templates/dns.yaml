@@ -10,6 +10,7 @@ allOf:
   - $ref: "_irule.yaml#/dns"
 anyOf:
   - {}
+  - $ref: "_analytics.yaml#/dns"
   - $ref: "_security_firewall.yaml#/dns"
   - $ref: "_telemetry.yaml#/dns"
 template: |

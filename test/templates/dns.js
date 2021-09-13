@@ -60,6 +60,10 @@ const view = {
     irule_names: ['example_tcp_irule'],
     udp_irule_names: ['example_udp_irule'],
 
+    // analytics
+    enable_analytics: true,
+    make_analytics_profile: true,
+
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
@@ -92,6 +96,9 @@ const expected = {
                         bigip: 'example_tcp_irule'
                     }
                 ],
+                profileAnalyticsTcp: {
+                    use: 'app1_tcp_analytics'
+                },
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
@@ -163,6 +170,17 @@ const expected = {
             app1_snatpool: {
                 class: 'SNAT_Pool',
                 snatAddresses: view.snat_addresses
+            },
+            app1_tcp_analytics: {
+                class: 'Analytics_TCP_Profile',
+                collectedStatsExternalLogging: true,
+                externalLoggingPublisher: {
+                    bigip: '/Common/default-ipsec-log-publisher'
+                },
+                collectRemoteHostIp: true,
+                collectNexthop: true,
+                collectCity: true,
+                collectPostCode: true
             },
             app1_fw_allow_list: {
                 class: 'Firewall_Address_List',
@@ -246,6 +264,12 @@ describe(template, function () {
             view.monitor_name = '/Common/monitor1';
             delete expected.t1.app1.app1_monitor;
             expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
+
+            // existing analytics profiles
+            view.make_analytics_profile = false;
+            view.analytics_existing_tcp_profile = '/Common/tcp-analytics';
+            expected.t1.app1.app1_tcp.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
+            delete expected.t1.app1.app1_tcp_analytics;
         });
         util.assertRendering(template, view, expected);
     });

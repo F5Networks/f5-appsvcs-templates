@@ -44,6 +44,7 @@ const safeFetch = (uri, opts, numAttempts) => {
         opts.headers['X-F5-Auth-Token'] = auth.token;
     }
 
+    const printUri = uri;
     if (uri.startsWith(endPointUrl) && !uri.includes('userAgent=')) {
         uri = uri.includes('?') ? `${uri}&userAgent=${userAgent}` : `${uri}?userAgent=${userAgent}`;
     }
@@ -74,7 +75,7 @@ const safeFetch = (uri, opts, numAttempts) => {
                 );
                 if (retry) {
                     numAttempts += 1;
-                    console.log(`attempting retry ${numAttempts} to ${uri}`);
+                    console.log(`attempting retry ${numAttempts} to ${printUri}`);
                     return Promise.resolve()
                         .then(() => wait(1000))
                         .then(() => safeFetch(uri, opts, numAttempts));
@@ -86,7 +87,7 @@ const safeFetch = (uri, opts, numAttempts) => {
                     msg = JSON.stringify(data, null, 2);
                 }
                 return Promise.reject(new Error(
-                    `Failed to get data from ${uri}: ${response.status} ${response.statusText}\n${msg}`
+                    `Failed to get data from ${printUri}: ${response.status} ${response.statusText}\n${msg}`
                 ));
             }
             return data;
@@ -235,7 +236,7 @@ const vueApp = new Vue({
     router,
     mounted() {
         // by default token is 1200s/20min
-        if (auth.timeout > 1200) {
+        if (auth.token && auth.timeout > 1200) {
             const extendToken = () => safeFetch(`/mgmt/shared/authz/tokens/${auth.token}`, {
                 method: 'PATCH',
                 headers: {

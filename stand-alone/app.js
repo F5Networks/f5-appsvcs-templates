@@ -33,7 +33,7 @@ const port = 8080;
 
 const worker = new FastWorker({
     templateStorage: new fast.dataStores.StorageMemory(),
-    configStorage: new fast.dataStores.StorageMemory(),
+    configStorage: new fast.dataStores.StorageJsonFile('config.json'),
     secretsManager: new SecretsBase64()
 });
 
