@@ -25,6 +25,11 @@ const assert = require('assert');
 
 const bigipTarget = process.env.BIGIP_TARGET;
 const bigipCreds = process.env.BIGIP_CREDS;
+const perfTracing = {
+    enabled: (String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true'),
+    endpoint: process.env.F5_PERF_TRACING_ENDPOINT,
+    debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true'
+};
 
 if (!bigipTarget) {
     throw new Error('BIGIP_TARGET env var needs to be defined');
@@ -32,6 +37,10 @@ if (!bigipTarget) {
 
 if (!bigipCreds) {
     throw new Error('BIGIP_CREDS env var needs to be defined');
+}
+
+if (perfTracing.enabled && !perfTracing.endpoint) {
+    throw new Error('F5_PERF_TRACING_ENDPOINT env var needs to be defined');
 }
 
 const endpoint = axios.create({
@@ -93,6 +102,25 @@ function deleteAllApplications() {
         .catch(err => Promise.reject(new Error(`Failed to delete applications: ${err.message}`)));
 }
 
+
+before('Setup', function () {
+    this.timeout(20000);
+    if (perfTracing.enabled) {
+        const url = '/mgmt/shared/fast/settings';
+
+        return getAuthToken()
+            .then(() => endpoint.patch(url, { perfTracing }))
+            .then(() => endpoint.get(url))
+            .then((actual) => {
+                console.log(JSON.stringify(actual.data));
+                const actualPerfSettings = actual.data.perfTracing;
+                assert.deepStrictEqual(actualPerfSettings, perfTracing, 'Unable to set up perf tracing');
+            })
+            // allow some time for settings to be applied to avoid 503
+            .then(() => new Promise((resolve) => { setTimeout(resolve, 10000); }));
+    }
+    return Promise.resolve();
+});
 
 describe('Template Sets', function () {
     this.timeout(120000);
@@ -314,7 +342,8 @@ describe('Settings', function () {
                 deletedTemplateSets: [],
                 ipamProviders: [],
                 enableIpam: false,
-                disableDeclarationCache: false
+                disableDeclarationCache: false,
+                perfTracing: {}
             },
             status: 200
         })));
@@ -339,7 +368,8 @@ describe('Settings', function () {
             enableIpam: false,
             log_afm: false,
             log_asm: false,
-            disableDeclarationCache: false
+            disableDeclarationCache: false,
+            perfTracing
         };
         const expected = {
             data: { code: 200, message: '' },
@@ -360,7 +390,10 @@ describe('Settings', function () {
     it('PATCH settings', () => {
         const patchBody = {
             deletedTemplateSets: ['examples'],
-            ipamProviders: []
+            ipamProviders: [],
+            perfTracing: {
+                enabled: false
+            }
         };
         const expected = {
             data: { code: 200, message: '' },
@@ -376,7 +409,11 @@ describe('Settings', function () {
                     enableIpam: false,
                     log_afm: false,
                     log_asm: false,
-                    disableDeclarationCache: false
+                    disableDeclarationCache: false,
+                    perfTracing: {
+                        debug: false,
+                        enabled: false
+                    }
                 };
                 return endpoint.get(url)
                     .then(res => assertResponse(res, expected));

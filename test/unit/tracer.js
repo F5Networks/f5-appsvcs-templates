@@ -35,7 +35,7 @@ describe('Tracer lib', function () {
     let spanReq;
 
     beforeEach(() => {
-        process.env.F5_PERF_TRACING_DEBUG = false;
+        process.env.F5_PERF_TRACING_DEBUG = true;
         process.env.F5_PERF_TRACING_ENABLED = true;
         process.env.F5_PERF_TRACING_ENDPOINT = 'http://mock.jaeger:14268/api/traces';
         tracer = new tracerLib.Tracer('testService');
@@ -66,13 +66,14 @@ describe('Tracer lib', function () {
 
             it('should set properties', () => {
                 const logger = {
-                    error: () => {},
-                    info: () => {},
-                    fine: () => {}
+                    error: (msg) => { console.log(msg); },
+                    info: (msg) => { console.log(msg); },
+                    fine: (msg) => { console.log(msg); }
                 };
                 const newTracer = new tracerLib.Tracer('testService', { logger });
                 assert.strictEqual(newTracer.serviceName, 'testService');
-                assert.deepStrictEqual(newTracer.logger, logger);
+                assert.deepStrictEqual(newTracer._logger, logger);
+                newTracer.startSpan();
                 newTracer.close();
             });
         });
@@ -80,7 +81,7 @@ describe('Tracer lib', function () {
         describe('.startSpan', () => {
             it('should return no-op tracer span when disabled through env var', () => {
                 process.env.F5_PERF_TRACING_ENABLED = false;
-                const noopTracer = new tracerLib.Tracer('testService');
+                const noopTracer = new tracerLib.Tracer('testService1');
                 const span = noopTracer.startSpan('opName');
                 assert.isTrue(span instanceof tracerLib.BaseSpan);
                 assert.isFalse(span instanceof tracerLib.Span);
@@ -95,7 +96,7 @@ describe('Tracer lib', function () {
 
             it('should return tracer span when enabled through env var', () => {
                 const span = tracer.startSpan('opName');
-                assert(span instanceof tracerLib.Span);
+                assert.isTrue(span instanceof tracerLib.Span);
                 assert.deepStrictEqual(span.serviceName, 'testService');
                 assert.deepStrictEqual(span.operationName, 'opName');
             });
@@ -110,14 +111,12 @@ describe('Tracer lib', function () {
 
         describe('.startHttpSpan', () => {
             it('should return a new span with correct service and opName', () => {
-                // tracer = new tracerLib.Tracer('testService');
                 const span = tracer.startHttpSpan('/api/tests', '/api/tests');
                 assert.deepStrictEqual(span.serviceName, 'testService');
                 assert.deepStrictEqual(span.operationName, '/api/tests');
             });
 
             it('should return a new span with default http tags', () => {
-                // tracer = new tracerLib.Tracer('testService');
                 const span = tracer.startHttpSpan('/resourcePath/{resourceId}', '/resourcePath/resource1', 'post');
                 assert.includeDeepMembers(span.tags, [
                     { key: 'span.kind', value: 'server' },
@@ -128,7 +127,6 @@ describe('Tracer lib', function () {
             });
 
             it('should return a new span with default and specified tags', () => {
-                // tracer = new tracerLib.Tracer('testService');
                 const span = tracer.startHttpSpan('/resources/{name}', '/resources/myResource',
                     'post', { tags: { a: 'b', c: 'd' } });
                 assert.includeDeepMembers(span.tags, [

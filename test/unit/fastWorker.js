@@ -814,6 +814,10 @@ describe('template worker tests', function () {
             deletedTemplateSets: [
                 'foo'
             ],
+            perfTracing: {
+                enabled: true,
+                endpoint: 'http://some.api:8080'
+            },
             enableIpam: true,
             ipamProviders: [
                 { name: 'test', password: 'foobar', serviceType: 'Generic' }
@@ -828,6 +832,11 @@ describe('template worker tests', function () {
             .then((config) => {
                 assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                 assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                assert.deepStrictEqual(config.perfTracing, {
+                    enabled: true,
+                    endpoint: 'http://some.api:8080',
+                    debug: false
+                });
             });
     });
     it('post_settings_bad', function () {
@@ -939,6 +948,9 @@ describe('template worker tests', function () {
             deletedTemplateSets: [
                 'foo'
             ],
+            perfTracing: {
+                enabled: false
+            },
             enableIpam: true,
             ipamProviders: [
                 { name: 'test', password: 'foobar', serviceType: 'Generic' }
@@ -953,6 +965,7 @@ describe('template worker tests', function () {
             .then((config) => {
                 assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                 assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                assert.equal(config.perfTracing.enabled, false);
             });
     });
     it('patch_settings_bad', function () {

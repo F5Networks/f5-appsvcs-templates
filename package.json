@@ -111,6 +111,7 @@
     "axios": "^0.21.1",
     "core-js": "^3.16.0",
     "deepmerge": "^4.2.2",
+    "error": "^7.2.1",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
     "jaeger-client": "^3.18.1",

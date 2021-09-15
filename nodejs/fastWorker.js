@@ -199,6 +199,7 @@ class FASTWorker {
         reqid = reqid || 0;
         const defaultConfig = {
             deletedTemplateSets: [],
+            perfTracing: { enabled: false, debug: false },
             enableIpam: false,
             ipamProviders: [],
             disableDeclarationCache: false
@@ -248,6 +249,25 @@ class FASTWorker {
                         type: 'string'
                     },
                     uniqueItems: true,
+                    options: {
+                        hidden: true
+                    }
+                },
+                perfTracing: {
+                    type: 'object',
+                    properties: {
+                        enabled: {
+                            type: 'boolean',
+                            default: false
+                        },
+                        endpoint: {
+                            type: 'string'
+                        },
+                        debug: {
+                            type: 'boolean',
+                            default: false
+                        }
+                    },
                     options: {
                         hidden: true
                     }
@@ -464,7 +484,7 @@ class FASTWorker {
             // Errors
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                span.logError();
+                span.logError(e);
                 error();
             });
     }
