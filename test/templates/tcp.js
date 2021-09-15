@@ -216,7 +216,7 @@ const expected = {
             app1_waf_policy: {
                 class: 'WAF_Policy',
                 policy: {
-                    text: '{ "policy": { "encoding": "utf-8", "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
+                    text: '{ "policy": { "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
                 },
                 ignoreChanges: true
             }

@@ -10,13 +10,14 @@ asm_base: &asm_base
       title: WAF Security Policy
       type: boolean
       default: false
-    waf_policy_encoding:
-      title: WAF Policy Encoding
-      type: string
-      enum: ["iso-8859-6","iso-8859-4","iso-8859-13","windows-1257","iso-8859-2","windows-1250","big5","gb2312","gbk","gb18030","iso-8859-5","koi8-r","windows-1251","iso-8859-7","windows-1253","iso-8859-8","windows-1255","euc-jp","shift_jis","euc-kr","iso-8859-10","iso-8859-16","iso-8859-3","windows-874","iso-8859-9","utf-8","iso-8859-1","iso-8859-15","windows-1252"]
-      default: "utf-8"
-      dependencies:
-        - enable_waf_policy
+#### ASM is not setting the encoding value specified by AS3 
+#    waf_policy_encoding:
+#      title: WAF Policy Encoding
+#      type: string
+#      enum: ["iso-8859-6","iso-8859-4","iso-8859-13","windows-1257","iso-8859-2","windows-1250","big5","gb2312","gbk","gb18030","iso-8859-5","koi8-r","windows-1251","iso-8859-7","windows-1253","iso-8859-8","windows-1255","euc-jp","shift_jis","euc-kr","iso-8859-10","iso-8859-16","iso-8859-3","windows-874","iso-8859-9","utf-8","iso-8859-1","iso-8859-15","windows-1252"]
+#     default: "utf-8"
+#      dependencies:
+#        - enable_waf_policy
     asm_partial_profiles: 
       template: |
         {{#enable_waf_policy}}
@@ -47,7 +48,7 @@ asm_base: &asm_base
                 "{{app_name}}_waf_policy": {
                   "class": "WAF_Policy",
                   "policy": {
-                    "text": "{ \"policy\": { \"encoding\": \"{{waf_policy_encoding}}\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                    "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
                   },
                   "ignoreChanges": true
                 }
