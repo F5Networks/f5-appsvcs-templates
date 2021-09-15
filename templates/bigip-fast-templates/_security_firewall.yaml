@@ -126,7 +126,7 @@ dns:
       uniqueItems: true
       items:
         type: string
-      default: []
+      default: ['0.0.0.0/0']
     fw_partial_rules:
       template: |
         {
