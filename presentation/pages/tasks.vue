@@ -49,13 +49,13 @@ export default {
             .then((tasks) => {
                 tasks.forEach((task, index) => {
                     if (task.message.includes('Error:')) {
-                        task.message = task.message.replace(/Error:/);
+                        task.message = task.message.replace(/Error:/, '');
                         task.status = 'Error';
                     } else if (task.message.includes('declaration failed')) {
-                        task.message = task.message.replace(/declaration failed/);
+                        task.message = task.message.replace(/declaration failed/, '');
                         task.status = 'Declaration Failed';
                     } else if (task.message.includes('declaration is invalid')) {
-                        task.message = task.message.replace(/declaration is invalid/);
+                        task.message = task.message.replace(/declaration is invalid/, '');
                         task.status = 'Declaration is Invalid';
                     } else if (task.message === 'success') {
                         task.status = 'Success';
