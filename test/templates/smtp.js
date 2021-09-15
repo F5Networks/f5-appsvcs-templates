@@ -68,7 +68,11 @@ const view = {
     make_tls_client_profile: true,
 
     // irule
-    irule_names: []
+    irule_names: [],
+
+    // analytics
+    enable_analytics: true,
+    make_analytics_profile: true
 };
 
 const expected = {
@@ -94,7 +98,10 @@ const expected = {
                     ingress: 'wan',
                     egress: 'lan'
                 },
-                iRules: []
+                iRules: [],
+                profileAnalyticsTcp: {
+                    use: 'app1_tcp_analytics'
+                }
             },
             app1_pool: {
                 class: 'Pool',
@@ -147,6 +154,17 @@ const expected = {
             },
             app1_tls_client: {
                 class: 'TLS_Client'
+            },
+            app1_tcp_analytics: {
+                class: 'Analytics_TCP_Profile',
+                collectedStatsExternalLogging: true,
+                externalLoggingPublisher: {
+                    bigip: '/Common/default-ipsec-log-publisher'
+                },
+                collectRemoteHostIp: true,
+                collectNexthop: true,
+                collectCity: true,
+                collectPostCode: true
             }
         }
     }
@@ -155,6 +173,16 @@ const expected = {
 describe(template, function () {
     describe('tls bridging with new pool, snatpool, and profiles', function () {
         util.assertRendering(template, view, expected);
+    });
+
+    describe('use existing analytics profile', function () {
+        before(() => {
+            // existing analytics profiles
+            view.make_analytics_profile = false;
+            view.analytics_existing_tcp_profile = '/Common/tcp-analytics';
+            expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
+            delete expected.t1.app1.app1_tcp_analytics;
+        });
     });
 
     describe('clean up', function () {

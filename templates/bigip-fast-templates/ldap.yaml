@@ -8,12 +8,13 @@ allOf:
   - $ref: "_tls_server_profile.yaml#"
   - $ref: "_tls_client_profile.yaml#"
   - $ref: "_pool.yaml#"
-  - $ref: "_monitor_ldap.yaml#"
+  - $ref: "_monitors.yaml#/ldap"
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_irule.yaml#"
   - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
+  - $ref: "_analytics.yaml#/tcp_only"
   - $ref: "_security_policy.yaml#"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"

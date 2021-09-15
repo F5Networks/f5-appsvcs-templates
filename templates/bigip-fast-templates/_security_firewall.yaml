@@ -1,21 +1,109 @@
-title: Security Firewall
-contentType: application/json
 bigipHideTemplate: true
-bigipDependencies:
-  - afm
-definitions:
-  enable_firewall:
-    title: Firewall
-    type: boolean
-    default: false
-  firewall_allow_list:
-    title: Allowed Networks
-    description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
-    type: array
-    uniqueItems: true
-    items:
-      type: string
-    default: ['0.0.0.0/0']
+
+fw_base: &fw_base
+  title: Security Firewall
+  contentType: application/json
+  bigipDependencies:
+    - afm
+  definitions: &fw_base_def
+    enable_firewall:
+      title: Firewall
+      type: boolean
+      default: false
+    firewall_allow_list:
+      title: Allowed Networks
+      description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+      default: ['0.0.0.0/0']
+    log_profile_names:
+      title: Security Log Profiles
+      description: Hold the *control* key to select or deselect multiple log profiles.
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+        enumFromBigip: security/log/profile
+      default: []
+    fw_partial_rules:
+      template: |
+        {
+          "protocol": "tcp",
+          "name": "acceptTcpPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
+              {
+                "use": "{{app_name}}_fw_allow_list"
+              }
+            ]
+          },
+          "action": "accept"
+        },
+        {
+          "protocol": "any",
+          "name": "dropPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
+              {
+                "use": "default_fw_deny_list"
+              }
+            ]
+          },
+          "action": "drop"
+        }
+    fw_partial_vs:
+      template: |
+        "{{app_name}}": {
+          "policyFirewallEnforced": {
+            "use": "{{app_name}}_fw_policy"
+          },
+          "securityLogProfiles": [
+            {{#log_profile_names}}
+              { "bigip": {{ . }} },
+            {{/log_profile_names}}
+          ]
+        }
+    fw_partial_template:
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{#enable_firewall}}
+                "{{app_name}}_fw_allow_list": {
+                  "class": "Firewall_Address_List",
+                  "addresses": {{firewall_allow_list}}
+                },
+                "default_fw_deny_list": {
+                  "class": "Firewall_Address_List",
+                  "addresses": ["0.0.0.0/0"]
+                },
+                "{{app_name}}_fw_rules": {
+                  "class": "Firewall_Rule_List",
+                  "rules": [
+                    {{> fw_partial_rules}}
+                  ]
+                },
+                "{{app_name}}_fw_policy": {
+                  "class": "Firewall_Policy",
+                  "rules": [
+                      {
+                          "use": "{{app_name}}_fw_rules"
+                      }
+                  ]
+                },
+                {{> fw_partial_vs}}
+              {{/enable_firewall}}
+            }
+          }
+        }
+
+<<: *fw_base
+definitions: 
+  <<: *fw_base_def
   enable_firewall_staging_policy:
     title: Staging Policy
     type: boolean
@@ -29,52 +117,59 @@ template: |
   {
     "{{tenant_name}}": {
       "{{app_name}}": {
-        {{#enable_firewall}}
-          "{{app_name}}_fw_allow_list": {
-            "class": "Firewall_Address_List",
-            "addresses": {{firewall_allow_list}}
+        "policyFirewallEnforced": {
+          "use": "{{app_name}}_fw_policy"
+        },
+        {{#enable_firewall_staging_policy}}
+          "policyFirewallStaged": {
+            "bigip": "{{firewall_staging_policy}}"
           },
-          "default_fw_deny_list": {
-            "class": "Firewall_Address_List",
-            "addresses": ["0.0.0.0/0"]
-          },
-          "{{app_name}}_fw_rules": {
-            "class": "Firewall_Rule_List",
-            "rules": [
+        {{/enable_firewall_staging_policy}}
+        "securityLogProfiles": [
+          {{#log_profile_names}}
+            { "bigip": {{ . }} },
+          {{/log_profile_names}}
+        ]
+      }
+template: |
+  {{> fw_partial_template}}
+
+dns:
+  <<: *fw_base
+  definitions:
+    <<: *fw_base_def
+    firewall_allow_list:
+      title: Allowed Networks
+      description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+      default: []
+    fw_partial_rules:
+      template: |
+        {
+          "protocol": "udp",
+          "name": "acceptUdpPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
               {
-                "protocol": "tcp",
-                "name": "acceptTcpPackets",
-                "loggingEnabled": true,
-                "source": {
-                  "addressLists": [
-                    {
-                      "use": "{{app_name}}_fw_allow_list"
-                    }
-                  ]
-                },
-                "action": "accept"
-              },
-              {
-                "protocol": "any",
-                "name": "dropPackets",
-                "loggingEnabled": true,
-                "source": {
-                  "addressLists": [
-                    {
-                      "use": "default_fw_deny_list"
-                    }
-                  ]
-                },
-                "action": "drop"
+                "use": "{{app_name}}_fw_allow_list"
               }
             ]
           },
-          "{{app_name}}_fw_policy": {
-            "class": "Firewall_Policy",
-            "rules": [
-                {
-                    "use": "{{app_name}}_fw_rules"
-                }
+          "action": "accept"
+        },
+        {
+          "protocol": "tcp",
+          "name": "acceptTcpPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
+              {
+                "use": "{{app_name}}_fw_allow_list"
+              }
             ]
           },
           "{{app_name}}": {

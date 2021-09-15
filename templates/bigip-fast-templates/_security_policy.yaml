@@ -25,28 +25,31 @@ asm_base: &asm_base
             "use": "{{app_name}}_waf_policy"
           }
         {{/enable_waf_policy}}
+    asm_partial_vs:
+      template: |
+          "{{app_name}}": {
+            {{#enable_asm_logging}}
+              "securityLogProfiles": [
+                {{#asm_log_profile_names}}
+                  { "bigip": {{ . }} },
+                {{/asm_log_profile_names}}
+              ]
+            {{/enable_asm_logging}}
+            {{> asm_partial_profiles}}
+          }
     asm_partial_template:
       template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
-              "{{app_name}}": {
-                {{#enable_asm_logging}}
-                  "securityLogProfiles": [
-                    {{#asm_log_profile_names}}
-                      { "bigip": {{ . }} },
-                    {{/asm_log_profile_names}}
-                  ]
-                {{/enable_asm_logging}}
-                {{> asm_partial_profiles}}
-              }
+              {{> asm_partial_vs}}
               {{#enable_waf_policy}},
                 "{{app_name}}_waf_policy": {
                   "class": "WAF_Policy",
                   "policy": {
                     "text": "{ \"policy\": { \"name\": \"app_name\", \"encoding\": \"{{waf_policy_encoding}}\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
                   },
-                  "ignoreChanges": false
+                  "ignoreChanges": true
                 }
               {{/enable_waf_policy}}
             }
@@ -77,7 +80,38 @@ definitions:
 template: |
   {{> asm_partial_template}}
 
-bot: 
+dns:
+  <<: *asm_base
+  definitions: 
+    <<: *asm_base_def
+    enable_asm_logging: *enable_asm_logging
+    asm_log_profile_names: *asm_log_profile_names
+    asm_partial_vs:
+      template: |
+        "{{app_name}}_udp": {
+          {{#enable_asm_logging}}
+            "securityLogProfiles": [
+              {{#asm_log_profile_names}}
+                { "bigip": {{ . }} },
+              {{/asm_log_profile_names}}
+            ]
+          {{/enable_asm_logging}}
+          {{> asm_partial_profiles}}
+        },
+        "{{app_name}}_tcp": {
+          {{#enable_asm_logging}}
+            "securityLogProfiles": [
+              {{#asm_log_profile_names}}
+                { "bigip": {{ . }} },
+              {{/asm_log_profile_names}}
+            ]
+          {{/enable_asm_logging}}
+          {{> asm_partial_profiles}}
+        }
+  template: |
+    {{> asm_partial_template}}
+
+and_bot_defense: 
   <<: *asm_base
   definitions: 
     <<: *asm_base_def

@@ -1,69 +1,154 @@
-title: Telemetry
-contentType: application/json
 bigipHideTemplate: true
-bigipDependencies:
-  - ts
-definitions:
-  enable_telemetry:
-    title: Forward logs to Telemetry Streaming
-    type: boolean
-    default: false
-anyOf:
-  - {}
-  - title: ASM Logging
-    contentType: application/json
-    bigipDependencies:
-      - asm
-    definitions:
-        enable_telemetry:
-            type: boolean
-    template: |
-      {
-        "{{tenant_name}}": {
-          "{{app_name}}": {
-            {{#enable_telemetry}}
-            "{{app_name}}": {
-              "securityLogProfiles": [
-                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" },
-              ]
-            }
-            {{/enable_telemetry}}
-          }
-        }
-      }
-  - title: AFM Logging
-    contentType: application/json
-    bigipDependencies:
-      - afm
-      - asm
-    definitions:
-        enable_telemetry:
-            type: boolean
-    template: |
-      {
-        "{{tenant_name}}": {
-          "{{app_name}}": {
-            {{#enable_telemetry}}
-            "{{app_name}}": {
-              "securityLogProfiles": [
-                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" },
-              ]
-            }
-            {{/enable_telemetry}}
-          }
-        }
-      }
-template: |
-  {
-    "{{tenant_name}}": {
-      "{{app_name}}": {
-        {{#enable_telemetry}}
+
+ts_base: &ts_base
+  title: Telemetry
+  contentType: application/json
+  bigipDependencies:
+    - ts
+    - asm
+    - afm
+  definitions: &ts_base_def
+    enable_telemetry:
+      title: Forward logs to Telemetry Streaming
+      type: boolean
+      default: false
+    ts_partial_vs:
+      template: |
         "{{app_name}}": {
           "profileTrafficLog": {
             "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
           }
         }
-        {{/enable_telemetry}}
-      }
-    }
-  }
+    ts_partial_template:
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{#enable_telemetry}}
+                {{> ts_partial_vs}}
+              {{/enable_telemetry}}
+            }
+          }
+        }
+
+asm: &ts_asm
+  title: ASM Logging
+  contentType: application/json
+  bigipDependencies:
+    - asm
+  definitions: &ts_asm_def
+    enable_telemetry:
+      type: boolean
+    ts_partial_asm_vs:
+      template: |
+        "{{app_name}}": {
+          "securityLogProfiles": [
+            { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
+          ]
+        }
+    ts_partial_asm_template:
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{#enable_telemetry}}
+                {{> ts_partial_asm_vs}}
+              {{/enable_telemetry}}
+            }
+          }
+        }
+
+afm: &ts_afm
+  title: AFM Logging
+  contentType: application/json
+  bigipDependencies:
+    - afm
+    - asm
+  definitions: &ts_afm_def
+    enable_telemetry:
+      type: boolean
+    ts_partial_afm_vs:
+      template: |
+        "{{app_name}}": {
+          "securityLogProfiles": [
+            { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
+          ]
+        }
+    ts_partial_afm_template:
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{#enable_telemetry}}
+                {{> ts_partial_afm_vs}}
+              {{/enable_telemetry}}
+            }
+          }
+        }
+
+<<: *ts_base
+anyOf:
+  - {}
+  - <<: *ts_asm
+    template: |
+      {{> ts_partial_asm_template}}
+  - <<: *ts_afm
+    template: |
+      {{> ts_partial_afm_template}}
+template: |
+    {{> ts_partial_template}}
+
+dns: 
+  <<: *ts_base
+  definitions: 
+    <<: *ts_base_def
+    ts_partial_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "profileTrafficLog": {
+            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
+          }
+        },
+        "{{app_name}}_udp": {
+          "profileTrafficLog": {
+            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
+          }
+        }
+  anyOf:
+    - {}
+    - <<: *ts_asm
+      definitions: 
+        <<: *ts_asm_def
+        ts_partial_asm_vs:
+          template: |
+            "{{app_name}}_tcp": {
+              "securityLogProfiles": [
+                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
+              ]
+            },
+            "{{app_name}}_udp": {
+              "securityLogProfiles": [
+                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
+              ]
+            }
+      template: |
+        {{> ts_partial_asm_template}}
+    - <<: *ts_afm
+      definitions: 
+        <<: *ts_afm_def
+        ts_partial_afm_vs:
+          template: |
+            "{{app_name}}_tcp": {
+              "securityLogProfiles": [
+                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
+              ]
+            },
+            "{{app_name}}_udp": {
+              "securityLogProfiles": [
+                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
+              ]
+            }
+      template: |
+        {{> ts_partial_afm_template}}
+  template: |
+      {{> ts_partial_template}}
