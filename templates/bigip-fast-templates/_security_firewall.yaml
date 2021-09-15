@@ -18,15 +18,6 @@ fw_base: &fw_base
       items:
         type: string
       default: ['0.0.0.0/0']
-    log_profile_names:
-      title: Security Log Profiles
-      description: Hold the *control* key to select or deselect multiple log profiles.
-      type: array
-      uniqueItems: true
-      items:
-        type: string
-        enumFromBigip: security/log/profile
-      default: []
     fw_partial_rules:
       template: |
         {
@@ -60,12 +51,7 @@ fw_base: &fw_base
         "{{app_name}}": {
           "policyFirewallEnforced": {
             "use": "{{app_name}}_fw_policy"
-          },
-          "securityLogProfiles": [
-            {{#log_profile_names}}
-              { "bigip": {{ . }} },
-            {{/log_profile_names}}
-          ]
+          }
         }
     fw_partial_template:
       template: |
@@ -113,23 +99,18 @@ definitions:
     description: Select an AFM Staging Policy.
     type: string
     enumFromBigip: security/firewall/policy
-template: |
-  {
-    "{{tenant_name}}": {
+    default: ''
+  fw_partial_vs:
+    template: |
       "{{app_name}}": {
         "policyFirewallEnforced": {
           "use": "{{app_name}}_fw_policy"
-        },
-        {{#enable_firewall_staging_policy}}
+        }
+        {{#enable_firewall_staging_policy}},
           "policyFirewallStaged": {
             "bigip": "{{firewall_staging_policy}}"
-          },
+          }
         {{/enable_firewall_staging_policy}}
-        "securityLogProfiles": [
-          {{#log_profile_names}}
-            { "bigip": {{ . }} },
-          {{/log_profile_names}}
-        ]
       }
 template: |
   {{> fw_partial_template}}
@@ -172,17 +153,32 @@ dns:
               }
             ]
           },
-          "{{app_name}}": {
-            "policyFirewallEnforced": {
-              "use": "{{app_name}}_fw_policy"
-            }
-            {{#enable_firewall_staging_policy}},
-              "policyFirewallStaged": {
-                "bigip": "{{firewall_staging_policy}}"
+          "action": "accept"
+        },
+        {
+          "protocol": "any",
+          "name": "dropPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
+              {
+                "use": "default_fw_deny_list"
               }
-            {{/enable_firewall_staging_policy}}
+            ]
+          },
+          "action": "drop"
+        }
+    fw_partial_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "policyFirewallEnforced": {
+            "use": "{{app_name}}_fw_policy"
           }
-        {{/enable_firewall}}
-      }
-    }
-  }
+        },
+        "{{app_name}}_udp": {
+          "policyFirewallEnforced": {
+            "use": "{{app_name}}_fw_policy"
+          }
+        }
+  template: |
+    {{> fw_partial_template}}
