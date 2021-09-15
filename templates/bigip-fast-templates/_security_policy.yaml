@@ -47,7 +47,7 @@ asm_base: &asm_base
                 "{{app_name}}_waf_policy": {
                   "class": "WAF_Policy",
                   "policy": {
-                    "text": "{ \"policy\": { \"name\": \"app_name\", \"encoding\": \"{{waf_policy_encoding}}\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                    "text": "{ \"policy\": { \"encoding\": \"{{waf_policy_encoding}}\", \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
                   },
                   "ignoreChanges": true
                 }
