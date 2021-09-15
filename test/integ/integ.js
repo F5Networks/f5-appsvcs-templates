@@ -117,7 +117,10 @@ before('Setup', function () {
                 assert.deepStrictEqual(actualPerfSettings, perfTracing, 'Unable to set up perf tracing');
             })
             // allow some time for settings to be applied to avoid 503
-            .then(() => new Promise((resolve) => { setTimeout(resolve, 10000); }));
+            .then(() => new Promise((resolve) => { setTimeout(resolve, 10000); }))
+            .catch((err) => {
+                console.log(err);
+            });
     }
     return Promise.resolve();
 });
@@ -343,7 +346,7 @@ describe('Settings', function () {
                 ipamProviders: [],
                 enableIpam: false,
                 disableDeclarationCache: false,
-                perfTracing: {}
+                perfTracing: { debug: false, enabled: false }
             },
             status: 200
         })));
