@@ -384,6 +384,7 @@ allOf:
       }
 anyOf:
   - {}
+  - $ref: "_analytics.yaml#/dns"
   - contentType: application/json
     title: DNS Firewall
     bigipDependencies:
