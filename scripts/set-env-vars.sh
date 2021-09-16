@@ -14,7 +14,7 @@ if [ -z "$CREDS" ]; then
 fi
 
 setVars="export F5_PERF_TRACING_ENABLED=${F5_PERF_TRACING_ENABLED} F5_PERF_TRACING_DEBUG=${F5_PERF_TRACING_DEBUG} F5_PERF_TRACING_ENDPOINT=${F5_PERF_TRACING_ENDPOINT}"
-cmd='echo \\\"$(awk -v var='"'""$setVars""'"" 'NR==3{print var}1'"' /etc/bigstart/scripts/restnoded)\\\" > /etc/bigstart/scripts/restnoded'
+cmd='echo \\\"$(awk -v var='"'""$setVars""'"" 'NR==3{print var}1'"' /etc/bigstart/scripts/restnoded)\\\" > /etc/bigstart/scripts/restnoded && bigstart restart restnoded'
 
 # TODO: add back
 # --write-out "%{http_code}" --output /dev/null \
