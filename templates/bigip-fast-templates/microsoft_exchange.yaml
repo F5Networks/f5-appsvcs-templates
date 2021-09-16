@@ -1402,7 +1402,6 @@ parameters:
   make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
-  tls_chain_name: ''
   tls_client_profile_name: /Common/serverssl
   snatpool_name: /Common
   owa: true
