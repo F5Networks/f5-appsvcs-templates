@@ -376,13 +376,14 @@ class FASTWorker {
             transactionLogger: this.transactionLogger,
             logger: this.logger
         });
-        this.tracer = new Tracer(pkg.name, {
+        // try to initialize tracer from env variables (minimal to record app start)
+        const tracerOpts = {
             logger: this.logger,
             tags: {
-                // TODO: set as3version, bigipversion
                 [Tags.APP.VERSION]: pkg.version
             }
-        });
+        };
+        this.tracer = new Tracer(pkg.name, tracerOpts);
         this.hookOnShutDown();
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
@@ -481,6 +482,13 @@ class FASTWorker {
                 const dt = Date.now() - startTime;
                 this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
                 span.finish();
+                // now that we have config and provision data loaded, close minimal tracer
+                // and use new one with updated settings
+                this.tracer.close();
+                const newTracerOpts = Object.assign({}, tracerOpts, config.perfTracing);
+                newTracerOpts.tags['as3.version'] = this.as3Info.version;
+                // TODO: add bigip version for tags
+                this.tracer = new Tracer(pkg.name, newTracerOpts);
             })
             .then(() => success())
             // Errors

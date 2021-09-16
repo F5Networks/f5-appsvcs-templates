@@ -35,10 +35,11 @@ describe('Tracer lib', function () {
     let spanReq;
 
     beforeEach(() => {
-        process.env.F5_PERF_TRACING_DEBUG = true;
-        process.env.F5_PERF_TRACING_ENABLED = true;
-        process.env.F5_PERF_TRACING_ENDPOINT = 'http://mock.jaeger:14268/api/traces';
-        tracer = new tracerLib.Tracer('testService');
+        tracer = new tracerLib.Tracer('testService', {
+            enabled: true,
+            debug: false,
+            endpoint: 'http://mock.jaeger:14268/api/traces'
+        });
         nock('http://mock.jaeger:14268')
             .persist()
             .post('/api/traces', (body) => {
@@ -48,7 +49,6 @@ describe('Tracer lib', function () {
             })
             .reply(202);
     });
-
 
     afterEach(() => {
         tracer.close();
@@ -60,28 +60,53 @@ describe('Tracer lib', function () {
 
     describe('Tracer', () => {
         describe('constructor', () => {
+            before(() => {
+                process.env.F5_PERF_TRACING_DEBUG = true;
+                process.env.F5_PERF_TRACING_ENABLED = true;
+                process.env.F5_PERF_TRACING_ENDPOINT = 'http://mock.jaeger:14268/api/traces';
+            });
+
+            after(() => {
+                delete process.env.F5_PERF_TRACING_DEBUG;
+                delete process.env.F5_PERF_TRACING_ENABLED;
+                delete process.env.F5_PERF_TRACING_ENDPOINT;
+            });
+
             it('should require serviceName', () => {
                 assert.throws(() => new tracerLib.Tracer(), 'serviceName is required');
             });
 
-            it('should set properties', () => {
+            it('should set properties from opts (override env vars)', () => {
                 const logger = {
-                    error: (msg) => { console.log(msg); },
-                    info: (msg) => { console.log(msg); },
-                    fine: (msg) => { console.log(msg); }
+                    error: () => { },
+                    info: () => { },
+                    fine: () => { }
                 };
-                const newTracer = new tracerLib.Tracer('testService', { logger });
-                assert.strictEqual(newTracer.serviceName, 'testService');
+                const newTracer = new tracerLib.Tracer('testServiceFromOpts', {
+                    logger, enabled: false, endpoint: 'http://somewhere', debug: true
+                });
+                assert.strictEqual(newTracer.serviceName, 'testServiceFromOpts');
                 assert.deepStrictEqual(newTracer._logger, logger);
-                newTracer.startSpan();
+                assert.isFalse(newTracer._enabled);
+                assert.isTrue(newTracer._debug);
+                assert.strictEqual(newTracer._endpoint, 'http://somewhere');
+                newTracer.close();
+            });
+
+            it('should set properties from env vars if no options present', () => {
+                const newTracer = new tracerLib.Tracer('testServiceFromEnvVars');
+                assert.strictEqual(newTracer.serviceName, 'testServiceFromEnvVars');
+                assert.isOk(newTracer._logger);
+                assert.isTrue(newTracer._enabled);
+                assert.isTrue(newTracer._debug);
+                assert.strictEqual(newTracer._endpoint, 'http://mock.jaeger:14268/api/traces');
                 newTracer.close();
             });
         });
 
         describe('.startSpan', () => {
-            it('should return no-op tracer span when disabled through env var', () => {
-                process.env.F5_PERF_TRACING_ENABLED = false;
-                const noopTracer = new tracerLib.Tracer('testService1');
+            it('should return no-op tracer span when disabled', () => {
+                const noopTracer = new tracerLib.Tracer('testService1', { enabled: false });
                 const span = noopTracer.startSpan('opName');
                 assert.isTrue(span instanceof tracerLib.BaseSpan);
                 assert.isFalse(span instanceof tracerLib.Span);
@@ -94,7 +119,7 @@ describe('Tracer lib', function () {
                 assert.isFalse(span instanceof tracerLib.Span);
             });
 
-            it('should return tracer span when enabled through env var', () => {
+            it('should return tracer span when enabled', () => {
                 const span = tracer.startSpan('opName');
                 assert.isTrue(span instanceof tracerLib.Span);
                 assert.deepStrictEqual(span.serviceName, 'testService');
@@ -219,7 +244,7 @@ describe('Tracer lib', function () {
             span.finish();
             // wait just a bit for tracer reporter to finish flushing
             // default interval is 1000 ms
-            return new Promise(resolve => setTimeout(resolve, 1100))
+            return new Promise(resolve => setTimeout(resolve, 1500))
                 .then(() => {
                     assert(spanReq, 'span request should be sent');
                     assert.isTrue(span.finished, 'span should be marked as finished');
