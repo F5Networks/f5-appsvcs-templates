@@ -163,6 +163,7 @@ The information includes:
 
 * Application name - the name given to the application 
 * Template used  - the name of the template used for deployment including the template set and template name
+* Tenant - the name of the deployed tenant
 * Operation 
 
   * Create operation shows the initial deployment
