@@ -1,5 +1,6 @@
 # 1.12.0
 ## Added
+* bigip-fast-templates: Add new or existing TCP or HTTP Analytics profiles on relevant templates
 
 ## Fixed
 * bigip-fast-templates: Fix pool members missing on ADFS template unless Certificate Authentication was selected

@@ -96,6 +96,12 @@ const view = {
     // irules
     irule_names: [],
 
+    // analytics
+    enable_analytics: true,
+    make_analytics_profile: true,
+    use_http_analytics_profile: false,
+    use_tcp_analytics_profile: false,
+
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
@@ -138,6 +144,12 @@ const expected = {
                 profileHTTPAcceleration: 'basic',
                 profileHTTPCompression: 'basic',
                 profileMultiplex: 'basic',
+                profileAnalytics: {
+                    use: 'app1_analytics'
+                },
+                profileAnalyticsTcp: {
+                    use: 'app1_tcp_analytics'
+                },
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
@@ -200,6 +212,36 @@ const expected = {
             app1_http: {
                 class: 'HTTP_Profile',
                 xForwardedFor: true
+            },
+            app1_analytics: {
+                class: 'Analytics_Profile',
+                collectedStatsExternalLogging: true,
+                externalLoggingPublisher: {
+                    bigip: '/Common/default-ipsec-log-publisher'
+                },
+                capturedTrafficInternalLogging: true,
+                notificationBySyslog: true,
+                publishIruleStatistics: true,
+                collectMaxTpsAndThroughput: true,
+                collectPageLoadTime: true,
+                collectClientSideStatistics: true,
+                collectUserSession: true,
+                collectUrl: true,
+                collectGeo: true,
+                collectIp: true,
+                collectSubnet: true,
+                collectUserAgent: true
+            },
+            app1_tcp_analytics: {
+                class: 'Analytics_TCP_Profile',
+                collectedStatsExternalLogging: true,
+                externalLoggingPublisher: {
+                    bigip: '/Common/default-ipsec-log-publisher'
+                },
+                collectRemoteHostIp: true,
+                collectNexthop: true,
+                collectCity: true,
+                collectPostCode: true
             },
             app1_fw_allow_list: {
                 class: 'Firewall_Address_List',
@@ -287,6 +329,17 @@ describe(template, function () {
             view.make_multiplex_profile = false;
             view.multiplex_profile_name = '/Common/oneconnect1';
             expected.t1.app1.app1.profileMultiplex = { bigip: '/Common/oneconnect1' };
+
+            // existing analytics profiles
+            view.make_analytics_profile = false;
+            view.use_http_analytics_profile = true;
+            view.analytics_existingHttpProfile = '/Common/analytics';
+            expected.t1.app1.app1.profileAnalytics = { bigip: '/Common/analytics' };
+            delete expected.t1.app1.app1_analytics;
+            view.use_tcp_analytics_profile = true;
+            view.analytics_existing_tcp_profile = '/Common/tcp-analytics';
+            expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
+            delete expected.t1.app1.app1_tcp_analytics;
 
             // existing DOS & staging profiles
             view.enable_dos = true;
