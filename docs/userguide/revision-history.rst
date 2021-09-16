@@ -12,7 +12,7 @@ Document Revision History
         - Date
 
       * - 16.0 
-        - **Updated the documentation for FAST v1.12** |br| This release contains the following changes:  |br| |br| Added: |br| * bigip-fast-templates: Allow using IPAM for virtual address |br| * bigip-fast-templates: Add blue-green template modeled after https://github.com/f5devcentral/as3-bluegreen/tree/master/fast |br| * bigip-fast-templates: Allow using IPAM for virtual addresses (feature must be enabled first) |br| |br| Fixed: |br| * bigip-fast-templates: Fix virtual server IP missing on ADFS template unless Certificate Authentication was selected |br| * GUI: Fix 404 error on BIG-IP 13.1 when loading pages immediately after installation or upgrade |br| * GUI: Fix 401 Unauthorized Error when idle timeout is longer than default |br| |br| Changed: |br| * GUI: Add option to show/hide debug buttons on app create/modify page (hidden by default) |br| * GUI: Change debug buttons to a menu with window for code output |br| *	GUI: Do not overwrite existing applications when creating new ones
+        - **Updated the documentation for FAST v1.12** |br| This release contains the following changes:  |br| |br| Added: |br| 
         - 09-21-21
 
       * - 15.0 
