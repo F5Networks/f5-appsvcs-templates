@@ -22,5 +22,5 @@ curl --insecure --silent --show-error -u "$CREDS" https://$TARGET/mgmt/tm/util/b
     -H "Content-Type: application/json" \
     -d '{
         "command": "run",
-        "utilCmdArgs": "-c \"'"${cmd}"' && bigstart restart restnoded\""
+        "utilCmdArgs": "-c \"'"${cmd}"'\""
     }'
