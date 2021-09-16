@@ -486,7 +486,7 @@ class FASTWorker {
                 // and use new one with updated settings
                 this.tracer.close();
                 const newTracerOpts = Object.assign({}, tracerOpts, config.perfTracing);
-                newTracerOpts.tags['as3.version'] = this.as3Info.version;
+                newTracerOpts.tags['as3.version'] = this.as3Info ? this.as3Info.version : '';
                 // TODO: add bigip version for tags
                 this.tracer = new Tracer(pkg.name, newTracerOpts);
             })
