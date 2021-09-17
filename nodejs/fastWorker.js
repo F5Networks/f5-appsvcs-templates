@@ -376,14 +376,7 @@ class FASTWorker {
             transactionLogger: this.transactionLogger,
             logger: this.logger
         });
-        // try to initialize tracer from env variables (minimal to record app start)
-        const tracerOpts = {
-            logger: this.logger,
-            tags: {
-                [Tags.APP.VERSION]: pkg.version
-            }
-        };
-        this.tracer = new Tracer(pkg.name, tracerOpts);
+        this.setTracer();
         this.hookOnShutDown();
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
@@ -482,13 +475,8 @@ class FASTWorker {
                 const dt = Date.now() - startTime;
                 this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
                 span.finish();
-                // now that we have config and provision data loaded, close minimal tracer
-                // and use new one with updated settings
-                this.tracer.close();
-                const newTracerOpts = Object.assign({}, tracerOpts, config.perfTracing);
-                newTracerOpts.tags['as3.version'] = this.as3Info ? this.as3Info.version : '';
-                // TODO: add bigip version for tags
-                this.tracer = new Tracer(pkg.name, newTracerOpts);
+                // now that we have config and provision data loaded, use new one with updated settings
+                this.setTracer(config.perfTracing);
             })
             .then(() => success())
             // Errors
@@ -507,6 +495,29 @@ class FASTWorker {
 
         this.generateTeemReportOnStart();
         return success();
+    }
+
+    setTracer(options) {
+        if (this.tracer) {
+            this.tracer.close();
+        }
+        let tracerOpts;
+        // tracer will be init from env variables if no opts supplied
+        // (minimal to record app start)
+        const defaultOpts = {
+            logger: this.logger,
+            tags: {
+                [Tags.APP.VERSION]: pkg.version,
+                'as3.version': this.as3Info ? this.as3Info.version : ''
+                // TODO: add bigip version for tags
+            }
+        };
+        if (!options) {
+            tracerOpts = defaultOpts;
+        } else {
+            tracerOpts = Object.assign({}, defaultOpts, options);
+        }
+        this.tracer = new Tracer(pkg.name, tracerOpts);
     }
 
     /**
@@ -1710,6 +1721,7 @@ class FASTWorker {
             .then(() => this.gatherProvisionData(reqid, true))
             .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
+            .then(() => Promise.resolve(this.setTracer(config.perfTracing)))
             .then(() => this.genRestResponse(restOperation, 200, '', ctx))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
@@ -1905,13 +1917,6 @@ class FASTWorker {
     }
 
     onDelete(restOperation) {
-        // const body = restOperation.getBody();
-        // const uri = restOperation.getUri();
-        // const pathElements = uri.pathname.split('/');
-        // const collection = pathElements[3];
-        // const itemid = pathElements[4];
-
-        // restOperation.requestId = this.generateRequestId();
         const ctx = this.generateContext(restOperation);
         this.recordRestRequest(restOperation);
 
@@ -1985,6 +1990,7 @@ class FASTWorker {
             .then(() => this.gatherProvisionData(reqid, true))
             .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
             .then(() => this.saveConfig(combinedConfig, reqid))
+            .then(() => Promise.resolve(this.setTracer(combinedConfig.perfTracing)))
             .then(() => this.genRestResponse(restOperation, 200, '', ctx))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
