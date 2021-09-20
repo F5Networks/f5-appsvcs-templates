@@ -1,3 +1,10 @@
+# 1.13.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.12.0
 ## Added
 * bigip-fast-templates: Add new or existing TCP or HTTP Analytics profiles on relevant templates
