@@ -108,7 +108,7 @@
     "@f5devcentral/f5-fast-core": "^0.15.0",
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "core-js": "^3.16.0",
     "deepmerge": "^4.2.2",
     "extract-zip": "^1.7.0",
