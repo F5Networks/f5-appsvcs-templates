@@ -12,7 +12,7 @@ Document Revision History
         - Date
 
       * - 16.0 
-        - **Updated the documentation for FAST v1.12** |br| This release contains the following changes:  |br| |br| Added: |br| 
+        - **Updated the documentation for FAST v1.12** |br| This release contains the following changes:  |br| |br| Fixed: |br| * bigip-fast-templates: Fixed pool members missing on ADFS template unless Certificate Authentication was selected |br| * bigip-fast-templates: Fixed AS3 declaration when using custom persistence profiles |br| * Fixed errors when deleting builtin template sets |br| * Fixed POST to /render and /application endpoints not using hydrated schemas |br| |br| Changed: |br| * gui: Stop showing appended userAgent query parameter on URIs for error messages 
         - 09-21-21
 
       * - 15.0 
