@@ -119,7 +119,7 @@
     "semver": "^7.3.5"
   },
   "optionalDependencies": {
-    "error": "^7.2.1",
+    "error": "7.2.1",
     "jaeger-client": "^3.18.1"
   }
 }
