@@ -17,6 +17,7 @@
     "buildgui": "./scripts/build-presentation-layer.sh",
     "buildrpm": "./scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
+    "buildperf": "F5_PERF_TRACING_ENABLED='true' npm run build",
     "version": "./scripts/fix-version.sh",
     "start": "node --unhandled-rejections=strict stand-alone/app.js",
     "watch": "NODE_ENV=development npm-watch"
@@ -111,13 +112,14 @@
     "axios": "^0.21.1",
     "core-js": "^3.16.0",
     "deepmerge": "^4.2.2",
-    "error": "^7.2.1",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
-    "jaeger-client": "^3.18.1",
     "jsonpath-plus": "^4.0.0",
     "mustache": "^4.2.0",
-    "opentracing": "^0.14.5",
     "semver": "^7.3.5"
+  },
+  "optionalDependencies": {
+    "error": "^7.2.1",
+    "jaeger-client": "^3.18.1"
   }
 }

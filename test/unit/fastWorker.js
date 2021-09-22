@@ -241,6 +241,39 @@ describe('template worker tests', function () {
             });
         nock('http://localhost:8100')
             .persist()
+            .get('/mgmt/tm/sys/version')
+            .reply(200, {
+                kind: 'tm:sys:version:versionstats',
+                selfLink: 'https://localhost/mgmt/tm/sys/version?ver=16.1.1',
+                entries: {
+                    'https://localhost/mgmt/tm/sys/version/0': {
+                        nestedStats: {
+                            entries: {
+                                Build: {
+                                    description: '0.0.15'
+                                },
+                                Date: {
+                                    description: 'Tue Aug 31 22:56:04 PDT 2021'
+                                },
+                                Edition: {
+                                    description: 'Final'
+                                },
+                                Product: {
+                                    description: 'BIG-IP'
+                                },
+                                Title: {
+                                    description: 'Main Package'
+                                },
+                                Version: {
+                                    description: '16.1.1'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        nock('http://localhost:8100')
+            .persist()
             .get('/mgmt/shared/appsvcs/info')
             .reply(200, {
                 version: '3.16'

@@ -16,6 +16,7 @@ rpmbuild -bb \
     --define "_name ${PKG_NAME}" \
     --define "_version ${VERSION}" \
     --define "_release ${RELEASE}" \
+    --define "PERF_TRACING_ENABLED ${F5_PERF_TRACING_ENABLED-false}" \
     project.spec
 
 cd "$MAINDIR/rpmbuild/RPMS/noarch"

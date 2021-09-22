@@ -41,8 +41,9 @@ const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
-const Tracer = require('../lib/tracer.js').Tracer;
-const Tags = require('../lib/tracer.js').Tags;
+const Tracer = require('../lib/tracer').Tracer;
+const Tags = require('../lib/tracer').Tags;
+const TracerUtil = require('../lib/tracer').Util;
 const IpamProviders = require('../lib/ipam');
 
 const pkg = require('../package.json');
@@ -509,9 +510,11 @@ class FASTWorker {
             tags: {
                 [Tags.APP.VERSION]: pkg.version,
                 'as3.version': this.as3Info ? this.as3Info.version : ''
-                // TODO: add bigip version for tags
             }
         };
+        if (this.deviceInfo) {
+            Object.assign(defaultOpts.tags, this.deviceInfo);
+        }
         if (!options) {
             tracerOpts = defaultOpts;
         } else {
@@ -755,6 +758,18 @@ class FASTWorker {
             this._provisionConfigCache = null;
         }
         return Promise.resolve()
+            .then(() => {
+                if (!this.deviceInfo) {
+                    return this.recordTransaction(requestId, 'Fetching device information',
+                        this.endpoint.get('/mgmt/tm/sys/version'), {
+                            validateStatus: () => true // ignore failure status codes
+                        })
+                        .then((res) => {
+                            this.deviceInfo = TracerUtil.buildDeviceTags(res.data);
+                        });
+                }
+                return Promise.resolve();
+            })
             .then(() => {
                 if (this.provisionData !== null) {
                     return Promise.resolve(this.provisionData);
