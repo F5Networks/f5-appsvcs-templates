@@ -611,7 +611,8 @@ class FASTWorker {
             collection: pathElements[3],
             itemId: pathElements[4],
             pathName,
-            requestId: restOperation.requestId
+            requestId: restOperation.requestId,
+            tracer: this.tracer
         };
 
         const getSpanPath = function (ctx) {
@@ -668,7 +669,7 @@ class FASTWorker {
             .then(tmpls => tmpls.map(x => x[0]));
     }
 
-    gatherTemplateSet(tsid) {
+    gatherTemplateSet(tsid, ctx) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
@@ -687,7 +688,7 @@ class FASTWorker {
                             return fsTsData;
                         });
                 }),
-            this.driver.listApplications()
+            this.driver.listApplications(ctx)
         ])
             .then(([tsData, appsList]) => {
                 if (!tsData) {
@@ -719,7 +720,14 @@ class FASTWorker {
             }));
     }
 
-    gatherInfo(requestId) {
+    gatherInfo(requestId, ctx) {
+        if (!ctx) {
+            ctx = {
+                tracer: this.tracer,
+                span: this.tracer.startSpan('gatherInfo')
+            };
+        }
+
         requestId = requestId || 0;
         const info = {
             version: pkg.version,
@@ -740,7 +748,7 @@ class FASTWorker {
             })
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
             .then(() => this.templateProvider.listSets())
-            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName))))
+            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName, ctx))))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
@@ -748,6 +756,7 @@ class FASTWorker {
             .then(() => this.getConfig(requestId))
             .then((config) => {
                 info.config = config;
+                ctx.span.finish();
             })
             .then(() => info);
     }
@@ -1171,7 +1180,7 @@ class FASTWorker {
         return Promise.all(promises);
     }
 
-    renderTemplates(reqid, data) {
+    renderTemplates(reqid, data, ctx) {
         const appsData = [];
         const lastModified = new Date().toISOString();
         let config = {};
@@ -1181,7 +1190,7 @@ class FASTWorker {
             .then((configData) => {
                 config = configData;
             })
-            .then(() => this.driver.listApplicationNames())
+            .then(() => this.driver.listApplicationNames(ctx))
             .then((listData) => {
                 appsList = listData.map(x => `${x[0]}/${x[1]}`);
             });
@@ -1341,7 +1350,7 @@ class FASTWorker {
 
     getInfo(restOperation, ctx) {
         return Promise.resolve()
-            .then(() => this.gatherInfo(restOperation.requestId))
+            .then(() => this.gatherInfo(restOperation.requestId, ctx))
             .then((info) => {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation, ctx);
@@ -1427,7 +1436,7 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'gathering a list of applications from the driver',
-                this.driver.listApplications()
+                this.driver.listApplications(ctx)
             ))
             .then(appsList => this.convertPoolMembers(reqid, appsList))
             .then((appsList) => {
@@ -1478,7 +1487,7 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid, 'gathering a template set',
-                    this.gatherTemplateSet(tsid)
+                    this.gatherTemplateSet(tsid, ctx)
                 ))
                 .then((tmplSet) => {
                     restOperation.setBody(tmplSet);
@@ -1503,7 +1512,7 @@ class FASTWorker {
             ))
             .then(setList => this.recordTransaction(
                 reqid, 'gathering data for each template set',
-                Promise.all(setList.map(x => this.gatherTemplateSet(x)))
+                Promise.all(setList.map(x => this.gatherTemplateSet(x, ctx)))
             ))
             .then(setList => ((showDisabled) ? setList.filter(x => !x.enabled) : setList))
             .then((setList) => {
@@ -1572,7 +1581,7 @@ class FASTWorker {
         let appsData;
 
         return Promise.resolve()
-            .then(() => this.renderTemplates(reqid, data))
+            .then(() => this.renderTemplates(reqid, data, ctx))
             .catch((e) => {
                 let code = 400;
                 if (e.message.match(/Could not find template/)) {
@@ -1592,7 +1601,7 @@ class FASTWorker {
             })
             .then(() => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
-                this.driver.createApplications(appsData)
+                this.driver.createApplications(appsData, ctx)
             ))
             .catch((e) => {
                 if (restOperation.getStatusCode() >= 400) {
@@ -1734,7 +1743,7 @@ class FASTWorker {
             .then(() => this.getConfig(reqid))
             .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
             .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(config, provisionData))
+            .then(provisionData => this.driver.setSettings(config, provisionData, false, ctx))
             .then(() => this.saveConfig(config, reqid))
             .then(() => Promise.resolve(this.setTracer(config.perfTracing)))
             .then(() => this.genRestResponse(restOperation, 200, '', ctx))
@@ -1755,7 +1764,7 @@ class FASTWorker {
         // this.logger.info(`postRender() received:\n${JSON.stringify(data, null, 2)}`);
 
         return Promise.resolve()
-            .then(() => this.renderTemplates(reqid, data))
+            .then(() => this.renderTemplates(reqid, data, ctx))
             .catch((e) => {
                 let code = 400;
                 if (e.message.match(/Could not find template/)) {
@@ -1818,12 +1827,12 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'requesting application data from driver',
-                Promise.all(appNames.map(x => this.driver.getApplication(...x)))
+                Promise.all(appNames.map(x => this.driver.getApplication(x[0], x[1], ctx)))
             ))
             .then(appsData => this.releaseIPAMAddressesFromApps(reqid, appsData))
             .then(() => this.recordTransaction(
                 reqid, 'deleting applications',
-                this.driver.deleteApplications(appNames)
+                this.driver.deleteApplications(appNames, ctx)
             ))
             .then((result) => {
                 restOperation.setHeaders('Content-Type', 'text/json');
@@ -1852,7 +1861,7 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid, `gathering template set data for ${tsid}`,
-                    this.gatherTemplateSet(tsid)
+                    this.gatherTemplateSet(tsid, ctx)
                 ))
                 .then((setData) => {
                     const usedBy = setData.templates.reduce((acc, curr) => {
@@ -1971,7 +1980,7 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'Fetching application data from AS3',
-                this.driver.getApplication(tenant, app)
+                this.driver.getApplication(tenant, app, ctx)
             ))
             .then(appData => this.recordTransaction(
                 reqid, 'Re-deploying application',
@@ -2003,7 +2012,7 @@ class FASTWorker {
                 ctx
             )))
             .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
+            .then(provisionData => this.driver.setSettings(combinedConfig, provisionData, false, ctx))
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => Promise.resolve(this.setTracer(combinedConfig.perfTracing)))
             .then(() => this.genRestResponse(restOperation, 200, '', ctx))

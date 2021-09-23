@@ -28,6 +28,7 @@ chai.use(chaiAsPromised);
 const assert = chai.assert;
 
 const { AS3Driver, AS3DriverConstantsKey } = require('../../lib/drivers');
+const Tracer = require('../../lib/tracer').Tracer;
 
 describe('AS3 Driver tests', function () {
     const appDef = {
@@ -65,10 +66,15 @@ describe('AS3 Driver tests', function () {
         }
     });
 
+    const mockCtx = {
+        tracer: new Tracer('test', { enabled: false })
+    };
+
     const host = 'http://localhost:8100';
 
     beforeEach(function () {
         this.clock = sinon.useFakeTimers();
+        mockCtx.span = mockCtx.tracer.startSpan('testMethod');
     });
 
     afterEach(function () {
@@ -96,13 +102,13 @@ describe('AS3 Driver tests', function () {
         const driver = new AS3Driver();
         mockAS3(as3stub);
 
-        return assert.becomes(driver._getDecl(), as3stub);
+        return assert.becomes(driver._getDecl(mockCtx.span), as3stub);
     });
     it('get_decl_empty_204', function () {
         const driver = new AS3Driver();
         mockAS3('', 204);
 
-        return assert.becomes(driver._getDecl(), as3stub);
+        return assert.becomes(driver._getDecl(mockCtx.span), as3stub);
     });
     it('get_decl_retry', function () {
         const driver = new AS3Driver();
@@ -114,7 +120,7 @@ describe('AS3 Driver tests', function () {
             .query(true)
             .reply(200, as3stub);
 
-        return assert.becomes(driver._getDecl(), as3stub);
+        return assert.becomes(driver._getDecl(mockCtx.span), as3stub);
     });
     it('get_tenant_and_app_from_decl', function () {
         const driver = new AS3Driver();
@@ -126,24 +132,24 @@ describe('AS3 Driver tests', function () {
     it('list_app_names_empty', function () {
         const driver = new AS3Driver();
         mockAS3(as3stub);
-        return assert.becomes(driver.listApplicationNames(), []);
+        return assert.becomes(driver.listApplicationNames(mockCtx), []);
     });
     it('list_app_names', function () {
         const driver = new AS3Driver();
         mockAS3(as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
-        return assert.becomes(driver.listApplicationNames(), [['tenantName', 'appName']]);
+        return assert.becomes(driver.listApplicationNames(mockCtx), [['tenantName', 'appName']]);
     });
     it('list_apps', function () {
         const driver = new AS3Driver();
         mockAS3(as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
-        return assert.becomes(driver.listApplications(), [appMetadata]);
+        return assert.becomes(driver.listApplications(mockCtx), [appMetadata]);
     });
     it('get_app', function () {
         const driver = new AS3Driver();
         mockAS3(as3WithApp);
-        return assert.becomes(driver.getApplication('tenantName', 'appName'), appMetadata);
+        return assert.becomes(driver.getApplication('tenantName', 'appName', mockCtx), appMetadata);
     });
     it('create_app', function () {
         const driver = new AS3Driver();
@@ -155,7 +161,7 @@ describe('AS3 Driver tests', function () {
             .query(true)
             .reply(202, {});
 
-        return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
+        return assert.isFulfilled(driver.createApplication(appDef, appMetadata, mockCtx));
     });
     it('create_app_user_agent', function () {
         const driver = new AS3Driver({ userAgent: 'foo-bar/1.0' });
@@ -173,7 +179,7 @@ describe('AS3 Driver tests', function () {
             .query(true)
             .reply(202, {});
 
-        return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
+        return assert.isFulfilled(driver.createApplication(appDef, appMetadata, mockCtx));
     });
     it('create_multiple_apps', function () {
         const driver = new AS3Driver();
@@ -235,7 +241,7 @@ describe('AS3 Driver tests', function () {
                 appDef: thirdAppDef,
                 metaData: appMetadata
             }
-        ])
+        ], mockCtx)
             .then((response) => {
                 assert.strictEqual(response.status, 202);
             });
@@ -270,7 +276,7 @@ describe('AS3 Driver tests', function () {
             .query(true)
             .reply(202, {});
 
-        return assert.isFulfilled(driver.deleteApplication('tenantName', 'appName'));
+        return assert.isFulfilled(driver.deleteApplication('tenantName', 'appName', mockCtx));
     });
     it('delete_all_apps', function () {
         const driver = new AS3Driver();
@@ -282,19 +288,20 @@ describe('AS3 Driver tests', function () {
             .query(true)
             .reply(202, {});
 
-        return assert.isFulfilled(driver.deleteApplications());
+        return assert.isFulfilled(driver.deleteApplications(undefined, mockCtx));
     });
     it('create_app_bad', function () {
         const driver = new AS3Driver();
 
         mockAS3(as3stub);
 
-        return assert.isRejected(driver.createApplication(appDef, { class: 'Application' }), /cannot contain the class key/)
+        return assert.isRejected(driver.createApplication(appDef,
+            { class: 'Application' }, mockCtx), /cannot contain the class key/)
             .then(() => assert.isRejected(driver.createApplication({
                 appName: {
                     class: 'Application'
                 }
-            }), /Did not find a tenant/))
+            }, undefined, mockCtx), /Did not find a tenant/))
             .then(() => assert.isRejected(driver.createApplication({
                 tenantName1: {
                     class: 'Tenant'
@@ -302,12 +309,12 @@ describe('AS3 Driver tests', function () {
                 tenantName2: {
                     class: 'Tenant'
                 }
-            }), /Only one tenant/))
+            }, undefined, mockCtx), /Only one tenant/))
             .then(() => assert.isRejected(driver.createApplication({
                 tenantName: {
                     class: 'Tenant'
                 }
-            }), /Did not find an application/))
+            }, undefined, mockCtx), /Did not find an application/))
             .then(() => assert.isRejected(driver.createApplication({
                 tenantName: {
                     class: 'Tenant',
@@ -318,18 +325,18 @@ describe('AS3 Driver tests', function () {
                         class: 'Application'
                     }
                 }
-            }), /Only one application/));
+            }, undefined, mockCtx), /Only one application/));
     });
     it('get_app_bad', function () {
         const driver = new AS3Driver();
         mockAS3(as3WithApp);
-        return assert.isRejected(driver.getApplication('badTenent', 'appName'), /no tenant found/)
-            .then(() => assert.isRejected(driver.getApplication('tenantName', 'badApp'), /could not find app/));
+        return assert.isRejected(driver.getApplication('badTenent', 'appName', mockCtx), /no tenant found/)
+            .then(() => assert.isRejected(driver.getApplication('tenantName', 'badApp', mockCtx), /could not find app/));
     });
     it('get_app_unmanaged', function () {
         const driver = new AS3Driver();
         mockAS3(Object.assign({}, as3stub, appDef));
-        return assert.isRejected(driver.getApplication('tenantName', 'appName'), /application is not managed/);
+        return assert.isRejected(driver.getApplication('tenantName', 'appName', mockCtx), /application is not managed/);
     });
     it('get_empty_tasks', function () {
         const driver = new AS3Driver();

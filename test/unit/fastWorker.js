@@ -179,7 +179,7 @@ function resetScope(scope) {
 }
 
 describe('template worker tests', function () {
-    this.timeout(3000);
+    this.timeout(300000);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
