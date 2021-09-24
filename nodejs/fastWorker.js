@@ -344,6 +344,7 @@ class FASTWorker {
             transactionLogger: this.transactionLogger,
             logger: this.logger
         });
+
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
@@ -391,6 +392,7 @@ class FASTWorker {
             .then((cfg) => {
                 config = cfg;
             })
+            .then(() => this.setDeviceInfo())
             // Get the AS3 driver ready
             .then(() => this.recordTransaction(
                 0, 'ready AS3 driver',
@@ -452,9 +454,34 @@ class FASTWorker {
             this.logger.error(`FAST Worker onStart error: ${errMsg}`);
             return error();
         }
-
         this.generateTeemReportOnStart();
         return success();
+    }
+
+    setDeviceInfo() {
+        // If device-info is unavailable intermittently, this can be placed in onStart
+        // and call setDeviceInfo in onStartCompleted
+        // this.dependencies.push(this.restHelper.makeRestjavadUri(
+        //     '/shared/identified-devices/config/device-info'
+        // ));
+        return Promise.resolve()
+            .then(() => this.recordTransaction(0, 'fetching device information',
+                this.endpoint.get('/mgmt/shared/identified-devices/config/device-info'))
+                .then((response) => {
+                    const data = response.data;
+                    if (data) {
+                        this.deviceInfo = {
+                            hostname: data.hostname,
+                            platform: data.platform,
+                            platformName: data.platformMarketingName,
+                            product: data.product,
+                            version: data.version,
+                            build: data.build,
+                            edition: data.edition,
+                            fullVersion: `${data.version}-${data.build}`
+                        };
+                    }
+                }));
     }
 
     /**
