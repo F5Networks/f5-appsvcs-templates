@@ -1006,7 +1006,7 @@ class FASTWorker {
             ...tmpl._oneOf || [],
             ...tmpl._anyOf || []
         ];
-        
+
         return Promise.resolve()
             .then(() => Promise.all(subTemplates.map(x => this.removeIncompatibleProps(x, requestId))))
             .then(() => {
@@ -1016,22 +1016,25 @@ class FASTWorker {
                 const minBigipVersionProps = (this.getPropsWithChild(schema, 'minBigipVersion'));
 
                 Object.entries(minBigipVersionProps).forEach(([key, value]) => {
-                    if (typeof value === "object" && value !== null && value.minBigipVersion !== undefined) {
-                        var  loopCtr = 0;
-                        let arrMinVersion = JSON.stringify(value.minBigipVersion).split('.');
-
-                        arrMinVersion.every(versionPoint => {
+                    if (typeof value === 'object' && value !== null && value.minBigipVersion !== undefined) {
+                        const arrMinVersion = JSON.stringify(value.minBigipVersion).split('.');
+                        let loopCtr = 0;
+                        arrMinVersion.every((versionPoint) => {
                             if (arrBigipVersion[loopCtr] === versionPoint) {
-                                ++loopCtr;
-                                return true
-                            } else if (arrBigipVersion[loopCtr] < versionPoint) {
+                                loopCtr += 1;
+                                return true;
+                            }
+
+                            if (arrBigipVersion[loopCtr] < versionPoint) {
                                 delete schema.properties[key];
                             }
+
+                            return false;
                         });
                     }
                 });
-                
-                return Promise.resolve();         
+
+                return Promise.resolve();
             });
     }
 
