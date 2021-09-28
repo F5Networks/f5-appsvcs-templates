@@ -1000,6 +1000,41 @@ class FASTWorker {
             });
     }
 
+    removeIncompatibleProps(tmpl, requestId) {
+        const subTemplates = [
+            ...tmpl._allOf || [],
+            ...tmpl._oneOf || [],
+            ...tmpl._anyOf || []
+        ];
+        
+        return Promise.resolve()
+            .then(() => Promise.all(subTemplates.map(x => this.removeIncompatibleProps(x, requestId))))
+            .then(() => {
+                const schema = tmpl._parametersSchema;
+                const arrBigipVersion = this.deviceInfo.version.split('.');
+
+                const minBigipVersionProps = (this.getPropsWithChild(schema, 'minBigipVersion'));
+
+                Object.entries(minBigipVersionProps).forEach(([key, value]) => {
+                    if (typeof value === "object" && value !== null && value.minBigipVersion !== undefined) {
+                        var  loopCtr = 0;
+                        let arrMinVersion = JSON.stringify(value.minBigipVersion).split('.');
+
+                        arrMinVersion.every(versionPoint => {
+                            if (arrBigipVersion[loopCtr] === versionPoint) {
+                                ++loopCtr;
+                                return true
+                            } else if (arrBigipVersion[loopCtr] < versionPoint) {
+                                delete schema.properties[key];
+                            }
+                        });
+                    }
+                });
+                
+                return Promise.resolve();         
+            });
+    }
+
     convertPoolMembers(reqid, apps) {
         reqid = reqid || 0;
         const convertTemplateNames = [
@@ -1094,6 +1129,7 @@ class FASTWorker {
                 tmpl.title = tmpl.title || tmplid;
                 return Promise.resolve()
                     .then(() => this.checkDependencies(tmpl, reqid, true))
+                    .then(() => this.removeIncompatibleProps(tmpl, reqid))
                     .then(() => this.hydrateSchema(tmpl, reqid, true))
                     .then(() => {
                         // Remove IPAM features in official templates if not enabled
