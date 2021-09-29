@@ -293,6 +293,22 @@ describe('template worker tests', function () {
             .get('/mgmt/shared/telemetry/info')
             .reply(200, {
             });
+        nock('http://localhost:8100')
+            .persist()
+            .get('/mgmt/shared/identified-devices/config/device-info')
+            .reply(200, {
+                platform: 'Z100',
+                machineId: 'some-guid',
+                hostname: 'fast.unit.test.host',
+                version: '13.1.1.4',
+                product: 'BIG-IP',
+                platformMarketingName: 'BIG-IP Virtual Edition',
+                edition: 'Engineering Hotfix',
+                build: '0.140.4',
+                restFrameworkVersion: '13.1.1.4-0.0.4',
+                kind: 'shared:resolver:device-groups:deviceinfostate',
+                selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
+            });
     });
 
     afterEach(function () {
@@ -1249,6 +1265,18 @@ describe('template worker tests', function () {
             .then(() => worker.templateProvider.list())
             .then((tmplList) => {
                 assert(tmplList.includes('examples/simple_http'));
+            })
+            .then(() => {
+                assert.deepStrictEqual(worker.deviceInfo, {
+                    build: '0.140.4',
+                    edition: 'Engineering Hotfix',
+                    fullVersion: '13.1.1.4-0.140.4',
+                    hostname: 'fast.unit.test.host',
+                    platform: 'Z100',
+                    platformName: 'BIG-IP Virtual Edition',
+                    product: 'BIG-IP',
+                    version: '13.1.1.4'
+                }, 'device info should be set');
             });
     });
     it('onStartCompleted', function () {

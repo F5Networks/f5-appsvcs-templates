@@ -89,7 +89,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '24ceb1559ad54a6b6f0814892665c1861597899187d366f22f8af2880ba68910', // v1.12
+        '42bd34feb4a63060df71c19bc4c23f9ec584507d4d3868ad75db51af8b449437', // v1.12
         '84904385ccc31f336b240ba1caa17dfab134d08efed7766fbcaea4eb61dae463', // v1.11
         '64d9692bdab5f1e2ba835700df4d719662b9976b9ff094fe7879f74d411fe00b', // v1.10
         '89f6d8fb68435c93748de3f175f208714dcbd75de37d9286a923656971c939f0', // v1.9
@@ -379,6 +379,7 @@ class FASTWorker {
         });
         this.setTracer();
         this.hookOnShutDown();
+
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
@@ -428,6 +429,7 @@ class FASTWorker {
                 config = cfg;
                 span.log({ event: 'config_loaded' });
             })
+            .then(() => this.setDeviceInfo())
             // Get the AS3 driver ready
             .then(() => this.recordTransaction(
                 0, 'ready AS3 driver',
@@ -493,7 +495,6 @@ class FASTWorker {
             this.logger.error(`FAST Worker onStart error: ${errMsg}`);
             return error();
         }
-
         this.generateTeemReportOnStart();
         return success();
     }
@@ -521,6 +522,32 @@ class FASTWorker {
             tracerOpts = Object.assign({}, defaultOpts, options);
         }
         this.tracer = new Tracer(pkg.name, tracerOpts);
+    }
+
+    setDeviceInfo() {
+        // If device-info is unavailable intermittently, this can be placed in onStart
+        // and call setDeviceInfo in onStartCompleted
+        // this.dependencies.push(this.restHelper.makeRestjavadUri(
+        //     '/shared/identified-devices/config/device-info'
+        // ));
+        return Promise.resolve()
+            .then(() => this.recordTransaction(0, 'fetching device information',
+                this.endpoint.get('/mgmt/shared/identified-devices/config/device-info'))
+                .then((response) => {
+                    const data = response.data;
+                    if (data) {
+                        this.deviceInfo = {
+                            hostname: data.hostname,
+                            platform: data.platform,
+                            platformName: data.platformMarketingName,
+                            product: data.product,
+                            version: data.version,
+                            build: data.build,
+                            edition: data.edition,
+                            fullVersion: `${data.version}-${data.build}`
+                        };
+                    }
+                }));
     }
 
     /**
@@ -1180,6 +1207,31 @@ class FASTWorker {
         return Promise.all(promises);
     }
 
+    fetchTemplate(reqid, tmplid) {
+        return Promise.resolve()
+            .then(() => this.recordTransaction(
+                reqid, 'fetching template',
+                this.templateProvider.fetch(tmplid)
+            ))
+            // Copy the template to avoid modifying the stored template
+            .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
+            .then((tmpl) => {
+                tmpl.title = tmpl.title || tmplid;
+                return Promise.resolve()
+                    .then(() => this.checkDependencies(tmpl, reqid, true))
+                    .then(() => this.hydrateSchema(tmpl, reqid, true))
+                    .then(() => {
+                        // Remove IPAM features in official templates if not enabled
+                        if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
+                            return Promise.resolve();
+                        }
+
+                        return this.removeIpamProps(tmpl, reqid);
+                    })
+                    .then(() => tmpl);
+            });
+    }
+
     renderTemplates(reqid, data, ctx) {
         const appsData = [];
         const lastModified = new Date().toISOString();
@@ -1226,10 +1278,7 @@ class FASTWorker {
                     this.templateProvider.getSetData(setName)
                 ))
                 .then(setData => Object.assign(tsData, setData))
-                .then(() => this.recordTransaction(
-                    reqid, `loading template (${tmplData.name})`,
-                    this.templateProvider.fetch(tmplData.name)
-                ))
+                .then(() => this.fetchTemplate(reqid, tmplData.name))
                 .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
@@ -1367,29 +1416,10 @@ class FASTWorker {
             tmplid = pathElements.slice(4, 6).join('/');
 
             return Promise.resolve()
-                .then(() => this.recordTransaction(
-                    reqid, 'fetching template',
-                    this.templateProvider.fetch(tmplid)
-                ))
-                // Copy the template to avoid modifying the stored template
-                .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
+                .then(() => this.fetchTemplate(reqid, tmplid))
                 .then((tmpl) => {
-                    tmpl.title = tmpl.title || tmplid;
-                    return Promise.resolve()
-                        .then(() => this.checkDependencies(tmpl, reqid, true))
-                        .then(() => this.hydrateSchema(tmpl, reqid, true))
-                        .then(() => {
-                            // Remove IPAM features in official templates if not enabled
-                            if (tmplid.split('/')[0] !== 'bigip-fast-templates') {
-                                return Promise.resolve();
-                            }
-
-                            return this.removeIpamProps(tmpl, reqid);
-                        })
-                        .then(() => {
-                            restOperation.setBody(tmpl);
-                            this.completeRestOperation(restOperation, ctx);
-                        });
+                    restOperation.setBody(tmpl);
+                    this.completeRestOperation(restOperation, ctx);
                 })
                 .catch((e) => {
                     if (e.message.match(/Could not find template/)) {
