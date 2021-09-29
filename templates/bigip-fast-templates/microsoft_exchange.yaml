@@ -8,15 +8,16 @@ anyOf:
   - {}
   - $ref: "_telemetry.yaml#"
 definitions:
-  app_fqdn:
-    title: Exchange Domain Name
-    description: Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
-    type: string
-    dependencies: []
   single_vip:
     title: Common VIP
     description: This checkbox determines the number of virtual servers the BIG-IP system creates for your Mailbox Server deployment. By choosing a single IP address, you can combine multiple functions (such as using a single FQDN and associated SSL certificate for all HTTP-based client access services) on the same virtual server. By choosing separate virtual servers for each client access service component, you can manage each service independently from the others. For detailed information, see the Deployment Guide.
     type: boolean
+  app_fqdn:
+    title: Exchange Domain Name
+    description: Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
+    type: string
+    dependencies: 
+      - single_vip
   use_ipam:
     title: Use IPAM Provider
     description: Use an IP Address Management service to get an IP address
