@@ -104,7 +104,7 @@ const supportedHashes = {
 };
 
 class FASTWorker {
-    constructor(options) {  
+    constructor(options) {
         options = options || {};
         this.state = {};
 
