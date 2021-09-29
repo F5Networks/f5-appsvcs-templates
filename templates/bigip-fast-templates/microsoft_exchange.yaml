@@ -202,6 +202,9 @@ definitions:
     type: string
     dependencies: 
       - owa
+      - single_vip
+    invertDependency:
+      - single_vip
   ews:
     title: EWS
     description: Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
@@ -224,6 +227,9 @@ definitions:
     type: string
     dependencies: 
       - ews
+      - single_vip
+    invertDependency:
+      - single_vip
   outlook:
     title: Microsoft Outlook and OAB
     description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
@@ -251,6 +257,9 @@ definitions:
     type: string
     dependencies: 
       - outlookMAPI
+      - single_vip
+    invertDependency:
+      - single_vip
   outlookRPC:
     title: RPC-over-HTTP
     description: Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
@@ -275,6 +284,9 @@ definitions:
     type: string
     dependencies: 
       - outlookRPC
+      - single_vip
+    invertDependency:
+      - single_vip
   activesync: 
     title: ActiveSync
     description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
@@ -297,6 +309,9 @@ definitions:
     type: string
     dependencies: 
       - activesync
+      - single_vip
+    invertDependency:
+      - single_vip
   autodiscover:
     title: Autodiscover
     description: Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
@@ -319,6 +334,9 @@ definitions:
     type: string
     dependencies:
       - autodiscover
+      - single_vip
+    invertDependency:
+      - single_vip
   pop3:
     title: POP3
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
