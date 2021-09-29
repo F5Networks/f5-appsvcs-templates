@@ -144,14 +144,15 @@ definitions:
     title: Specify the name of an existing BIG-IP SSL key.
     enumFromBigip: 'sys/crypto/key'
   enable_tls_server_chain:
-    title: TLS Server Intermediate Certificate Bundle
-    description: 'Specify the name of an existing BIG-IP SSL certificate bundle that contains your intermediate certificate(s).'
+    title: TLS Server Chain Certificate Bundle
     type: boolean
     dependencies: 
       - enable_tls_server
   tls_chain_name:
-    title: Specify the name of an existing BIG-IP SSL certificate that contains your Intermediate Certificate(s).
+    title: Specify the name of an existing BIG-IP SSL certificate bundle that contains your chain of trust.
     enumFromBigip: 'sys/crypto/cert'
+    dependencies: 
+      - enable_tls_server_chain
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
@@ -1402,6 +1403,7 @@ parameters:
   make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
+  tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
   snatpool_name: /Common
   owa: true
