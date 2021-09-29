@@ -514,7 +514,7 @@ class FASTWorker {
             }
         };
         if (this.deviceInfo) {
-            Object.assign(defaultOpts.tags, this.deviceInfo);
+            Object.assign(defaultOpts.tags, TracerUtil.buildDeviceTags(this.deviceInfo));
         }
         if (!options) {
             tracerOpts = defaultOpts;
@@ -794,18 +794,6 @@ class FASTWorker {
             this._provisionConfigCache = null;
         }
         return Promise.resolve()
-            .then(() => {
-                if (!this.deviceInfo) {
-                    return this.recordTransaction(requestId, 'Fetching device information',
-                        this.endpoint.get('/mgmt/tm/sys/version'), {
-                            validateStatus: () => true // ignore failure status codes
-                        })
-                        .then((res) => {
-                            this.deviceInfo = TracerUtil.buildDeviceTags(res.data);
-                        });
-                }
-                return Promise.resolve();
-            })
             .then(() => {
                 if (this.provisionData !== null) {
                     return Promise.resolve(this.provisionData);
