@@ -12,6 +12,7 @@ definitions:
     title: Exchange Domain Name
     description: Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
     type: string
+    dependencies: []
   single_vip:
     title: Common VIP
     description: This checkbox determines the number of virtual servers the BIG-IP system creates for your Mailbox Server deployment. By choosing a single IP address, you can combine multiple functions (such as using a single FQDN and associated SSL certificate for all HTTP-based client access services) on the same virtual server. By choosing separate virtual servers for each client access service component, you can manage each service independently from the others. For detailed information, see the Deployment Guide.
@@ -143,6 +144,15 @@ definitions:
   tls_key_name:
     title: Specify the name of an existing BIG-IP SSL key.
     enumFromBigip: 'sys/crypto/key'
+  enable_tls_server_chain:
+    title: TLS Server Intermediate Certificate Bundle
+    description: 'Specify the name of an existing BIG-IP SSL certificate bundle that contains your intermediate certificate(s).'
+    type: boolean
+    dependencies: 
+      - enable_tls_server
+  tls_chain_name:
+    title: Specify the name of an existing BIG-IP SSL certificate that contains your Intermediate Certificate(s).
+    enumFromBigip: 'sys/crypto/cert'
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
@@ -189,6 +199,9 @@ definitions:
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
   owa_fqdn: 
     title: OWA Domain Name
+    type: string
+    dependencies: 
+      - owa
   ews:
     title: EWS
     description: Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
@@ -208,6 +221,9 @@ definitions:
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the EWS virtual server.
   ews_fqdn: 
     title: EWS Domain Name
+    type: string
+    dependencies: 
+      - ews
   outlook:
     title: Microsoft Outlook and OAB
     description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
@@ -232,6 +248,9 @@ definitions:
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
   mapi_fqdn: 
     title: MAPI Domain Name
+    type: string
+    dependencies: 
+      - outlookMAPI
   outlookRPC:
     title: RPC-over-HTTP
     description: Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
@@ -253,6 +272,9 @@ definitions:
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
   oa_fqdn: 
     title: Outlook Anywhere Domain Name
+    type: string
+    dependencies: 
+      - outlookRPC
   activesync: 
     title: ActiveSync
     description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
@@ -272,6 +294,9 @@ definitions:
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the ActiveSync virtual server.
   as_fqdn: 
     title: ActiveSync Domain Name
+    type: string
+    dependencies: 
+      - activesync
   autodiscover:
     title: Autodiscover
     description: Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
@@ -291,6 +316,9 @@ definitions:
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Autodiscover virtual server.
   ad_fqdn: 
     title: Autodiscover Domain Name
+    type: string
+    dependencies:
+      - autodiscover
   pop3:
     title: POP3
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
@@ -336,6 +364,9 @@ definitions:
           "class": "Certificate",
           "certificate": { "bigip": "{{tls_cert_name:f5:bigip_path}}" },
           "privateKey": { "bigip": "{{tls_key_name:f5:bigip_path}}" }
+          {{#enable_tls_server_chain}}, 
+            "chainCA": { "bigip": "{{tls_chain_name:f5:bigip_path}}" }
+          {{/enable_tls_server_chain}}
         },
       {{/enable_tls_server}}
   app_tls_client_def:
@@ -1385,6 +1416,7 @@ parameters:
   single_vip: true
   enable_multiplex: true
   enable_tls_server: true
+  enable_tls_server_chain: false
   enable_tls_client: false
   make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
