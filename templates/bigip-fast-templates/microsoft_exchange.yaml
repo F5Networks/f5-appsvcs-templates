@@ -144,8 +144,8 @@ definitions:
     title: Specify the name of an existing BIG-IP SSL key.
     enumFromBigip: 'sys/crypto/key'
   enable_tls_server_chain:
-    title: TLS Server Chain of Trust Certificate
-    description: 'Specify a bundle file that verifies the full chain of trust for the TLS Server certificate, containing the Intermediate certificates in the correct order'
+    title: TLS Server Intermediate Certificate Bundle
+    description: 'Specify the name of an existing BIG-IP SSL certificate bundle that contains your intermediate certificate(s).'
     type: boolean
     dependencies: 
       - enable_tls_server
