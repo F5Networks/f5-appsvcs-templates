@@ -346,7 +346,11 @@ describe('Settings', function () {
                 ipamProviders: [],
                 enableIpam: false,
                 disableDeclarationCache: false,
-                perfTracing: { debug: false, enabled: false }
+                perfTracing: { debug: false, enabled: false },
+                // driver defaults
+                enable_telemetry: false,
+                log_asm: false,
+                log_afm: false
             },
             status: 200
         })));
