@@ -143,6 +143,16 @@ definitions:
   tls_key_name:
     title: Specify the name of an existing BIG-IP SSL key.
     enumFromBigip: 'sys/crypto/key'
+  enable_tls_server_chain:
+    title: TLS Server Chain Certificate Bundle
+    type: boolean
+    dependencies: 
+      - enable_tls_server
+  tls_chain_name:
+    title: Specify the name of an existing BIG-IP SSL certificate bundle that contains your chain of trust.
+    enumFromBigip: 'sys/crypto/cert'
+    dependencies: 
+      - enable_tls_server_chain
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
@@ -336,6 +346,9 @@ definitions:
           "class": "Certificate",
           "certificate": { "bigip": "{{tls_cert_name:f5:bigip_path}}" },
           "privateKey": { "bigip": "{{tls_key_name:f5:bigip_path}}" }
+          {{#enable_tls_server_chain}}, 
+            "chainCA": { "bigip": "{{tls_chain_name:f5:bigip_path}}" }
+          {{/enable_tls_server_chain}}
         },
       {{/enable_tls_server}}
   app_tls_client_def:
@@ -1404,10 +1417,12 @@ parameters:
   single_vip: true
   enable_multiplex: true
   enable_tls_server: true
+  enable_tls_server_chain: false
   enable_tls_client: false
   make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
+  tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
   snatpool_name: /Common
   owa: true
