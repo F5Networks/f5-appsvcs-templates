@@ -146,14 +146,15 @@ definitions:
     title: Specify the name of an existing BIG-IP SSL key.
     enumFromBigip: 'sys/crypto/key'
   enable_tls_server_chain:
-    title: TLS Server Intermediate Certificate Bundle
-    description: 'Specify the name of an existing BIG-IP SSL certificate bundle that contains your intermediate certificate(s).'
+    title: TLS Server Chain Certificate Bundle
     type: boolean
     dependencies: 
       - enable_tls_server
   tls_chain_name:
-    title: Specify the name of an existing BIG-IP SSL certificate that contains your Intermediate Certificate(s).
+    title: Specify the name of an existing BIG-IP SSL certificate bundle that contains your chain of trust.
     enumFromBigip: 'sys/crypto/cert'
+    dependencies: 
+      - enable_tls_server_chain
   enable_tls_client:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
@@ -1146,6 +1147,9 @@ definitions:
       {{/owa}}
       {
         "use": "{{app_name}}_combined_pool_irule3"
+      },
+      {
+        "use": "{{app_name}}_samesite_irule"
       }
       ],
   service_owa_irules_def:
@@ -1153,6 +1157,9 @@ definitions:
       "iRules": [
         {
           "use": "{{app_name}}_owa_redirect_irule3"
+        },
+        {
+          "use": "{{app_name}}_samesite_irule"
         }
       ],
   service_oneconnect_irules_def:
@@ -1161,6 +1168,9 @@ definitions:
         "iRules": [
           {
             "use": "{{app_name}}_oneconnect_irule3"
+          },
+          {
+            "use": "{{app_name}}_samesite_irule"
           }
         ],
       {{/enable_multiplex}}
@@ -1344,25 +1354,30 @@ definitions:
       {{^single_vip}}
         {{#activesync}}  
           "{{app_name}}_as_vs": {
-          "virtualAddresses": [
-            {{#as_use_ipam}}
-              "{{as_virtual_address_ipam}}"
-            {{/as_use_ipam}}
-            {{^as_use_ipam}}
-              "{{as_virtual_address:f5:ipv4_ipv6}}"
-            {{/as_use_ipam}}
-          ],
-          "pool": "exchangeVS_as_pool",
-          "virtualPort": {{virtual_port:f5:port}},
-          {{> service_type_def}}
-          {{> service_tls_server_def}}
-          {{> service_tls_client_def}}
-          {{> service_http_def}}
-          {{> service_persist}}
-          {{> service_snat_def}}
-          {{> service_multiplex_def}}
-          {{> service_redirect80_def}}
-          {{> service_tcp_def}}
+            "virtualAddresses": [
+              {{#as_use_ipam}}
+                "{{as_virtual_address_ipam}}"
+              {{/as_use_ipam}}
+              {{^as_use_ipam}}
+                "{{as_virtual_address:f5:ipv4_ipv6}}"
+              {{/as_use_ipam}}
+            ],
+            "pool": "exchangeVS_as_pool",
+            "virtualPort": {{virtual_port:f5:port}},
+            {{> service_type_def}}
+            {{> service_tls_server_def}}
+            {{> service_tls_client_def}}
+            {{> service_http_def}}
+            {{> service_persist}}
+            {{> service_snat_def}}
+            {{> service_multiplex_def}}
+            {{> service_redirect80_def}}
+            "iRules": [
+              {
+                "use": "{{app_name}}_samesite_irule"
+              }
+            ],
+            {{> service_tcp_def}}
           },
         {{/activesync}}
       {{/single_vip}} 
@@ -1391,6 +1406,11 @@ definitions:
           {{> service_compression_def}}
           {{> service_multiplex_def}}
           {{> service_redirect80_def}}
+            "iRules": [
+              {
+                "use": "{{app_name}}_samesite_irule"
+              }
+            ],
           {{> service_tcp_def}}
           },
         {{/autodiscover}}
@@ -1440,6 +1460,7 @@ parameters:
   make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
+  tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
   snatpool_name: /Common
   owa: true
@@ -1486,12 +1507,25 @@ template: |
         {{> app_snatpool_def}}
         {{> app_accelerate_def}}
         {{> app_compression_def}}
+<<<<<<< HEAD
         {{#single_vip}}
           "{{app_name}}_combined_pool_irule3": {
             "class": "iRule",
             "iRule": "{{> app_irule_combined_def}}"
           },
         {{/single_vip}}
+=======
+        "{{app_name}}_combined_pool_irule3": {
+          "class": "iRule",
+          "iRule": "{{> app_irule_combined_def}}"
+        },
+        "{{app_name}}_samesite_irule": {
+          "class": "iRule",
+          "iRule": {
+            base64: 'd2hlbiBIVFRQX1JFU1BPTlNFX1JFTEVBU0UgewogICAgZm9yZWFjaCBteWNvb2tpZSBbSFRUUDo6Y29va2llIG5hbWVzXSB7CiAgICAgICAgSFRUUDo6Y29va2llIHNlY3VyZSAkbXljb29raWUgZW5hYmxlCiAgICB9Cn0='
+          }
+        },
+>>>>>>> origin/develop
         {{> app_irule_owa_def}}
         {{> app_irule_oneconnect_def}}
         "template": "generic"
