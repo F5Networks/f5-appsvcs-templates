@@ -79,11 +79,13 @@ monitor_base: &monitor_base
           }
         }
 
+# subtemplate for tcp monitor
 tcp:
   <<: *monitor_base
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for smtp monitor
 smtp:
   <<: *monitor_base
   definitions: 
@@ -119,6 +121,7 @@ smtp:
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for ldap monitor
 ldap:
   <<: *monitor_base
   definitions: 
@@ -169,6 +172,7 @@ ldap:
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for http monitor
 http:
   <<: *monitor_base
   definitions: 
@@ -286,6 +290,7 @@ http:
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for dns monitor
 dns:
   <<: *monitor_base
   definitions: 

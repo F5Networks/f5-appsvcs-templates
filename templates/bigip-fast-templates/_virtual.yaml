@@ -25,6 +25,7 @@ virtual_base: &virtual_base
       title: Virtual Server Port
       default: 443
 
+# default VS subtemplate
 <<: *virtual_base
 template: |
         {
@@ -45,6 +46,7 @@ template: |
           }
         }
 
+# subtemplate with VS names unique to DNS template
 dns:
   <<: *virtual_base
   definitions: 

@@ -89,11 +89,12 @@ snat_base: &snat_base
           }
         }
 
-
+# default snat subtemplate
 <<: *snat_base
 template: |
   {{> snat_partial_template}}
 
+# subtemplate with VS names unique to DNS template
 dns:
   <<: *snat_base
   definitions: 

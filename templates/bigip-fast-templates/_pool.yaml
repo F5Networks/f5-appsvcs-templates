@@ -115,10 +115,12 @@ pool_base: &pool_base
           }
         }
 
+# default subtemplate
 <<: *pool_base
 template: |
   {{> pool_partials_template}}
 
+# subtemplate with VS name unique to DNS template
 dns:
   <<: *pool_base
   definitions: 

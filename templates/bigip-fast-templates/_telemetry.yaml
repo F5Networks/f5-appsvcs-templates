@@ -84,6 +84,7 @@ afm: &ts_afm
           }
         }
 
+# default TS subtemplate
 <<: *ts_base
 anyOf:
   - {}
@@ -96,6 +97,7 @@ anyOf:
 template: |
     {{> ts_partial_template}}
 
+# subtemplate with VS names unique to DNS template
 dns: 
   <<: *ts_base
   definitions: 

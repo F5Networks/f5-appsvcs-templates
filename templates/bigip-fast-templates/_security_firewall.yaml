@@ -101,6 +101,7 @@ fw_base: &fw_base
           }
         }
 
+# default AFM subtemplate
 <<: *fw_base
 definitions: 
   <<: *fw_base_def
@@ -143,6 +144,7 @@ definitions:
 template: |
   {{> fw_partial_template}}
 
+# subtemplate with VS names uniques to DNS
 dns:
   <<: *fw_base
   definitions:
