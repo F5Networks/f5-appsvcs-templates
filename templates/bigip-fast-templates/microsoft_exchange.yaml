@@ -1486,10 +1486,12 @@ template: |
         {{> app_snatpool_def}}
         {{> app_accelerate_def}}
         {{> app_compression_def}}
-        "{{app_name}}_combined_pool_irule3": {
-          "class": "iRule",
-          "iRule": "{{> app_irule_combined_def}}"
-        },
+        {{#single_vip}}
+          "{{app_name}}_combined_pool_irule3": {
+            "class": "iRule",
+            "iRule": "{{> app_irule_combined_def}}"
+          },
+        {{/single_vip}}
         {{> app_irule_owa_def}}
         {{> app_irule_oneconnect_def}}
         "template": "generic"
