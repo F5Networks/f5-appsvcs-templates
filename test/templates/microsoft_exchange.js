@@ -423,6 +423,9 @@ describe(template, function () {
                 iRules: [
                     {
                         use: 'app1_owa_redirect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
                     }
                 ],
                 profileTCP: 'normal'
@@ -454,6 +457,9 @@ describe(template, function () {
                 iRules: [
                     {
                         use: 'app1_oneconnect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
                     }
                 ],
                 profileTCP: 'normal'
@@ -482,6 +488,11 @@ describe(template, function () {
                     bigip: '/Common/ntlm'
                 },
                 redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
                 profileTCP: 'normal'
             };
 
@@ -514,6 +525,11 @@ describe(template, function () {
                     bigip: '/Common/ntlm'
                 },
                 redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
                 profileTCP: 'normal'
             };
 
@@ -543,6 +559,9 @@ describe(template, function () {
                 iRules: [
                     {
                         use: 'app1_oneconnect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
                     }
                 ],
                 profileTCP: 'normal'
@@ -603,6 +622,9 @@ describe(template, function () {
                 iRules: [
                     {
                         use: 'app1_oneconnect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
                     }
                 ],
                 profileTCP: 'normal'
