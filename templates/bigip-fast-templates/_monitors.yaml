@@ -192,7 +192,7 @@ http:
         - enable_tls_client
       invertDependency:
         - enable_tls_client
-    monitor_name_https:
+    monitor_name:
       title: HTTPS Monitor
       description: Select an existing BIG-IP HTTPS pool monitor. Monitors are used to determine
         the health of the application on each server. If an application instance does not respond
@@ -223,7 +223,7 @@ http:
       description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
       type: string
       default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
-    monitor_receive:
+    monitor_expected_response:
       title: Expected Response
       description: The presence of this string anywhere in the HTTP response implies availability.
       type: string
@@ -246,7 +246,7 @@ http:
           },
         {{/monitor_credentials}}
         "send": "{{monitor_send_string}}",
-        "receive": "{{monitor_receive}}"
+        "receive": "{{monitor_expected_response}}"
     monitor_partial_template:
       template: |
         {
@@ -273,7 +273,7 @@ http:
                       "{{app_name}}_pool": {
                         "monitors": [{
                           {{#enable_tls_client}}
-                            "bigip": "{{monitor_name_https}}"
+                            "bigip": "{{monitor_name}}"
                           {{/enable_tls_client}}
                           {{^enable_tls_client}}
                             "bigip": "{{monitor_name_http}}"
