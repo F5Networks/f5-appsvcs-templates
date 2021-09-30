@@ -3,7 +3,8 @@
 * bigip-fast-templates: option for chain file on TLS Server in Exchange template
 
 ## Fixed
-* bigip-fast-templates: Exchange template has a new iRule that adds the  secure attribute to all cookies so SameSite=None will work 
+* bigip-fast-templates: Fix SameSite=None cookies with a new iRule that adds the secure attribute to all cookies in the Exchange template 
+* bigip-fast-templates: Fix fqdn missing from Exchange services when not using the Common VIP
 
 ## Changed
 
