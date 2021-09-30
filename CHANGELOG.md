@@ -1,6 +1,6 @@
 # 1.13.0
 ## Added
-* bigip-fast-templates: option for chain file on TLS Server in Exchange template adds iRule for SameSite cookies option for chain file to TLS Server, 
+* bigip-fast-templates: option for chain file on TLS Server in Exchange template
 
 ## Fixed
 * bigip-fast-templates: Exchange template has a new iRule that adds the  secure attribute to all cookies so SameSite=None will work 
