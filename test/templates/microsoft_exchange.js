@@ -384,6 +384,284 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
+    describe('multiple service vips', function () {
+        before(() => {
+            // disable common vip
+            view.single_vip = false;
+            delete expected.t1.app1.app1_vs;
+            delete expected.t1.app1.app1_combined_pool_irule3;
+
+            // owa
+            view.owa_fqdn = 'owa.f5net.com';
+            expected.t1.app1.exchangeVS_owa_https_monitor.send = 'GET /owa/healthcheck.htm HTTP/1.1\r\nHost: owa.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.owa_virtual_address = '10.1.1.1';
+            expected.t1.app1.app1_owa_vs = {
+                virtualAddresses: [
+                    '10.1.1.1'
+                ],
+                pool: 'exchangeVS_owa_pool',
+                virtualPort: 443,
+                class: 'Service_HTTPS',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
+                persistenceMethods: [],
+                snat: 'auto',
+                profileHTTPAcceleration: {
+                    use: 'app1_cache-optimize'
+                },
+                profileHTTPCompression: {
+                    use: 'app1_wan-optimized-compression'
+                },
+                profileMultiplex: 'basic',
+                profileNTLM: {
+                    bigip: '/Common/ntlm'
+                },
+                redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_owa_redirect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
+                profileTCP: 'normal'
+            };
+
+            // ews
+            view.ews_fqdn = 'ews.f5net.com';
+            expected.t1.app1.exchangeVS_ews_https_monitor.send = 'GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: ews.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.ews_virtual_address = '10.1.1.2';
+            expected.t1.app1.app1_ews_vs = {
+                virtualAddresses: [
+                    '10.1.1.2'
+                ],
+                pool: 'exchangeVS_ews_pool',
+                virtualPort: 443,
+                class: 'Service_HTTPS',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
+                persistenceMethods: [],
+                snat: 'auto',
+                profileMultiplex: 'basic',
+                profileNTLM: {
+                    bigip: '/Common/ntlm'
+                },
+                redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_oneconnect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
+                profileTCP: 'normal'
+            };
+
+            // as
+            view.as_fqdn = 'as.f5net.com';
+            expected.t1.app1.exchangeVS_as_https_monitor.send = 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: as.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.as_virtual_address = '10.1.1.5';
+            expected.t1.app1.app1_as_vs = {
+                virtualAddresses: [
+                    '10.1.1.5'
+                ],
+                pool: 'exchangeVS_as_pool',
+                virtualPort: 443,
+                class: 'Service_HTTPS',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
+                persistenceMethods: [],
+                snat: 'auto',
+                profileMultiplex: 'basic',
+                profileNTLM: {
+                    bigip: '/Common/ntlm'
+                },
+                redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
+                profileTCP: 'normal'
+            };
+
+            // ad
+            view.ad_fqdn = 'ad.f5net.com';
+            expected.t1.app1.exchangeVS_ad_https_monitor.send = 'GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: ad.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.ad_virtual_address = '10.1.1.6';
+            expected.t1.app1.app1_ad_vs = {
+                virtualAddresses: [
+                    '10.1.1.6'
+                ],
+                pool: 'exchangeVS_ad_pool',
+                virtualPort: 443,
+                class: 'Service_HTTPS',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
+                persistenceMethods: [],
+                snat: 'auto',
+                profileHTTPAcceleration: {
+                    use: 'app1_cache-optimize'
+                },
+                profileHTTPCompression: {
+                    use: 'app1_wan-optimized-compression'
+                },
+                profileMultiplex: 'basic',
+                profileNTLM: {
+                    bigip: '/Common/ntlm'
+                },
+                redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
+                profileTCP: 'normal'
+            };
+
+            // mapi
+            view.outlookMAPI = true;
+            view.mapi_fqdn = 'mapi.f5net.com';
+            view.mapi_virtual_address = '10.1.1.3';
+            expected.t1.app1.app1_mapi_vs = {
+                virtualAddresses: [
+                    '10.1.1.3'
+                ],
+                pool: 'exchangeVS_mapi_pool',
+                virtualPort: 443,
+                class: 'Service_HTTPS',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
+                persistenceMethods: [],
+                snat: 'auto',
+                profileMultiplex: 'basic',
+                profileNTLM: {
+                    bigip: '/Common/ntlm'
+                },
+                redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_oneconnect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
+                profileTCP: 'normal'
+            };
+            expected.t1.app1.exchangeVS_mapi_pool = {
+                class: 'Pool',
+                members: [
+                    {
+                        serverAddresses: [
+                            '10.0.0.1',
+                            '10.0.0.2'
+                        ],
+                        servicePort: 80,
+                        shareNodes: true
+                    }
+                ],
+                loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                monitors: [
+                    {
+                        use: 'exchangeVS_mapi_https_monitor'
+                    }
+                ],
+                minimumMonitors: 1
+            };
+            expected.t1.app1.exchangeVS_mapi_https_monitor = {
+                class: 'Monitor',
+                interval: 10,
+                timeout: 31,
+                monitorType: 'https',
+                send: 'GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: mapi.f5net.com\r\nConnection: Close\r\n\r\n',
+                receive: '200 OK'
+            };
+
+            // oa
+            view.outlookRPC = true;
+            view.oa_fqdn = 'oa.f5net.com';
+            view.oa_virtual_address = '10.1.1.4';
+            expected.t1.app1.app1_oa_vs = {
+                virtualAddresses: [
+                    '10.1.1.4'
+                ],
+                pool: 'exchangeVS_oa_pool',
+                virtualPort: 443,
+                class: 'Service_HTTPS',
+                serverTLS: 'app1_tls_server',
+                clientTLS: 'app1_tls_client',
+                profileHTTP: {
+                    use: 'app1_http'
+                },
+                persistenceMethods: [],
+                snat: 'auto',
+                profileMultiplex: 'basic',
+                profileNTLM: {
+                    bigip: '/Common/ntlm'
+                },
+                redirect80: true,
+                iRules: [
+                    {
+                        use: 'app1_oneconnect_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
+                    }
+                ],
+                profileTCP: 'normal'
+            };
+            expected.t1.app1.exchangeVS_oa_pool = {
+                class: 'Pool',
+                members: [
+                    {
+                        serverAddresses: [
+                            '10.0.0.1',
+                            '10.0.0.2'
+                        ],
+                        servicePort: 80,
+                        shareNodes: true
+                    }
+                ],
+                loadBalancingMode: 'least-connections-member',
+                slowRampTime: 300,
+                monitors: [
+                    {
+                        use: 'exchangeVS_oa_https_monitor'
+                    }
+                ],
+                minimumMonitors: 1
+            };
+            expected.t1.app1.exchangeVS_oa_https_monitor = {
+                class: 'Monitor',
+                interval: 10,
+                timeout: 31,
+                monitorType: 'https',
+                send: 'GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: oa.f5net.com\r\nConnection: Close\r\n\r\n',
+                receive: '200 OK'
+            };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
     describe('clean up', function () {
         util.cleanUp();
     });
