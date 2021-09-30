@@ -310,6 +310,10 @@ const expected = {
                 class: 'iRule',
                 iRule: 'when HTTP_RESPONSE {\n    if { ( [HTTP::header exists "WWW-Authenticate"] &&\n        [string tolower [HTTP::header values "WWW-Authenticate"]] contains "negotiate" ) ||\n        ( [HTTP::header exists "Persistent-Auth"] &&\n        [string tolower [HTTP::header "Persistent-Auth"]] contains "true" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   }\n   if {[HTTP::header exists "Transfer-Encoding"]} {\n        HTTP::payload rechunk\n   }\n}'
             },
+            app1_samesite_irule: {
+                class: 'iRule',
+                iRule: { base64: 'd2hlbiBIVFRQX1JFU1BPTlNFX1JFTEVBU0UgewogICAgZm9yZWFjaCBteWNvb2tpZSBbSFRUUDo6Y29va2llIG5hbWVzXSB7CiAgICAgICAgSFRUUDo6Y29va2llIHNlY3VyZSAkbXljb29raWUgZW5hYmxlCiAgICB9Cn0=' }
+            },
             app1_pop3_vs: {
                 virtualAddresses: [
                     '10.1.1.1'
@@ -364,6 +368,9 @@ const expected = {
                     },
                     {
                         use: 'app1_combined_pool_irule3'
+                    },
+                    {
+                        use: 'app1_samesite_irule'
                     }
                 ],
                 profileTCP: 'normal'
