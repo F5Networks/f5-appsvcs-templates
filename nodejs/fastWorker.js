@@ -86,7 +86,8 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        'ee81fec1cde7d6f970bfb390799ca0bba3becab91e243a0f92b0f95e25a73415', // v1.12
+        'f7ed3217c61febc50ddad71f104e511a038b4f002fcce2d87bd1fa46a229b3e8', // v1.13
+        '42bd34feb4a63060df71c19bc4c23f9ec584507d4d3868ad75db51af8b449437', // v1.12
         '84904385ccc31f336b240ba1caa17dfab134d08efed7766fbcaea4eb61dae463', // v1.11
         '64d9692bdab5f1e2ba835700df4d719662b9976b9ff094fe7879f74d411fe00b', // v1.10
         '89f6d8fb68435c93748de3f175f208714dcbd75de37d9286a923656971c939f0', // v1.9
@@ -344,6 +345,7 @@ class FASTWorker {
             transactionLogger: this.transactionLogger,
             logger: this.logger
         });
+
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
         const startTime = Date.now();
@@ -391,6 +393,7 @@ class FASTWorker {
             .then((cfg) => {
                 config = cfg;
             })
+            .then(() => this.setDeviceInfo())
             // Get the AS3 driver ready
             .then(() => this.recordTransaction(
                 0, 'ready AS3 driver',
@@ -452,9 +455,34 @@ class FASTWorker {
             this.logger.error(`FAST Worker onStart error: ${errMsg}`);
             return error();
         }
-
         this.generateTeemReportOnStart();
         return success();
+    }
+
+    setDeviceInfo() {
+        // If device-info is unavailable intermittently, this can be placed in onStart
+        // and call setDeviceInfo in onStartCompleted
+        // this.dependencies.push(this.restHelper.makeRestjavadUri(
+        //     '/shared/identified-devices/config/device-info'
+        // ));
+        return Promise.resolve()
+            .then(() => this.recordTransaction(0, 'fetching device information',
+                this.endpoint.get('/mgmt/shared/identified-devices/config/device-info'))
+                .then((response) => {
+                    const data = response.data;
+                    if (data) {
+                        this.deviceInfo = {
+                            hostname: data.hostname,
+                            platform: data.platform,
+                            platformName: data.platformMarketingName,
+                            product: data.product,
+                            version: data.version,
+                            build: data.build,
+                            edition: data.edition,
+                            fullVersion: `${data.version}-${data.build}`
+                        };
+                    }
+                }));
     }
 
     /**
