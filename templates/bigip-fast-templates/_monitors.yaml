@@ -205,7 +205,7 @@ http:
       description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
       type: string
       default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
-    monitor_receive:
+    monitor_expected_response:
       title: Expected Response
       description: The presence of this string anywhere in the HTTP response implies availability.
       type: string
@@ -228,7 +228,7 @@ http:
           },
         {{/monitor_credentials}}
         "send": "{{monitor_send_string}}",
-        "receive": "{{monitor_receive}}"
+        "receive": "{{monitor_expected_response}}"
   template: |
     {{> monitor_partial_template}}
 

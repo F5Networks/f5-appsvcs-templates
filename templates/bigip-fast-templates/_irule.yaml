@@ -34,7 +34,7 @@ dns:
   <<: *irule_base
   definitions: 
     <<: *irule_base_def
-    irule_names:
+    tcp_irule_names:
       title: TCP iRules
       description: Hold the *control* key to select or deselect multiple iRules to attach to the TCP virtual server.
       type: array
@@ -58,9 +58,9 @@ dns:
         "{{app_name}}": {
           "{{app_name}}_tcp": {
             "iRules": [
-              {{#irule_names}}
+              {{#tcp_irule_names}}
               { "bigip": {{ . }} },
-              {{/irule_names}}
+              {{/tcp_irule_names}}
             ]
           },
           "{{app_name}}_udp": {
