@@ -60,7 +60,7 @@ asm_base: &asm_base
     enable_asm_logging: &enable_asm_logging
       title: Application Security Logging
       type: boolean
-      default: false
+      default: true
     log_profile_names: &log_profile_names
       title: Security Log Profiles
       description: Hold the *control* key to select or deselect multiple log profiles.
