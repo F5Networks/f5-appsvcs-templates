@@ -5,8 +5,6 @@ ts_base: &ts_base
   contentType: application/json
   bigipDependencies:
     - ts
-    - asm
-    - afm
   definitions: &ts_base_def
     enable_telemetry:
       title: Forward logs to Telemetry Streaming
