@@ -742,14 +742,15 @@ class FASTWorker {
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
-                Promise.resolve(this.as3Info)
+                Promise.resolve(this.as3Info),
+                Promise.resolve(this.deviceInfo)
             ]));
     }
 
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
-            .then(([provisionData, as3Info]) => {
+            .then(([provisionData, as3Info, deviceInfo]) => {
                 const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
                 const as3Version = semver.coerce(as3Info.version || '0.0');
                 const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
@@ -768,6 +769,56 @@ class FASTWorker {
                     ));
                 }
 
+                const arrDeviceVersion = deviceInfo.version.split('.');
+                const retValMsgs = {
+                    bigipMaximumVersion:
+                        `could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
+                    bigipMinimumVersion:
+                        `could not load template (${tmpl.title}) since it requires BIG-IP ${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
+                };
+                for (let versionPropName of ['bigipMaximumVersion', 'bigipMinimumVersion']) {
+                    if (typeof tmpl[versionPropName] !== 'undefined') {
+                        if (!this.versionCompatibility(arrDeviceVersion, tmpl[versionPropName], versionPropName)) {
+                            return Promise.reject(new Error(retValMsgs[versionPropName]));
+                        }
+                    }
+                };
+                
+                /* // if the template specifies a bigipMinimumVersion
+                if (typeof tmpl.bigipMinimumVersion !== 'undefined') {
+                    const bigipVersion = semver.coerce(deviceInfo.version || '0.0.0');
+                    const minBigipVersion = semver.coerce(tmpl.bigipMinimumVersion || '13.1');
+
+                    // if semver thinks the Major.Minor.Patch version of the installed BIG-IP
+                    // is not greater than the minimum specified in the template
+                    if (!semver.gte(bigipVersion, minBigipVersion)) {
+                        let rejectVersion = true;
+                        // if there is a chance it might be equal
+                        if (semver.eq(bigipVersion, minBigipVersion)) {
+                            // we check the point release versions before rejecting
+                            rejectVersion = false;
+                            const arrMinBigipVersion = tmpl.bigipMinimumVersion.split('.');
+
+                            // if a point release version is specified in the template
+                            if (arrMinBigipVersion.length === 4) {
+                                const bigipPointVersion = (arrDeviceVersion[3] || 0);
+
+                                // then don't throw exception unless minimum point release is greater than the device's
+                                if (arrMinBigipVersion[3] > bigipPointVersion) {
+                                    rejectVersion = true;
+                                }
+                            }
+                        }
+
+                        if (rejectVersion) {
+                            return Promise.reject(new Error(
+                                `could not load template (${tmpl.title}) since it requires`
+                                + `asdf BIG-IP ${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
+                            ));
+                        }
+                    }
+                } */
+
                 let promiseChain = Promise.resolve();
                 tmpl._allOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
@@ -782,7 +833,7 @@ class FASTWorker {
                             validOneOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!e.message.match(/due to missing modules/)) {
+                            if (!(e.message.match(/due to missing modules/) || e.message.match(/since it requires BIG-IP/))) {
                                 return Promise.reject(e);
                             }
                             errstr = `\n${errstr}`;
@@ -807,7 +858,7 @@ class FASTWorker {
                             validAnyOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!e.message.match(/due to missing modules/)) {
+                            if (!(e.message.match(/due to missing modules/) || e.message.match(/since it requires BIG-IP/))) {
                                 return Promise.reject(e);
                             }
                             return Promise.resolve();
