@@ -44,7 +44,7 @@ const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');
 
 const pkg = require('../package.json');
-
+ 
 const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
@@ -747,13 +747,21 @@ class FASTWorker {
             ]));
     }
 
+    getAS3VersionError(tmpl, as3Info) {
+        const as3Version = semver.coerce(as3Info.version || '0.0');
+        const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
+        if (!semver.gte(as3Version, tmplAs3Version)) {
+            return `could not load template (${tmpl.title}) since it requires`
+                + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`;
+        }
+        return false;        
+    }
+
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
             .then(([provisionData, as3Info, deviceInfo]) => {
                 const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
-                const as3Version = semver.coerce(as3Info.version || '0.0');
-                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
                 const deps = tmpl.bigipDependencies || [];
                 const missingModules = deps.filter(x => !provisionedModules.includes(x));
                 if (missingModules.length > 0) {
@@ -762,12 +770,8 @@ class FASTWorker {
                     ));
                 }
 
-                if (!semver.gte(as3Version, tmplAs3Version)) {
-                    return Promise.reject(new Error(
-                        `could not load template (${tmpl.title}) since it requires`
-                        + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
-                    ));
-                }
+                const e = this.getAS3VersionError(tmpl, as3Info);
+                if (e) { return Promise.reject(new Error(e)); }
 
                 const arrDeviceVersion = deviceInfo.version.split('.');
                 const retValMsgs = {
@@ -822,7 +826,13 @@ class FASTWorker {
                 let promiseChain = Promise.resolve();
                 tmpl._allOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
-                        .then(() => this.checkDependencies(subtmpl, requestId));
+                        // just check AS3 version since also checking dependencies will still show a broken form instead of an error
+                        //.then(() => this.checkAS3(subtmpl, requestId));
+                        .then(() => this.gatherProvisionData(requestId, clearCache))
+                        .then(([provisionData, as3Info, deviceInfo]) => {
+                            const e = this.getAS3VersionError(subtmpl, as3Info);
+                            return (e) ? Promise.reject(new Error(e)) : Promise.resolve();
+                        });
                 });
                 const validOneOf = [];
                 let errstr = '';
@@ -859,6 +869,8 @@ class FASTWorker {
                         })
                         .catch((e) => {
                             if (!(e.message.match(/due to missing modules/) || e.message.match(/since it requires BIG-IP/))) {
+                                // without this line, subtemplate will not display if AS3 version is old 
+                                // instead of showing an error and not loading the whole template like allOf templates do
                                 return Promise.reject(e);
                             }
                             return Promise.resolve();
