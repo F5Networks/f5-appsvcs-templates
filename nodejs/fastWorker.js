@@ -44,7 +44,7 @@ const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');
 
 const pkg = require('../package.json');
- 
+
 const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
@@ -747,20 +747,11 @@ class FASTWorker {
             ]));
     }
 
-    getAS3VersionError(tmpl, as3Info) {
-        const as3Version = semver.coerce(as3Info.version || '0.0');
-        const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
-        if (!semver.gte(as3Version, tmplAs3Version)) {
-            return `could not load template (${tmpl.title}) since it requires`
-                + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`;
-        }
-        return false;        
-    }
-
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
             .then(([provisionData, as3Info, deviceInfo]) => {
+                // check for missing module dependencies
                 const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
                 const deps = tmpl.bigipDependencies || [];
                 const missingModules = deps.filter(x => !provisionedModules.includes(x));
@@ -770,69 +761,40 @@ class FASTWorker {
                     ));
                 }
 
-                const e = this.getAS3VersionError(tmpl, as3Info);
-                if (e) { return Promise.reject(new Error(e)); }
+                // check AS3 Version minimum
+                const as3Version = semver.coerce(as3Info.version || '0.0');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
+                if (!semver.gte(as3Version, tmplAs3Version)) {
+                    return Promise.reject(new Error(
+                        `could not load template (${tmpl.title}) since it requires`
+                        + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
+                    ));
+                }
 
+                // check min/max BIG-IP version
                 const arrDeviceVersion = deviceInfo.version.split('.');
-                const retValMsgs = {
-                    bigipMaximumVersion:
-                        `could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
-                    bigipMinimumVersion:
-                        `could not load template (${tmpl.title}) since it requires BIG-IP ${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
+                const objBigipVersionCheck = {
+                    doReturn: false,
+                    bigipMaximumVersion: `maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
+                    bigipMinimumVersion: `${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
                 };
-                for (let versionPropName of ['bigipMaximumVersion', 'bigipMinimumVersion']) {
+                ['bigipMaximumVersion', 'bigipMinimumVersion'].find((versionPropName) => {
                     if (typeof tmpl[versionPropName] !== 'undefined') {
                         if (!this.versionCompatibility(arrDeviceVersion, tmpl[versionPropName], versionPropName)) {
-                            return Promise.reject(new Error(retValMsgs[versionPropName]));
+                            objBigipVersionCheck.doReturn = versionPropName;
+                            return true;
                         }
                     }
-                };
-                
-                /* // if the template specifies a bigipMinimumVersion
-                if (typeof tmpl.bigipMinimumVersion !== 'undefined') {
-                    const bigipVersion = semver.coerce(deviceInfo.version || '0.0.0');
-                    const minBigipVersion = semver.coerce(tmpl.bigipMinimumVersion || '13.1');
-
-                    // if semver thinks the Major.Minor.Patch version of the installed BIG-IP
-                    // is not greater than the minimum specified in the template
-                    if (!semver.gte(bigipVersion, minBigipVersion)) {
-                        let rejectVersion = true;
-                        // if there is a chance it might be equal
-                        if (semver.eq(bigipVersion, minBigipVersion)) {
-                            // we check the point release versions before rejecting
-                            rejectVersion = false;
-                            const arrMinBigipVersion = tmpl.bigipMinimumVersion.split('.');
-
-                            // if a point release version is specified in the template
-                            if (arrMinBigipVersion.length === 4) {
-                                const bigipPointVersion = (arrDeviceVersion[3] || 0);
-
-                                // then don't throw exception unless minimum point release is greater than the device's
-                                if (arrMinBigipVersion[3] > bigipPointVersion) {
-                                    rejectVersion = true;
-                                }
-                            }
-                        }
-
-                        if (rejectVersion) {
-                            return Promise.reject(new Error(
-                                `could not load template (${tmpl.title}) since it requires`
-                                + `asdf BIG-IP ${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
-                            ));
-                        }
-                    }
-                } */
+                    return false;
+                });
+                if (objBigipVersionCheck.doReturn) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP ${objBigipVersionCheck[objBigipVersionCheck.doReturn]}`));
+                }
 
                 let promiseChain = Promise.resolve();
                 tmpl._allOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
-                        // just check AS3 version since also checking dependencies will still show a broken form instead of an error
-                        //.then(() => this.checkAS3(subtmpl, requestId));
-                        .then(() => this.gatherProvisionData(requestId, clearCache))
-                        .then(([provisionData, as3Info, deviceInfo]) => {
-                            const e = this.getAS3VersionError(subtmpl, as3Info);
-                            return (e) ? Promise.reject(new Error(e)) : Promise.resolve();
-                        });
+                        .then(() => this.checkDependencies(subtmpl, requestId));
                 });
                 const validOneOf = [];
                 let errstr = '';
@@ -869,8 +831,8 @@ class FASTWorker {
                         })
                         .catch((e) => {
                             if (!(e.message.match(/due to missing modules/) || e.message.match(/since it requires BIG-IP/))) {
-                                // without this line, subtemplate will not display if AS3 version is old 
-                                // instead of showing an error and not loading the whole template like allOf templates do
+                                // without this line, subtemplate will not display if AS3 version is old instead of
+                                // showing an error and not loading the whole template like allOf templates do
                                 return Promise.reject(e);
                             }
                             return Promise.resolve();
@@ -1103,25 +1065,33 @@ class FASTWorker {
         // and then create an array, split on the dots
         const arrVersionLimit = versionPropValue.replace(/\.(\.)+/g, '.').split('.');
         let loopCtr = 0;
-        for (let versionPoint of arrVersionLimit) {
-        //const versionLimit = arrVersionLimit.every((versionPoint) => {
-            // get the device's correlated version number (major/minor/patch/point) or zero(0) if not present
-            const bigipVersionPoint = (arrDeviceVersion[loopCtr] || 0);
-            // if the versions are equal or a user specified a wildcard
-            if (bigipVersionPoint === versionPoint || versionPoint === '*') {
-                // return true to continue comparing the versions
-                loopCtr += 1;
-                continue;
-            }
+        try {
+            arrVersionLimit.every((versionPoint) => {
+                // as soon as we encounter a wildcard(*) the rest of the version points are moot
+                if (versionPoint === '*') {
+                    // uncomment this to ignore all subsequent version points
+                    // throw true;
+                }
 
-            const retValOptions = {
-                bigipMaximumVersion: (bigipVersionPoint <= versionPoint),
-                bigipMinimumVersion: (bigipVersionPoint >= versionPoint)
-            };
+                // get the device's correlated version number (major/minor/patch/point) or zero(0) if not present
+                const bigipVersionPoint = (arrDeviceVersion[loopCtr] || versionPropName === 0);
 
-            // if the versions are not identical at this point then we have made a decision
-            return retValOptions[versionPropName];
-        };
+                // if the versions are equal we continue
+                if ((bigipVersionPoint === versionPoint || versionPoint === '*')) {
+                    loopCtr += 1;
+                    return true;
+                }
+
+                // if the versions are not identical at this point then we have made a decision
+                const objRetVal = {
+                    bigipMaximumVersion: (bigipVersionPoint <= versionPoint),
+                    bigipMinimumVersion: (bigipVersionPoint >= versionPoint)
+                };
+                throw objRetVal[versionPropName];
+            });
+        } catch (e) {
+            return e;
+        }
 
         return true;
     }
