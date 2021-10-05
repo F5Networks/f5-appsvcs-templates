@@ -112,7 +112,6 @@ before('Setup', function () {
             .then(() => endpoint.patch(url, { perfTracing }))
             .then(() => endpoint.get(url))
             .then((actual) => {
-                console.log(JSON.stringify(actual.data));
                 const actualPerfSettings = actual.data.perfTracing;
                 assert.deepStrictEqual(actualPerfSettings, perfTracing, 'Unable to set up perf tracing');
             })
