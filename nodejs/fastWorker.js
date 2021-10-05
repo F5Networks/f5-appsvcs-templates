@@ -1006,36 +1006,61 @@ class FASTWorker {
             ...tmpl._oneOf || [],
             ...tmpl._anyOf || []
         ];
+        const schema = tmpl._parametersSchema;
+        const arrDeviceVersion = this.deviceInfo.version.split('.');
 
         return Promise.resolve()
             .then(() => Promise.all(subTemplates.map(x => this.removeIncompatibleProps(x, requestId))))
             .then(() => {
-                const schema = tmpl._parametersSchema;
-                const arrBigipVersion = this.deviceInfo.version.split('.');
+                ['bigipMaximumVersion', 'bigipMinimumVersion'].forEach((versionPropName) => {
+                    const bigipVersionProps = (this.getPropsWithChild(schema, versionPropName));
 
-                const minBigipVersionProps = (this.getPropsWithChild(schema, 'minBigipVersion'));
+                    Object.entries(bigipVersionProps).forEach(([key, value]) => {
+                        const versionPropValue = value[versionPropName];
 
-                Object.entries(minBigipVersionProps).forEach(([key, value]) => {
-                    if (typeof value === 'object' && value !== null && value.minBigipVersion !== undefined) {
-                        const arrMinVersion = JSON.stringify(value.minBigipVersion).split('.');
-                        let loopCtr = 0;
-                        arrMinVersion.every((versionPoint) => {
-                            if (arrBigipVersion[loopCtr] === versionPoint) {
-                                loopCtr += 1;
-                                return true;
-                            }
-
-                            if (arrBigipVersion[loopCtr] < versionPoint) {
+                        if (typeof value === 'object' && value !== null && versionPropValue !== undefined) {
+                            if (!this.versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName)) {
                                 delete schema.properties[key];
                             }
-
-                            return false;
-                        });
-                    }
+                        }
+                    });
                 });
 
                 return Promise.resolve();
             });
+    }
+
+    versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName) {
+        // if the user supplied a version limit that does not end with a wildcard (*)
+        if (!versionPropValue.toString().match(/\*$/)) {
+            // add .0 if there are not four points, e.g., 14.1 becomes 14.1.0 and 15.1.3 becomes 15.1.3.0
+            versionPropValue = (versionPropValue.toString().match(/(((\d){1,2}\.){3,3}\d{1,2})/g)) ? versionPropValue : `${versionPropValue}.0`;
+        }
+        // replace mulitple consecutive dots with a single dot in case of user error
+        // and then create an array, split on the dots
+        const arrVersionLimit = versionPropValue.replace(/\.(\.)+/g, '.').split('.');
+        let loopCtr = 0;
+        for (let versionPoint of arrVersionLimit) {
+        //const versionLimit = arrVersionLimit.every((versionPoint) => {
+            // get the device's correlated version number (major/minor/patch/point) or zero(0) if not present
+            const bigipVersionPoint = (arrDeviceVersion[loopCtr] || 0);
+            // if the versions are equal or a user specified a wildcard
+            if (bigipVersionPoint === versionPoint || versionPoint === '*') {
+                // return true to continue comparing the versions
+                loopCtr += 1;
+                continue;
+            }
+
+            const retValOptions = {
+                bigipMaximumVersion: (bigipVersionPoint <= versionPoint),
+                bigipMinimumVersion: (bigipVersionPoint >= versionPoint)
+            };
+
+            // if the versions are not identical at this point then we have made a decision
+            return retValOptions[versionPropName];
+        };
+
+        return true;
     }
 
     convertPoolMembers(reqid, apps) {
