@@ -373,7 +373,7 @@ class FASTWorker {
                     .then(() => this.bigip.getIAppsBlocks())
                     .catch(e => this.handleResponseError(e, 'to get blocks'))
                     .then((results) => {
-                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
+                        const matchingBlocks = results.filter(x => x.name === mainBlockName);
                         const blockData = {
                             name: mainBlockName,
                             state: 'BOUND',
@@ -476,8 +476,7 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(0, 'fetching device information',
                 this.bigip.getDeviceInfo())
-                .then((response) => {
-                    const data = response.data;
+                .then((data) => {
                     if (data) {
                         this.deviceInfo = {
                             hostname: data.hostname,
@@ -696,8 +695,7 @@ class FASTWorker {
                 return this.recordTransaction(
                     requestId, 'Fetching module provision information',
                     this.bigip.getProvisionData()
-                )
-                    .then(response => response.data);
+                );
             })
             .then((response) => {
                 this.provisionData = response;
@@ -955,8 +953,7 @@ class FASTWorker {
                                 requestId, `fetching data from ${endPoint}`,
                                 this.bigip.getSharedObjects(endPoint)
                             )
-                                .then((response) => {
-                                    const items = response.data.items;
+                                .then((items) => {
                                     this._hydrateCache[endPoint] = items;
                                     return items;
                                 });

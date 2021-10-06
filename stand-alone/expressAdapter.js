@@ -80,6 +80,8 @@ function getWorkerResponse(worker, req, res) {
 }
 
 function generateApp(workers, options) {
+    options = options || {};
+
     if (!Array.isArray(workers)) {
         workers = [workers];
     }
