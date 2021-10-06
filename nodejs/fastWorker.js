@@ -20,11 +20,9 @@
 require('core-js');
 
 const fs = require('fs-extra');
-const https = require('https');
 const url = require('url');
 
 const extract = require('extract-zip');
-const axios = require('axios');
 const Ajv = require('ajv');
 const merge = require('deepmerge');
 const Mustache = require('mustache');
@@ -148,16 +146,6 @@ class FASTWorker {
             username: bigipUser,
             password: bigipPassword,
             strictCerts: bigipStrictCert
-        });
-        this.selfEndpoint = axios.create({
-            baseURL: `${bigipHost}/mgmt/${this.WORKER_URI_PATH}`,
-            auth: {
-                username: bigipUser,
-                password: bigipPassword
-            },
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: bigipStrictCert
-            })
         });
 
         this.requestTimes = {};
@@ -1031,8 +1019,9 @@ class FASTWorker {
             });
     }
 
-    convertPoolMembers(reqid, apps) {
-        reqid = reqid || 0;
+    convertPoolMembers(restOperation, apps) {
+        const reqid = restOperation.requestId;
+
         const convertTemplateNames = [
             'bigip-fast-templates/http',
             'bigip-fast-templates/tcp',
@@ -1063,19 +1052,30 @@ class FASTWorker {
 
         let promiseChain = Promise.resolve();
 
+        const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.setMethod('Post');
+
         if (newApps.length > 0) {
             promiseChain = promiseChain
-                .then(() => this.recordTransaction(
-                    reqid, 'Updating pool members',
-                    this.selfEndpoint.post('/applications', newApps.map(app => ({
+                .then(() => {
+                    postOp.setBody(newApps.map(app => ({
                         name: app.template,
                         parameters: app.view
-                    })))
-                ))
-                .then((resp) => {
+                    })));
+                    return this.onPost(postOp);
+                })
+                .then(() => {
+                    if (postOp.getStatusCode() >= 400) {
+                        return Promise.reject(new Error(
+                            `Updating pool_members failed with ${postOp.getStatusCode()}: ${postOp.getBody().message}`
+                        ));
+                    }
+
                     this.logger.info(
-                        `FAST Worker [${reqid}]: task ${resp.data.message[0].id} submitted to update pool_members`
+                        `FAST Worker [${reqid}]: task ${postOp.getBody().message[0].id} submitted to update pool_members`
                     );
+
+                    return Promise.resolve();
                 });
         }
 
@@ -1356,7 +1356,7 @@ class FASTWorker {
                     this.driver.getRawDeclaration()
                 ))
                 .then(resp => resp.data[tenant][app])
-                .then(appDef => this.convertPoolMembers(reqid, [appDef]))
+                .then(appDef => this.convertPoolMembers(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
@@ -1369,7 +1369,7 @@ class FASTWorker {
                 reqid, 'gathering a list of applications from the driver',
                 this.driver.listApplications()
             ))
-            .then(appsList => this.convertPoolMembers(reqid, appsList))
+            .then(appsList => this.convertPoolMembers(restOperation, appsList))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);
@@ -1934,19 +1934,22 @@ class FASTWorker {
         const app = pathElements[5];
         const newParameters = data.parameters;
 
+        const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.setMethod('Post');
+
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'Fetching application data from AS3',
                 this.driver.getApplication(tenant, app)
             ))
-            .then(appData => this.recordTransaction(
-                reqid, 'Re-deploying application',
-                this.selfEndpoint.post('/applications', {
+            .then((appData) => {
+                postOp.setBody({
                     name: appData.template,
                     parameters: Object.assign({}, appData.view, newParameters)
-                })
-            ))
-            .then(resp => this.genRestResponse(restOperation, resp.status, resp.data))
+                });
+                return this.onPost(postOp);
+            })
+            .then(() => this.genRestResponse(restOperation, postOp.getStatusCode(), postOp.getBody()))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 

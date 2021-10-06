@@ -88,13 +88,16 @@ class RestOp {
     getMethod() {
         return '';
     }
+
+    setMethod() {
+    }
 }
 
 // Update worker instance to mimic iControl LX environment
 const patchWorker = (worker) => {
     worker.logger = {
         severe: (str) => {
-            console.error(str);
+            console.log(str);
             assert(false, 'worker hit a severe error');
         },
         error: console.log,
@@ -920,10 +923,9 @@ describe('template worker tests', function () {
                         }
                     }
                 }
-            }));
-        nock('http://localhost:8100')
+            }))
             .persist()
-            .post(`/mgmt/${worker.WORKER_URI_PATH}/applications`)
+            .post(`${as3ep}/tenant?async=true`)
             .reply(202, {});
 
         return worker.onPatch(op)
@@ -1557,6 +1559,8 @@ describe('template worker tests', function () {
                             [AS3DriverConstantsKey]: {
                                 template: 'bigip-fast-templates/http',
                                 view: {
+                                    tenant_name: 'tenant',
+                                    app_name: 'http',
                                     enable_pool: true,
                                     make_pool: true,
                                     pool_port: 80,
@@ -1573,6 +1577,8 @@ describe('template worker tests', function () {
                             [AS3DriverConstantsKey]: {
                                 template: 'bigip-fast-templates/tcp',
                                 view: {
+                                    tenant_name: 'tenant',
+                                    app_name: 'tcp',
                                     enable_pool: true,
                                     make_pool: true,
                                     pool_members: [
@@ -1606,13 +1612,23 @@ describe('template worker tests', function () {
                         }
                     }
                 }
-            }));
-        const postScope = nock('http://localhost:8100')
-            .post(`/mgmt/${worker.WORKER_URI_PATH}/applications`)
+            }))
+            .persist()
+            .post(`${as3ep}/tenant?async=true`)
             .reply(202, {
                 code: 202,
                 message: [
                     { id: '0' }
+                ]
+            });
+
+        nock('http://localhost:8100')
+            .persist()
+            .get(/mgmt\/tm\/.*\?\$select=fullPath/)
+            .reply(200, {
+                items: [
+                    { fullPath: '/Common/httpcompression' },
+                    { fullPath: '/Common/wan-optimized-compression' }
                 ]
             });
 
@@ -1621,7 +1637,6 @@ describe('template worker tests', function () {
             .then(() => {
                 console.log(op.body);
                 assert(as3Scope.isDone());
-                assert(postScope.isDone(), 'failed to post new applications');
             });
     });
     it('post_render_bad_tmplid', function () {
