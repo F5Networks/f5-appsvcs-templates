@@ -73,7 +73,11 @@ const view = {
 
     // analytics
     enable_analytics: true,
-    make_analytics_profile: true
+    make_analytics_profile: true,
+
+    // asm
+    enable_asm_logging: true,
+    log_profile_names: ['log local']
 };
 
 const expected = {
@@ -102,7 +106,12 @@ const expected = {
                 iRules: [],
                 profileAnalyticsTcp: {
                     use: 'app1_tcp_analytics'
-                }
+                },
+                securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    }
+                ]
             },
             app1_pool: {
                 class: 'Pool',
