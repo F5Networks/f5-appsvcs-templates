@@ -805,10 +805,8 @@ class FASTWorker {
                             validOneOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!(e.message.match(/due to missing modules/) || e.message.match(/since it requires BIG-IP/))) {
-                                return Promise.reject(e);
-                            }
-                            errstr = `\n${errstr}`;
+                            errstr += errstr === '' ? '' : '; ';
+                            errstr += `${e.message}`;
                             return Promise.resolve();
                         });
                 });
@@ -816,7 +814,7 @@ class FASTWorker {
                     .then(() => {
                         if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
                             return Promise.reject(new Error(
-                                `could not load template since no oneOf had valid dependencies:${errstr}`
+                                `could not load template since no oneOf had valid dependencies: ${errstr}`
                             ));
                         }
                         tmpl._oneOf = validOneOf;
@@ -829,9 +827,7 @@ class FASTWorker {
                         .then(() => {
                             validAnyOf.push(subtmpl);
                         })
-                        .catch((e) => {
-                            return Promise.resolve();
-                        });
+                        .catch(() => Promise.resolve());
                 });
                 promiseChain = promiseChain
                     .then(() => {
