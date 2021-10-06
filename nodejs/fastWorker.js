@@ -42,6 +42,7 @@ const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');
+const { BigipDeviceClassic } = require('../lib/bigipDevices');
 
 const pkg = require('../package.json');
 
@@ -142,9 +143,14 @@ class FASTWorker {
             }
         );
         this.ipamProviders = options.ipamProviders;
-
-        this.endpoint = axios.create({
-            baseURL: bigipHost,
+        this.bigip = options.bigipDevice || new BigipDeviceClassic({
+            host: bigipHost,
+            username: bigipUser,
+            password: bigipPassword,
+            strictCerts: bigipStrictCert
+        });
+        this.selfEndpoint = axios.create({
+            baseURL: `${bigipHost}/mgmt/${this.WORKER_URI_PATH}`,
             auth: {
                 username: bigipUser,
                 password: bigipPassword
@@ -364,7 +370,7 @@ class FASTWorker {
 
                 return Promise.resolve()
                     .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
+                    .then(() => this.bigip.getIAppsBlocks())
                     .catch(e => this.handleResponseError(e, 'to get blocks'))
                     .then((results) => {
                         const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
@@ -381,7 +387,7 @@ class FASTWorker {
 
                         if (matchingBlocks.length === 0) {
                             // No existing block, make a new one
-                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
+                            return this.bigip.addIAppsBlock(blockData);
                         }
 
                         // Found a block, do nothing
@@ -469,7 +475,7 @@ class FASTWorker {
         // ));
         return Promise.resolve()
             .then(() => this.recordTransaction(0, 'fetching device information',
-                this.endpoint.get('/mgmt/shared/identified-devices/config/device-info'))
+                this.bigip.getDeviceInfo())
                 .then((response) => {
                     const data = response.data;
                     if (data) {
@@ -656,9 +662,7 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 requestId, 'GET to appsvcs/info',
-                this.endpoint.get('/mgmt/shared/appsvcs/info', {
-                    validateStatus: () => true // ignore failure status codes
-                })
+                this.driver.getInfo()
             ))
             .then((as3response) => {
                 info.as3Info = as3response.data;
@@ -691,7 +695,7 @@ class FASTWorker {
 
                 return this.recordTransaction(
                     requestId, 'Fetching module provision information',
-                    this.endpoint.get('/mgmt/tm/sys/provision')
+                    this.bigip.getProvisionData()
                 )
                     .then(response => response.data);
             })
@@ -716,9 +720,7 @@ class FASTWorker {
 
                 return this.recordTransaction(
                     requestId, 'Fetching TS module information',
-                    this.endpoint.get('/mgmt/shared/telemetry/info', {
-                        validateStatus: () => true // ignore failure status codes
-                    })
+                    this.bigip.getTSInfo()
                 );
             })
             .then((response) => {
@@ -734,9 +736,7 @@ class FASTWorker {
                 }
                 return this.recordTransaction(
                     requestId, 'Fetching AS3 info',
-                    this.endpoint.get('/mgmt/shared/appsvcs/info', {
-                        validateStatus: () => true // ignore failure status codes
-                    })
+                    this.driver.getInfo()
                 )
                     .then(response => response.data);
             })
@@ -943,8 +943,7 @@ class FASTWorker {
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
-                const epStubs = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
-                const endPoints = epStubs.map(x => `/mgmt/tm/${x}?$select=fullPath`);
+                const endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
                 return Promise.resolve()
                     .then(() => Promise.all(endPoints.map(endPoint => Promise.resolve()
                         .then(() => {
@@ -954,7 +953,7 @@ class FASTWorker {
 
                             return this.recordTransaction(
                                 requestId, `fetching data from ${endPoint}`,
-                                this.endpoint.get(endPoint)
+                                this.bigip.getSharedObjects(endPoint)
                             )
                                 .then((response) => {
                                     const items = response.data.items;
@@ -1071,7 +1070,7 @@ class FASTWorker {
             promiseChain = promiseChain
                 .then(() => this.recordTransaction(
                     reqid, 'Updating pool members',
-                    this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications/`, newApps.map(app => ({
+                    this.selfEndpoint.post('/applications', newApps.map(app => ({
                         name: app.template,
                         parameters: app.view
                     })))
@@ -1357,7 +1356,7 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid, 'GET request to appsvcs/declare',
-                    this.endpoint.get('/mgmt/shared/appsvcs/declare')
+                    this.driver.getRawDeclaration()
                 ))
                 .then(resp => resp.data[tenant][app])
                 .then(appDef => this.convertPoolMembers(reqid, [appDef]))
@@ -1945,7 +1944,7 @@ class FASTWorker {
             ))
             .then(appData => this.recordTransaction(
                 reqid, 'Re-deploying application',
-                this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications`, {
+                this.selfEndpoint.post('/applications', {
                     name: appData.template,
                     parameters: Object.assign({}, appData.view, newParameters)
                 })
