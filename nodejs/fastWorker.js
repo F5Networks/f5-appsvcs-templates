@@ -830,11 +830,6 @@ class FASTWorker {
                             validAnyOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!(e.message.match(/due to missing modules/) || e.message.match(/since it requires BIG-IP/))) {
-                                // without this line, subtemplate will not display if AS3 version is old instead of
-                                // showing an error and not loading the whole template like allOf templates do
-                                return Promise.reject(e);
-                            }
                             return Promise.resolve();
                         });
                 });
