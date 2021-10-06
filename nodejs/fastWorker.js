@@ -1053,7 +1053,7 @@ class FASTWorker {
 
     releaseIPAMAddressesFromApps(reqid, appsData) {
         let config;
-        const promises = [];
+        let promiseChain = Promise.resolve();
         appsData.forEach((appDef) => {
             let view;
             if (appDef.metaData) {
@@ -1067,7 +1067,8 @@ class FASTWorker {
                 }
                 view = appDef;
             }
-            promises.push(Promise.resolve()
+
+            promiseChain = promiseChain
                 .then(() => {
                     if (config) {
                         return Promise.resolve(config);
@@ -1075,10 +1076,10 @@ class FASTWorker {
                     return this.getConfig(reqid)
                         .then((c) => { config = c; });
                 })
-                .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, view)));
+                .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, view));
         });
 
-        return Promise.all(promises);
+        return promiseChain;
     }
 
     fetchTemplate(reqid, tmplid) {
