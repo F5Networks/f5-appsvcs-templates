@@ -57,7 +57,7 @@ const view = {
     snat_addresses: ['10.3.1.1', '10.3.1.2'],
 
     // irule
-    irule_names: ['example_tcp_irule'],
+    tcp_irule_names: ['example_tcp_irule'],
     udp_irule_names: ['example_udp_irule'],
 
     // analytics
@@ -71,7 +71,7 @@ const view = {
     // asm
     enable_waf_policy: true,
     enable_asm_logging: true,
-    asm_log_profile_names: ['log local']
+    log_profile_names: ['log local']
 };
 
 const expected = {

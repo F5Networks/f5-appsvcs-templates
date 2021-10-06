@@ -87,7 +87,7 @@ const view = {
     // \
     enable_waf_policy: true,
     enable_asm_logging: true,
-    asm_log_profile_names: ['log local']
+    log_profile_names: ['log local']
 
 };
 

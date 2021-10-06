@@ -52,7 +52,7 @@ const view = {
     make_monitor: true,
     monitor_interval: 30,
     monitor_send_string: 'GET / HTTP/1.1\\r\\n\\r\\n',
-    monitor_receive: '200 OK',
+    monitor_expected_response: '200 OK',
 
     // snat
     enable_snat: true,
@@ -113,7 +113,7 @@ const view = {
     // asm
     enable_waf_policy: true,
     enable_asm_logging: true,
-    asm_log_profile_names: ['log local']
+    log_profile_names: ['log local']
 };
 
 const expected = {
