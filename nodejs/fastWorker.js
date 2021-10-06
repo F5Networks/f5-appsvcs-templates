@@ -743,17 +743,17 @@ class FASTWorker {
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
-                Promise.resolve(this.as3Info)
+                Promise.resolve(this.as3Info),
+                Promise.resolve(this.deviceInfo)
             ]));
     }
 
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
-            .then(([provisionData, as3Info]) => {
+            .then(([provisionData, as3Info, deviceInfo]) => {
+                // check for missing module dependencies
                 const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
-                const as3Version = semver.coerce(as3Info.version || '0.0');
-                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
                 const deps = tmpl.bigipDependencies || [];
                 const missingModules = deps.filter(x => !provisionedModules.includes(x));
                 if (missingModules.length > 0) {
@@ -762,11 +762,34 @@ class FASTWorker {
                     ));
                 }
 
+                // check AS3 Version minimum
+                const as3Version = semver.coerce(as3Info.version || '0.0');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
                 if (!semver.gte(as3Version, tmplAs3Version)) {
                     return Promise.reject(new Error(
                         `could not load template (${tmpl.title}) since it requires`
                         + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
                     ));
+                }
+
+                // check min/max BIG-IP version
+                const arrDeviceVersion = deviceInfo.version.split('.');
+                const objBigipVersionCheck = {
+                    doReturn: false,
+                    bigipMaximumVersion: `maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
+                    bigipMinimumVersion: `${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
+                };
+                ['bigipMaximumVersion', 'bigipMinimumVersion'].find((versionPropName) => {
+                    if (typeof tmpl[versionPropName] !== 'undefined') {
+                        if (!this.versionCompatibility(arrDeviceVersion, tmpl[versionPropName], versionPropName)) {
+                            objBigipVersionCheck.doReturn = versionPropName;
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                if (objBigipVersionCheck.doReturn) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP ${objBigipVersionCheck[objBigipVersionCheck.doReturn]}`));
                 }
 
                 let promiseChain = Promise.resolve();
@@ -783,10 +806,8 @@ class FASTWorker {
                             validOneOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!e.message.match(/due to missing modules/)) {
-                                return Promise.reject(e);
-                            }
-                            errstr = `\n${errstr}`;
+                            errstr += errstr === '' ? '' : '; ';
+                            errstr += `${e.message}`;
                             return Promise.resolve();
                         });
                 });
@@ -794,7 +815,7 @@ class FASTWorker {
                     .then(() => {
                         if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
                             return Promise.reject(new Error(
-                                `could not load template since no oneOf had valid dependencies:${errstr}`
+                                `could not load template since no oneOf had valid dependencies: ${errstr}`
                             ));
                         }
                         tmpl._oneOf = validOneOf;
@@ -807,12 +828,7 @@ class FASTWorker {
                         .then(() => {
                             validAnyOf.push(subtmpl);
                         })
-                        .catch((e) => {
-                            if (!e.message.match(/due to missing modules/)) {
-                                return Promise.reject(e);
-                            }
-                            return Promise.resolve();
-                        });
+                        .catch(() => Promise.resolve());
                 });
                 promiseChain = promiseChain
                     .then(() => {
@@ -1001,6 +1017,77 @@ class FASTWorker {
             });
     }
 
+    removeIncompatibleProps(tmpl, requestId) {
+        const subTemplates = [
+            ...tmpl._allOf || [],
+            ...tmpl._oneOf || [],
+            ...tmpl._anyOf || []
+        ];
+        const schema = tmpl._parametersSchema;
+        const arrDeviceVersion = this.deviceInfo.version.split('.');
+
+        return Promise.resolve()
+            .then(() => Promise.all(subTemplates.map(x => this.removeIncompatibleProps(x, requestId))))
+            .then(() => {
+                ['bigipMaximumVersion', 'bigipMinimumVersion'].forEach((versionPropName) => {
+                    const bigipVersionProps = (this.getPropsWithChild(schema, versionPropName));
+
+                    Object.entries(bigipVersionProps).forEach(([key, value]) => {
+                        const versionPropValue = value[versionPropName];
+
+                        if (typeof value === 'object' && value !== null && versionPropValue !== undefined) {
+                            if (!this.versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName)) {
+                                delete schema.properties[key];
+                            }
+                        }
+                    });
+                });
+
+                return Promise.resolve();
+            });
+    }
+
+    versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName) {
+        // if the user supplied a version limit that does not end with a wildcard (*)
+        if (!versionPropValue.toString().match(/\*$/)) {
+            // add .0 if there are not four points, e.g., 14.1 becomes 14.1.0 and 15.1.3 becomes 15.1.3.0
+            versionPropValue = (versionPropValue.toString().match(/(((\d){1,2}\.){3,3}\d{1,2})/g)) ? versionPropValue : `${versionPropValue}.0`;
+        }
+        // replace mulitple consecutive dots with a single dot in case of user error
+        // and then create an array, split on the dots
+        const arrVersionLimit = versionPropValue.replace(/\.(\.)+/g, '.').split('.');
+        let loopCtr = 0;
+        try {
+            arrVersionLimit.every((versionPoint) => {
+                // as soon as we encounter a wildcard(*) the rest of the version points are moot
+                if (versionPoint === '*') {
+                    // uncomment this to ignore all subsequent version points
+                    // throw true;
+                }
+
+                // get the device's correlated version number (major/minor/patch/point) or zero(0) if not present
+                const bigipVersionPoint = (arrDeviceVersion[loopCtr] || versionPropName === 0);
+
+                // if the versions are equal we continue
+                if ((bigipVersionPoint === versionPoint || versionPoint === '*')) {
+                    loopCtr += 1;
+                    return true;
+                }
+
+                // if the versions are not identical at this point then we have made a decision
+                const objRetVal = {
+                    bigipMaximumVersion: (bigipVersionPoint <= versionPoint),
+                    bigipMinimumVersion: (bigipVersionPoint >= versionPoint)
+                };
+                throw objRetVal[versionPropName];
+            });
+        } catch (e) {
+            return e;
+        }
+
+        return true;
+    }
+
     convertPoolMembers(reqid, apps) {
         reqid = reqid || 0;
         const convertTemplateNames = [
@@ -1095,6 +1182,7 @@ class FASTWorker {
                 tmpl.title = tmpl.title || tmplid;
                 return Promise.resolve()
                     .then(() => this.checkDependencies(tmpl, reqid, true))
+                    .then(() => this.removeIncompatibleProps(tmpl, reqid))
                     .then(() => this.hydrateSchema(tmpl, reqid, true))
                     .then(() => {
                         // Remove IPAM features in official templates if not enabled

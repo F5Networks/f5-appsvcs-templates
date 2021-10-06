@@ -107,6 +107,7 @@ const patchWorker = (worker) => {
         logger: worker.logger,
         transactionLogger: worker.transactionLogger
     });
+    worker.setDeviceInfo();
     worker.completedRestOp = false;
     worker.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
