@@ -747,6 +747,36 @@ class FASTWorker {
             ]));
     }
 
+    versionCompatibility(deviceVersion, tmplVersion, versionPropName) {
+        if (typeof deviceVersion === 'undefined' || typeof tmplVersion === 'undefined') {
+            return false;
+        }
+
+        const semverFromBigip = (version) => {
+            version = version.toString();
+            let verParts = version.split('.');
+            if (verParts.length < 2) {
+                verParts.push('0');
+            }
+            verParts = [
+                verParts[0] + verParts[1],
+                ...verParts.slice(2)
+            ];
+            return semver.coerce(verParts.join('.'));
+        };
+
+        deviceVersion = semverFromBigip(deviceVersion);
+        tmplVersion = semverFromBigip(tmplVersion);
+
+        if (versionPropName === 'bigipMinimumVersion') {
+            this.logger.info(`JDK comparing version: ${deviceVersion} ${tmplVersion}`);
+            return semver.gte(deviceVersion, tmplVersion);
+        }
+        this.logger.info(`JDK compared version: ${deviceVersion} ${tmplVersion}`);
+
+        return semver.lte(tmplVersion, tmplVersion);
+    }
+
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
@@ -772,7 +802,6 @@ class FASTWorker {
                 }
 
                 // check min/max BIG-IP version
-                const arrDeviceVersion = deviceInfo.version.split('.');
                 const objBigipVersionCheck = {
                     doReturn: false,
                     bigipMaximumVersion: `maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
@@ -780,7 +809,7 @@ class FASTWorker {
                 };
                 ['bigipMaximumVersion', 'bigipMinimumVersion'].find((versionPropName) => {
                     if (typeof tmpl[versionPropName] !== 'undefined') {
-                        if (!this.versionCompatibility(arrDeviceVersion, tmpl[versionPropName], versionPropName)) {
+                        if (!this.versionCompatibility(deviceInfo.version, tmpl[versionPropName], versionPropName)) {
                             objBigipVersionCheck.doReturn = versionPropName;
                             return true;
                         }
@@ -1014,47 +1043,6 @@ class FASTWorker {
 
                 return Promise.resolve();
             });
-    }
-
-    versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName) {
-        // if the user supplied a version limit that does not end with a wildcard (*)
-        if (!versionPropValue.toString().match(/\*$/)) {
-            // add .0 if there are not four points, e.g., 14.1 becomes 14.1.0 and 15.1.3 becomes 15.1.3.0
-            versionPropValue = (versionPropValue.toString().match(/(((\d){1,2}\.){3,3}\d{1,2})/g)) ? versionPropValue : `${versionPropValue}.0`;
-        }
-        // replace mulitple consecutive dots with a single dot in case of user error
-        // and then create an array, split on the dots
-        const arrVersionLimit = versionPropValue.replace(/\.(\.)+/g, '.').split('.');
-        let loopCtr = 0;
-        try {
-            arrVersionLimit.every((versionPoint) => {
-                // as soon as we encounter a wildcard(*) the rest of the version points are moot
-                if (versionPoint === '*') {
-                    // uncomment this to ignore all subsequent version points
-                    // throw true;
-                }
-
-                // get the device's correlated version number (major/minor/patch/point) or zero(0) if not present
-                const bigipVersionPoint = (arrDeviceVersion[loopCtr] || versionPropName === 0);
-
-                // if the versions are equal we continue
-                if ((bigipVersionPoint === versionPoint || versionPoint === '*')) {
-                    loopCtr += 1;
-                    return true;
-                }
-
-                // if the versions are not identical at this point then we have made a decision
-                const objRetVal = {
-                    bigipMaximumVersion: (bigipVersionPoint <= versionPoint),
-                    bigipMinimumVersion: (bigipVersionPoint >= versionPoint)
-                };
-                throw objRetVal[versionPropName];
-            });
-        } catch (e) {
-            return e;
-        }
-
-        return true;
     }
 
     convertPoolMembers(reqid, apps) {
