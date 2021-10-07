@@ -1016,36 +1016,6 @@ class FASTWorker {
             });
     }
 
-    removeIncompatibleProps(tmpl, requestId) {
-        const subTemplates = [
-            ...tmpl._allOf || [],
-            ...tmpl._oneOf || [],
-            ...tmpl._anyOf || []
-        ];
-        const schema = tmpl._parametersSchema;
-        const arrDeviceVersion = this.deviceInfo.version.split('.');
-
-        return Promise.resolve()
-            .then(() => Promise.all(subTemplates.map(x => this.removeIncompatibleProps(x, requestId))))
-            .then(() => {
-                ['bigipMaximumVersion', 'bigipMinimumVersion'].forEach((versionPropName) => {
-                    const bigipVersionProps = (this.getPropsWithChild(schema, versionPropName));
-
-                    Object.entries(bigipVersionProps).forEach(([key, value]) => {
-                        const versionPropValue = value[versionPropName];
-
-                        if (typeof value === 'object' && value !== null && versionPropValue !== undefined) {
-                            if (!this.versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName)) {
-                                delete schema.properties[key];
-                            }
-                        }
-                    });
-                });
-
-                return Promise.resolve();
-            });
-    }
-
     versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName) {
         // if the user supplied a version limit that does not end with a wildcard (*)
         if (!versionPropValue.toString().match(/\*$/)) {
@@ -1181,7 +1151,6 @@ class FASTWorker {
                 tmpl.title = tmpl.title || tmplid;
                 return Promise.resolve()
                     .then(() => this.checkDependencies(tmpl, reqid, true))
-                    .then(() => this.removeIncompatibleProps(tmpl, reqid))
                     .then(() => this.hydrateSchema(tmpl, reqid, true))
                     .then(() => {
                         // Remove IPAM features in official templates if not enabled
