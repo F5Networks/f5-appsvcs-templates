@@ -2,49 +2,40 @@ bigipHideTemplate: true
 
 bipMinVer: &bigipMinimumVersion 14.1
 
-# ASM template base, containing all settings that don't change order (unlike ASM Logging)
-asm_base: &asm_base
-  title: WAF Security Policy
+# ASM Logging
+asm_logging: &asm_logging
+  title: ASM Logging
   contentType: application/json
   bigipDependencies:
     - asm
-  definitions: &asm_base_def
-    enable_telemetry:
-      title: Enable Telemetry
-      description: This will display in the GUI, even if anyOf doens't meet minimum bigip version, or any other dependency
+  definitions: &asm_logging_def
+    enable_asm_logging:
+      title: Application Security Logging
       type: boolean
       default: true
-    enable_waf_policy:
-      title: WAF Security Policy
-      type: boolean
-      default: false
-      bigipMinimumVersion: *bigipMinimumVersion
-#### ASM is not setting the encoding value specified by AS3 
-#    waf_policy_encoding:
-#      title: WAF Policy Encoding
-#      type: string
-#      enum: ["iso-8859-6","iso-8859-4","iso-8859-13","windows-1257","iso-8859-2","windows-1250","big5","gb2312","gbk","gb18030","iso-8859-5","koi8-r","windows-1251","iso-8859-7","windows-1253","iso-8859-8","windows-1255","euc-jp","shift_jis","euc-kr","iso-8859-10","iso-8859-16","iso-8859-3","windows-874","iso-8859-9","utf-8","iso-8859-1","iso-8859-15","windows-1252"]
-#     default: "utf-8"
-#      dependencies:
-#        - enable_waf_policy
+    log_profile_names:
+      title: Security Log Profiles
+      description: Hold the *control* key to select or deselect multiple log profiles.
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+        enumFromBigip: security/log/profile
+      default: []
+      dependencies:
+        - enable_asm_logging    
     asm_partial_profiles: 
       template: |
-        {{#enable_waf_policy}}
-          {{#enable_asm_logging}},{{/enable_asm_logging}}
-          "policyWAF": {
-            "use": "{{app_name}}_waf_policy"
-          }
-        {{/enable_waf_policy}}
+        {{#enable_asm_logging}}
+          "securityLogProfiles": [
+            {{#log_profile_names}}
+              { "bigip": {{ . }} },
+            {{/log_profile_names}}
+          ]
+        {{/enable_asm_logging}}
     asm_partial_vs:
       template: |
           "{{app_name}}": {
-            {{#enable_asm_logging}}
-              "securityLogProfiles": [
-                {{#log_profile_names}}
-                  { "bigip": {{ . }} },
-                {{/log_profile_names}}
-              ]
-            {{/enable_asm_logging}}
             {{> asm_partial_profiles}}
           }
     asm_partial_template:
@@ -53,7 +44,52 @@ asm_base: &asm_base
           "{{tenant_name}}": {
             "{{app_name}}": {
               {{> asm_partial_vs}}
-              {{#enable_waf_policy}},
+            }
+          }
+        }
+  template: |
+    {{> asm_partial_template}}
+
+# WAF Policy
+waf_policy: &waf_policy
+  title: WAF Policy
+  contentType: application/json
+  bigipDependencies:
+    - asm
+  bigipMinimumVersion: *bigipMinimumVersion
+  definitions: &waf_policy_def
+    enable_waf_policy:
+      title: WAF Security Policy
+      description: Requires BIG-IP version 14.1 or greater
+      type: boolean
+      default: false
+  #### ASM is not setting the encoding value specified by AS3 
+  #  waf_policy_encoding:
+  #    title: WAF Policy Encoding
+  #    type: string
+  #    enum: ["iso-8859-6","iso-8859-4","iso-8859-13","windows-1257","iso-8859-2","windows-1250","big5","gb2312","gbk","gb18030","iso-8859-5","koi8-r","windows-1251","iso-8859-7","windows-1253","iso-8859-8","windows-1255","euc-jp","shift_jis","euc-kr","iso-8859-10","iso-8859-16","iso-8859-3","windows-874","iso-8859-9","utf-8","iso-8859-1","iso-8859-15","windows-1252"]
+  #   default: "utf-8"
+  #    dependencies:
+  #      - enable_waf_policy
+    waf_partial_profiles: 
+      template: |
+            {{#enable_waf_policy}}
+              "policyWAF": {
+                "use": "{{app_name}}_waf_policy"
+              }
+            {{/enable_waf_policy}}
+    waf_partial_vs:
+      template: |
+          "{{app_name}}": {
+            {{> waf_partial_profiles}}
+          },
+    waf_partial_template:
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{> waf_partial_vs}}
+              {{#enable_waf_policy}}
                 "{{app_name}}_waf_policy": {
                   "class": "WAF_Policy",
                   "policy": {
@@ -66,130 +102,109 @@ asm_base: &asm_base
           }
         }
   template: |
-    {{> asm_partial_template}}
+    {{> waf_partial_template}}
 
 # Bot Defense
 bot_defense: &bot_defense
-  enable_asm_bot_defense:
-    title: Bot Defense
-    type: boolean
-    default: false
-    dependencies:
-      - enable_waf_policy
-    invertDependency:
-      - enable_waf_policy
-    bigipMinimumVersion: *bigipMinimumVersion
-  asm_bot_defense_profiles:
-    title: Bot Defense Profiles
-    description: Hold the *control* key to select or deselect multiple Bot Defense profiles.
-    type: string
-    enumFromBigip: security/bot-defense/profile
-    default: ''
-    bigipMinimumVersion: *bigipMinimumVersion
-
-# ASM Logging
-asm_logging: &asm_logging
-  enable_asm_logging: &enable_asm_logging
-    title: Application Security Logging
-    type: boolean
-    default: true
-  log_profile_names: &log_profile_names
-    title: Security Log Profiles
-    description: Hold the *control* key to select or deselect multiple log profiles.
-    type: array
-    uniqueItems: true
-    items:
+  title: Bot Defense Profile
+  contentType: application/json
+  bigipDependencies:
+    - asm
+  bigipMinimumVersion: *bigipMinimumVersion
+  definitions: &bot_defense_def
+    enable_asm_bot_defense:
+      title: Bot Defense
+      description: Requires BIG-IP version 14.1 or greater
+      type: boolean
+      default: false
+      dependencies:
+        - enable_waf_policy
+      invertDependency:
+        - enable_waf_policy
+    asm_bot_defense_profiles:
+      title: Bot Defense Profiles
+      description: Hold the *control* key to select or deselect multiple Bot Defense profiles.
       type: string
-      enumFromBigip: security/log/profile
-    default: []
-    dependencies:
-      - enable_asm_logging
+      enumFromBigip: security/bot-defense/profile
+      default: ''
+      dependencies:
+        - enable_asm_bot_defense
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{#enable_asm_bot_defense}}
+            "{{app_name}}": {
+              "profileBotDefense": { 
+                "bigip": {{asm_bot_defense_profiles}}
+              }
+            }
+          {{/enable_asm_bot_defense}}
+        }
+      }
+    }
+
+# ASM template base, containing all settings that don't change order (unlike ASM Logging)
+asm_base: &asm_base
+  title: Application Security
+  contentType: application/json
+  bigipDependencies:
+    - asm
+  anyOf: &asm_base_anyof
+    - {}
+    - *asm_logging
+  definitions:
+    <<: *waf_policy_def
+    <<: *bot_defense_def
+    <<: *asm_logging_def
+  parameters:
+    tenant_name: subSubTemplate
+    app_name: testing
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+        }
+      }
+    }
 
 # subtemplate with baasic features: WAF and ASM logging
 <<: *asm_base
-definitions: 
-  <<: *asm_base_def
-  <<: *asm_logging
+anyOf: 
+  - <<: *asm_base_anyof
+  - *waf_policy
 
 # subtemplate with VS names unique to DNS template
 dns:
   <<: *asm_base
-  definitions: 
-    <<: *asm_base_def
-    <<: *asm_logging
-    asm_partial_vs:
-      template: |
-        "{{app_name}}_udp": {
-          {{#enable_asm_logging}}
-            "securityLogProfiles": [
-              {{#log_profile_names}}
-                { "bigip": {{ . }} },
-              {{/log_profile_names}}
-            ]
-          {{/enable_asm_logging}}
-          {{> asm_partial_profiles}}
-        },
-        "{{app_name}}_tcp": {
-          {{#enable_asm_logging}}
-            "securityLogProfiles": [
-              {{#log_profile_names}}
-                { "bigip": {{ . }} },
-              {{/log_profile_names}}
-            ]
-          {{/enable_asm_logging}}
-          {{> asm_partial_profiles}}
-        }
+  anyOf: 
+    - <<: *asm_base_anyof
+      definitions: 
+        <<: *asm_logging_def
+        asm_partial_vs:
+          template: |
+            "{{app_name}}_udp": {
+              {{> asm_partial_profiles}}
+            },
+            "{{app_name}}_tcp": {
+              {{> asm_partial_profiles}}
+            },
+    - <<: *waf_policy
+      definitions: 
+        <<: *waf_policy_def
+        waf_partial_vs:
+          template: |
+            "{{app_name}}_udp": {
+              {{> waf_partial_profiles}}
+            },
+            "{{app_name}}_tcp": {
+              {{> waf_partial_profiles}}
+            },
 
 # subtemplate with bot defense profile for templates with http
-and_bot_defense: 
+and_bot_defense:
   <<: *asm_base
-  definitions: 
-    <<: *asm_base_def
-    <<: *bot_defense
-    <<: *asm_logging
-    asm_partial_profiles: 
-      template: |
-        {{#enable_waf_policy}}
-          {{#enable_asm_logging}},{{/enable_asm_logging}}
-          "policyWAF": {
-            "use": "{{app_name}}_waf_policy"
-          }
-        {{/enable_waf_policy}}
-        {{#enable_asm_bot_defense}}
-          {{#enable_asm_logging}},{{/enable_asm_logging}}
-          "profileBotDefense":
-            {{#asm_bot_defense_profiles}}
-              { "bigip": {{ . }} }
-            {{/asm_bot_defense_profiles}}
-        {{/enable_asm_bot_defense}}
-  parameters:
-    tenant_name: subSubTemplate
-    app_name: testing
-  anyOf:
-    - {}
-    - title: AFM Logging
-      contentType: application/json
-      bigipDependencies:
-        - afm
-        - asm
-      bigipMaximumVersion: 16
-      definitions:
-        enable_telemetry:
-          title: enable telemetry
-          description: this will not display in the GUI, even if we remove the property from the &asm_base
-          type: boolean
-          default: true
-      template: |
-        {
-          "{{tenant_name}}": {
-            "{{app_name}}": {
-              {{#enable_telemetry}}
-                "{{app_name}}": {
-                  "securityLogProfiles": [
-                    { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
-                  ]
-                }
-              {{/enable_telemetry}}
-            }
-          }
-        }
+  anyOf: 
+    - <<: *asm_base_anyof
+    - *waf_policy
+    - *bot_defense
