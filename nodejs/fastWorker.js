@@ -850,17 +850,36 @@ class FASTWorker {
                         return Promise.resolve();
                     });
                 const validAnyOf = [];
+                let errstrAnyOf = '';
                 tmpl._anyOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
                         .then(() => this.checkDependencies(subtmpl, requestId))
                         .then(() => {
+                            this.logger.info(`JDK pushing ${subtmpl.title}`);
                             validAnyOf.push(subtmpl);
+                            this.logger.info(`JDK validAnyOf ${validAnyOf.length}`);
                         })
-                        .catch(() => Promise.resolve());
+                        .catch((e) => {
+                            this.logger.info(`JDK error ${e.message}`);
+                            errstrAnyOf += errstrAnyOf === '' ? '' : '; ';
+                            errstrAnyOf += `${e.message}`;
+                            return Promise.resolve();
+                        });
                 });
                 promiseChain = promiseChain
                     .then(() => {
+                        this.logger.info(`JDK error: ${errstrAnyOf} validanylength: ${validAnyOf.length} tmplanylength: ${tmpl._anyOf.length}`);
+                        if (tmpl._anyOf.length > 0) {
+                            this.logger.info(`JDK some anyOf ${tmpl._anyOf.length}`);
+                            if (validAnyOf.length === 0) {
+                                this.logger.info(`JDK none valid ${validAnyOf.length}`);
+                                return Promise.reject(new Error(
+                                    `could not load template since no anyOf had valid dependencies: ${errstrAnyOf}`
+                                ));
+                            }
+                        }
                         tmpl._anyOf = validAnyOf;
+                        return Promise.resolve();
                     });
                 return promiseChain;
             });
