@@ -123,7 +123,8 @@ analytics_base: &analytics_base
       type: string
       enumFromBigip: ltm/profile/tcp-analytics
       default: '/Common/tcp-analytics'
-      
+
+# subtemplate for http analytics only, without checkbox
 http_only: 
   <<: *analytics_base
   definitions:
@@ -132,6 +133,7 @@ http_only:
   template: |
     {{> http_partial_template_analytics}}
 
+# subtemplate for http analytics with checkbox to exclude manually
 http:
   <<: *analytics_base
   definitions:
@@ -152,6 +154,7 @@ http:
   template: |
     {{> http_partial_template_analytics}}
 
+# subtemplate for tcp analytics only, without checkbox
 tcp_only:
   <<: *analytics_base
   definitions: 
@@ -160,6 +163,7 @@ tcp_only:
   template: |
     {{> tcp_partial_template_analytics}}
 
+# subtemplate for tcp analytics with checkbox to exclude manually
 tcp:
   <<: *analytics_base
   definitions: 
@@ -180,6 +184,7 @@ tcp:
   template: |
     {{> tcp_partial_template_analytics}}
 
+# subtemplate for tcp analytics with VS name uniques to the DNS template
 dns:
   <<: *analytics_base
   definitions: 

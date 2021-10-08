@@ -8,7 +8,7 @@ allOf:
   - $ref: "_tls_server_profile.yaml#"
   - $ref: "_tls_client_profile.yaml#"
   - $ref: "_pool.yaml#"
-  - $ref: "_monitor_smtp.yaml#"
+  - $ref: "_monitors.yaml#/smtp"
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_irule.yaml#"
   - $ref: "_vlan_allow.yaml#"

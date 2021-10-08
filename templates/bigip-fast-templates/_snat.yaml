@@ -1,73 +1,143 @@
-title: SNAT
-contentType: application/json
 bigipHideTemplate: true
-definitions:
-  enable_snat:
-    title: SNAT
-    description: "*Secure Network Address Translation* maps the source client IP address
-      in a request to a translation address defined on the BIG-IP device."
-    type: boolean
-    default: true
-  snat_automap:
-    title: SNAT Automap
-    description: SNAT automap uses BIG-IP self-IP addresses as the translation address.
-    type: boolean
-    default: true
-  make_snatpool:
-    title: FAST-Generated SNAT Pool
-    description: Uncheck to use an existing BIG-IP SNAT Pool.
-    type: boolean
-    default: true
-  snatpool_name:
-    title: BIG-IP SNAT Pool
-    description: Enter the name of an existing BIG-IP SNAT pool.
-    type: string
-    enumFromBigip: ltm/snatpool
-    default: ''
-  snat_addresses:
-    title: SNAT Pool Addresses
-    type: array
-    uniqueItems: true
-    default: ['10.0.1.1']
-    items:
+
+snat_base: &snat_base
+  title: SNAT
+  contentType: application/json
+  definitions: &snat_base_def
+    enable_snat:
+      title: SNAT
+      description: "*Secure Network Address Translation* maps the source client IP address
+        in a request to a translation address defined on the BIG-IP device."
+      type: boolean
+      default: true
+    snat_automap:
+      title: SNAT Automap
+      description: SNAT automap uses BIG-IP self-IP addresses as the translation address.
+      type: boolean
+      default: true
+    make_snatpool:
+      title: FAST-Generated SNAT Pool
+      description: Uncheck to use an existing BIG-IP SNAT Pool.
+      type: boolean
+      default: true
+    snatpool_name:
+      title: BIG-IP SNAT Pool
+      description: Enter the name of an existing BIG-IP SNAT pool.
       type: string
-      default: '10.0.1.2'
-template: |
-  {
-    "{{tenant_name}}": {
-      "{{app_name}}": {
-        {{#enable_snat}}
-          {{#snat_automap}}
-            "{{app_name}}": {
-              "snat": "auto"
-            }
-          {{/snat_automap}}
-          {{^snat_automap}}
-            {{#make_snatpool}}
-              "{{app_name}}_snatpool": {
-                "class": "SNAT_Pool",
-                "snatAddresses": {{snat_addresses}}
-              },
-              "{{app_name}}": {
-                "snat": {
-                  "use": "{{app_name}}_snatpool"
-                }
-              }
-            {{/make_snatpool}}
-            {{^make_snatpool}}
-              "{{app_name}}": {
-                "snat": {
-                  "bigip": "{{snatpool_name}}"
-                }
-              }
-            {{/make_snatpool}}
-          {{/snat_automap}}
-        {{/enable_snat}}
-        {{^enable_snat}}
-          "{{app_name}}": {
-            "snat": "none"
+      enumFromBigip: ltm/snatpool
+      default: ''
+    snat_addresses:
+      title: SNAT Pool Addresses
+      type: array
+      uniqueItems: true
+      default: ['10.0.1.1']
+      items:
+        type: string
+        default: '10.0.1.2'
+    snat_partial_automap_vs: 
+      template: |
+        "{{app_name}}": {
+          "snat": "auto"
+        }
+    snat_partial_make_snatpool_vs: 
+      template: |
+        "{{app_name}}": {
+          "snat": {
+            "use": "{{app_name}}_snatpool"
           }
-        {{/enable_snat}}
-      }
-    }
-  }
+        }
+    snat_partial_existing_snatpool_vs: 
+      template: |
+        "{{app_name}}": {
+          "snat": {
+            "bigip": "{{snatpool_name}}"
+          }
+        }
+    snat_partial_disable_vs: 
+      template: |
+        "{{app_name}}": {
+          "snat": "none"
+        }
+    snat_partial_template: 
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{#enable_snat}}
+                {{#snat_automap}}
+                  {{> snat_partial_automap_vs}}
+                {{/snat_automap}}
+                {{^snat_automap}}
+                  {{#make_snatpool}}
+                    "{{app_name}}_snatpool": {
+                      "class": "SNAT_Pool",
+                      "snatAddresses": {{snat_addresses}}
+                    },
+                    {{> snat_partial_make_snatpool_vs}}
+                  {{/make_snatpool}}
+                  {{^make_snatpool}}
+                    {{> snat_partial_existing_snatpool_vs}}
+                  {{/make_snatpool}}
+                {{/snat_automap}}
+              {{/enable_snat}}
+              {{^enable_snat}}
+                "{{app_name}}": {
+                  "snat": "none"
+                }
+              {{/enable_snat}}
+            }
+          }
+        }
+
+# default snat subtemplate
+<<: *snat_base
+template: |
+  {{> snat_partial_template}}
+
+# subtemplate with VS names unique to DNS template
+dns:
+  <<: *snat_base
+  definitions: 
+    <<: *snat_base_def
+    snat_partial_automap_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "snat": "auto"
+        },
+        "{{app_name}}_udp": {
+          "snat": "auto"
+        }
+    snat_partial_make_snatpool_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "snat": {
+            "use": "{{app_name}}_snatpool"
+          }
+        },
+        "{{app_name}}_udp": {
+          "snat": {
+            "use": "{{app_name}}_snatpool"
+          }
+        }
+    snat_partial_existing_snatpool_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "snat": {
+            "bigip": "{{snatpool_name}}"
+          }
+        },
+        "{{app_name}}_udp": {
+          "snat": {
+            "bigip": "{{snatpool_name}}"
+          }
+        }
+    snat_partial_disable_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "snat": "none"
+        },
+        "{{app_name}}_udp": {
+          "snat": "none"
+        }
+  template: |
+    {{> snat_partial_template}}

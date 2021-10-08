@@ -115,10 +115,15 @@ pool_base: &pool_base
           }
         }
 
+<<<<<<< HEAD
+=======
+# default subtemplate
+>>>>>>> origin/MYSTIQUE-434-reuse-templates-for-dns
 <<: *pool_base
 template: |
   {{> pool_partials_template}}
 
+<<<<<<< HEAD
 ldap:
   <<: *pool_base
   definitions: 
@@ -156,5 +161,32 @@ ldap:
             title: Share Node
             type: boolean
             default: true
+=======
+# subtemplate with VS name unique to DNS template
+dns:
+  <<: *pool_base
+  definitions: 
+    <<: *pool_base_def
+    pool_partials_new_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "pool": "{{app_name}}_pool",
+        },
+        "{{app_name}}_udp": {
+          "pool": "{{app_name}}_pool",
+        }
+    pool_partials_existing_vs:
+      template: |
+        "{{app_name}}_tcp": {
+          "pool": {
+            "bigip": "{{pool_name}}"
+          }
+        },
+        "{{app_name}}_udp": {
+          "pool": {
+            "bigip": "{{pool_name}}"
+          }
+        }
+>>>>>>> origin/MYSTIQUE-434-reuse-templates-for-dns
   template: |
     {{> pool_partials_template}}
