@@ -1399,7 +1399,7 @@ describe('template worker tests', function () {
                     Some text
             `))
             .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /no oneOf had valid/))
+            .catch(e => assert.match(e.message, /no single oneOf had valid/))
             .then(() => checkTmplDeps(`
                 title: root oneOf pass
                 oneOf:
