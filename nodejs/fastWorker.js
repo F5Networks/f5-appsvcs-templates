@@ -841,9 +841,9 @@ class FASTWorker {
                 });
                 promiseChain = promiseChain
                     .then(() => {
-                        if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
+                        if (tmpl._oneOf.length > 0 && validOneOf.length !== 1) {
                             return Promise.reject(new Error(
-                                `could not load template since no oneOf had valid dependencies: ${errstr}`
+                                `could not load template since no single oneOf had valid dependencies: Value must validate against exactly one of the provided schemas. ${errstr}`
                             ));
                         }
                         tmpl._oneOf = validOneOf;
