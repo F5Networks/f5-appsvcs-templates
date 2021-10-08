@@ -302,7 +302,7 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls bridging with existing monitor, snatpool, and profiles', function () {
+    describe('tls bridging with existing https monitor, snatpool, and profiles', function () {
         before(() => {
             // existing TLS profiles
             view.make_tls_server_profile = false;
@@ -314,6 +314,12 @@ describe(template, function () {
             view.tls_client_profile_name = '/Common/serverssl';
             delete expected.t1.app1.app1_tls_client;
             expected.t1.app1.app1.clientTLS = { bigip: '/Common/serverssl' };
+
+            // existing https monitor
+            view.make_monitor = false;
+            view.monitor_name_https = '/Common/https';
+            expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/https' }];
+            delete expected.t1.app1.app1_monitor;
 
             // existing caching, compression, and multiplex profiles
             delete expected.t1.app1.app1_http;
@@ -361,7 +367,11 @@ describe(template, function () {
             // remove TLS client
             view.enable_tls_client = false;
             delete expected.t1.app1.app1.clientTLS;
-            expected.t1.app1.app1_monitor.monitorType = 'http';
+
+            // existing http monitor
+            view.make_monitor = false;
+            view.monitor_name_http = '/Common/http';
+            expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/http' }];
 
             // snat automap
             view.snat_automap = true;

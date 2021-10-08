@@ -1,7 +1,12 @@
 # 1.13.0
 ## Added
+* bigip-fast-templates: option for chain file on TLS Server in Exchange template
+* ipam: Add support for authorization headers other than basic auth
 
 ## Fixed
+* bigip-fast-templates: Fix SameSite=None cookies with a new iRule that adds the secure attribute to all cookies in the Exchange template 
+* bigip-fast-templates: Fix fqdn missing from Exchange services when not using the Common VIP
+* bigip-fast-templates: Fix the default port for pool members in the LDAP template, and show the password field
 
 ## Changed
 
