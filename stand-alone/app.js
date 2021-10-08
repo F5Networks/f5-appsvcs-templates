@@ -28,19 +28,10 @@ const FastWorker = require('../nodejs/fastWorker');
 const expressAdapter = require('./expressAdapter');
 
 const { SecretsBase64 } = require('../lib/secrets');
+const { BigipDeviceClassic } = require('../lib/bigipDevices');
+const { AS3Driver } = require('../lib/drivers');
 
 const port = 8080;
-
-const worker = new FastWorker({
-    templateStorage: new fast.dataStores.StorageMemory(),
-    configStorage: new fast.dataStores.StorageJsonFile('config.json'),
-    secretsManager: new SecretsBase64()
-});
-
-console.log([
-    'Warning: running FAST as a stand-alone application is only supported',
-    'for development and debug purposes. It is not suitable for production environments.'
-].join(' '));
 
 let strictCerts = process.env.FAST_BIGIP_STRICT_CERT;
 if (typeof strictCerts === 'string') {
@@ -49,14 +40,34 @@ if (typeof strictCerts === 'string') {
         || strictCerts === '1'
     );
 }
+const bigipInfo = {
+    host: process.env.FAST_BIGIP_HOST,
+    user: process.env.FAST_BIGIP_USER,
+    username: process.env.FAST_BIGIP_USER,
+    password: process.env.FAST_BIGIP_PASSWORD,
+    strictCerts
+};
+
+const worker = new FastWorker({
+    templateStorage: new fast.dataStores.StorageMemory(),
+    configStorage: new fast.dataStores.StorageJsonFile('config.json'),
+    secretsManager: new SecretsBase64(),
+    bigipDevice: new BigipDeviceClassic(bigipInfo),
+    as3Driver: new AS3Driver({
+        endPointUrl: `${bigipInfo.host}/mgmt/shared/appsvcs`,
+        bigipUser: bigipInfo.user,
+        bigipPassword: bigipInfo.password,
+        strictCerts: bigipInfo.strictCerts
+    })
+});
+
+console.log([
+    'Warning: running FAST as a stand-alone application is only supported',
+    'for development and debug purposes. It is not suitable for production environments.'
+].join(' '));
 
 expressAdapter.generateApp(worker, {
-    bigip: {
-        host: process.env.FAST_BIGIP_HOST,
-        user: process.env.FAST_BIGIP_USER,
-        password: process.env.FAST_BIGIP_PASSWORD,
-        strictCerts
-    },
+    bigip: bigipInfo,
     staticFiles: path.join(__dirname, '../presentation')
 })
     .then(app => app.listen(port));

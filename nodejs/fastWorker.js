@@ -48,17 +48,6 @@ const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
 
-const bigipHost = (process.env.FAST_BIGIP_HOST && `${process.env.FAST_BIGIP_HOST}`) || 'http://localhost:8100';
-const bigipUser = process.env.FAST_BIGIP_USER || 'admin';
-const bigipPassword = process.env.FAST_BIGIP_PASSWORD || '';
-let bigipStrictCert = process.env.FAST_BIGIP_STRICT_CERT || true;
-if (typeof bigipStrictCert === 'string') {
-    bigipStrictCert = (
-        bigipStrictCert.toLowerCase() === 'true'
-        || bigipStrictCert === '1'
-    );
-}
-
 const ajv = new Ajv({
     useDefaults: true
 });
@@ -113,12 +102,8 @@ class FASTWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.driver = new AS3Driver({
-            endPointUrl: `${bigipHost}/mgmt/shared/appsvcs`,
-            userAgent: this.baseUserAgent,
-            bigipUser,
-            bigipPassword,
-            strictCerts: bigipStrictCert
+        this.driver = options.as3Driver || new AS3Driver({
+            userAgent: this.baseUserAgent
         });
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
@@ -141,12 +126,7 @@ class FASTWorker {
             }
         );
         this.ipamProviders = options.ipamProviders;
-        this.bigip = options.bigipDevice || new BigipDeviceClassic({
-            host: bigipHost,
-            username: bigipUser,
-            password: bigipPassword,
-            strictCerts: bigipStrictCert
-        });
+        this.bigip = options.bigipDevice || new BigipDeviceClassic();
 
         this.requestTimes = {};
         this.requestCounter = 1;
@@ -343,7 +323,7 @@ class FASTWorker {
         });
 
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
-        this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
+        this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
         let config;
         let saveState = true;
@@ -351,7 +331,7 @@ class FASTWorker {
         return Promise.resolve()
             // Automatically add a block
             .then(() => {
-                const hosturl = url.parse(bigipHost);
+                const hosturl = this.bigip.host ? url.parse(this.bigip.host) : '';
                 if (hosturl.hostname !== 'localhost') {
                     return Promise.resolve();
                 }
