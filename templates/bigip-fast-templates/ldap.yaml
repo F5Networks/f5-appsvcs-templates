@@ -17,20 +17,6 @@ anyOf:
   - $ref: "_analytics.yaml#/tcp_only"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"
-definitions:
-  virtual_port:
-    type: integer
-    default: 389
-  pool_members:
-    type: array
-    items:
-      type: object
-      properties:
-        serverAddresses:
-          type: array
-        servicePort:
-          type: integer
-          default: 389
 template: |
   {
     "{{tenant_name}}": {
