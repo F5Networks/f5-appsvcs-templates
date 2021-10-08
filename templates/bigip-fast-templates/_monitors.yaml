@@ -146,7 +146,6 @@ ldap:
       format: password
       contentEncoding: base64
       minLength: 2
-      default: ''
     monitor_base:
       title: Directory Level
       description: Enter the directory level to be searched in the health check.
@@ -171,6 +170,8 @@ ldap:
         "filter": "{{monitor_filter}}"
   template: |
     {{> monitor_partial_template}}
+  parameters:
+    monitor_passphrase: ''
 
 # subtemplate for http monitor
 http:
