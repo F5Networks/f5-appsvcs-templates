@@ -45,6 +45,11 @@ const view = {
     load_balancing_mode: 'round-robin',
     slow_ramp_time: 300,
 
+    // monitor spec
+    enable_monitor: true,
+    make_monitor: true,
+    monitor_interval: 30,
+
     // snat
     enable_snat: true,
     snat_automap: false,
@@ -125,7 +130,16 @@ const expected = {
                 }],
                 loadBalancingMode: view.load_balancing_mode,
                 slowRampTime: 300,
-                monitors: ['tcp']
+                monitors: [{
+                    use: 'app1_monitor'
+                }]
+            },
+            app1_monitor: {
+                class: 'Monitor',
+                monitorType: 'tcp',
+                interval: 30,
+                timeout: 91,
+                receive: ''
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',
@@ -207,6 +221,13 @@ describe(template, function () {
             view.make_monitor = false;
             view.monitor_name = '/Common/monitor1';
             expected.t1.app1.app1_pool.monitors = [{ bigip: '/Common/monitor1' }];
+            delete expected.t1.app1.app1_monitor;
+
+            // existing analytics profiles
+            view.make_analytics_profile = false;
+            view.analytics_existing_tcp_profile = '/Common/tcp-analytics';
+            expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
+            delete expected.t1.app1.app1_tcp_analytics;
 
             // existing analytics profiles
             view.make_analytics_profile = false;
@@ -237,6 +258,7 @@ describe(template, function () {
             view.make_pool = false;
             view.pool_name = '/Common/pool1';
             delete expected.t1.app1.app1_pool;
+            delete expected.t1.app1.app1_monitor;
             expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
 
             // snat automap

@@ -10,7 +10,7 @@ allOf:
   - $ref: "_tls_server_profile.yaml#"
   - $ref: "_tls_client_profile.yaml#"
   - $ref: "_pool.yaml#"
-  - $ref: "_monitor_http.yaml#"
+  - $ref: "_monitors.yaml#/http"
   - $ref: "_http_profile.yaml#"
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_policy_endpoint.yaml#"
