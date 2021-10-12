@@ -42,7 +42,8 @@ monitor_base: &monitor_base
         "monitorType": "tcp",
     monitor_partial_type_specifics:
       template: >-
-        "receive": ""
+        "receive": "",
+        "send": ""
     monitor_partial_template:
       template: |
         {
