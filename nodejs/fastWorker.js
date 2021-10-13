@@ -127,6 +127,7 @@ class FASTWorker {
         );
         this.ipamProviders = options.ipamProviders;
         this.bigip = options.bigipDevice || new BigipDeviceClassic();
+        this.minAs3Version = options.minAs3Version || '3.16';
 
         this.requestTimes = {};
         this.requestCounter = 1;
@@ -732,11 +733,11 @@ class FASTWorker {
 
                 // check AS3 Version minimum
                 const as3Version = semver.coerce(as3Info.version || '0.0');
-                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || this.minAs3Version);
                 if (!semver.gte(as3Version, tmplAs3Version)) {
                     return Promise.reject(new Error(
                         `could not load template (${tmpl.title}) since it requires`
-                        + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
+                        + ` AS3 >= ${tmplAs3Version} (found ${as3Version})`
                     ));
                 }
 
