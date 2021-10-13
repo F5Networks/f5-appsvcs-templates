@@ -1226,10 +1226,12 @@ class FASTWorker {
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
-        // Update driver's user agent if one was provided with the request
-        const userAgent = restOp.getUri().query.userAgent;
-        this.incomingUserAgent = userAgent || '';
-        this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+        if (this.driver.userAgent) {
+            // Update driver's user agent if one was provided with the request
+            const userAgent = restOp.getUri().query.userAgent;
+            this.incomingUserAgent = userAgent || '';
+            this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+        }
 
         // Record the time we received the request
         this.requestTimes[restOp.requestId] = Date.now();
