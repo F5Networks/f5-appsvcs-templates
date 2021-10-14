@@ -22,11 +22,6 @@
 const path = require('path');
 const url = require('url');
 
-process.AFL_TW_ROOT = path.join(process.cwd(), './templates');
-process.AFL_TW_TS = path.join(process.cwd(), './templates');
-process.env.FAST_UPLOAD_DIR = './test/unit/mockDir';
-delete process.env.FAST_BIGIP_HOST; // Never try targeting a remote BIG-IP
-
 const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
@@ -39,6 +34,8 @@ const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker');
 const IpamProviders = require('../../lib/ipam');
+
+const templatesPath = path.join(process.cwd(), 'templates');
 
 class RestOp {
     constructor(uri) {
@@ -157,7 +154,10 @@ function createWorker() {
         fsTemplateList: [
             'examples',
             'bigip-fast-templates'
-        ]
+        ],
+        configPath: process.cwd(),
+        templatesPath,
+        uploadPath: './test/unit/mockDir'
     });
     patchWorker(worker);
 
@@ -198,7 +198,7 @@ describe('template worker tests', function () {
             'examples'
         ];
         testStorage = new fast.dataStores.StorageMemory();
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, templatesPath, tsNames);
     });
 
     beforeEach(function () {
@@ -1004,7 +1004,6 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
         const infoOp = new RestOp('info');
-        const tsPath = path.join(process.cwd(), 'templates');
 
         this.clock.restore();
 
@@ -1022,7 +1021,7 @@ describe('template worker tests', function () {
             })
             .then(() => worker.templateProvider.listSets())
             .then((tmplSets) => {
-                assert(fs.existsSync(`${tsPath}/scratch`));
+                assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                 assert(tmplSets.includes('testset'));
             })
             .then(() => worker.onGet(infoOp))

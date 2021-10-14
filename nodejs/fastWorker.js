@@ -63,10 +63,6 @@ Mustache.escape = function escape(text) {
     return text;
 };
 
-const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
-const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
-const uploadPath = process.env.FAST_UPLOAD_DIR || '/var/config/rest/downloads';
-const scratchPath = `${configPath}/scratch`;
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
 const configDGPath = `/Common/${projectName}/config`;
@@ -99,6 +95,11 @@ class FASTWorker {
         this.baseUserAgent = `${pkg.name}/${pkg.version}`;
         this.incomingUserAgent = '';
 
+        this.configPath = options.configPath || `/var/config/rest/iapps/${projectName}`;
+        this.templatesPath = options.templatesPath || `${this.configPath}/templatesets`;
+        this.uploadPath = options.uploadPath || '/var/config/rest/downloads';
+        this.scratchPath = `${this.configPath}/scratch`;
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
@@ -108,7 +109,7 @@ class FASTWorker {
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
-        this.fsTemplateProvider = new FsTemplateProvider(templatesPath, options.fsTemplateList);
+        this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version
@@ -409,7 +410,7 @@ class FASTWorker {
                     return Promise.resolve();
                 }
                 this.templateProvider.invalidateCache();
-                return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
+                return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
             .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
@@ -1564,9 +1565,9 @@ class FASTWorker {
     postTemplateSets(restOperation, data) {
         const tsid = data.name;
         const reqid = restOperation.requestId;
-        const setpath = `${uploadPath}/${tsid}.zip`;
-        const scratch = `${scratchPath}/${tsid}`;
-        const onDiskPath = `${templatesPath}/${tsid}`;
+        const setpath = `${this.uploadPath}/${tsid}.zip`;
+        const scratch = `${this.scratchPath}/${tsid}`;
+        const onDiskPath = `${this.templatesPath}/${tsid}`;
 
         if (!data.name) {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
@@ -1599,12 +1600,12 @@ class FASTWorker {
             .then(() => this.exitTransaction(reqid, 'extract template set'))
             .then(() => this.recordTransaction(
                 reqid, 'validate template set',
-                this._validateTemplateSet(scratchPath)
+                this._validateTemplateSet(this.scratchPath)
             ))
             .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)))
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
-            .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
+            .then(() => DataStoreTemplateProvider.fromFs(this.storage, this.scratchPath, [tsid]))
             .then(() => {
                 this.generateTeemReportTemplateSet('create', tsid);
             })

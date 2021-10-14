@@ -19,9 +19,6 @@
 
 const path = require('path');
 
-process.AFL_TW_ROOT = '.';
-process.AFL_TW_TS = path.join(__dirname, '../templates');
-
 const fast = require('@f5devcentral/f5-fast-core');
 
 const FastWorker = require('../nodejs/fastWorker');
@@ -49,6 +46,8 @@ const bigipInfo = {
 };
 
 const worker = new FastWorker({
+    configPath: '.',
+    templatesPath: path.join(__dirname, '..', 'templates'),
     templateStorage: new fast.dataStores.StorageMemory(),
     configStorage: new fast.dataStores.StorageJsonFile('config.json'),
     secretsManager: new SecretsBase64(),
