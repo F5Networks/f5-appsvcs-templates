@@ -379,7 +379,7 @@ For example:
    }
    ...
 
-AFL has support for `enums` and custom formats can be applied to the primitive types outlined in the previous section.
+FAST has support for `enums` and custom formats can be applied to the primitive types outlined in the previous section.
 The variable in the example is a `service` type from the `f5` schema named `service_type`.
 The `service` schema is an enum containing the AS3 basic services, `Service_HTTP`, `Service_HTTPS`, `Service_L4`, `Service_UDP`, and `Service_TCP`.
 
