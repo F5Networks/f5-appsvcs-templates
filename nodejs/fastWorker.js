@@ -333,7 +333,6 @@ class FASTWorker {
         return Promise.reject(e);
     }
 
-
     /**
      * Worker Handlers
      */
@@ -975,7 +974,6 @@ class FASTWorker {
                 if (config.enableIpam) {
                     return Promise.resolve();
                 }
-
 
                 const schema = tmpl._parametersSchema;
                 const props = schema.properties;

@@ -38,7 +38,6 @@ function restOpFromRequest(req) {
         restOp.setHeader(headerName, req.headers[headerName]);
     });
 
-
     return restOp;
 }
 
@@ -55,7 +54,6 @@ function setResponseFromRestOp(restOp, res) {
         .status(restOp.getStatusCode())
         .send(body);
 }
-
 
 function getWorkerResponse(worker, req, res) {
     const restOp = restOpFromRequest(req);

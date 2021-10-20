@@ -93,7 +93,6 @@ function deleteAllApplications() {
         .catch(err => Promise.reject(new Error(`Failed to delete applications: ${err.message}`)));
 }
 
-
 describe('Template Sets', function () {
     this.timeout(120000);
     const url = '/mgmt/shared/fast/templatesets';
