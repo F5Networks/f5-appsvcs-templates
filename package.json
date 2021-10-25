@@ -1,6 +1,6 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.13.0-rc.4",
+  "version": "1.13.0-rc.5",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
@@ -64,7 +64,13 @@
     "rules": {
       "no-control-regex": "off",
       "strict": "off",
-      "arrow-parens": ["error", "as-needed", { "requireForBlockBody": true }],
+      "arrow-parens": [
+        "error",
+        "as-needed",
+        {
+          "requireForBlockBody": true
+        }
+      ],
       "max-classes-per-file": "off",
       "vue/html-indent": [
         "error",
