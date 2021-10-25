@@ -1499,7 +1499,6 @@ class FASTWorker {
                 appsData.forEach((appData) => {
                     this.generateTeemReportApplication('modify', appData.template);
                 });
-                return appsData;
             })
             .then(() => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
@@ -1721,12 +1720,16 @@ class FASTWorker {
         }
 
         const appNames = data.map(x => x.split('/'));
+        let appsData;
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'requesting application data from driver',
                 Promise.all(appNames.map(x => this.driver.getApplication(...x)))
             ))
-            .then(appsData => this.releaseIPAMAddressesFromApps(reqid, appsData))
+            .then((value) => {
+                appsData = value;
+            })
+            .then(() => this.releaseIPAMAddressesFromApps(reqid, appsData))
             .then(() => this.recordTransaction(
                 reqid, 'deleting applications',
                 this.driver.deleteApplications(appNames)
@@ -1738,7 +1741,9 @@ class FASTWorker {
                 this.completeRestOperation(restOperation);
             })
             .then(() => {
-                this.generateTeemReportApplication('delete', '');
+                appsData.forEach((appData) => {
+                    this.generateTeemReportApplication('delete', appData.template);
+                });
             })
             .catch((e) => {
                 if (e.message.match('no tenant found')) {
