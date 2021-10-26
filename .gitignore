@@ -14,3 +14,4 @@ presentation/openapi.json
 presentation/apidoc.html
 venv/
 docs/userguide/proposed-doc-rev.rst
+config.json

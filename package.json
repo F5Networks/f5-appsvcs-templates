@@ -105,7 +105,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.14.8",
-    "@f5devcentral/atg-shared-utilities": "^0.2.1",
+    "@f5devcentral/atg-shared-utilities": "git+ssh://git@gitswarm.f5net.com:automation-toolchain/atg-shared-utilities.git#f80298ac588128b74b10123913b611dac75c7bc6",
     "@f5devcentral/f5-fast-core": "^0.15.0",
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
@@ -118,8 +118,5 @@
     "mustache": "^4.2.0",
     "semver": "^7.3.5"
   },
-  "optionalDependencies": {
-    "error": "7.2.1",
-    "jaeger-client": "^3.18.1"
-  }
+  "optionalDependencies": {}
 }

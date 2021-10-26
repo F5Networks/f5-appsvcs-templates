@@ -27,8 +27,8 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
+const { Tracer } = require('@f5devcentral/atg-shared-utilities').tracer;
 const { AS3Driver, AS3DriverConstantsKey } = require('../../lib/drivers');
-const Tracer = require('../../lib/tracer').Tracer;
 
 describe('AS3 Driver tests', function () {
     const appDef = {

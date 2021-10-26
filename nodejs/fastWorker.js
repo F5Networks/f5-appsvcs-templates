@@ -32,6 +32,7 @@ const semver = require('semver');
 
 const fast = require('@f5devcentral/f5-fast-core');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
+const { Tracer, TraceTags, TraceUtil } = require('@f5devcentral/atg-shared-utilities').tracer;
 
 const drivers = require('../lib/drivers');
 const { SecretsSecureVault } = require('../lib/secrets');
@@ -41,9 +42,6 @@ const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
 const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
-const Tracer = require('../lib/tracer').Tracer;
-const Tags = require('../lib/tracer').Tags;
-const TracerUtil = require('../lib/tracer').Util;
 const IpamProviders = require('../lib/ipam');
 
 const pkg = require('../package.json');
@@ -509,12 +507,12 @@ class FASTWorker {
         const defaultOpts = {
             logger: this.logger,
             tags: {
-                [Tags.APP.VERSION]: pkg.version,
+                [TraceTags.APP.VERSION]: pkg.version,
                 'as3.version': this.as3Info ? this.as3Info.version : ''
             }
         };
         if (this.deviceInfo) {
-            Object.assign(defaultOpts.tags, TracerUtil.buildDeviceTags(this.deviceInfo));
+            Object.assign(defaultOpts.tags, TraceUtil.buildDeviceTags(this.deviceInfo));
         }
         if (!options) {
             tracerOpts = defaultOpts;

@@ -33,14 +33,13 @@ const nock = require('nock');
 const sinon = require('sinon');
 
 const fast = require('@f5devcentral/f5-fast-core');
+const { Tracer, TraceTags } = require('@f5devcentral/atg-shared-utilities').tracer;
 
 const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
 const { SecretsBase64 } = require('../../lib/secrets');
 
 const FASTWorker = require('../../nodejs/fastWorker.js');
 const IpamProviders = require('../../lib/ipam');
-const { Tracer } = require('../../lib/tracer');
-const { Tags } = require('../../lib/tracer');
 const pkg = require('../../package.json');
 
 class RestOp {
@@ -113,7 +112,7 @@ const patchWorker = (worker) => {
     worker.tracer = new Tracer(pkg.name, {
         logger: worker.logger,
         tags: {
-            [Tags.APP.VERSION]: pkg.version
+            [TraceTags.APP.VERSION]: pkg.version
         }
     });
     worker.completedRestOp = false;
