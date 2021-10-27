@@ -86,7 +86,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '3632e5541e437d6ceba1bceb4a985ce363f26f81fbdedcbe6a0c8d8505db3240', // v1.13
+        '3935c37c85e32f1fd23fa83f59bda5de3d98daefaccc13b4f879ef4e49a4665e', // v1.13
         '42bd34feb4a63060df71c19bc4c23f9ec584507d4d3868ad75db51af8b449437', // v1.12
         '84904385ccc31f336b240ba1caa17dfab134d08efed7766fbcaea4eb61dae463', // v1.11
         '64d9692bdab5f1e2ba835700df4d719662b9976b9ff094fe7879f74d411fe00b', // v1.10
@@ -748,34 +748,6 @@ class FASTWorker {
             ]));
     }
 
-    versionCompatibility(deviceVersion, tmplVersion, versionPropName) {
-        if (typeof deviceVersion === 'undefined' || typeof tmplVersion === 'undefined') {
-            return false;
-        }
-
-        const semverFromBigip = (version) => {
-            version = version.toString();
-            let verParts = version.split('.');
-            if (verParts.length < 2) {
-                verParts.push('0');
-            }
-            verParts = [
-                verParts[0] + verParts[1],
-                ...verParts.slice(2)
-            ];
-            return semver.coerce(verParts.join('.'));
-        };
-
-        deviceVersion = semverFromBigip(deviceVersion);
-        tmplVersion = semverFromBigip(tmplVersion);
-
-        if (versionPropName === 'bigipMinimumVersion') {
-            return semver.gte(deviceVersion, tmplVersion);
-        }
-
-        return semver.lte(tmplVersion, tmplVersion);
-    }
-
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
@@ -801,24 +773,40 @@ class FASTWorker {
                 }
 
                 // check min/max BIG-IP version
-                const objBigipVersionCheck = {
-                    doReturn: false,
-                    bigipMaximumVersion: `maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
-                    bigipMinimumVersion: `${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
+                const semverFromBigip = (version) => {
+                    version = version.toString();
+                    let verParts = version.split('.');
+                    if (verParts.length < 2) {
+                        verParts.push('0');
+                    }
+                    verParts = [
+                        verParts[0] + verParts[1],
+                        ...verParts.slice(2)
+                    ];
+                    return semver.coerce(verParts.join('.'));
                 };
-                ['bigipMaximumVersion', 'bigipMinimumVersion'].find((versionPropName) => {
-                    if (typeof tmpl[versionPropName] !== 'undefined') {
-                        if (!this.versionCompatibility(deviceInfo.version, tmpl[versionPropName], versionPropName)) {
-                            objBigipVersionCheck.doReturn = versionPropName;
-                            return true;
+
+                if (typeof deviceInfo.version !== 'undefined') {
+                    const bigipVersion = semverFromBigip(deviceInfo.version);
+
+                    if (bigipVersion && typeof tmpl.bigipMinimumVersion !== 'undefined') {
+                        const tmplBigipMin = semverFromBigip(tmpl.bigipMinimumVersion);
+
+                        if (tmplBigipMin && !semver.gte(bigipVersion, tmplBigipMin)) {
+                            return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP >= ${tmpl.bigipMinimumVersion} (found ${deviceInfo.version})`));
                         }
                     }
-                    return false;
-                });
-                if (objBigipVersionCheck.doReturn) {
-                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP ${objBigipVersionCheck[objBigipVersionCheck.doReturn]}`));
+
+                    if (bigipVersion && typeof tmpl.bigipMaximumVersion !== 'undefined') {
+                        const tmplBigipMax = semverFromBigip(tmpl.bigipMaximimumVersion);
+
+                        if (tmplBigipMax && !semver.lte(bigipVersion, tmplBigipMax)) {
+                            return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`));
+                        }
+                    }
                 }
 
+                // check subTemplates
                 let promiseChain = Promise.resolve();
                 tmpl._allOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
