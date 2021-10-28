@@ -114,7 +114,7 @@
   "dependencies": {
     "@babel/runtime": "^7.15.4",
     "@f5devcentral/atg-shared-utilities": "^0.2.2",
-    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#87100ecf87f776f08cc7f6d97f1878ffb7f9da86",
+    "@f5devcentral/f5-fast-core": "^0.16.0",
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
     "axios": "^0.21.2",
