@@ -11,6 +11,10 @@ Document Revision History
         - Description
         - Date
 
+      * - 17.0 
+        - **Updated the documentation for FAST v1.13** |br| This release contains the following changes:  |br| |br| Added: |br| * bigip-fast-templates: option for chain file on TLS Server in Exchange template |br| * ipam: Add support for authorization headers other than basic auth |br| |br| Fixed: |br| * bigip-fast-templates: Fix SameSite=None cookies with a new iRule that adds the secure attribute to all cookies in the Exchange template |br| *bigip-fast-templates: Fix fqdn missing from Exchange services when not using the Common VIP |br| * bigip-fast-templates: Fix the default port for pool members in the LDAP template, and show the password field
+        - 11-02-21
+
       * - 16.0 
         - **Updated the documentation for FAST v1.12** |br| This release contains the following changes:  |br| |br| Fixed: |br| * bigip-fast-templates: Fixed pool members missing on ADFS template unless Certificate Authentication was selected |br| * bigip-fast-templates: Fixed AS3 declaration when using custom persistence profiles |br| * Fixed errors when deleting builtin template sets |br| * Fixed POST to /render and /application endpoints not using hydrated schemas |br| |br| Changed: |br| * gui: Stop showing appended userAgent query parameter on URIs for error messages 
         - 09-21-21
