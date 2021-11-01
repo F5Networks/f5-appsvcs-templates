@@ -9,7 +9,7 @@
 * bigip-fast-templates: Fix the default port for pool members in the LDAP template, and show the password field
 
 ## Changed
-* Update f5-faste-core from v0.15.0 to v0.16.0
+* Update f5-fast-core from v0.15.0 to v0.16.0
 
 # 1.12.0
 ## Added
