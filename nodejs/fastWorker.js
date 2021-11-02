@@ -280,6 +280,7 @@ class FASTWorker {
     saveConfig(config, reqid) {
         reqid = reqid || 0;
         let prevConfig;
+        let persisted = false;
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'saving config data'))
             .then(() => this.configStorage.getItem(configKey, config))
@@ -289,6 +290,7 @@ class FASTWorker {
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
+                    persisted = true;
                     return this.recordTransaction(
                         reqid, 'persisting config',
                         this.configStorage.persist()
@@ -298,6 +300,7 @@ class FASTWorker {
                 return Promise.resolve();
             })
             .then(() => this.exitTransaction(reqid, 'saving config data'))
+            .then(() => persisted)
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
             });
@@ -1594,9 +1597,6 @@ class FASTWorker {
             .then(() => {
                 this.generateTeemReportTemplateSet('create', tsid);
             })
-            .then(() => this.storage.persist())
-            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
-            .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => this.getConfig(reqid))
             .then((config) => {
                 if (config.deletedTemplateSets.includes(tsid)) {
@@ -1605,15 +1605,27 @@ class FASTWorker {
                 }
                 return Promise.resolve();
             })
-            // Automatically convert any apps using the old pool_members definition
+            .then((persisted) => {
+                // if both template and config storage are data-group based, avoid calling persist() twice
+                // saveConfig() already calls persist() and triggers save sys config, which can cause latency
+                if (persisted && this.storage instanceof StorageDataGroup
+                        && this.configStorage instanceof StorageDataGroup) {
+                    return Promise.resolve();
+                }
+                return this.storage.persist();
+            })
+            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => {
                 if (tsid !== 'bigip-fast-templates') {
                     return Promise.resolve();
                 }
-
+                // Automatically convert any apps using the old pool_members definition
                 return this.recordTransaction(
-                    reqid, 'converting applications with old pool_members definition',
-                    this.convertPoolMembers(reqid)
+                    reqid,
+                    'converting applications with old pool_members definition',
+                    this.driver.listApplications()
+                        .then(apps => this.convertPoolMembers(reqid, apps))
                 );
             })
             .then(() => this.genRestResponse(restOperation, 200, ''))
@@ -1780,14 +1792,18 @@ class FASTWorker {
                     config.deletedTemplateSets.push(tsid);
                     return this.saveConfig(config, reqid);
                 })
-                .then(() => {
+                .then((persisted) => {
                     this.generateTeemReportTemplateSet('delete', tsid);
+                    if (persisted && this.storage instanceof StorageDataGroup
+                        && this.configStorage instanceof StorageDataGroup) {
+                        return Promise.resolve();
+                    }
+                    return this.recordTransaction(
+                        reqid, 'persisting the data store',
+                        this.storage.persist()
+                    );
                 })
-                .then(() => this.recordTransaction(
-                    reqid, 'persisting the data store',
-                    this.storage.persist()
-                        .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
-                ))
+                .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
                 .then(() => this.genRestResponse(restOperation, 200, 'success'))
                 .catch((e) => {
                     if (e.message.match(/failed to find template set/)) {
@@ -1815,14 +1831,20 @@ class FASTWorker {
                         ));
                 });
                 return promiseChain
-                    .then(() => this.recordTransaction(
-                        reqid, 'persisting the data store',
-                        this.storage.persist()
-                    ))
                     .then(() => this.getConfig(reqid))
                     .then((config) => {
                         config.deletedTemplateSets = [...new Set(config.deletedTemplateSets.concat(setList))];
                         return this.saveConfig(config, reqid);
+                    })
+                    .then((persisted) => {
+                        if (persisted && this.storage instanceof StorageDataGroup
+                            && this.configStorage instanceof StorageDataGroup) {
+                            return Promise.resolve();
+                        }
+                        return this.recordTransaction(
+                            reqid, 'persisting the data store',
+                            this.storage.persist()
+                        );
                     });
             })
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
