@@ -141,7 +141,6 @@ describe('ipam providers tests', function () {
                 .reply(200, (uri, reqBody) => ({ address: reqBody.address }))
                 .persist();
 
-
             ipLastOctet1 = 0;
             ipLastOctet2 = 0;
             ipLastOctet3 = 0;

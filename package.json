@@ -1,6 +1,6 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.13.0-rc.2",
+  "version": "1.14.0-rc.0",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
@@ -29,20 +29,21 @@
   ],
   "devDependencies": {
     "@babel/cli": "^7.15.7",
-    "@babel/core": "^7.15.5",
-    "@babel/plugin-transform-runtime": "^7.15.0",
-    "@babel/preset-env": "^7.15.6",
-    "@f5devcentral/eslint-config-f5-atg": "^0.1.1",
-    "@json-editor/json-editor": "^2.5.4",
+    "@babel/core": "^7.15.8",
+    "@babel/plugin-transform-runtime": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "@f5devcentral/eslint-config-f5-atg": "^0.1.5",
+    "@json-editor/json-editor": "^2.6.0",
     "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
-    "css-loader": "^6.3.0",
+    "css-loader": "^6.5.0",
     "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^7.18.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-vue": "^7.20.0",
     "express": "^4.17.1",
     "marked": "^2.1.3",
-    "mocha": "^9.1.2",
-    "nock": "^13.1.3",
+    "mocha": "^9.1.3",
+    "nock": "^13.1.4",
     "node-polyfill-webpack-plugin": "^1.1.4",
     "npm-watch": "^0.11.0",
     "nyc": "^15.1.0",
@@ -50,10 +51,10 @@
     "sinon": "^11.1.2",
     "vue": "^2.6.14",
     "vue-loader": "^15.9.8",
-    "vue-router": "^3.5.2",
+    "vue-router": "^3.5.3",
     "vue-template-compiler": "^2.6.14",
-    "webpack": "^5.54.0",
-    "webpack-cli": "^4.8.0"
+    "webpack": "^5.60.0",
+    "webpack-cli": "^4.9.1"
   },
   "eslintConfig": {
     "extends": [
@@ -63,6 +64,14 @@
     "rules": {
       "no-control-regex": "off",
       "strict": "off",
+      "arrow-parens": [
+        "error",
+        "as-needed",
+        {
+          "requireForBlockBody": true
+        }
+      ],
+      "max-classes-per-file": "off",
       "vue/html-indent": [
         "error",
         4
@@ -104,12 +113,12 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4",
-    "@f5devcentral/atg-shared-utilities": "^0.2.1",
-    "@f5devcentral/f5-fast-core": "git+https://github.com/f5devcentral/f5-fast-core.git#87100ecf87f776f08cc7f6d97f1878ffb7f9da86",
+    "@f5devcentral/atg-shared-utilities": "^0.2.2",
+    "@f5devcentral/f5-fast-core": "^0.16.0",
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
     "axios": "^0.21.2",
-    "core-js": "^3.18.1",
+    "core-js": "^3.19.0",
     "deepmerge": "^4.2.2",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",

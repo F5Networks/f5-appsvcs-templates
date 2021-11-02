@@ -131,7 +131,6 @@ class RestOperation {
         return this._httpResponse;
     }
 
-
     getIsSetBasicAuthHeader() {
         return this.isSetBasicAuthHeader;
     }
@@ -211,7 +210,6 @@ class RestOperation {
     clearHeaders() {
         this.headers = {};
     }
-
 
     clone() {
         const copy = new RestOperation();

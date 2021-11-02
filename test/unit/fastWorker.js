@@ -37,7 +37,7 @@ const fast = require('@f5devcentral/f5-fast-core');
 const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
 const { SecretsBase64 } = require('../../lib/secrets');
 
-const FASTWorker = require('../../nodejs/fastWorker.js');
+const FASTWorker = require('../../nodejs/fastWorker');
 const IpamProviders = require('../../lib/ipam');
 
 class RestOp {

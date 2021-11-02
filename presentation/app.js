@@ -132,7 +132,6 @@ const getAuthToken = () => Promise.resolve()
         return Promise.resolve(null);
     });
 
-
 const storeSubmissionData = (data) => {
     localStorage.setItem('submission-data', JSON.stringify(data));
 };

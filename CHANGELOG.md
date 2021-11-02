@@ -1,3 +1,11 @@
+# 1.14.0
+## Added
+
+## Fixed
+* Fix error and avoid delays when deleting or adding new templatesets
+* Fix error when updating bigip-fast-templates apps that use old pool_member definitions
+## Changed
+
 # 1.13.0
 ## Added
 * bigip-fast-templates: option for chain file on TLS Server in Exchange template
@@ -9,6 +17,7 @@
 * bigip-fast-templates: Fix the default port for pool members in the LDAP template, and show the password field
 
 ## Changed
+* Update f5-fast-core from v0.15.0 to v0.16.0
 
 # 1.12.0
 ## Added
