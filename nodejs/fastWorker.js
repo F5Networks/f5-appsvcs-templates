@@ -792,7 +792,7 @@ class FASTWorker {
                 if (!semver.gte(bigipVersion, tmplBigipMin)) {
                     return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP >= ${tmpl.bigipMinimumVersion} (found ${deviceInfo.version})`));
                 }
-                const tmplBigipMax = semverFromBigip(tmpl.bigipMaximimumVersion || Infinity);
+                const tmplBigipMax = semverFromBigip(tmpl.bigipMaximumVersion || Infinity);
                 if (!semver.lte(bigipVersion, tmplBigipMax)) {
                     return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`));
                 }
