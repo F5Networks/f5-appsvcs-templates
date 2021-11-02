@@ -1452,6 +1452,96 @@ describe('template worker tests', function () {
             .then(() => assert(false, 'expected template to fail'))
             .catch(e => assert.match(e.message, /since it requires AS3 >= 3.23/));
     });
+    it('bigip_version_check', function () {
+        const worker = createWorker();
+
+        const checkBigipVersion = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkBigipVersion(`
+                title: no version
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: min version met
+                bigipMinimumVersion: 13.1
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: min version not met
+                bigipMinimumVersion: 16.3
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires BIG-IP >= 16.3/))
+            .then(() => checkBigipVersion(`
+                title: max version met
+                bigipMaximumVersion: 16.3
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: max version not met
+                bigipMaximumVersion: 13.1
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires BIG-IP maximum version of 13.1/))
+            .then(() => checkBigipVersion(`
+                title: min and version met
+                bigipMinimumVersion: 13.1
+                bigipMaximumVersion: 16.3
+                template: text
+            `))
+            .catch(e => assert(false, e.stack));
+    });
+    it('max_bigip_version_check', function () {
+        const worker = createWorker();
+
+        const checkBigipVersion = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkBigipVersion(`
+                title: no version
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: version met
+                bigipMinimumVersion: 13.1
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: version not met
+                bigipMinimumVersion: 16.3
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires BIG-IP >= /));
+    });
     it('convert_pool_members', function () {
         const worker = createWorker();
 
