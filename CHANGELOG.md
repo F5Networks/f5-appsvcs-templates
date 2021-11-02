@@ -2,7 +2,8 @@
 ## Added
 
 ## Fixed
-
+* Fix error and avoid delays when deleting or adding new templatesets
+* Fix error when updating big-ip-fast-templates apps using old pool_member definitions
 ## Changed
 
 # 1.13.0
