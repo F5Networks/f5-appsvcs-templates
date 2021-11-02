@@ -785,25 +785,14 @@ class FASTWorker {
                     ];
                     return semver.coerce(verParts.join('.'));
                 };
-
-                if (typeof deviceInfo.version !== 'undefined') {
-                    const bigipVersion = semverFromBigip(deviceInfo.version);
-
-                    if (bigipVersion && typeof tmpl.bigipMinimumVersion !== 'undefined') {
-                        const tmplBigipMin = semverFromBigip(tmpl.bigipMinimumVersion);
-
-                        if (tmplBigipMin && !semver.gte(bigipVersion, tmplBigipMin)) {
-                            return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP >= ${tmpl.bigipMinimumVersion} (found ${deviceInfo.version})`));
-                        }
-                    }
-
-                    if (bigipVersion && typeof tmpl.bigipMaximumVersion !== 'undefined') {
-                        const tmplBigipMax = semverFromBigip(tmpl.bigipMaximimumVersion);
-
-                        if (tmplBigipMax && !semver.lte(bigipVersion, tmplBigipMax)) {
-                            return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`));
-                        }
-                    }
+                const bigipVersion = semverFromBigip(deviceInfo.version || '13.1');
+                const tmplBigipMin = semverFromBigip(tmpl.bigipMinimumVersion || '13.1');
+                if (!semver.gte(bigipVersion, tmplBigipMin)) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP >= ${tmpl.bigipMinimumVersion} (found ${deviceInfo.version})`));
+                }
+                const tmplBigipMax = semverFromBigip(tmpl.bigipMaximimumVersion || Infinity);
+                if (!semver.lte(bigipVersion, tmplBigipMax)) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`));
                 }
 
                 // check subTemplates
