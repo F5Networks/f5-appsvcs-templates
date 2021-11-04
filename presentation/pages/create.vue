@@ -327,7 +327,7 @@ export default {
                     console.log('Editor loaded'); // Clear text on new editor load
                 })
                 .catch((e) => {
-                    const versionError = e.message.match(/^.*since it requires AS3.*$/m);
+                    const versionError = e.message.match(/^.*(since it requires (AS3|BIG-IP)|due to missing modules).*$/m);
                     if (versionError) {
                         this.$root.dispOutput(versionError[0].replace('&gt;', '>'));
                     } else {
