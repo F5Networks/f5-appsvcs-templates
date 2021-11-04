@@ -745,17 +745,17 @@ class FASTWorker {
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
-                Promise.resolve(this.as3Info)
+                Promise.resolve(this.as3Info),
+                Promise.resolve(this.deviceInfo)
             ]));
     }
 
     checkDependencies(tmpl, requestId, clearCache) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache))
-            .then(([provisionData, as3Info]) => {
+            .then(([provisionData, as3Info, deviceInfo]) => {
+                // check for missing module dependencies
                 const provisionedModules = provisionData.items.filter(x => x.level !== 'none').map(x => x.name);
-                const as3Version = semver.coerce(as3Info.version || '0.0');
-                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
                 const deps = tmpl.bigipDependencies || [];
                 const missingModules = deps.filter(x => !provisionedModules.includes(x));
                 if (missingModules.length > 0) {
@@ -764,6 +764,9 @@ class FASTWorker {
                     ));
                 }
 
+                // check AS3 Version minimum
+                const as3Version = semver.coerce(as3Info.version || '0.0');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
                 if (!semver.gte(as3Version, tmplAs3Version)) {
                     return Promise.reject(new Error(
                         `could not load template (${tmpl.title}) since it requires`
@@ -771,6 +774,30 @@ class FASTWorker {
                     ));
                 }
 
+                // check min/max BIG-IP version
+                const semverFromBigip = (version) => {
+                    version = version.toString();
+                    let verParts = version.split('.');
+                    if (verParts.length < 2) {
+                        verParts.push('0');
+                    }
+                    verParts = [
+                        verParts[0] + verParts[1],
+                        ...verParts.slice(2)
+                    ];
+                    return semver.coerce(verParts.join('.'));
+                };
+                const bigipVersion = semverFromBigip(deviceInfo.version || '13.1');
+                const tmplBigipMin = semverFromBigip(tmpl.bigipMinimumVersion || '13.1');
+                if (!semver.gte(bigipVersion, tmplBigipMin)) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP >= ${tmpl.bigipMinimumVersion} (found ${deviceInfo.version})`));
+                }
+                const tmplBigipMax = semverFromBigip(tmpl.bigipMaximumVersion || '999.999');
+                if (!semver.lte(bigipVersion, tmplBigipMax)) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`));
+                }
+
+                // check subTemplates
                 let promiseChain = Promise.resolve();
                 tmpl._allOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
@@ -785,24 +812,23 @@ class FASTWorker {
                             validOneOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!e.message.match(/due to missing modules/)) {
-                                return Promise.reject(e);
-                            }
-                            errstr = `\n${errstr}`;
+                            errstr += errstr === '' ? '' : '; ';
+                            errstr += `${e.message}`;
                             return Promise.resolve();
                         });
                 });
                 promiseChain = promiseChain
                     .then(() => {
-                        if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
+                        if (tmpl._oneOf.length > 0 && validOneOf.length !== 1) {
                             return Promise.reject(new Error(
-                                `could not load template since no oneOf had valid dependencies:${errstr}`
+                                `could not load template since no single oneOf had valid dependencies: Value must validate against exactly one of the provided schemas. ${errstr}`
                             ));
                         }
                         tmpl._oneOf = validOneOf;
                         return Promise.resolve();
                     });
                 const validAnyOf = [];
+                let errstrAnyOf = '';
                 tmpl._anyOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
                         .then(() => this.checkDependencies(subtmpl, requestId))
@@ -810,15 +836,22 @@ class FASTWorker {
                             validAnyOf.push(subtmpl);
                         })
                         .catch((e) => {
-                            if (!e.message.match(/due to missing modules/)) {
-                                return Promise.reject(e);
-                            }
+                            errstrAnyOf += errstrAnyOf === '' ? '' : '; ';
+                            errstrAnyOf += `${e.message}`;
                             return Promise.resolve();
                         });
                 });
                 promiseChain = promiseChain
                     .then(() => {
+                        if (tmpl._anyOf.length > 0) {
+                            if (validAnyOf.length === 0) {
+                                return Promise.reject(new Error(
+                                    `could not load template since no anyOf had valid dependencies: ${errstrAnyOf}`
+                                ));
+                            }
+                        }
                         tmpl._anyOf = validAnyOf;
+                        return Promise.resolve();
                     });
                 return promiseChain;
             });
