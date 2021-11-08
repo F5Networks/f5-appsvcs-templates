@@ -3,6 +3,8 @@ bigipHideTemplate: true
 snat_base: &snat_base
   title: SNAT
   contentType: application/json
+  parameters:
+    snat_addresses: ['10.0.1.1']
   definitions: &snat_base_def
     enable_snat:
       title: SNAT
@@ -30,7 +32,6 @@ snat_base: &snat_base
       title: SNAT Pool Addresses
       type: array
       uniqueItems: true
-      default: ['10.0.1.1']
       items:
         type: string
         default: '10.0.1.2'
