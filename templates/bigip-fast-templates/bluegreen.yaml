@@ -10,6 +10,7 @@ definitions:
     title: Enable
     description: Check to enable blue-green traffic distribution. When disabled, all traffic is sent to the blue pool.
     type: boolean
+    default: true
   distribution:
     title: Percentage
     description: Specify the fraction of traffic to send to blue or green. 0 will send all traffic to blue, 1 will send all traffic to green. 0.5 will send 50% to blue and 50% to green.
@@ -24,7 +25,6 @@ definitions:
     minLength: 2
 parameters:
   virtual_port: 80
-  enable_bluegreen: true
   distribution: "0.5"
   blue_pool: blue
   green_pool: green
