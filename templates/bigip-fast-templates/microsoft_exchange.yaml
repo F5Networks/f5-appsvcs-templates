@@ -12,6 +12,7 @@ definitions:
     title: Common VIP
     description: This checkbox determines the number of virtual servers the BIG-IP system creates for your Mailbox Server deployment. By choosing a single IP address, you can combine multiple functions (such as using a single FQDN and associated SSL certificate for all HTTP-based client access services) on the same virtual server. By choosing separate virtual servers for each client access service component, you can manage each service independently from the others. For detailed information, see the Deployment Guide.
     type: boolean
+    default: true
   app_fqdn:
     title: Exchange Domain Name
     description: Specify the fully qualified domain name you are using for all of the HTTP-based client access services.
@@ -79,6 +80,7 @@ definitions:
     title: SNMP-Based External Monitoring
     description: By default, FAST creates Microsoft-recommended Managed Availability monitors. You can choose to have FAST create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange deployment guide.
     type: boolean
+    default: false
     dependencies: []
   snmp_community_string:
     title: SNMP Community String
@@ -140,6 +142,7 @@ definitions:
     title: TLS Server
     description: 'Build a TLS server profile. Note: TLS server profiles are of type "ltm clientssl" on BIG-IP.'
     type: boolean
+    default: true
   tls_cert_name:
     title: Specify the name of an existing BIG-IP SSL certificate.
     enumFromBigip: 'sys/crypto/cert'
@@ -149,6 +152,7 @@ definitions:
   enable_tls_server_chain:
     title: TLS Server Chain Certificate Bundle
     type: boolean
+    default: false
     dependencies: 
       - enable_tls_server
   tls_chain_name:
@@ -160,9 +164,11 @@ definitions:
     title: TLS Client
     description: Enable TLS client to encrypt server-side connections.
     type: boolean
+    default: false
   make_tls_client_profile:
     title: Automatically manage the TLS client profile
     type: boolean
+    default: false
     dependencies:
     - enable_tls_client
   tls_client_profile_name:
@@ -178,6 +184,7 @@ definitions:
     title: Connection Multiplexing
     description: Works with HTTP Keep-Alives to allow the BIG-IP system to minimize the number of server-side TCP connections by making existing connections available for reuse by other clients.
     type: boolean
+    default: true
   hsts_insert:
     title: HSTS Header
     description: Enforces HTTP Strict Transport Security (HSTS).
@@ -187,6 +194,7 @@ definitions:
     title: Outlook Web App
     description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
     type: boolean
+    default: true
   owa_use_ipam:
     title: Use IPAM Provider for OWA Virtual IP
     description: Use an IP Address Management service to get an IP address
@@ -212,6 +220,7 @@ definitions:
     title: EWS
     description: Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 or 2019 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
+    default: true
   ews_use_ipam:
     title: Use IPAM Provider for EWS Virtual IP
     description: Use an IP Address Management service to get an IP address
@@ -237,9 +246,11 @@ definitions:
     title: Microsoft Outlook and OAB
     description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 or 2019 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
+    default: true
   outlookMAPI:
     title: MAPI-over-HTTP
     type: boolean
+    default: true
     dependencies:
     - outlook
   mapi_use_ipam:
@@ -267,6 +278,7 @@ definitions:
     title: RPC-over-HTTP
     description: Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
     type: boolean
+    default: false
     dependencies:
     - outlook
   oa_use_ipam:
@@ -294,6 +306,7 @@ definitions:
     title: ActiveSync
     description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
     type: boolean
+    default: true
   as_use_ipam:
     title: Use IPAM Provider for ActiveSync Virtual IP
     description: Use an IP Address Management service to get an IP address
@@ -319,6 +332,7 @@ definitions:
     title: Autodiscover
     description: Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
     type: boolean
+    default: true
   ad_use_ipam:
     title: Use IPAM Provider for Autodiscover Virtual IP
     description: Use an IP Address Management service to get an IP address
@@ -344,6 +358,7 @@ definitions:
     title: POP3
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
     type: boolean
+    default: true
   pop3_use_ipam:
     title: Use IPAM Provider for POP3 Virtual IP
     description: Use an IP Address Management service to get an IP address
@@ -361,6 +376,7 @@ definitions:
     title: IMAP4
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable IMAP4 on each of your Exchange Mailbox Servers before that service will be available. IMAP4 is not enabled by default on Exchange Mailbox Servers.
     type: boolean
+    default: false
   imap4_use_ipam:
     title: Use IPAM Provider for IMAP4 Virtual IP
     description: Use an IP Address Management service to get an IP address
@@ -1452,27 +1468,11 @@ parameters:
   oa_fqdn: 'example.mycompany.com'
   as_fqdn: 'example.mycompany.com'
   ad_fqdn: 'example.mycompany.com'
-  eav: false
-  single_vip: true
-  enable_multiplex: true
-  enable_tls_server: true
-  enable_tls_server_chain: false
-  enable_tls_client: false
-  make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
   tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
   snatpool_name: /Common
-  owa: true
-  outlook: true
-  ews: true
-  outlookMAPI: true
-  outlookRPC: false
-  activesync: true
-  autodiscover: true
-  pop3: false
-  imap4: false
 template: |
   {
     "{{tenant_name}}": {
