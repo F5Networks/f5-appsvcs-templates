@@ -17,17 +17,17 @@ definitions:
     type: number
     minimum: 0
     maximum: 1
+    default: '0.5'
   blue_pool:
     title: Blue Pool Name
     minLength: 2
+    default: 'blue'
   green_pool:
     title: Green Pool Name
     minLength: 2
+    default: 'green'
 parameters:
   virtual_port: 80
-  distribution: "0.5"
-  blue_pool: blue
-  green_pool: green
 template: |
   {
     "{{tenant_name}}": {
