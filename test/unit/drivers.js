@@ -414,4 +414,20 @@ describe('AS3 Driver tests', function () {
             }
         ]);
     });
+    it('set_auth_token', function () {
+        const getAuthToken = () => Promise.resolve('secret');
+        const driver = new AS3Driver({
+            getAuthToken
+        });
+        nock(host, {
+            reqheaders: {
+                authorization: 'Bearer secret'
+            }
+        })
+            .persist()
+            .get(as3ep)
+            .query(true)
+            .reply(200, {});
+        return driver.getRawDeclaration();
+    });
 });
