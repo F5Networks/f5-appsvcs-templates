@@ -128,7 +128,6 @@ definitions:
     title: SNAT Pool Addresses
     type: array
     uniqueItems: true
-    default: ['10.0.1.1']
     items:
       type: string
       default: '10.0.1.2'
@@ -1472,6 +1471,7 @@ parameters:
   tls_key_name: /Common/default.key
   tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
+  snat_addresses: ['10.0.1.1']
 template: |
   {
     "{{tenant_name}}": {
