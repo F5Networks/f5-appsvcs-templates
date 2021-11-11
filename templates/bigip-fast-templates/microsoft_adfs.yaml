@@ -90,7 +90,7 @@ allOf:
         title: TLS Client Profile
         description: Select an existing TLS client profile. TLS client profiles are of type "ltm serverssl" on BIG-IP.
         enumFromBigip: ltm/profile/server-ssl
-        default: "/Common/serverssl"
+        default: '/Common/serverssl'
     template: |
       {
         "{{tenant_name}}": {
@@ -288,7 +288,6 @@ allOf:
       app_fqdn:
         title: ADFS Domain Name
         description: Specify the FQDN (Fully Qualified Domain Name) clients will use to access the ADFS implementation.
-        default: 'adfs.mycompany.com'
       monitor_interval:
         title: Interval
         description: Set the time between health checks, in seconds.
@@ -355,4 +354,5 @@ anyOf:
   - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "ADFS"
+  app_fqdn: 'adfs.mycompany.com'
 template: ""
