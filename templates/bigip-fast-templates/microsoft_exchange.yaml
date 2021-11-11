@@ -116,7 +116,6 @@ definitions:
     description: Enter the name of an existing BIG-IP SNAT pool.
     type: string
     enumFromBigip: ltm/snatpool
-    default: ''
     dependencies:
     - enable_snat
     - snat_automap
@@ -1472,6 +1471,7 @@ parameters:
   tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
   snat_addresses: ['10.0.1.1']
+  snatpool_name: '/Common'
 template: |
   {
     "{{tenant_name}}": {
