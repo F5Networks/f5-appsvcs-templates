@@ -419,7 +419,7 @@ describe('AS3 Driver tests', function () {
         const driver = new AS3Driver({
             getAuthToken
         });
-        nock(host, {
+        const scope = nock(host, {
             reqheaders: {
                 authorization: 'Bearer secret'
             }
@@ -428,6 +428,7 @@ describe('AS3 Driver tests', function () {
             .get(as3ep)
             .query(true)
             .reply(200, {});
-        return driver.getRawDeclaration();
+        return driver.getRawDeclaration()
+            .then(() => assert(scope.isDone(), 'no request was sent to AS3'));
     });
 });
