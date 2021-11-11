@@ -21,12 +21,13 @@ definitions:
     title: TLS Certificate
     description: Select an existing BIG-IP SSL certificate.
     enumFromBigip: sys/crypto/cert
-    default: "/Common/default.crt"
   tls_key_name:
     title: TLS Key
     description: Select an existing BIG-IP SSL key.
     enumFromBigip: sys/crypto/key
-    default: "/Common/default.key"
+parameters:
+  tls_cert_name: "/Common/default.crt"
+  tls_key_name: "/Common/default.key"
 template: |
   {
     "{{tenant_name}}": {
