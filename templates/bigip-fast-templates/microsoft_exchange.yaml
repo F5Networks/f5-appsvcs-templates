@@ -1472,7 +1472,6 @@ parameters:
   tls_key_name: /Common/default.key
   tls_chain_name: /Common/ca-bundle.crt
   tls_client_profile_name: /Common/serverssl
-  snatpool_name: /Common
 template: |
   {
     "{{tenant_name}}": {
