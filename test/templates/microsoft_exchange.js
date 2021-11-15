@@ -64,7 +64,8 @@ const view = {
     activesync: true,
     autodiscover: true,
     pop3: true,
-    imap4: true
+    imap4: true,
+    imap4_virtual_address: '10.1.1.1'
 };
 
 const expected = {
