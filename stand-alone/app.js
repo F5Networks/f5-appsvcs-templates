@@ -25,8 +25,6 @@ const FastWorker = require('../nodejs/fastWorker');
 const expressAdapter = require('./expressAdapter');
 
 const { SecretsBase64 } = require('../lib/secrets');
-const { BigipDeviceClassic } = require('../lib/bigipDevices');
-const { AS3Driver } = require('../lib/drivers');
 
 const port = 8080;
 
@@ -39,7 +37,6 @@ if (typeof strictCerts === 'string') {
 }
 const bigipInfo = {
     host: process.env.FAST_BIGIP_HOST,
-    user: process.env.FAST_BIGIP_USER,
     username: process.env.FAST_BIGIP_USER,
     password: process.env.FAST_BIGIP_PASSWORD,
     strictCerts
@@ -51,13 +48,7 @@ const worker = new FastWorker({
     templateStorage: new fast.dataStores.StorageMemory(),
     configStorage: new fast.dataStores.StorageJsonFile('config.json'),
     secretsManager: new SecretsBase64(),
-    bigipDevice: new BigipDeviceClassic(bigipInfo),
-    as3Driver: new AS3Driver({
-        endPointUrl: `${bigipInfo.host}/mgmt/shared/appsvcs`,
-        bigipUser: bigipInfo.user,
-        bigipPassword: bigipInfo.password,
-        strictCerts: bigipInfo.strictCerts
-    })
+    bigipInfo
 });
 
 console.log([

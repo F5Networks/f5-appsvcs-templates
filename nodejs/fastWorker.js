@@ -103,8 +103,17 @@ class FASTWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
+        const bigipInfo = options.bigipInfo || {
+            host: 'http://localhost:8100',
+            username: 'admin',
+            password: '',
+            strictCerts: true
+        };
+        this.bigip = options.bigipDevice || new BigipDeviceClassic(bigipInfo);
         this.driver = options.as3Driver || new AS3Driver({
-            userAgent: this.baseUserAgent
+            userAgent: this.baseUserAgent,
+            bigipInfo
+
         });
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
@@ -127,7 +136,6 @@ class FASTWorker {
             }
         );
         this.ipamProviders = options.ipamProviders;
-        this.bigip = options.bigipDevice || new BigipDeviceClassic();
         this.minAs3Version = options.minAs3Version || '3.16';
 
         this.requestTimes = {};
