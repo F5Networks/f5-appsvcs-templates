@@ -484,7 +484,8 @@ class FASTWorker {
                             fullVersion: `${data.version}-${data.build}`
                         };
                     }
-                }));
+                }))
+            .catch(e => this.handleResponseError(e, 'fetching BIG-IP device information'));
     }
 
     /**
