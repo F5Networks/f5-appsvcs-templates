@@ -1450,7 +1450,14 @@ definitions:
         {{#outlook}}     
           {{#outlookRPC}}  
             "{{app_name}}_oa_vs": {
-              "virtualAddresses": ["{{oa_virtual_address:f5:ipv4_ipv6}}"],
+              "virtualAddresses": [
+                {{#oa_use_ipam}}
+                  "{{oa_virtual_address_ipam}}"
+                {{/oa_use_ipam}}
+                {{^oa_use_ipam}}
+                  "{{oa_virtual_address:f5:ipv4_ipv6}}"
+                {{/oa_use_ipam}}
+              ],
               "pool": "exchangeVS_oa_pool",
               "virtualPort": {{virtual_port:f5:port}},
               {{> service_type_def}}
