@@ -1337,12 +1337,12 @@ definitions:
               {{/use_ipam}}
             {{/single_vip}}
             {{^single_vip}}
-              {{#pop3_use_ipam}}
+              {{#imap4_use_ipam}}
                 "{{imap4_virtual_address_ipam}}"
-              {{/pop3_use_ipam}}
-              {{^pop3_use_ipam}}
+              {{/imap4_use_ipam}}
+              {{^imap4_use_ipam}}
                 "{{imap4_virtual_address:f5:ipv4_ipv6}}"
-              {{/pop3_use_ipam}}
+              {{/imap4_use_ipam}}
             {{/single_vip}}
           ],
           "pool": "exchangeVS_imap4_pool",
