@@ -18,6 +18,11 @@ definitions:
     type: string
     dependencies: 
       - single_vip
+  virtual_port:
+    title: Virtual Server Port
+    default: 443
+    dependencies: 
+      - single_vip
   virtual_address:
     title: Virtual Server IP Address
     description: This IP address, combined with the port you specify below, becomes
@@ -25,9 +30,9 @@ definitions:
       The system uses this IP:Port for distributing requests to the web servers.
     dependencies:
       - single_vip
-  virtual_port:
-    title: Virtual Server Port
-    default: 443
+      - use_ipam
+    invertDependency:
+      -use_ipam
   use_ipam:
     title: Use IPAM Provider
     description: Use an IP Address Management service to get an IP address
