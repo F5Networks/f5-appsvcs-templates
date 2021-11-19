@@ -1,17 +1,13 @@
-# ** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION **
-# This template is an example of how one might build a simple UDP application with load balancing.
-# It allows the user to provide a virtual IP address and port along with a list of UDP server addresses.
-# The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration
-# suitable for submission to BIG-IP.
+# Simple UDP template with parameters defined outside of the template
 title: Simple UDP Application
-description: Simple UDP template with parameters defined outside of the template
+description:  "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This template is an example of how one might build a simple UDP application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
 parameters:
   tenant_name: foo
   application_name: bar
-  virtual_address: 192.0.2.1
+  virtual_address: 192.0.2.11
   virtual_port: 5555
   server_addresses:
-    - 192.0.2.2
+    - 192.0.2.22
   service_port: 5555
 template: |
   {
