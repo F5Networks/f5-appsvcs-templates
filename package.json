@@ -102,7 +102,8 @@
       "patterns": [
         "lib",
         "nodejs",
-        "templates"
+        "templates",
+        "stand-alone"
       ],
       "extensions": [
         "js",
