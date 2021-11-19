@@ -20,11 +20,9 @@
 require('core-js');
 
 const fs = require('fs-extra');
-const https = require('https');
 const url = require('url');
 
 const extract = require('extract-zip');
-const axios = require('axios');
 const Ajv = require('ajv');
 const merge = require('deepmerge');
 const Mustache = require('mustache');
@@ -42,23 +40,13 @@ const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');
+const { BigipDeviceClassic } = require('../lib/bigipDevices');
 
 const pkg = require('../package.json');
 
 const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
-
-const bigipHost = (process.env.FAST_BIGIP_HOST && `${process.env.FAST_BIGIP_HOST}`) || 'http://localhost:8100';
-const bigipUser = process.env.FAST_BIGIP_USER || 'admin';
-const bigipPassword = process.env.FAST_BIGIP_PASSWORD || '';
-let bigipStrictCert = process.env.FAST_BIGIP_STRICT_CERT || true;
-if (typeof bigipStrictCert === 'string') {
-    bigipStrictCert = (
-        bigipStrictCert.toLowerCase() === 'true'
-        || bigipStrictCert === '1'
-    );
-}
 
 const ajv = new Ajv({
     useDefaults: true
@@ -75,10 +63,6 @@ Mustache.escape = function escape(text) {
     return text;
 };
 
-const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
-const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
-const uploadPath = process.env.FAST_UPLOAD_DIR || '/var/config/rest/downloads';
-const scratchPath = `${configPath}/scratch`;
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
 const configDGPath = `/Common/${projectName}/config`;
@@ -111,20 +95,30 @@ class FASTWorker {
         this.baseUserAgent = `${pkg.name}/${pkg.version}`;
         this.incomingUserAgent = '';
 
+        this.configPath = options.configPath || `/var/config/rest/iapps/${projectName}`;
+        this.templatesPath = options.templatesPath || `${this.configPath}/templatesets`;
+        this.uploadPath = options.uploadPath || '/var/config/rest/downloads';
+        this.scratchPath = `${this.configPath}/scratch`;
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.driver = new AS3Driver({
-            endPointUrl: `${bigipHost}/mgmt/shared/appsvcs`,
+        const bigipInfo = options.bigipInfo || {
+            host: 'http://localhost:8100',
+            username: 'admin',
+            password: '',
+            strictCerts: true
+        };
+        this.bigip = options.bigipDevice || new BigipDeviceClassic(bigipInfo);
+        this.driver = options.as3Driver || new AS3Driver({
             userAgent: this.baseUserAgent,
-            bigipUser,
-            bigipPassword,
-            strictCerts: bigipStrictCert
+            bigipInfo
+
         });
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
-        this.fsTemplateProvider = new FsTemplateProvider(templatesPath, options.fsTemplateList);
+        this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version
@@ -142,17 +136,7 @@ class FASTWorker {
             }
         );
         this.ipamProviders = options.ipamProviders;
-
-        this.endpoint = axios.create({
-            baseURL: bigipHost,
-            auth: {
-                username: bigipUser,
-                password: bigipPassword
-            },
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: bigipStrictCert
-            })
-        });
+        this.minAs3Version = options.minAs3Version || '3.16';
 
         this.requestTimes = {};
         this.requestCounter = 1;
@@ -349,7 +333,7 @@ class FASTWorker {
         });
 
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
-        this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
+        this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
         let config;
         let saveState = true;
@@ -357,17 +341,17 @@ class FASTWorker {
         return Promise.resolve()
             // Automatically add a block
             .then(() => {
-                const hosturl = url.parse(bigipHost);
+                const hosturl = this.bigip.host ? url.parse(this.bigip.host) : '';
                 if (hosturl.hostname !== 'localhost') {
                     return Promise.resolve();
                 }
 
                 return Promise.resolve()
                     .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
+                    .then(() => this.bigip.getIAppsBlocks())
                     .catch(e => this.handleResponseError(e, 'to get blocks'))
                     .then((results) => {
-                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
+                        const matchingBlocks = results.filter(x => x.name === mainBlockName);
                         const blockData = {
                             name: mainBlockName,
                             state: 'BOUND',
@@ -381,7 +365,7 @@ class FASTWorker {
 
                         if (matchingBlocks.length === 0) {
                             // No existing block, make a new one
-                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
+                            return this.bigip.addIAppsBlock(blockData);
                         }
 
                         // Found a block, do nothing
@@ -434,7 +418,7 @@ class FASTWorker {
                     return Promise.resolve();
                 }
                 this.templateProvider.invalidateCache();
-                return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
+                return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
             .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
@@ -469,9 +453,8 @@ class FASTWorker {
         // ));
         return Promise.resolve()
             .then(() => this.recordTransaction(0, 'fetching device information',
-                this.endpoint.get('/mgmt/shared/identified-devices/config/device-info'))
-                .then((response) => {
-                    const data = response.data;
+                this.bigip.getDeviceInfo())
+                .then((data) => {
                     if (data) {
                         this.deviceInfo = {
                             hostname: data.hostname,
@@ -657,9 +640,7 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 requestId, 'GET to appsvcs/info',
-                this.endpoint.get('/mgmt/shared/appsvcs/info', {
-                    validateStatus: () => true // ignore failure status codes
-                })
+                this.driver.getInfo()
             ))
             .then((as3response) => {
                 info.as3Info = as3response.data;
@@ -692,9 +673,8 @@ class FASTWorker {
 
                 return this.recordTransaction(
                     requestId, 'Fetching module provision information',
-                    this.endpoint.get('/mgmt/tm/sys/provision')
-                )
-                    .then(response => response.data);
+                    this.bigip.getProvisionData()
+                );
             })
             .then((response) => {
                 this.provisionData = response;
@@ -717,9 +697,7 @@ class FASTWorker {
 
                 return this.recordTransaction(
                     requestId, 'Fetching TS module information',
-                    this.endpoint.get('/mgmt/shared/telemetry/info', {
-                        validateStatus: () => true // ignore failure status codes
-                    })
+                    this.bigip.getTSInfo()
                 );
             })
             .then((response) => {
@@ -735,9 +713,7 @@ class FASTWorker {
                 }
                 return this.recordTransaction(
                     requestId, 'Fetching AS3 info',
-                    this.endpoint.get('/mgmt/shared/appsvcs/info', {
-                        validateStatus: () => true // ignore failure status codes
-                    })
+                    this.driver.getInfo()
                 )
                     .then(response => response.data);
             })
@@ -767,11 +743,11 @@ class FASTWorker {
 
                 // check AS3 Version minimum
                 const as3Version = semver.coerce(as3Info.version || '0.0');
-                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || this.minAs3Version);
                 if (!semver.gte(as3Version, tmplAs3Version)) {
                     return Promise.reject(new Error(
                         `could not load template (${tmpl.title}) since it requires`
-                        + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
+                        + ` AS3 >= ${tmplAs3Version} (found ${as3Version})`
                     ));
                 }
 
@@ -944,8 +920,7 @@ class FASTWorker {
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
-                const epStubs = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
-                const endPoints = epStubs.map(x => `/mgmt/tm/${x}?$select=fullPath`);
+                const endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
                 return Promise.resolve()
                     .then(() => Promise.all(endPoints.map(endPoint => Promise.resolve()
                         .then(() => {
@@ -955,10 +930,9 @@ class FASTWorker {
 
                             return this.recordTransaction(
                                 requestId, `fetching data from ${endPoint}`,
-                                this.endpoint.get(endPoint)
+                                this.bigip.getSharedObjects(endPoint)
                             )
-                                .then((response) => {
-                                    const items = response.data.items;
+                                .then((items) => {
                                     this._hydrateCache[endPoint] = items;
                                     return items;
                                 });
@@ -1036,8 +1010,9 @@ class FASTWorker {
             });
     }
 
-    convertPoolMembers(reqid, apps) {
-        reqid = reqid || 0;
+    convertPoolMembers(restOperation, apps) {
+        const reqid = restOperation.requestId;
+
         const convertTemplateNames = [
             'bigip-fast-templates/http',
             'bigip-fast-templates/tcp',
@@ -1068,19 +1043,30 @@ class FASTWorker {
 
         let promiseChain = Promise.resolve();
 
+        const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.setMethod('Post');
+
         if (newApps.length > 0) {
             promiseChain = promiseChain
-                .then(() => this.recordTransaction(
-                    reqid, 'Updating pool members',
-                    this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications/`, newApps.map(app => ({
+                .then(() => {
+                    postOp.setBody(newApps.map(app => ({
                         name: app.template,
                         parameters: app.view
-                    })))
-                ))
-                .then((resp) => {
+                    })));
+                    return this.onPost(postOp);
+                })
+                .then(() => {
+                    if (postOp.getStatusCode() >= 400) {
+                        return Promise.reject(new Error(
+                            `Updating pool_members failed with ${postOp.getStatusCode()}: ${postOp.getBody().message}`
+                        ));
+                    }
+
                     this.logger.info(
-                        `FAST Worker [${reqid}]: task ${resp.data.message[0].id} submitted to update pool_members`
+                        `FAST Worker [${reqid}]: task ${postOp.getBody().message[0].id} submitted to update pool_members`
                     );
+
+                    return Promise.resolve();
                 });
         }
 
@@ -1250,10 +1236,12 @@ class FASTWorker {
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
-        // Update driver's user agent if one was provided with the request
-        const userAgent = restOp.getUri().query.userAgent;
-        this.incomingUserAgent = userAgent || '';
-        this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+        if (this.driver.userAgent) {
+            // Update driver's user agent if one was provided with the request
+            const userAgent = restOp.getUri().query.userAgent;
+            this.incomingUserAgent = userAgent || '';
+            this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+        }
 
         // Record the time we received the request
         this.requestTimes[restOp.requestId] = Date.now();
@@ -1358,10 +1346,10 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid, 'GET request to appsvcs/declare',
-                    this.endpoint.get('/mgmt/shared/appsvcs/declare')
+                    this.driver.getRawDeclaration()
                 ))
                 .then(resp => resp.data[tenant][app])
-                .then(appDef => this.convertPoolMembers(reqid, [appDef]))
+                .then(appDef => this.convertPoolMembers(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
@@ -1374,7 +1362,7 @@ class FASTWorker {
                 reqid, 'gathering a list of applications from the driver',
                 this.driver.listApplications()
             ))
-            .then(appsList => this.convertPoolMembers(reqid, appsList))
+            .then(appsList => this.convertPoolMembers(restOperation, appsList))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);
@@ -1586,9 +1574,9 @@ class FASTWorker {
     postTemplateSets(restOperation, data) {
         const tsid = data.name;
         const reqid = restOperation.requestId;
-        const setpath = `${uploadPath}/${tsid}.zip`;
-        const scratch = `${scratchPath}/${tsid}`;
-        const onDiskPath = `${templatesPath}/${tsid}`;
+        const setpath = `${this.uploadPath}/${tsid}.zip`;
+        const scratch = `${this.scratchPath}/${tsid}`;
+        const onDiskPath = `${this.templatesPath}/${tsid}`;
 
         if (!data.name) {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
@@ -1621,12 +1609,12 @@ class FASTWorker {
             .then(() => this.exitTransaction(reqid, 'extract template set'))
             .then(() => this.recordTransaction(
                 reqid, 'validate template set',
-                this._validateTemplateSet(scratchPath)
+                this._validateTemplateSet(this.scratchPath)
             ))
             .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)))
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
-            .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
+            .then(() => DataStoreTemplateProvider.fromFs(this.storage, this.scratchPath, [tsid]))
             .then(() => {
                 this.generateTeemReportTemplateSet('create', tsid);
             })
@@ -1939,19 +1927,22 @@ class FASTWorker {
         const app = pathElements[5];
         const newParameters = data.parameters;
 
+        const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.setMethod('Post');
+
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'Fetching application data from AS3',
                 this.driver.getApplication(tenant, app)
             ))
-            .then(appData => this.recordTransaction(
-                reqid, 'Re-deploying application',
-                this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications`, {
+            .then((appData) => {
+                postOp.setBody({
                     name: appData.template,
                     parameters: Object.assign({}, appData.view, newParameters)
-                })
-            ))
-            .then(resp => this.genRestResponse(restOperation, resp.status, resp.data))
+                });
+                return this.onPost(postOp);
+            })
+            .then(() => this.genRestResponse(restOperation, postOp.getStatusCode(), postOp.getBody()))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 

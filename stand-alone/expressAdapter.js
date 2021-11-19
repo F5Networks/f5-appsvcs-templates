@@ -80,6 +80,8 @@ function getWorkerResponse(worker, req, res) {
 }
 
 function generateApp(workers, options) {
+    options = options || {};
+
     if (!Array.isArray(workers)) {
         workers = [workers];
     }
@@ -113,10 +115,11 @@ function generateApp(workers, options) {
 
     // Create an endpoint to forward remaining requests to BIG-IP
     if (options.bigip) {
+        options.bigip.username = options.bigip.username || options.bigip.user;
         const endpoint = axios.create({
             baseURL: options.bigip.host,
             auth: {
-                username: options.bigip.user,
+                username: options.bigip.username,
                 password: options.bigip.password
             },
             maxBodyLength: 'Infinity',
