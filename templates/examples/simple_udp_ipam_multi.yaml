@@ -1,7 +1,7 @@
 # Simple UDP template with option to select or specify multiple addresses.
 # ** At least one IPAM provider must be specified in settings**
 title: Simple UDP Application with IPAM (Multiple Addresses)
-description: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This template is an example of how one might build a simple UDP application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
+description: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION **  This template is an example of how one might build a simple UDP application with load balancing and listening on multiple IPAM addresses.  It allows the user to provide a list of IPAM server addresses and a port to listen on, along with a list of UDP server addresses to load balance to.  The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
 definitions:
   virtual_addresses_arr:
     title: Virtual Addresses

@@ -4,10 +4,10 @@ description:  "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION
 parameters:
   tenant_name: foo
   application_name: bar
-  virtual_address: 192.0.2.11
+  virtual_address: 192.0.2.1
   virtual_port: 5555
   server_addresses:
-    - 192.0.2.22
+    - 192.0.2.2
   service_port: 5555
 template: |
   {
