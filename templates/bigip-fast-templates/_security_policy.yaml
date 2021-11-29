@@ -2,6 +2,32 @@ bigipHideTemplate: true
 
 bipMinVer: &bigipMinimumVersion 14.1
 
+
+# ASM template base, containing all settings that don't change order (unlike ASM Logging)
+asm_base: &asm_base
+  title: Application Security
+  contentType: application/json
+  anyOf: &asm_base_anyof
+    - {}
+  definitions:
+    asm:
+      type: boolean
+      default: false
+      dependencies: 
+        - enable_asm_logging
+    afm: 
+      type: boolean
+      default: false
+      dependencies: 
+        - enable_asm_logging
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+        }
+      }
+    }
+
 # ASM Logging
 asm_logging: &asm_logging
   title: ASM Logging
@@ -47,6 +73,20 @@ asm_logging: &asm_logging
             }
           }
         }
+  parameters:
+    asm: true
+  template: |
+    {{> asm_partial_template}}
+
+# AFM Logging
+afm_logging: &afm_logging
+  title: AFM Logging
+  contentType: application/json
+  bigipDependencies:
+    - afm
+  definitions: *asm_logging_def
+  parameters:
+    afm: true
   template: |
     {{> asm_partial_template}}
 
@@ -144,35 +184,13 @@ bot_defense: &bot_defense
       }
     }
 
-# ASM template base, containing all settings that don't change order (unlike ASM Logging)
-asm_base: &asm_base
-  title: Application Security
-  contentType: application/json
-  bigipDependencies:
-    - asm
-  anyOf: &asm_base_anyof
-    - {}
-    - *asm_logging
-  definitions:
-    <<: *waf_policy_def
-    <<: *bot_defense_def
-    <<: *asm_logging_def
-  parameters:
-    tenant_name: subSubTemplate
-    app_name: testing
-  template: |
-    {
-      "{{tenant_name}}": {
-        "{{app_name}}": {
-        }
-      }
-    }
-
 # subtemplate with baasic features: WAF and ASM logging
 <<: *asm_base
 anyOf: 
   - <<: *asm_base_anyof
   - *waf_policy
+  - *asm_logging
+  - *afm_logging
 
 # subtemplate with VS names unique to DNS template
 dns:
@@ -200,6 +218,52 @@ dns:
             "{{app_name}}_tcp": {
               {{> waf_partial_profiles}}
             },
+    - <<: *asm_logging
+      definitions:
+        <<: *asm_logging_def
+        asm_partial_profiles: 
+          template: |
+            "{{app_name}}_udp": {
+              {{#enable_asm_logging}}
+                "securityLogProfiles": [
+                  {{#log_profile_names}}
+                    { "bigip": {{ . }} },
+                  {{/log_profile_names}}
+                ]
+              {{/enable_asm_logging}}
+            },
+            "{{app_name}}_tcp": {
+              {{#enable_asm_logging}}
+                "securityLogProfiles": [
+                  {{#log_profile_names}}
+                    { "bigip": {{ . }} },
+                  {{/log_profile_names}}
+                ]
+              {{/enable_asm_logging}}
+            },
+    - <<: *afm_logging
+      definitions:
+        <<: *asm_logging_def
+        asm_partial_profiles: 
+          template: |
+            "{{app_name}}_udp": {
+              {{#enable_asm_logging}}
+                "securityLogProfiles": [
+                  {{#log_profile_names}}
+                    { "bigip": {{ . }} },
+                  {{/log_profile_names}}
+                ]
+              {{/enable_asm_logging}}
+            },
+            "{{app_name}}_tcp": {
+              {{#enable_asm_logging}}
+                "securityLogProfiles": [
+                  {{#log_profile_names}}
+                    { "bigip": {{ . }} },
+                  {{/log_profile_names}}
+                ]
+              {{/enable_asm_logging}}
+            },
 
 # subtemplate with bot defense profile for templates with http
 and_bot_defense:
@@ -208,3 +272,5 @@ and_bot_defense:
     - <<: *asm_base_anyof
     - *waf_policy
     - *bot_defense
+    - *asm_logging
+    - *afm_logging
