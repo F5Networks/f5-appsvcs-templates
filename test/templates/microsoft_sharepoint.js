@@ -139,6 +139,9 @@ const expected = {
                 securityLogProfiles: [
                     {
                         bigip: 'log local'
+                    },
+                    {
+                        bigip: 'log local'
                     }
                 ]
             },

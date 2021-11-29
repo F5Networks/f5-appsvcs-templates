@@ -112,6 +112,9 @@ const expected = {
                 securityLogProfiles: [
                     {
                         bigip: 'log local'
+                    },
+                    {
+                        bigip: 'log local'
                     }
                 ]
             },
@@ -141,6 +144,9 @@ const expected = {
                     use: 'app1_waf_policy'
                 },
                 securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    },
                     {
                         bigip: 'log local'
                     }

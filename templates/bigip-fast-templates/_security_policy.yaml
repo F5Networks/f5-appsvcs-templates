@@ -221,48 +221,24 @@ dns:
     - <<: *asm_logging
       definitions:
         <<: *asm_logging_def
-        asm_partial_profiles: 
+        asm_partial_vs: 
           template: |
             "{{app_name}}_udp": {
-              {{#enable_asm_logging}}
-                "securityLogProfiles": [
-                  {{#log_profile_names}}
-                    { "bigip": {{ . }} },
-                  {{/log_profile_names}}
-                ]
-              {{/enable_asm_logging}}
+              {{> asm_partial_profiles}}
             },
             "{{app_name}}_tcp": {
-              {{#enable_asm_logging}}
-                "securityLogProfiles": [
-                  {{#log_profile_names}}
-                    { "bigip": {{ . }} },
-                  {{/log_profile_names}}
-                ]
-              {{/enable_asm_logging}}
+              {{> asm_partial_profiles}}
             },
     - <<: *afm_logging
       definitions:
         <<: *asm_logging_def
-        asm_partial_profiles: 
+        asm_partial_vs: 
           template: |
             "{{app_name}}_udp": {
-              {{#enable_asm_logging}}
-                "securityLogProfiles": [
-                  {{#log_profile_names}}
-                    { "bigip": {{ . }} },
-                  {{/log_profile_names}}
-                ]
-              {{/enable_asm_logging}}
+              {{> asm_partial_profiles}}
             },
             "{{app_name}}_tcp": {
-              {{#enable_asm_logging}}
-                "securityLogProfiles": [
-                  {{#log_profile_names}}
-                    { "bigip": {{ . }} },
-                  {{/log_profile_names}}
-                ]
-              {{/enable_asm_logging}}
+              {{> asm_partial_profiles}}
             },
 
 # subtemplate with bot defense profile for templates with http
