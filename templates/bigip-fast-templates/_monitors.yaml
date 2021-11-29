@@ -2,7 +2,7 @@ bigipHideTemplate: true
 
 monitor_base: &monitor_base
   title: Pool Monitor
-  contentType: application/json    
+  contentType: application/json
   definitions: &monitor_base_def
     enable_pool:
       type: boolean
