@@ -20,6 +20,7 @@ anyOf:
   - {}
   - $ref: "_analytics.yaml#/http"
   - $ref: "_analytics.yaml#/tcp"
+  - $ref: "_security_policy.yaml#/and_bot_defense"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_security_dos.yaml#"
   - $ref: "_telemetry.yaml#"

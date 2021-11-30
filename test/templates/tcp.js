@@ -70,6 +70,10 @@ const view = {
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
+
+    // asm
+    enable_waf_policy: true,
+    enable_asm_logging: true,
     log_profile_names: ['log local']
 };
 
@@ -106,7 +110,13 @@ const expected = {
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
+                policyWAF: {
+                    use: 'app1_waf_policy'
+                },
                 securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    },
                     {
                         bigip: 'log local'
                     }
@@ -206,6 +216,13 @@ const expected = {
                         use: 'app1_fw_rules'
                     }
                 ]
+            },
+            app1_waf_policy: {
+                class: 'WAF_Policy',
+                policy: {
+                    text: '{ "policy": { "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
+                },
+                ignoreChanges: true
             }
         }
     }
@@ -238,12 +255,16 @@ describe(template, function () {
 
             // no firewall
             view.enable_firewall = false;
-            delete expected.t1.app1.app1.securityLogProfiles;
             delete expected.t1.app1.app1.policyFirewallEnforced;
             delete expected.t1.app1.app1_fw_policy;
             delete expected.t1.app1.app1_fw_rules;
             delete expected.t1.app1.app1_fw_allow_list;
             delete expected.t1.app1.default_fw_deny_list;
+            view.enable_asm_logging = false;
+            delete expected.t1.app1.app1.securityLogProfiles;
+            view.enable_waf_policy = false;
+            delete expected.t1.app1.app1.policyWAF;
+            delete expected.t1.app1.app1_waf_policy;
         });
         util.assertRendering(template, view, expected);
     });

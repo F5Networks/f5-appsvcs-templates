@@ -67,6 +67,10 @@ const view = {
     // firewall
     enable_firewall: true,
     firewall_allow_list: ['10.0.0.0/8', '11.0.0.0/8'],
+
+    // asm
+    enable_waf_policy: true,
+    enable_asm_logging: true,
     log_profile_names: ['log local']
 };
 
@@ -102,7 +106,13 @@ const expected = {
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
+                policyWAF: {
+                    use: 'app1_waf_policy'
+                },
                 securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    },
                     {
                         bigip: 'log local'
                     }
@@ -130,7 +140,13 @@ const expected = {
                 policyFirewallEnforced: {
                     use: 'app1_fw_policy'
                 },
+                policyWAF: {
+                    use: 'app1_waf_policy'
+                },
                 securityLogProfiles: [
+                    {
+                        bigip: 'log local'
+                    },
                     {
                         bigip: 'log local'
                     }
@@ -244,6 +260,13 @@ const expected = {
                         use: 'app1_fw_rules'
                     }
                 ]
+            },
+            app1_waf_policy: {
+                class: 'WAF_Policy',
+                policy: {
+                    text: '{ "policy": { "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
+                },
+                ignoreChanges: true
             }
         }
     }
