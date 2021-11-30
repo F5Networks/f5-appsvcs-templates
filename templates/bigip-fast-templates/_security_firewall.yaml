@@ -18,15 +18,6 @@ fw_base: &fw_base
       items:
         type: string
       default: ['0.0.0.0/0']
-    log_profile_names:
-      title: Security Log Profiles
-      description: Hold the *control* key to select or deselect multiple log profiles.
-      type: array
-      uniqueItems: true
-      items:
-        type: string
-        enumFromBigip: security/log/profile
-      default: []
     fw_partial_rules:
       template: |
         {
@@ -60,12 +51,7 @@ fw_base: &fw_base
         "{{app_name}}": {
           "policyFirewallEnforced": {
             "use": "{{app_name}}_fw_policy"
-          },
-          "securityLogProfiles": [
-            {{#log_profile_names}}
-              { "bigip": {{ . }} },
-            {{/log_profile_names}}
-          ]
+          }
         }
     fw_partial_template:
       template: |
@@ -115,31 +101,17 @@ definitions:
     type: string
     enumFromBigip: security/firewall/policy
     default: ''
-  log_profile_names:
-    title: Security Log Profiles
-    description: Hold the *control* key to select or deselect multiple log profiles.
-    type: array
-    uniqueItems: true
-    items:
-      type: string
-      enumFromBigip: security/log/profile
-    default: []
   fw_partial_vs:
     template: |
       "{{app_name}}": {
         "policyFirewallEnforced": {
           "use": "{{app_name}}_fw_policy"
-        },
-        {{#enable_firewall_staging_policy}}
+        }
+        {{#enable_firewall_staging_policy}},
           "policyFirewallStaged": {
             "bigip": "{{firewall_staging_policy}}"
-          },
+          }
         {{/enable_firewall_staging_policy}}
-        "securityLogProfiles": [
-          {{#log_profile_names}}
-            { "bigip": {{ . }} },
-          {{/log_profile_names}}
-        ]
       }
 template: |
   {{> fw_partial_template}}
@@ -156,7 +128,7 @@ dns:
       uniqueItems: true
       items:
         type: string
-      default: []
+      default: ['0.0.0.0/0']
     fw_partial_rules:
       template: |
         {
@@ -203,22 +175,12 @@ dns:
         "{{app_name}}_tcp": {
           "policyFirewallEnforced": {
             "use": "{{app_name}}_fw_policy"
-          },
-          "securityLogProfiles": [
-            {{#log_profile_names}}
-              { "bigip": {{ . }} },
-            {{/log_profile_names}}
-          ]
+          }
         },
         "{{app_name}}_udp": {
           "policyFirewallEnforced": {
             "use": "{{app_name}}_fw_policy"
-          },
-          "securityLogProfiles": [
-            {{#log_profile_names}}
-              { "bigip": {{ . }} },
-            {{/log_profile_names}}
-          ]
+          }
         }
   template: |
     {{> fw_partial_template}}
