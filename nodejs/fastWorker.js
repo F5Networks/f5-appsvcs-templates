@@ -70,7 +70,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '569e4188172e591abae1a782b37db35cd115f91208a9138d16647bddb85f99aa', // v1.14
+        '98c7d0e1990a46ed4fcb7e34bc797bf0d69b02a5f4720d36cf1ee71c94c7d111', // v1.14
         '55e71bb2a511a1399bc41e9e34e657b2c0de447261ce3a1b92927094d988621e', // v1.13
         '42bd34feb4a63060df71c19bc4c23f9ec584507d4d3868ad75db51af8b449437', // v1.12
         '84904385ccc31f336b240ba1caa17dfab134d08efed7766fbcaea4eb61dae463', // v1.11
@@ -1118,7 +1118,6 @@ class FASTWorker {
                 tmpl.title = tmpl.title || tmplid;
                 return Promise.resolve()
                     .then(() => this.checkDependencies(tmpl, reqid, true))
-                    .then(() => this.removeIncompatibleProps(tmpl, reqid))
                     .then(() => this.hydrateSchema(tmpl, reqid, true))
                     .then(() => {
                         // Remove IPAM features in official templates if not enabled
