@@ -42,7 +42,8 @@ monitor_base: &monitor_base
         "monitorType": "tcp",
     monitor_partial_type_specifics:
       template: >-
-        "receive": ""
+        "receive": "",
+        "send": ""
     monitor_partial_template:
       template: |
         {
@@ -79,11 +80,13 @@ monitor_base: &monitor_base
           }
         }
 
+# subtemplate for tcp monitor
 tcp:
   <<: *monitor_base
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for smtp monitor
 smtp:
   <<: *monitor_base
   definitions: 
@@ -119,6 +122,7 @@ smtp:
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for ldap monitor
 ldap:
   <<: *monitor_base
   definitions: 
@@ -143,7 +147,6 @@ ldap:
       format: password
       contentEncoding: base64
       minLength: 2
-      default: ''
     monitor_base:
       title: Directory Level
       description: Enter the directory level to be searched in the health check.
@@ -168,7 +171,10 @@ ldap:
         "filter": "{{monitor_filter}}"
   template: |
     {{> monitor_partial_template}}
+  parameters:
+    monitor_passphrase: ''
 
+# subtemplate for http monitor
 http:
   <<: *monitor_base
   definitions: 
@@ -176,14 +182,28 @@ http:
     enable_tls_client:
       type: boolean
       dependencies: []
-    monitor_name:
-      title: Monitor
+    monitor_name_http:
+      title: HTTP Monitor
       description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
         the health of the application on each server. If an application instance does not respond
         system will block client requests to that web server.
       type: string
       enumFromBigip: ltm/monitor/http
       default: /Common/http
+      dependencies: 
+        - enable_tls_client
+      invertDependency:
+        - enable_tls_client
+    monitor_name:
+      title: HTTPS Monitor
+      description: Select an existing BIG-IP HTTPS pool monitor. Monitors are used to determine
+        the health of the application on each server. If an application instance does not respond
+        system will block client requests to that web server.
+      type: string
+      enumFromBigip: ltm/monitor/https
+      default: /Common/https
+      dependencies: 
+        - enable_tls_client
     monitor_credentials:
       title: Credentials
       description: Check this box if the servers require login credentials for web access.
@@ -229,9 +249,50 @@ http:
         {{/monitor_credentials}}
         "send": "{{monitor_send_string}}",
         "receive": "{{monitor_expected_response}}"
+    monitor_partial_template:
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{#enable_pool}}
+                {{#make_pool}}
+                  {{#enable_monitor}}
+                    {{#make_monitor}}
+                      "{{app_name}}_monitor": {
+                        "class": "Monitor",
+                        {{> monitor_partial_type}}
+                        "interval": {{monitor_interval}},
+                        "timeout": {{monitor_timeout}},
+                        {{> monitor_partial_type_specifics}}
+                      },
+                      "{{app_name}}_pool": {
+                        "monitors": [{
+                          "use": "{{app_name}}_monitor"
+                        }]
+                      }
+                    {{/make_monitor}}
+                    {{^make_monitor}}
+                      "{{app_name}}_pool": {
+                        "monitors": [{
+                          {{#enable_tls_client}}
+                            "bigip": "{{monitor_name}}"
+                          {{/enable_tls_client}}
+                          {{^enable_tls_client}}
+                            "bigip": "{{monitor_name_http}}"
+                          {{/enable_tls_client}}
+                        }]
+                      }
+                    {{/make_monitor}}
+                  {{/enable_monitor}}
+                {{/make_pool}}
+              {{/enable_pool}}
+            }
+          }
+        }
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for dns monitor
 dns:
   <<: *monitor_base
   definitions: 

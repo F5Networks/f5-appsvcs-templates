@@ -50,6 +50,17 @@ describe('ipam providers tests', function () {
                 retrieveBody: '{"count":1}',
                 retrievePathQuery: '$.addresses.[0]',
                 retrieveUrl: '{{host}}/ip/reserve'
+            },
+            {
+                name: 'testProviderToken',
+                host: 'http://provider.test3',
+                releaseBody: '{"address": "{{address}}" }',
+                releaseUrl: '{{host}}/ip/release',
+                retrieveBody: '{"count":1}',
+                retrievePathQuery: '$.address',
+                retrieveUrl: '{{host}}/ip/reserve',
+                authHeaderName: 'Authorization',
+                authHeaderValue: 'Token super-secret'
             }
         ]
     };
@@ -80,6 +91,7 @@ describe('ipam providers tests', function () {
     describe('populate_ipam_address', () => {
         let ipLastOctet1;
         let ipLastOctet2;
+        let ipLastOctet3;
         beforeEach(() => {
             nock('http://provider.test1', {
                 reqheaders: {
@@ -114,8 +126,24 @@ describe('ipam providers tests', function () {
                 .reply(200, (uri, reqBody) => ({ address: reqBody.address }))
                 .persist();
 
+            nock('http://provider.test3', {
+                reqheaders: {
+                    authorization: 'Token super-secret'
+                }
+            })
+                .post('/ip/reserve', { count: 1 })
+                .reply(200, () => {
+                    ipLastOctet3 += 1;
+                    console.log(ipLastOctet3);
+                    return { address: `10.10.3.${ipLastOctet3}` };
+                })
+                .post('/ip/release')
+                .reply(200, (uri, reqBody) => ({ address: reqBody.address }))
+                .persist();
+
             ipLastOctet1 = 0;
             ipLastOctet2 = 0;
+            ipLastOctet3 = 0;
         });
         const assertPopulate = function (ipamProps, templateData, expAddrs) {
             const reqId = 1234;
@@ -196,6 +224,23 @@ describe('ipam providers tests', function () {
             const expectedAddrs = {
                 testProvider1: [{ address: '10.10.1.1', ref: '' }],
                 testProvider2: [{ address: '10.10.2.1', ref: '' }]
+            };
+            return assertPopulate(ipamProps, templateData, expectedAddrs);
+        });
+        it('token_auth', () => {
+            const ipamProps = { testIpamProp: { ipFromIpam: true } };
+            const templateData = {
+                parameters: {
+                    testIpamProp: 'testProviderToken',
+                    nonIpamProp: 'somethingZZZ',
+                    anotherProp: true
+                }
+            };
+            const expectedAddrs = {
+                testProviderToken: [{
+                    address: '10.10.3.1',
+                    ref: ''
+                }]
             };
             return assertPopulate(ipamProps, templateData, expectedAddrs);
         });

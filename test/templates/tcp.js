@@ -149,7 +149,8 @@ const expected = {
                 monitorType: 'tcp',
                 interval: 30,
                 timeout: 91,
-                receive: ''
+                receive: '',
+                send: ''
             },
             app1_snatpool: {
                 class: 'SNAT_Pool',

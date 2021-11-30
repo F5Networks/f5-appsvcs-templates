@@ -20,11 +20,9 @@
 require('core-js');
 
 const fs = require('fs-extra');
-const https = require('https');
 const url = require('url');
 
 const extract = require('extract-zip');
-const axios = require('axios');
 const Ajv = require('ajv');
 const merge = require('deepmerge');
 const Mustache = require('mustache');
@@ -42,23 +40,13 @@ const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');
+const { BigipDeviceClassic } = require('../lib/bigipDevices');
 
 const pkg = require('../package.json');
 
 const endpointName = 'fast';
 const projectName = 'f5-appsvcs-templates';
 const mainBlockName = 'F5 Application Services Templates';
-
-const bigipHost = (process.env.FAST_BIGIP_HOST && `${process.env.FAST_BIGIP_HOST}`) || 'http://localhost:8100';
-const bigipUser = process.env.FAST_BIGIP_USER || 'admin';
-const bigipPassword = process.env.FAST_BIGIP_PASSWORD || '';
-let bigipStrictCert = process.env.FAST_BIGIP_STRICT_CERT || true;
-if (typeof bigipStrictCert === 'string') {
-    bigipStrictCert = (
-        bigipStrictCert.toLowerCase() === 'true'
-        || bigipStrictCert === '1'
-    );
-}
 
 const ajv = new Ajv({
     useDefaults: true
@@ -75,10 +63,6 @@ Mustache.escape = function escape(text) {
     return text;
 };
 
-const configPath = process.AFL_TW_ROOT || `/var/config/rest/iapps/${projectName}`;
-const templatesPath = process.AFL_TW_TS || `${configPath}/templatesets`;
-const uploadPath = process.env.FAST_UPLOAD_DIR || '/var/config/rest/downloads';
-const scratchPath = `${configPath}/scratch`;
 const dataGroupPath = `/Common/${projectName}/dataStore`;
 
 const configDGPath = `/Common/${projectName}/config`;
@@ -112,20 +96,30 @@ class FASTWorker {
         this.baseUserAgent = `${pkg.name}/${pkg.version}`;
         this.incomingUserAgent = '';
 
+        this.configPath = options.configPath || `/var/config/rest/iapps/${projectName}`;
+        this.templatesPath = options.templatesPath || `${this.configPath}/templatesets`;
+        this.uploadPath = options.uploadPath || '/var/config/rest/downloads';
+        this.scratchPath = `${this.configPath}/scratch`;
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
-        this.driver = new AS3Driver({
-            endPointUrl: `${bigipHost}/mgmt/shared/appsvcs`,
+        const bigipInfo = options.bigipInfo || {
+            host: 'http://localhost:8100',
+            username: 'admin',
+            password: '',
+            strictCerts: true
+        };
+        this.bigip = options.bigipDevice || new BigipDeviceClassic(bigipInfo);
+        this.driver = options.as3Driver || new AS3Driver({
             userAgent: this.baseUserAgent,
-            bigipUser,
-            bigipPassword,
-            strictCerts: bigipStrictCert
+            bigipInfo
+
         });
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
-        this.fsTemplateProvider = new FsTemplateProvider(templatesPath, options.fsTemplateList);
+        this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
         this.teemDevice = new TeemDevice({
             name: projectName,
             version: pkg.version
@@ -143,17 +137,7 @@ class FASTWorker {
             }
         );
         this.ipamProviders = options.ipamProviders;
-
-        this.endpoint = axios.create({
-            baseURL: bigipHost,
-            auth: {
-                username: bigipUser,
-                password: bigipPassword
-            },
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: bigipStrictCert
-            })
-        });
+        this.minAs3Version = options.minAs3Version || '3.16';
 
         this.requestTimes = {};
         this.requestCounter = 1;
@@ -281,6 +265,7 @@ class FASTWorker {
     saveConfig(config, reqid) {
         reqid = reqid || 0;
         let prevConfig;
+        let persisted = false;
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'saving config data'))
             .then(() => this.configStorage.getItem(configKey, config))
@@ -290,6 +275,7 @@ class FASTWorker {
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
+                    persisted = true;
                     return this.recordTransaction(
                         reqid, 'persisting config',
                         this.configStorage.persist()
@@ -299,6 +285,7 @@ class FASTWorker {
                 return Promise.resolve();
             })
             .then(() => this.exitTransaction(reqid, 'saving config data'))
+            .then(() => persisted)
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
             });
@@ -334,7 +321,6 @@ class FASTWorker {
         return Promise.reject(e);
     }
 
-
     /**
      * Worker Handlers
      */
@@ -348,7 +334,7 @@ class FASTWorker {
         });
 
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
-        this.logger.fine(`FAST Worker: Targetting ${bigipHost}`);
+        this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
         let config;
         let saveState = true;
@@ -356,17 +342,17 @@ class FASTWorker {
         return Promise.resolve()
             // Automatically add a block
             .then(() => {
-                const hosturl = url.parse(bigipHost);
+                const hosturl = this.bigip.host ? url.parse(this.bigip.host) : '';
                 if (hosturl.hostname !== 'localhost') {
                     return Promise.resolve();
                 }
 
                 return Promise.resolve()
                     .then(() => this.enterTransaction(0, 'ensure FAST is in iApps blocks'))
-                    .then(() => this.endpoint.get('/mgmt/shared/iapp/blocks'))
+                    .then(() => this.bigip.getIAppsBlocks())
                     .catch(e => this.handleResponseError(e, 'to get blocks'))
                     .then((results) => {
-                        const matchingBlocks = results.data.items.filter(x => x.name === mainBlockName);
+                        const matchingBlocks = results.filter(x => x.name === mainBlockName);
                         const blockData = {
                             name: mainBlockName,
                             state: 'BOUND',
@@ -380,7 +366,7 @@ class FASTWorker {
 
                         if (matchingBlocks.length === 0) {
                             // No existing block, make a new one
-                            return this.endpoint.post('/mgmt/shared/iapp/blocks', blockData);
+                            return this.bigip.addIAppsBlock(blockData);
                         }
 
                         // Found a block, do nothing
@@ -433,7 +419,7 @@ class FASTWorker {
                     return Promise.resolve();
                 }
                 this.templateProvider.invalidateCache();
-                return DataStoreTemplateProvider.fromFs(this.storage, templatesPath, sets);
+                return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
             .then(() => this.exitTransaction(0, 'loading template sets from disk'))
             // Persist any template set changes
@@ -468,9 +454,8 @@ class FASTWorker {
         // ));
         return Promise.resolve()
             .then(() => this.recordTransaction(0, 'fetching device information',
-                this.endpoint.get('/mgmt/shared/identified-devices/config/device-info'))
-                .then((response) => {
-                    const data = response.data;
+                this.bigip.getDeviceInfo())
+                .then((data) => {
                     if (data) {
                         this.deviceInfo = {
                             hostname: data.hostname,
@@ -483,7 +468,8 @@ class FASTWorker {
                             fullVersion: `${data.version}-${data.build}`
                         };
                     }
-                }));
+                }))
+            .catch(e => this.handleResponseError(e, 'fetching BIG-IP device information'));
     }
 
     /**
@@ -655,9 +641,7 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 requestId, 'GET to appsvcs/info',
-                this.endpoint.get('/mgmt/shared/appsvcs/info', {
-                    validateStatus: () => true // ignore failure status codes
-                })
+                this.driver.getInfo()
             ))
             .then((as3response) => {
                 info.as3Info = as3response.data;
@@ -690,9 +674,8 @@ class FASTWorker {
 
                 return this.recordTransaction(
                     requestId, 'Fetching module provision information',
-                    this.endpoint.get('/mgmt/tm/sys/provision')
-                )
-                    .then(response => response.data);
+                    this.bigip.getProvisionData()
+                );
             })
             .then((response) => {
                 this.provisionData = response;
@@ -715,9 +698,7 @@ class FASTWorker {
 
                 return this.recordTransaction(
                     requestId, 'Fetching TS module information',
-                    this.endpoint.get('/mgmt/shared/telemetry/info', {
-                        validateStatus: () => true // ignore failure status codes
-                    })
+                    this.bigip.getTSInfo()
                 );
             })
             .then((response) => {
@@ -733,9 +714,7 @@ class FASTWorker {
                 }
                 return this.recordTransaction(
                     requestId, 'Fetching AS3 info',
-                    this.endpoint.get('/mgmt/shared/appsvcs/info', {
-                        validateStatus: () => true // ignore failure status codes
-                    })
+                    this.driver.getInfo()
                 )
                     .then(response => response.data);
             })
@@ -765,34 +744,38 @@ class FASTWorker {
 
                 // check AS3 Version minimum
                 const as3Version = semver.coerce(as3Info.version || '0.0');
-                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || '3.16');
+                const tmplAs3Version = semver.coerce(tmpl.bigipMinimumAS3 || this.minAs3Version);
                 if (!semver.gte(as3Version, tmplAs3Version)) {
                     return Promise.reject(new Error(
                         `could not load template (${tmpl.title}) since it requires`
-                        + ` AS3 >= ${tmpl.bigipMinimumAS3} (found ${as3Version})`
+                        + ` AS3 >= ${tmplAs3Version} (found ${as3Version})`
                     ));
                 }
 
                 // check min/max BIG-IP version
-                const arrDeviceVersion = deviceInfo.version.split('.');
-                const objBigipVersionCheck = {
-                    doReturn: false,
-                    bigipMaximumVersion: `maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`,
-                    bigipMinimumVersion: `${tmpl.bigipMinimumVersion} or greater (found ${deviceInfo.version})`
-                };
-                ['bigipMaximumVersion', 'bigipMinimumVersion'].find((versionPropName) => {
-                    if (typeof tmpl[versionPropName] !== 'undefined') {
-                        if (!this.versionCompatibility(arrDeviceVersion, tmpl[versionPropName], versionPropName)) {
-                            objBigipVersionCheck.doReturn = versionPropName;
-                            return true;
-                        }
+                const semverFromBigip = (version) => {
+                    version = version.toString();
+                    let verParts = version.split('.');
+                    if (verParts.length < 2) {
+                        verParts.push('0');
                     }
-                    return false;
-                });
-                if (objBigipVersionCheck.doReturn) {
-                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP ${objBigipVersionCheck[objBigipVersionCheck.doReturn]}`));
+                    verParts = [
+                        verParts[0] + verParts[1],
+                        ...verParts.slice(2)
+                    ];
+                    return semver.coerce(verParts.join('.'));
+                };
+                const bigipVersion = semverFromBigip(deviceInfo.version || '13.1');
+                const tmplBigipMin = semverFromBigip(tmpl.bigipMinimumVersion || '13.1');
+                if (!semver.gte(bigipVersion, tmplBigipMin)) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP >= ${tmpl.bigipMinimumVersion} (found ${deviceInfo.version})`));
+                }
+                const tmplBigipMax = semverFromBigip(tmpl.bigipMaximumVersion || '999.999');
+                if (!semver.lte(bigipVersion, tmplBigipMax)) {
+                    return Promise.reject(new Error(`could not load template (${tmpl.title}) since it requires BIG-IP maximum version of ${tmpl.bigipMaximumVersion} (found ${deviceInfo.version})`));
                 }
 
+                // check subTemplates
                 let promiseChain = Promise.resolve();
                 tmpl._allOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
@@ -814,26 +797,39 @@ class FASTWorker {
                 });
                 promiseChain = promiseChain
                     .then(() => {
-                        if (tmpl._oneOf.length > 0 && validOneOf.length === 0) {
+                        if (tmpl._oneOf.length > 0 && validOneOf.length !== 1) {
                             return Promise.reject(new Error(
-                                `could not load template since no oneOf had valid dependencies: ${errstr}`
+                                `could not load template since no single oneOf had valid dependencies: Value must validate against exactly one of the provided schemas. ${errstr}`
                             ));
                         }
                         tmpl._oneOf = validOneOf;
                         return Promise.resolve();
                     });
                 const validAnyOf = [];
+                let errstrAnyOf = '';
                 tmpl._anyOf.forEach((subtmpl) => {
                     promiseChain = promiseChain
                         .then(() => this.checkDependencies(subtmpl, requestId))
                         .then(() => {
                             validAnyOf.push(subtmpl);
                         })
-                        .catch(() => Promise.resolve());
+                        .catch((e) => {
+                            errstrAnyOf += errstrAnyOf === '' ? '' : '; ';
+                            errstrAnyOf += `${e.message}`;
+                            return Promise.resolve();
+                        });
                 });
                 promiseChain = promiseChain
                     .then(() => {
+                        if (tmpl._anyOf.length > 0) {
+                            if (validAnyOf.length === 0) {
+                                return Promise.reject(new Error(
+                                    `could not load template since no anyOf had valid dependencies: ${errstrAnyOf}`
+                                ));
+                            }
+                        }
                         tmpl._anyOf = validAnyOf;
+                        return Promise.resolve();
                     });
                 return promiseChain;
             });
@@ -925,8 +921,7 @@ class FASTWorker {
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
-                const epStubs = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
-                const endPoints = epStubs.map(x => `/mgmt/tm/${x}?$select=fullPath`);
+                const endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
                 return Promise.resolve()
                     .then(() => Promise.all(endPoints.map(endPoint => Promise.resolve()
                         .then(() => {
@@ -936,10 +931,9 @@ class FASTWorker {
 
                             return this.recordTransaction(
                                 requestId, `fetching data from ${endPoint}`,
-                                this.endpoint.get(endPoint)
+                                this.bigip.getSharedObjects(endPoint)
                             )
-                                .then((response) => {
-                                    const items = response.data.items;
+                                .then((items) => {
                                     this._hydrateCache[endPoint] = items;
                                     return items;
                                 });
@@ -993,7 +987,6 @@ class FASTWorker {
                     return Promise.resolve();
                 }
 
-
                 const schema = tmpl._parametersSchema;
                 const props = schema.properties;
 
@@ -1018,79 +1011,9 @@ class FASTWorker {
             });
     }
 
-    removeIncompatibleProps(tmpl, requestId) {
-        const subTemplates = [
-            ...tmpl._allOf || [],
-            ...tmpl._oneOf || [],
-            ...tmpl._anyOf || []
-        ];
-        const schema = tmpl._parametersSchema;
-        const arrDeviceVersion = this.deviceInfo.version.split('.');
+    convertPoolMembers(restOperation, apps) {
+        const reqid = restOperation.requestId;
 
-        return Promise.resolve()
-            .then(() => Promise.all(subTemplates.map(x => this.removeIncompatibleProps(x, requestId))))
-            .then(() => {
-                ['bigipMaximumVersion', 'bigipMinimumVersion'].forEach((versionPropName) => {
-                    const bigipVersionProps = (this.getPropsWithChild(schema, versionPropName));
-
-                    Object.entries(bigipVersionProps).forEach(([key, value]) => {
-                        const versionPropValue = value[versionPropName];
-
-                        if (typeof value === 'object' && value !== null && versionPropValue !== undefined) {
-                            if (!this.versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName)) {
-                                delete schema.properties[key];
-                            }
-                        }
-                    });
-                });
-
-                return Promise.resolve();
-            });
-    }
-
-    versionCompatibility(arrDeviceVersion, versionPropValue, versionPropName) {
-        // if the user supplied a version limit that does not end with a wildcard (*)
-        if (!versionPropValue.toString().match(/\*$/)) {
-            // add .0 if there are not four points, e.g., 14.1 becomes 14.1.0 and 15.1.3 becomes 15.1.3.0
-            versionPropValue = (versionPropValue.toString().match(/(((\d){1,2}\.){3,3}\d{1,2})/g)) ? versionPropValue : `${versionPropValue}.0`;
-        }
-        // replace mulitple consecutive dots with a single dot in case of user error
-        // and then create an array, split on the dots
-        const arrVersionLimit = versionPropValue.replace(/\.(\.)+/g, '.').split('.');
-        let loopCtr = 0;
-        try {
-            arrVersionLimit.every((versionPoint) => {
-                // as soon as we encounter a wildcard(*) the rest of the version points are moot
-                if (versionPoint === '*') {
-                    // uncomment this to ignore all subsequent version points
-                    // throw true;
-                }
-
-                // get the device's correlated version number (major/minor/patch/point) or zero(0) if not present
-                const bigipVersionPoint = (arrDeviceVersion[loopCtr] || versionPropName === 0);
-
-                // if the versions are equal we continue
-                if ((bigipVersionPoint === versionPoint || versionPoint === '*')) {
-                    loopCtr += 1;
-                    return true;
-                }
-
-                // if the versions are not identical at this point then we have made a decision
-                const objRetVal = {
-                    bigipMaximumVersion: (bigipVersionPoint <= versionPoint),
-                    bigipMinimumVersion: (bigipVersionPoint >= versionPoint)
-                };
-                throw objRetVal[versionPropName];
-            });
-        } catch (e) {
-            return e;
-        }
-
-        return true;
-    }
-
-    convertPoolMembers(reqid, apps) {
-        reqid = reqid || 0;
         const convertTemplateNames = [
             'bigip-fast-templates/http',
             'bigip-fast-templates/tcp',
@@ -1121,19 +1044,30 @@ class FASTWorker {
 
         let promiseChain = Promise.resolve();
 
+        const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.setMethod('Post');
+
         if (newApps.length > 0) {
             promiseChain = promiseChain
-                .then(() => this.recordTransaction(
-                    reqid, 'Updating pool members',
-                    this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications/`, newApps.map(app => ({
+                .then(() => {
+                    postOp.setBody(newApps.map(app => ({
                         name: app.template,
                         parameters: app.view
-                    })))
-                ))
-                .then((resp) => {
+                    })));
+                    return this.onPost(postOp);
+                })
+                .then(() => {
+                    if (postOp.getStatusCode() >= 400) {
+                        return Promise.reject(new Error(
+                            `Updating pool_members failed with ${postOp.getStatusCode()}: ${postOp.getBody().message}`
+                        ));
+                    }
+
                     this.logger.info(
-                        `FAST Worker [${reqid}]: task ${resp.data.message[0].id} submitted to update pool_members`
+                        `FAST Worker [${reqid}]: task ${postOp.getBody().message[0].id} submitted to update pool_members`
                     );
+
+                    return Promise.resolve();
                 });
         }
 
@@ -1143,7 +1077,7 @@ class FASTWorker {
 
     releaseIPAMAddressesFromApps(reqid, appsData) {
         let config;
-        const promises = [];
+        let promiseChain = Promise.resolve();
         appsData.forEach((appDef) => {
             let view;
             if (appDef.metaData) {
@@ -1157,7 +1091,8 @@ class FASTWorker {
                 }
                 view = appDef;
             }
-            promises.push(Promise.resolve()
+
+            promiseChain = promiseChain
                 .then(() => {
                     if (config) {
                         return Promise.resolve(config);
@@ -1165,10 +1100,10 @@ class FASTWorker {
                     return this.getConfig(reqid)
                         .then((c) => { config = c; });
                 })
-                .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, view)));
+                .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, view));
         });
 
-        return Promise.all(promises);
+        return promiseChain;
     }
 
     fetchTemplate(reqid, tmplid) {
@@ -1303,10 +1238,12 @@ class FASTWorker {
      * HTTP/REST handlers
      */
     recordRestRequest(restOp) {
-        // Update driver's user agent if one was provided with the request
-        const userAgent = restOp.getUri().query.userAgent;
-        this.incomingUserAgent = userAgent || '';
-        this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+        if (this.driver.userAgent) {
+            // Update driver's user agent if one was provided with the request
+            const userAgent = restOp.getUri().query.userAgent;
+            this.incomingUserAgent = userAgent || '';
+            this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
+        }
 
         // Record the time we received the request
         this.requestTimes[restOp.requestId] = Date.now();
@@ -1411,10 +1348,10 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid, 'GET request to appsvcs/declare',
-                    this.endpoint.get('/mgmt/shared/appsvcs/declare')
+                    this.driver.getRawDeclaration()
                 ))
                 .then(resp => resp.data[tenant][app])
-                .then(appDef => this.convertPoolMembers(reqid, [appDef]))
+                .then(appDef => this.convertPoolMembers(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
@@ -1427,7 +1364,7 @@ class FASTWorker {
                 reqid, 'gathering a list of applications from the driver',
                 this.driver.listApplications()
             ))
-            .then(appsList => this.convertPoolMembers(reqid, appsList))
+            .then(appsList => this.convertPoolMembers(restOperation, appsList))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);
@@ -1589,7 +1526,6 @@ class FASTWorker {
                 appsData.forEach((appData) => {
                     this.generateTeemReportApplication('modify', appData.template);
                 });
-                return appsData;
             })
             .then(() => this.recordTransaction(
                 reqid, 'requesting new application(s) from the driver',
@@ -1640,9 +1576,9 @@ class FASTWorker {
     postTemplateSets(restOperation, data) {
         const tsid = data.name;
         const reqid = restOperation.requestId;
-        const setpath = `${uploadPath}/${tsid}.zip`;
-        const scratch = `${scratchPath}/${tsid}`;
-        const onDiskPath = `${templatesPath}/${tsid}`;
+        const setpath = `${this.uploadPath}/${tsid}.zip`;
+        const scratch = `${this.scratchPath}/${tsid}`;
+        const onDiskPath = `${this.templatesPath}/${tsid}`;
 
         if (!data.name) {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
@@ -1675,18 +1611,15 @@ class FASTWorker {
             .then(() => this.exitTransaction(reqid, 'extract template set'))
             .then(() => this.recordTransaction(
                 reqid, 'validate template set',
-                this._validateTemplateSet(scratchPath)
+                this._validateTemplateSet(this.scratchPath)
             ))
             .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)))
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
-            .then(() => DataStoreTemplateProvider.fromFs(this.storage, scratchPath, [tsid]))
+            .then(() => DataStoreTemplateProvider.fromFs(this.storage, this.scratchPath, [tsid]))
             .then(() => {
                 this.generateTeemReportTemplateSet('create', tsid);
             })
-            .then(() => this.storage.persist())
-            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
-            .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => this.getConfig(reqid))
             .then((config) => {
                 if (config.deletedTemplateSets.includes(tsid)) {
@@ -1695,15 +1628,27 @@ class FASTWorker {
                 }
                 return Promise.resolve();
             })
-            // Automatically convert any apps using the old pool_members definition
+            .then((persisted) => {
+                // if both template and config storage are data-group based, avoid calling persist() twice
+                // saveConfig() already calls persist() and triggers save sys config, which can cause latency
+                if (persisted && this.storage instanceof StorageDataGroup
+                        && this.configStorage instanceof StorageDataGroup) {
+                    return Promise.resolve();
+                }
+                return this.storage.persist();
+            })
+            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => {
                 if (tsid !== 'bigip-fast-templates') {
                     return Promise.resolve();
                 }
-
+                // Automatically convert any apps using the old pool_members definition
                 return this.recordTransaction(
-                    reqid, 'converting applications with old pool_members definition',
-                    this.convertPoolMembers(reqid)
+                    reqid,
+                    'converting applications with old pool_members definition',
+                    this.driver.listApplications()
+                        .then(apps => this.convertPoolMembers(reqid, apps))
                 );
             })
             .then(() => this.genRestResponse(restOperation, 200, ''))
@@ -1811,12 +1756,16 @@ class FASTWorker {
         }
 
         const appNames = data.map(x => x.split('/'));
+        let appsData;
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'requesting application data from driver',
                 Promise.all(appNames.map(x => this.driver.getApplication(...x)))
             ))
-            .then(appsData => this.releaseIPAMAddressesFromApps(reqid, appsData))
+            .then((value) => {
+                appsData = value;
+            })
+            .then(() => this.releaseIPAMAddressesFromApps(reqid, appsData))
             .then(() => this.recordTransaction(
                 reqid, 'deleting applications',
                 this.driver.deleteApplications(appNames)
@@ -1828,7 +1777,9 @@ class FASTWorker {
                 this.completeRestOperation(restOperation);
             })
             .then(() => {
-                this.generateTeemReportApplication('delete', '');
+                appsData.forEach((appData) => {
+                    this.generateTeemReportApplication('delete', appData.template);
+                });
             })
             .catch((e) => {
                 if (e.message.match('no tenant found')) {
@@ -1870,14 +1821,18 @@ class FASTWorker {
                     config.deletedTemplateSets.push(tsid);
                     return this.saveConfig(config, reqid);
                 })
-                .then(() => {
+                .then((persisted) => {
                     this.generateTeemReportTemplateSet('delete', tsid);
+                    if (persisted && this.storage instanceof StorageDataGroup
+                        && this.configStorage instanceof StorageDataGroup) {
+                        return Promise.resolve();
+                    }
+                    return this.recordTransaction(
+                        reqid, 'persisting the data store',
+                        this.storage.persist()
+                    );
                 })
-                .then(() => this.recordTransaction(
-                    reqid, 'persisting the data store',
-                    this.storage.persist()
-                        .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
-                ))
+                .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
                 .then(() => this.genRestResponse(restOperation, 200, 'success'))
                 .catch((e) => {
                     if (e.message.match(/failed to find template set/)) {
@@ -1905,14 +1860,20 @@ class FASTWorker {
                         ));
                 });
                 return promiseChain
-                    .then(() => this.recordTransaction(
-                        reqid, 'persisting the data store',
-                        this.storage.persist()
-                    ))
                     .then(() => this.getConfig(reqid))
                     .then((config) => {
                         config.deletedTemplateSets = [...new Set(config.deletedTemplateSets.concat(setList))];
                         return this.saveConfig(config, reqid);
+                    })
+                    .then((persisted) => {
+                        if (persisted && this.storage instanceof StorageDataGroup
+                            && this.configStorage instanceof StorageDataGroup) {
+                            return Promise.resolve();
+                        }
+                        return this.recordTransaction(
+                            reqid, 'persisting the data store',
+                            this.storage.persist()
+                        );
                     });
             })
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
@@ -1968,19 +1929,22 @@ class FASTWorker {
         const app = pathElements[5];
         const newParameters = data.parameters;
 
+        const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.setMethod('Post');
+
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid, 'Fetching application data from AS3',
                 this.driver.getApplication(tenant, app)
             ))
-            .then(appData => this.recordTransaction(
-                reqid, 'Re-deploying application',
-                this.endpoint.post(`/mgmt/${this.WORKER_URI_PATH}/applications`, {
+            .then((appData) => {
+                postOp.setBody({
                     name: appData.template,
                     parameters: Object.assign({}, appData.view, newParameters)
-                })
-            ))
-            .then(resp => this.genRestResponse(restOperation, resp.status, resp.data))
+                });
+                return this.onPost(postOp);
+            })
+            .then(() => this.genRestResponse(restOperation, postOp.getStatusCode(), postOp.getBody()))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 

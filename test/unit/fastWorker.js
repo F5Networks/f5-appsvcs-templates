@@ -22,11 +22,6 @@
 const path = require('path');
 const url = require('url');
 
-process.AFL_TW_ROOT = path.join(process.cwd(), './templates');
-process.AFL_TW_TS = path.join(process.cwd(), './templates');
-process.env.FAST_UPLOAD_DIR = './test/unit/mockDir';
-delete process.env.FAST_BIGIP_HOST; // Never try targeting a remote BIG-IP
-
 const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
@@ -37,8 +32,10 @@ const fast = require('@f5devcentral/f5-fast-core');
 const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
 const { SecretsBase64 } = require('../../lib/secrets');
 
-const FASTWorker = require('../../nodejs/fastWorker.js');
+const FASTWorker = require('../../nodejs/fastWorker');
 const IpamProviders = require('../../lib/ipam');
+
+const templatesPath = path.join(process.cwd(), 'templates');
 
 class RestOp {
     constructor(uri) {
@@ -88,13 +85,16 @@ class RestOp {
     getMethod() {
         return '';
     }
+
+    setMethod() {
+    }
 }
 
 // Update worker instance to mimic iControl LX environment
 const patchWorker = (worker) => {
     worker.logger = {
         severe: (str) => {
-            console.error(str);
+            console.log(str);
             assert(false, 'worker hit a severe error');
         },
         error: console.log,
@@ -154,7 +154,10 @@ function createWorker() {
         fsTemplateList: [
             'examples',
             'bigip-fast-templates'
-        ]
+        ],
+        configPath: process.cwd(),
+        templatesPath,
+        uploadPath: './test/unit/mockDir'
     });
     patchWorker(worker);
 
@@ -195,7 +198,7 @@ describe('template worker tests', function () {
             'examples'
         ];
         testStorage = new fast.dataStores.StorageMemory();
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, process.AFL_TW_TS, tsNames);
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, templatesPath, tsNames);
     });
 
     beforeEach(function () {
@@ -920,10 +923,9 @@ describe('template worker tests', function () {
                         }
                     }
                 }
-            }));
-        nock('http://localhost:8100')
+            }))
             .persist()
-            .post(`/mgmt/${worker.WORKER_URI_PATH}/applications`)
+            .post(`${as3ep}/tenant?async=true`)
             .reply(202, {});
 
         return worker.onPatch(op)
@@ -1002,7 +1004,6 @@ describe('template worker tests', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
         const infoOp = new RestOp('info');
-        const tsPath = path.join(process.cwd(), 'templates');
 
         this.clock.restore();
 
@@ -1020,7 +1021,7 @@ describe('template worker tests', function () {
             })
             .then(() => worker.templateProvider.listSets())
             .then((tmplSets) => {
-                assert(fs.existsSync(`${tsPath}/scratch`));
+                assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                 assert(tmplSets.includes('testset'));
             })
             .then(() => worker.onGet(infoOp))
@@ -1399,7 +1400,7 @@ describe('template worker tests', function () {
                     Some text
             `))
             .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /no oneOf had valid/))
+            .catch(e => assert.match(e.message, /no single oneOf had valid/))
             .then(() => checkTmplDeps(`
                 title: root oneOf pass
                 oneOf:
@@ -1452,6 +1453,96 @@ describe('template worker tests', function () {
             .then(() => assert(false, 'expected template to fail'))
             .catch(e => assert.match(e.message, /since it requires AS3 >= 3.23/));
     });
+    it('bigip_version_check', function () {
+        const worker = createWorker();
+
+        const checkBigipVersion = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkBigipVersion(`
+                title: no version
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: min version met
+                bigipMinimumVersion: 13.1
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: min version not met
+                bigipMinimumVersion: 16.3
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires BIG-IP >= 16.3/))
+            .then(() => checkBigipVersion(`
+                title: max version met
+                bigipMaximumVersion: 16.3
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: max version not met
+                bigipMaximumVersion: 13.1
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires BIG-IP maximum version of 13.1/))
+            .then(() => checkBigipVersion(`
+                title: min and version met
+                bigipMinimumVersion: 13.1
+                bigipMaximumVersion: 16.3
+                template: text
+            `))
+            .catch(e => assert(false, e.stack));
+    });
+    it('max_bigip_version_check', function () {
+        const worker = createWorker();
+
+        const checkBigipVersion = (yamltext) => {
+            let retTmpl;
+            return Promise.resolve()
+                .then(() => fast.Template.loadYaml(yamltext))
+                .then((tmpl) => {
+                    retTmpl = tmpl;
+                    return tmpl;
+                })
+                .then(tmpl => worker.checkDependencies(tmpl, 0))
+                .then(() => retTmpl);
+        };
+
+        return Promise.resolve()
+            .then(() => checkBigipVersion(`
+                title: no version
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: version met
+                bigipMinimumVersion: 13.1
+                template: text
+            `))
+            .catch(e => assert(false, e.stack))
+            .then(() => checkBigipVersion(`
+                title: version not met
+                bigipMinimumVersion: 16.3
+                template: text
+            `))
+            .then(() => assert(false, 'expected template to fail'))
+            .catch(e => assert.match(e.message, /since it requires BIG-IP >= /));
+    });
     it('convert_pool_members', function () {
         const worker = createWorker();
 
@@ -1467,6 +1558,8 @@ describe('template worker tests', function () {
                             [AS3DriverConstantsKey]: {
                                 template: 'bigip-fast-templates/http',
                                 view: {
+                                    tenant_name: 'tenant',
+                                    app_name: 'http',
                                     enable_pool: true,
                                     make_pool: true,
                                     pool_port: 80,
@@ -1483,6 +1576,8 @@ describe('template worker tests', function () {
                             [AS3DriverConstantsKey]: {
                                 template: 'bigip-fast-templates/tcp',
                                 view: {
+                                    tenant_name: 'tenant',
+                                    app_name: 'tcp',
                                     enable_pool: true,
                                     make_pool: true,
                                     pool_members: [
@@ -1516,13 +1611,23 @@ describe('template worker tests', function () {
                         }
                     }
                 }
-            }));
-        const postScope = nock('http://localhost:8100')
-            .post(`/mgmt/${worker.WORKER_URI_PATH}/applications/`)
+            }))
+            .persist()
+            .post(`${as3ep}/tenant?async=true`)
             .reply(202, {
                 code: 202,
                 message: [
                     { id: '0' }
+                ]
+            });
+
+        nock('http://localhost:8100')
+            .persist()
+            .get(/mgmt\/tm\/.*\?\$select=fullPath/)
+            .reply(200, {
+                items: [
+                    { fullPath: '/Common/httpcompression' },
+                    { fullPath: '/Common/wan-optimized-compression' }
                 ]
             });
 
@@ -1531,7 +1636,6 @@ describe('template worker tests', function () {
             .then(() => {
                 console.log(op.body);
                 assert(as3Scope.isDone());
-                assert(postScope.isDone(), 'failed to post new applications');
             });
     });
     it('post_render_bad_tmplid', function () {
