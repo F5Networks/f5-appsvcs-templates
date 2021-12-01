@@ -5,7 +5,7 @@ allOf:
   - $ref: "_as3.yaml#"
   - $ref: "_virtual.yaml#"
   - $ref: "_snat.yaml#"
-  - $ref: "_persist.yaml#"
+  - $ref: "_persist.yaml#/tcp"
   - $ref: "_pool.yaml#"
   - $ref: "_monitors.yaml#/tcp"
   - $ref: "_tcp_profile.yaml#"
@@ -17,12 +17,6 @@ anyOf:
   - $ref: "_security_policy.yaml#"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"
-definitions:
-  persistence_type:
-    default: source-address
-  enable_fallback_persistence:
-    type: boolean
-    default: false
 template: |
   {
     "{{tenant_name}}": {
