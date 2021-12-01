@@ -24,27 +24,30 @@ virtual_base: &virtual_base
     virtual_port:
       title: Virtual Server Port
       default: 443
+    virtual_partial_template:
+      template: |
+              {
+                "{{tenant_name}}": {
+                  "{{app_name}}": {
+                    "{{app_name}}": {
+                      "virtualAddresses": [
+                        {{#use_ipam}}
+                          "{{virtual_address_ipam}}"
+                        {{/use_ipam}}
+                        {{^use_ipam}}
+                          "{{virtual_address:f5:ipv4_ipv6}}"
+                        {{/use_ipam}}
+                      ],
+                      "virtualPort": {{virtual_port:f5:port}}
+                    }
+                  }
+                }
+              }
 
 # default VS subtemplate
 <<: *virtual_base
 template: |
-        {
-          "{{tenant_name}}": {
-            "{{app_name}}": {
-              "{{app_name}}": {
-                "virtualAddresses": [
-                  {{#use_ipam}}
-                    "{{virtual_address_ipam}}"
-                  {{/use_ipam}}
-                  {{^use_ipam}}
-                    "{{virtual_address:f5:ipv4_ipv6}}"
-                  {{/use_ipam}}
-                ],
-                "virtualPort": {{virtual_port:f5:port}}
-              }
-            }
-          }
-        }
+  {{> virtual_partial_template}}
 
 # subtemplate with VS names unique to DNS template
 dns:
@@ -79,3 +82,27 @@ dns:
           }
         }
       }
+
+# subtemplate with unique virtual port for Blue-Green template
+bluegreen:
+  <<: *virtual_base
+  definitions: 
+    <<: *virtual_base_def
+    virtual_port:
+      title: Virtual Server Port
+      type: integer
+      default: 80
+  template: |
+    {{> virtual_partial_template}}
+
+# subtemplate with unique virtual port for SMTP template
+smtp:
+  <<: *virtual_base
+  definitions: 
+    <<: *virtual_base_def
+    virtual_port:
+      title: Virtual Server Port
+      type: integer
+      default: 25
+  template: |
+    {{> virtual_partial_template}}

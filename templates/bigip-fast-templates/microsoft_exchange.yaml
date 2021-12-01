@@ -82,6 +82,7 @@ definitions:
     dependencies: []
   snmp_community_string:
     title: SNMP Community String
+    default: 'public'
     dependencies:
     - eav
   enable_snat:

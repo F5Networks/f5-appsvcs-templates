@@ -3,11 +3,11 @@ title: SMTP Application Template
 description: Configure high availability and optimization for SMTP implementations.
 allOf:
   - $ref: "_as3.yaml#"
-  - $ref: "_virtual.yaml#"
+  - $ref: "_virtual.yaml#/smtp"
   - $ref: "_snat.yaml#"
   - $ref: "_tls_server_profile.yaml#"
   - $ref: "_tls_client_profile.yaml#"
-  - $ref: "_pool.yaml#"
+  - $ref: "_pool.yaml#/smtp"
   - $ref: "_monitors.yaml#/smtp"
   - $ref: "_tcp_profile.yaml#"
   - $ref: "_irule.yaml#"
@@ -18,20 +18,6 @@ anyOf:
   - $ref: "_security_policy.yaml#"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"
-definitions:
-  virtual_port:
-    type: integer
-    default: 25
-  pool_members:
-    type: array
-    items:
-      type: object
-      properties:
-        serverAddresses:
-          type: array
-        servicePort:
-          type: integer
-          default: 25
 template: |
   {
     "{{tenant_name}}": {

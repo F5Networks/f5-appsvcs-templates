@@ -3,7 +3,7 @@ title: Blue-Green Deployment Template
 description: Divide application traffic between pools by percentage. Add and remove pool members Event-Driven Service Discovery.
 allOf:
   - $ref: "_as3.yaml#"
-  - $ref: "_virtual.yaml#"
+  - $ref: "_virtual.yaml#/bluegreen"
   - $ref: "_snat.yaml#"
 definitions:
   enable_bluegreen:
