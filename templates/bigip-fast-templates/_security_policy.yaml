@@ -184,7 +184,7 @@ bot_defense: &bot_defense
       }
     }
 
-# subtemplate with baasic features: WAF and ASM logging
+# subtemplate with basic features: WAF and ASM logging
 <<: *asm_base
 anyOf: 
   - <<: *asm_base_anyof
@@ -218,6 +218,24 @@ dns:
             "{{app_name}}_tcp": {
               {{> waf_partial_profiles}}
             },
+        waf_partial_template:
+          template: |
+            {
+              "{{tenant_name}}": {
+                "{{app_name}}": {
+                  {{> waf_partial_vs}}
+                  {{#enable_waf_policy}}
+                    "{{app_name}}_waf_policy": {
+                      "class": "WAF_Policy",
+                      "policy": {
+                        "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                      },
+                      "ignoreChanges": true
+                    }
+                  {{/enable_waf_policy}}
+                }
+              }
+            }
     - <<: *asm_logging
       definitions:
         <<: *asm_logging_def
@@ -248,5 +266,50 @@ and_bot_defense:
     - <<: *asm_base_anyof
     - *waf_policy
     - *bot_defense
+    - *asm_logging
+    - *afm_logging
+
+# fastL4 subTemplate
+fastl4:
+  <<: *asm_base
+  anyOf: 
+    - <<: *asm_base_anyof
+    - <<: *waf_policy
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{> waf_partial_vs}}
+                {{#enable_waf_policy}}
+                  "{{app_name}}_waf_policy": {
+                    "class": "WAF_Policy",
+                    "policy": {
+                      "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+                    },
+                    "ignoreChanges": true
+                  }
+                {{/enable_waf_policy}}
+              {{/fastl4}}
+            }
+          }
+        }
+    - <<: *bot_defense
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{#enable_asm_bot_defense}}
+                  "{{app_name}}": {
+                    "profileBotDefense": { 
+                      "bigip": {{asm_bot_defense_profiles}}
+                    }
+                  }
+                {{/enable_asm_bot_defense}}
+              {{/fastl4}}
+            }
+          }
+        }
     - *asm_logging
     - *afm_logging

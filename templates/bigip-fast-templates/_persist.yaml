@@ -1,62 +1,159 @@
-title: Persist
-contentType: application/json
 bigipHideTemplate: true
-definitions:
-  enable_persistence:
-    title: Persistence
-    description: Ensures that client requests are directed to the same pool member throughout
-      the life of a session or during subsequent sessions.
-    type: boolean
-    default: true
-  use_existing_persistence_profile:
-    title: Use Existing Persistence Profile
-    description: Select persistence profiles from those available on the BIG-IP
-    type: boolean
-    default: false
-  persistence_profile:
-    title: Persistence Profiles
-    description: Select the persistence profile.
-    enumFromBigip:
-      - ltm/persistence/cookie
-      - ltm/persistence/source-addr
-      - ltm/persistence/ssl
-      - ltm/persistence/universal
-    default: /Common/cookie
-  persistence_type:
-    title: Persistence Type
-    description: Select the type of persistence.
-    default: cookie
-  enable_fallback_persistence:
-    title: Fallback Persistence
-    description: Create a secondary, or fallback, persistence record for each new client connection.
-    type: boolean
-    default: true
-  fallback_persistence_type:
-    title: Fallback Persistence Type
-    description: Select the type of fallback persistence.
-    default: source-address
-template: |
-  {
-    "{{tenant_name}}": {
-      "{{app_name}}": {
-        "{{app_name}}": {
-          {{#enable_persistence}}
-            {{#use_existing_persistence_profile}}
-              "persistenceMethods": [
-                {"bigip": {{persistence_profile}} }
-              ],
-            {{/use_existing_persistence_profile}}
-            {{^use_existing_persistence_profile}}
-              "persistenceMethods": ["{{persistence_type:f5:persistence}}"],
-              {{#enable_fallback_persistence}}
-                "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
-              {{/enable_fallback_persistence}}
-            {{/use_existing_persistence_profile}}
-          {{/enable_persistence}}
-          {{^enable_persistence}}
-            "persistenceMethods": [],
-          {{/enable_persistence}}
+
+persist_base: &persist_base
+  title: Persist
+  contentType: application/json
+  definitions: &persist_base_def
+    enable_persistence: &enable_persistence
+      title: Persistence
+      description: Ensures that client requests are directed to the same pool member throughout
+        the life of a session or during subsequent sessions.
+      type: boolean
+      default: true
+    use_existing_persistence_profile: &use_existing_persistence_profile
+      title: Use Existing Persistence Profile
+      description: Select persistence profiles from those available on the BIG-IP
+      type: boolean
+      default: false
+    persistence_profile: &persistence_profile
+      title: Persistence Profiles
+      description: Select the persistence profile.
+      enumFromBigip:
+        - ltm/persistence/cookie
+        - ltm/persistence/source-addr
+        - ltm/persistence/ssl
+        - ltm/persistence/universal
+      default: /Common/cookie
+    persistence_type: &persistence_type
+      title: Persistence Type
+      description: Select the type of persistence.
+      default: cookie
+    enable_fallback_persistence: &enable_fallback_persistence
+      title: Fallback Persistence
+      description: Create a secondary, or fallback, persistence record for each new client connection.
+      type: boolean
+      default: false
+    fallback_persistence_type: &fallback_persistence_type
+      title: Fallback Persistence Type
+      description: Select the type of fallback persistence.
+      enum: [destination-address, source-address]
+      default: destination-address
+    persist_partial_template: 
+      template: | 
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              "{{app_name}}": {
+                {{#enable_persistence}}
+                  {{#use_existing_persistence_profile}}
+                    "persistenceMethods": [
+                      {"bigip": {{persistence_profile}} }
+                    ],
+                  {{/use_existing_persistence_profile}}
+                  {{^use_existing_persistence_profile}}
+                    "persistenceMethods": [
+                      "{{persistence_type:f5:persistence}}"
+                    ],
+                    {{#enable_fallback_persistence}}
+                      "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
+                    {{/enable_fallback_persistence}}
+                  {{/use_existing_persistence_profile}}
+                {{/enable_persistence}}
+                {{^enable_persistence}}
+                  "persistenceMethods": [],
+                {{/enable_persistence}}
+              }
+            }
+          }
         }
-      }
-    }
-  }
+
+# default persist subTemplate
+<<: *persist_base
+template: |
+  {{> persist_partial_template}}
+
+# fastl4 version of the persist subTemplate
+fastl4:
+  <<: *persist_base
+  definitions: # to sort correctly, we have to recreate the whole definitions list, instead of adding new items to <<: *persist_base_def
+    enable_persistence: *enable_persistence
+    use_existing_persistence_profile: *use_existing_persistence_profile
+    persistence_profile: *persistence_profile
+    persistence_type: *persistence_type
+    fastl4_persistence_profile:
+      title: Persistence Profiles
+      description: Select the persistence profile.
+      enumFromBigip:
+        - ltm/persistence/source-addr
+        - ltm/persistence/universal
+      default: /Common/source_addr
+    fastl4_persistence_type:
+      title: Persistence Type
+      description: Select the type of persistence.
+      enum: [destination-address, source-address]
+      default: source-address
+    enable_fallback_persistence: *enable_fallback_persistence
+    fallback_persistence_type: *fallback_persistence_type
+    fastl4: 
+      type: boolean
+      default: false
+      dependencies: [] # this is required to prevent disabling enable_persistence or use_existing_ersistence_profile from hiding fastl4
+    persist_partial_template: 
+      template: | 
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              "{{app_name}}": {
+
+                {{#enable_persistence}}
+                  {{#use_existing_persistence_profile}}
+                    "persistenceMethods": [
+                      {{#fastl4}}
+                        {"bigip": {{fastl4_persistence_profile}} }
+                      {{/fastl4}}
+                      {{^fastl4}}
+                        {"bigip": {{persistence_profile}} }
+                      {{/fastl4}}
+                    ],
+                  {{/use_existing_persistence_profile}}
+
+                  {{^use_existing_persistence_profile}}
+                    "persistenceMethods": [
+                      {{#fastl4}}
+                        "{{fastl4_persistence_type}}"
+                      {{/fastl4}}
+                      {{^fastl4}}
+                        "{{persistence_type:f5:persistence}}"
+                      {{/fastl4}}
+                    ],
+                  {{/use_existing_persistence_profile}}
+
+                  {{#enable_fallback_persistence}}
+                    "fallbackPersistenceMethod": "{{fallback_persistence_type:f5:persistence}}",
+                  {{/enable_fallback_persistence}}
+                {{/enable_persistence}}
+
+                {{^enable_persistence}}
+                  "persistenceMethods": [],
+                {{/enable_persistence}}
+                
+              }
+            }
+          }
+        }
+  template: |
+    {{> persist_partial_template}}
+
+# TCP persist subTemplate
+tcp:
+  <<: *persist_base
+  definitions:
+    <<: *persist_base_def
+    persistence_type: 
+      <<: *persistence_type
+      default: source-address
+    enable_fallback_persistence: 
+      <<: *enable_fallback_persistence
+      default: false
+  template: |
+    {{> persist_partial_template}}
