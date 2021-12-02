@@ -1,6 +1,6 @@
 contentType: application/json
 title: Microsoft Exchange Application Template
-description: Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations.
+description: Configure high availability and optimization for Microsoft Exchange 2016 and 2019 implementations.
 bigipMinimumAS3: 3.23
 allOf:
   - $ref: "_as3.yaml#"
@@ -210,7 +210,7 @@ definitions:
       - single_vip
   ews:
     title: EWS
-    description: Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
+    description: Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 or 2019 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
   ews_use_ipam:
     title: Use IPAM Provider for EWS Virtual IP
@@ -235,7 +235,7 @@ definitions:
       - single_vip
   outlook:
     title: Microsoft Outlook and OAB
-    description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
+    description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 or 2019 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
   outlookMAPI:
     title: MAPI-over-HTTP
@@ -1444,7 +1444,7 @@ definitions:
         },
       {{/single_vip}}
 parameters:
-  app_name: 'Exchange2016'
+  app_name: 'Exchange'
   app_fqdn: 'example.mycompany.com'
   owa_fqdn: 'example.mycompany.com'
   ews_fqdn: 'example.mycompany.com'
