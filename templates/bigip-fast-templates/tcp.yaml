@@ -3,18 +3,18 @@ title: TCP Application Template
 description: Configure high availability and optimization for TCP implementations.
 allOf:
   - $ref: "_as3.yaml#"
-  - $ref: "_virtual.yaml#"
+  - $ref: "_virtual.yaml#/tcp"
   - $ref: "_snat.yaml#"
-  - $ref: "_persist.yaml#"
+  - $ref: "_persist.yaml#/tcp"
   - $ref: "_pool.yaml#"
   - $ref: "_monitors.yaml#/tcp"
-  - $ref: "_tcp_profile.yaml#"
+  - $ref: "_tcp_profile.yaml#/fastl4"
   - $ref: "_irule.yaml#"
   - $ref: "_vlan_allow.yaml#"
 anyOf:
   - {}
   - $ref: "_analytics.yaml#/tcp_only"
-  - $ref: "_security_policy.yaml#"
+  - $ref: "_security_policy.yaml#/tcp"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"
 definitions:
@@ -28,8 +28,8 @@ template: |
     "{{tenant_name}}": {
       "{{app_name}}": {
         "{{app_name}}": {
-          "class": "Service_TCP"
         }
       }
     }
   }
+
