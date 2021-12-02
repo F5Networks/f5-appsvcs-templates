@@ -35,7 +35,7 @@ The following table lists the template set, the corresponding template(s) and a 
 
       * - bigip-fast-templates
         - Microsoft Exchange Application Template
-        - Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations
+        - Configure high availability and optimization for Microsoft Exchange 2016 and 2019 implementations
 
       * - bigip-fast-templates
         - Microsoft IIS Application Template
@@ -43,7 +43,7 @@ The following table lists the template set, the corresponding template(s) and a 
       
       * - bigip-fast-templates
         - Microsoft Sharepoint Application Template
-        - Configure high availability and optimization for Microsoft Sharepoint 2013 and 2016 implementations
+        - Configure high availability and optimization for Microsoft Sharepoint 2016 implementations
 
       * - bigip-fast-templates
         - SMTP Application Template
@@ -62,7 +62,7 @@ The following table lists the template set, the corresponding template(s) and a 
         - Simple UDP template wuth parameters defined outside of the template
 
       * - examples
-        - Simple UDP Application with IPAM (experimental/beta)
+        - Simple UDP Application with IPAM
         - Simple UDP template with IPAM options, see note below
    
       * - examples
