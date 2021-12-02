@@ -1,5 +1,6 @@
 # 1.14.0
 ## Added
+* bigip-fast-templates: Support for Exchange 2019
 
 ## Fixed
 * Fix error and avoid delays when deleting or adding new templatesets
