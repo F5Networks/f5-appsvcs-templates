@@ -44,9 +44,9 @@ definitions:
     minItems: 1
     maxItems: 1
     items:
-      type: object
       title: Type
-      properties:  
+      type: object
+      properties:
         blue_pool_port:
           title: Port
           type: integer
@@ -58,24 +58,11 @@ definitions:
         bp_sd_type:
           title: Type
           type: string
-          enum: ["static", "fqdn", "event", "aws", "gce", "azure", "consul"]
+          enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
           default: "event"
           options:
             input_width: 100px
-        bp_sd_node:
-          title: "   "
-          description: IP Address
-          type: string
-          enumFromBigip: ltm/node
-          default: ''
-          minLength: 0
-          maxLength: 255
-          propertyOrder: 2
-          options:
-            input_width: 100px
-            dependencies:
-              bp_sd_type: ["static"]
         bp_sd_host:
           title: "   "
           description: "FQDN"
@@ -270,8 +257,8 @@ definitions:
     minItems: 1
     maxItems: 1
     items:
-      type: object
       title: Type
+      type: object
       properties:  
         green_pool_port:
           title: Port
@@ -284,24 +271,11 @@ definitions:
         gp_sd_type:
           title: Type
           type: string
-          enum: ["static", "fqdn", "event", "aws", "gce", "azure", "consul"]
+          enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
           default: "event"
           options:
             input_width: 100px
-        gp_sd_node:
-          title: "   "
-          description: IP Address
-          type: string
-          enumFromBigip: ltm/node
-          default: ''
-          minLength: 0
-          maxLength: 255
-          propertyOrder: 2
-          options:
-            input_width: 100px
-            dependencies:
-              gp_sd_type: ["static"]
         gp_sd_host:
           title: "   "
           description: "FQDN"
@@ -474,6 +448,8 @@ parameters:
   distribution: "0.5"
   blue_pool: blue
   green_pool: green
+  blue_pool_sd: [{}]
+  green_pool_sd: [{}]
 template: |
   {
     "{{tenant_name}}": {
@@ -510,7 +486,6 @@ template: |
                     { 
                       "servicePort": {{blue_pool_port}},
                       "addressDiscovery": "{{bp_sd_type}}",
-                      {{#bp_sd_node}}"bigip": "{{bp_sd_node}}",{{/bp_sd_node}}
                       {{#bp_sd_host}}"hostname": "{{bp_sd_host}}",{{/bp_sd_host}}
                       {{#bp_sd_tag_key}}"tagKey": "{{bp_sd_tag_key}}",{{/bp_sd_tag_key}}
                       {{#bp_sd_tag_val}}"tagValue": "{{bp_sd_tag_val}}",{{/bp_sd_tag_val}}
@@ -554,7 +529,6 @@ template: |
                     { 
                       "servicePort": {{green_pool_port}},
                       "addressDiscovery": "{{gp_sd_type}}",
-                      {{#gp_sd_node}}"use": "/{{tenant}}/{{app_name}}/{{gp_sd_node}}",{{/gp_sd_node}}
                       {{#gp_sd_host}}"hostname": "{{gp_sd_host}}",{{/gp_sd_host}}
                       {{#gp_sd_tag_key}}"tagKey": "{{gp_sd_tag_key}}",{{/gp_sd_tag_key}}
                       {{#gp_sd_tag_val}}"tagValue": "{{gp_sd_tag_val}}",{{/gp_sd_tag_val}}
