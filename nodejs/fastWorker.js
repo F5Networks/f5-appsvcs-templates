@@ -340,8 +340,6 @@ class FASTWorker {
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
-        let config;
-        let saveState = true;
 
         return Promise.resolve()
             // Automatically add a block
@@ -384,23 +382,55 @@ class FASTWorker {
             .then((cfg) => {
                 config = cfg;
             })
-            .then(() => this.setDeviceInfo())
+            .then(() => this.setDeviceInfo(0))
             // Get the AS3 driver ready
+            .then(() => this.prepareAS3Driver(0, config))
+            // Load template sets from disk (i.e., those from the RPM)
+            .then(() => this.loadOnDiskTemplateSets(0, config))
+            // Done
+            .then(() => {
+                const dt = Date.now() - startTime;
+                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
+            })
+            .then(() => success())
+            // Errors
+            .catch((e) => {
+                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
+                error();
+            });
+    }
+
+    onStartCompleted(success, error, _loadedState, errMsg) {
+        if (typeof errMsg === 'string' && errMsg !== '') {
+            this.logger.error(`FAST Worker onStart error: ${errMsg}`);
+            return error();
+        }
+        this.generateTeemReportOnStart();
+        return success();
+    }
+
+    prepareAS3Driver(reqid, config) {
+        return Promise.resolve()
             .then(() => this.recordTransaction(
-                0, 'ready AS3 driver',
+                reqid, 'ready AS3 driver',
                 this.driver.loadMixins()
             ))
             .then(() => this.recordTransaction(
-                0, 'sync AS3 driver settings',
+                reqid, 'sync AS3 driver settings',
                 Promise.resolve()
-                    .then(() => this.gatherProvisionData(0, false, true))
+                    .then(() => this.gatherProvisionData(reqid, false, true))
                     .then(provisionData => this.driver.setSettings(config, provisionData, true))
-                    .then(() => this.saveConfig(config, 0))
-            ))
-            // Load template sets from disk (i.e., those from the RPM)
-            .then(() => this.enterTransaction(0, 'loading template sets from disk'))
+                    .then(() => this.saveConfig(config, reqid))
+            ));
+    }
+
+    loadOnDiskTemplateSets(reqid, config) {
+        let saveState = true;
+
+        return Promise.resolve()
+            .then(() => this.enterTransaction(reqid, 'loading template sets from disk'))
             .then(() => this.recordTransaction(
-                0, 'gather list of templates from disk',
+                reqid, 'gather list of templates from disk',
                 this.fsTemplateProvider.listSets()
             ))
             .then((fsSets) => {
@@ -425,39 +455,19 @@ class FASTWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
-            .then(() => this.exitTransaction(0, 'loading template sets from disk'))
+            .then(() => this.exitTransaction(reqid, 'loading template sets from disk'))
             // Persist any template set changes
-            .then(() => saveState && this.recordTransaction(0, 'persist template data store', this.storage.persist()))
-            // Done
-            .then(() => {
-                const dt = Date.now() - startTime;
-                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
-            })
-            .then(() => success())
-            // Errors
-            .catch((e) => {
-                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                error();
-            });
+            .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
 
-    onStartCompleted(success, error, _loadedState, errMsg) {
-        if (typeof errMsg === 'string' && errMsg !== '') {
-            this.logger.error(`FAST Worker onStart error: ${errMsg}`);
-            return error();
-        }
-        this.generateTeemReportOnStart();
-        return success();
-    }
-
-    setDeviceInfo() {
+    setDeviceInfo(reqid) {
         // If device-info is unavailable intermittently, this can be placed in onStart
         // and call setDeviceInfo in onStartCompleted
         // this.dependencies.push(this.restHelper.makeRestjavadUri(
         //     '/shared/identified-devices/config/device-info'
         // ));
         return Promise.resolve()
-            .then(() => this.recordTransaction(0, 'fetching device information',
+            .then(() => this.recordTransaction(reqid, 'fetching device information',
                 this.bigip.getDeviceInfo())
                 .then((data) => {
                     if (data) {
