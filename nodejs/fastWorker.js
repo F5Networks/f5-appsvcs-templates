@@ -1248,6 +1248,14 @@ class FASTWorker {
             this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
         }
 
+        // Update the driver's auth header if one was provided with the request
+        if (restOp.headers && restOp.headers.Authorization) {
+            this.driver.setAuthHeader(restOp.headers.Authorization);
+        }
+        if (restOp.headers && restOp.headers.authorization) {
+            this.driver.setAuthHeader(restOp.headers.authorization);
+        }
+
         // Record the time we received the request
         this.requestTimes[restOp.requestId] = Date.now();
 
