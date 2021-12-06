@@ -5,7 +5,10 @@
 ## Fixed
 * Fix error and avoid delays when deleting or adding new templatesets
 * Fix error when updating bigip-fast-templates apps that use old pool_member definitions
+* bigip-fast-templates: Fix Exchange template dependencies so that all fields show/hide as expected
+
 ## Changed
+* bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in scheme.
 
 # 1.13.0
 ## Added
