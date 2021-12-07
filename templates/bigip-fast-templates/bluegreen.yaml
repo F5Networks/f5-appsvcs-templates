@@ -17,7 +17,7 @@ definitions:
     type: number
     minimum: 0
     maximum: 1
-    default: '0.5'
+    default: 0.5
   blue_pool:
     title: Blue Pool Name
     minLength: 2
