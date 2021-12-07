@@ -53,7 +53,7 @@ fastl4: &fastl4
     <<: *virtual_base_def
     fastl4:
       title: Use fastL4 Protocol Profiles
-      description: Check to use BIG-IP's fastL4 profile for delivery optimization.
+      description: The FastL4 profile can increase virtual server performance and throughput by using the embedded Packet Velocity Acceleration (ePVA) chip to accelerate traffic.
       type: boolean
       default: false
     make_fastl4_profile:
