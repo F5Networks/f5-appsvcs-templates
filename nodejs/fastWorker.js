@@ -91,6 +91,10 @@ const supportedHashes = {
 class FASTWorker {
     constructor(options) {
         options = options || {};
+        if (typeof options.uploadPath === 'undefined') {
+            options.uploadPath = '/var/config/rest/downloads';
+        }
+
         this.state = {};
 
         this.baseUserAgent = `${pkg.name}/${pkg.version}`;
@@ -98,7 +102,7 @@ class FASTWorker {
 
         this.configPath = options.configPath || `/var/config/rest/iapps/${projectName}`;
         this.templatesPath = options.templatesPath || `${this.configPath}/templatesets`;
-        this.uploadPath = options.uploadPath || '/var/config/rest/downloads';
+        this.uploadPath = options.uploadPath;
         this.scratchPath = `${this.configPath}/scratch`;
 
         this.isPublic = true;
@@ -1575,16 +1579,12 @@ class FASTWorker {
     postTemplateSets(restOperation, data) {
         const tsid = data.name;
         const reqid = restOperation.requestId;
-        const setpath = `${this.uploadPath}/${tsid}.zip`;
+        const setsrc = (this.uploadPath !== '') ? `${this.uploadPath}/${tsid}.zip` : `${tsid}.zip`;
         const scratch = `${this.scratchPath}/${tsid}`;
         const onDiskPath = `${this.templatesPath}/${tsid}`;
 
         if (!data.name) {
             return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`);
-        }
-
-        if (!fs.existsSync(setpath) && !fs.existsSync(onDiskPath)) {
-            return this.genRestResponse(restOperation, 404, `${setpath} does not exist`);
         }
 
         // Setup a scratch location we can use while validating the template set
@@ -1594,20 +1594,30 @@ class FASTWorker {
         this.exitTransaction(reqid, 'prepare scratch space');
 
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, 'extract template set'))
             .then(() => {
                 if (fs.existsSync(onDiskPath)) {
-                    return fs.copy(onDiskPath, scratch);
+                    return this.recordTransaction(
+                        reqid, 'copy template set from disk',
+                        fs.copy(onDiskPath, scratch)
+                    );
                 }
 
-                return new Promise((resolve, reject) => {
-                    extract(setpath, { dir: scratch }, (err) => {
-                        if (err) return reject(err);
-                        return resolve();
-                    });
-                });
+                const setpath = `${scratch}.zip`;
+                return Promise.resolve()
+                    .then(() => this.recordTransaction(
+                        reqid, 'fetch uploaded template set',
+                        this.bigip.copyUploadedFile(setsrc, setpath)
+                    ))
+                    .then(() => this.recordTransaction(
+                        reqid, 'extract template set',
+                        new Promise((resolve, reject) => {
+                            extract(setpath, { dir: scratch }, (err) => {
+                                if (err) return reject(err);
+                                return resolve();
+                            });
+                        })
+                    ));
             })
-            .then(() => this.exitTransaction(reqid, 'extract template set'))
             .then(() => this.recordTransaction(
                 reqid, 'validate template set',
                 this._validateTemplateSet(this.scratchPath)
@@ -1652,6 +1662,9 @@ class FASTWorker {
             })
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
+                if (e.message.match(/no such file/)) {
+                    return this.genRestResponse(restOperation, 404, `${setsrc} does not exist`);
+                }
                 if (e.message.match(/failed validation/)) {
                     return this.genRestResponse(restOperation, 400, e.message);
                 }
