@@ -231,7 +231,7 @@ definitions:
           default: true
   use_existing_green_pool: # it is for re-entry that we deviate from our FAST-Generated checkbox
     title: Use Existing Green Pool 
-    description: Uncheck to use an existing Green Pool.
+    description: Uncheck to use a FAST-Generated Green Pool.
     type: boolean
     default: false # this needs to be false for re-entry
   existing_green_pool:
