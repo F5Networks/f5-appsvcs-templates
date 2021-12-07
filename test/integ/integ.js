@@ -283,6 +283,10 @@ describe('Applications', function () {
             '10.0.0.9'
         ]
     }));
+    it('Deploy bigip-fast-templates/bluegreen', () => deployApplication('bigip-fast-templates/bluegreen', {
+        tenant_name: 'tenant',
+        app_name: 'bluegreen'
+    }));
 });
 
 describe('Settings', function () {
