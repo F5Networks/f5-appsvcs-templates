@@ -196,9 +196,13 @@ describe('Applications', function () {
             })
             .catch((e) => {
                 if (e.response) {
+                    const cfg = e.response.config;
+                    console.error(`${cfg.method} to ${cfg.url}:`);
                     console.error(e.response.data);
                 }
-                return Promise.reject(e);
+                return Promise.reject(new Error(
+                    `Failed to deploy ${templateName}: ${e.message}`
+                ));
             });
     }
 
