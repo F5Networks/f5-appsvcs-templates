@@ -123,21 +123,24 @@ waf_policy: &waf_policy
           "{{app_name}}": {
             {{> waf_partial_profiles}}
           },
+    waf_partial_policy:
+      template: |
+        {{#enable_waf_policy}}
+          "{{app_name}}_waf_policy": {
+            "class": "WAF_Policy",
+            "policy": {
+              "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+            },
+            "ignoreChanges": true
+          }
+        {{/enable_waf_policy}}
     waf_partial_template:
       template: |
         {
           "{{tenant_name}}": {
             "{{app_name}}": {
               {{> waf_partial_vs}}
-              {{#enable_waf_policy}}
-                "{{app_name}}_waf_policy": {
-                  "class": "WAF_Policy",
-                  "policy": {
-                    "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
-                  },
-                  "ignoreChanges": true
-                }
-              {{/enable_waf_policy}}
+              {{> waf_partial_policy}}
             }
           }
         }
@@ -184,7 +187,7 @@ bot_defense: &bot_defense
       }
     }
 
-# subtemplate with baasic features: WAF and ASM logging
+# subtemplate with basic features: WAF and ASM logging
 <<: *asm_base
 anyOf: 
   - <<: *asm_base_anyof
@@ -197,16 +200,16 @@ dns:
   <<: *asm_base
   anyOf: 
     - <<: *asm_base_anyof
-      definitions: 
-        <<: *asm_logging_def
-        asm_partial_vs:
-          template: |
-            "{{app_name}}_udp": {
-              {{> asm_partial_profiles}}
-            },
-            "{{app_name}}_tcp": {
-              {{> asm_partial_profiles}}
-            },
+      # definitions: 
+      #   <<: *asm_logging_def
+      #   asm_partial_vs:
+      #     template: |
+      #       "{{app_name}}_udp": {
+      #         {{> asm_partial_profiles}}
+      #       },
+      #       "{{app_name}}_tcp": {
+      #         {{> asm_partial_profiles}}
+      #       },
     - <<: *waf_policy
       definitions: 
         <<: *waf_policy_def
@@ -248,5 +251,62 @@ and_bot_defense:
     - <<: *asm_base_anyof
     - *waf_policy
     - *bot_defense
+    - *asm_logging
+    - *afm_logging
+
+# http subTemplate
+fastl4:
+  <<: *asm_base
+  anyOf: 
+    - <<: *asm_base_anyof
+    - <<: *waf_policy
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{> waf_partial_vs}}
+                {{> waf_partial_policy}}
+              {{/fastl4}}
+            }
+          }
+        }
+    - <<: *bot_defense
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{#enable_asm_bot_defense}}
+                  "{{app_name}}": {
+                    "profileBotDefense": { 
+                      "bigip": {{asm_bot_defense_profiles}}
+                    }
+                  }
+                {{/enable_asm_bot_defense}}
+              {{/fastl4}}
+            }
+          }
+        }
+    - *asm_logging
+    - *afm_logging
+
+# tcp subTemplate
+tcp:
+  <<: *asm_base
+  anyOf: 
+    - <<: *asm_base_anyof
+    - <<: *waf_policy
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{> waf_partial_vs}}
+                {{> waf_partial_policy}}
+              {{/fastl4}}
+            }
+          }
+        }
     - *asm_logging
     - *afm_logging
