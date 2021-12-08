@@ -493,7 +493,6 @@ definitions:
     title: Virtual Server IP Address from IPAM
     description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the IMAP4 virtual server.
     ipFromIpam: true
-    default: ''
     dependencies: 
       - imap4_use_ipam
   app_tls_server_def:
