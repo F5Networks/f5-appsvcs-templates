@@ -1,108 +1,156 @@
-title: TCP Profile
-contentType: application/json
 bigipHideTemplate: true
-definitions:
-  common_tcp_profile:
-    title: Common TCP Profile
-    description: Use the same TCP profile for ingress and egress traffic.
-    type: boolean
-    default: false
-  make_tcp_profile:
-    title: FAST-Generated TCP Profile
-    description: Uncheck to use an existing BIG-IP TCP profile.
-    type: boolean
-    default: true
-  tcp_topology:
-    title: Common Network Topology
-    description: Select the network type connecting both clients and servers to the BIG-IP system
-    type: string
-    enum:
-      - lan
-      - wan
-      - mobile
-    default: wan
-  tcp_profile_name:
-    title: TCP profile
-    description: Select an existing BIG-IP TCP profile. It will be applied to both client-side and server-side context.
-    type: string
-    enumFromBigip: ltm/profile/tcp
-    default: "/Common/f5-tcp-progressive"
-  make_tcp_ingress_profile:
-    title: FAST-Generated Ingress TCP Profile
-    description: Uncheck to use an existing BIG-IP TCP client-side context.
-    type: boolean
-    default: true
-  tcp_ingress_topology:
-    title: Ingress Topology
-    description: Select the type of network connecting clients to the BIG-IP system.
-    type: string
-    enum:
-      - lan
-      - wan
-      - mobile
-    default: wan
-  tcp_ingress_profile_name:
-    title: Ingress TCP Profile
-    description: Select an existing BIG-IP TCP profile for client-side context.
-    type: string
-    enumFromBigip: ltm/profile/tcp
-    default: "/Common/f5-tcp-progressive"
-  make_tcp_egress_profile:
-    title: FAST-Generated Egress TCP profile
-    description: Uncheck to use an existing BIG-IP TCP server-side context.
-    type: boolean
-    default: true
-  tcp_egress_topology:
-    title: Egress Topology
-    description: Select the type of network connecting servers to the BIG-IP system.
-    type: string
-    enum:
-      - lan
-      - wan
-      - mobile
-    default: lan
-  tcp_egress_profile_name:
-    title: Egress TCP Profile
-    description: Select an existing BIG-IP TCP profile for server-side context
-    type: string
-    enumFromBigip: ltm/profile/tcp
-    default: "/Common/f5-tcp-progressive"
-template: |
-  {
-    "{{tenant_name}}": {
-      "{{app_name}}": {
+
+tcp_base: &tcp_base
+  title: TCP Profile
+  contentType: application/json
+  definitions: &tcp_base_def
+    common_tcp_profile:
+      title: Common TCP Profile
+      description: Use the same TCP profile for ingress and egress traffic.
+      type: boolean
+      default: false
+    make_tcp_profile:
+      title: FAST-Generated TCP Profile
+      description: Uncheck to use an existing BIG-IP TCP profile.
+      type: boolean
+      default: true
+    tcp_topology:
+      title: Common Network Topology
+      description: Select the network type connecting both clients and servers to the BIG-IP system
+      type: string
+      enum:
+        - lan
+        - wan
+        - mobile
+      default: wan
+    tcp_profile_name:
+      title: TCP profile
+      description: Select an existing BIG-IP TCP profile. It will be applied to both client-side and server-side context.
+      type: string
+      enumFromBigip: ltm/profile/tcp
+      default: "/Common/f5-tcp-progressive"
+    make_tcp_ingress_profile:
+      title: FAST-Generated Ingress TCP Profile
+      description: Uncheck to use an existing BIG-IP TCP client-side context.
+      type: boolean
+      default: true
+    tcp_ingress_topology:
+      title: Ingress Topology
+      description: Select the type of network connecting clients to the BIG-IP system.
+      type: string
+      enum:
+        - lan
+        - wan
+        - mobile
+      default: wan
+    tcp_ingress_profile_name:
+      title: Ingress TCP Profile
+      description: Select an existing BIG-IP TCP profile for client-side context.
+      type: string
+      enumFromBigip: ltm/profile/tcp
+      default: "/Common/f5-tcp-progressive"
+    make_tcp_egress_profile:
+      title: FAST-Generated Egress TCP profile
+      description: Uncheck to use an existing BIG-IP TCP server-side context.
+      type: boolean
+      default: true
+    tcp_egress_topology:
+      title: Egress Topology
+      description: Select the type of network connecting servers to the BIG-IP system.
+      type: string
+      enum:
+        - lan
+        - wan
+        - mobile
+      default: lan
+    tcp_egress_profile_name:
+      title: Egress TCP Profile
+      description: Select an existing BIG-IP TCP profile for server-side context
+      type: string
+      enumFromBigip: ltm/profile/tcp
+      default: "/Common/f5-tcp-progressive"
+  template: |
+    {
+      "{{tenant_name}}": {
         "{{app_name}}": {
-          {{#common_tcp_profile}}
-            {{#make_tcp_profile}}
-              "profileTCP": "{{tcp_topology}}",
-            {{/make_tcp_profile}}
-            {{^make_tcp_profile}}
-              "profileTCP": {
-                "bigip": "{{tcp_profile_name}}"
-              },
-            {{/make_tcp_profile}}
-          {{/common_tcp_profile}}
-          {{^common_tcp_profile}}
-          "profileTCP": {
-              {{#make_tcp_ingress_profile}}
-                "ingress": "{{tcp_ingress_topology}}",
-              {{/make_tcp_ingress_profile}}
-              {{^make_tcp_ingress_profile}}
-                "ingress": {
-                  "bigip": "{{tcp_ingress_profile_name}}"
+          "{{app_name}}": {
+            {{#common_tcp_profile}}
+              {{#make_tcp_profile}}
+                "profileTCP": "{{tcp_topology}}",
+              {{/make_tcp_profile}}
+              {{^make_tcp_profile}}
+                "profileTCP": {
+                  "bigip": "{{tcp_profile_name}}"
                 },
-              {{/make_tcp_ingress_profile}}
-              {{#make_tcp_egress_profile}}
-                "egress": "{{tcp_egress_topology}}"
-              {{/make_tcp_egress_profile}}
-              {{^make_tcp_egress_profile}}
-                "egress": {
-                  "bigip": "{{tcp_egress_profile_name}}"
-                }
-              {{/make_tcp_egress_profile}}
-           },
-          {{/common_tcp_profile}}
+              {{/make_tcp_profile}}
+            {{/common_tcp_profile}}
+            {{^common_tcp_profile}}
+              "profileTCP": {
+                  {{#make_tcp_ingress_profile}}
+                    "ingress": "{{tcp_ingress_topology}}",
+                  {{/make_tcp_ingress_profile}}
+                  {{^make_tcp_ingress_profile}}
+                    "ingress": {
+                      "bigip": "{{tcp_ingress_profile_name}}"
+                    },
+                  {{/make_tcp_ingress_profile}}
+                  {{#make_tcp_egress_profile}}
+                    "egress": "{{tcp_egress_topology}}"
+                  {{/make_tcp_egress_profile}}
+                  {{^make_tcp_egress_profile}}
+                    "egress": {
+                      "bigip": "{{tcp_egress_profile_name}}"
+                    }
+                  {{/make_tcp_egress_profile}}
+              },
+            {{/common_tcp_profile}}
+          }
         }
       }
     }
-  }
+
+<<: *tcp_base
+
+fastl4:
+  <<: *tcp_base
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          "{{app_name}}": {
+            {{^fastl4}}
+              {{#common_tcp_profile}}
+                {{#make_tcp_profile}}
+                  "profileTCP": "{{tcp_topology}}",
+                {{/make_tcp_profile}}
+                {{^make_tcp_profile}}
+                  "profileTCP": {
+                    "bigip": "{{tcp_profile_name}}"
+                  },
+                {{/make_tcp_profile}}
+              {{/common_tcp_profile}}
+              {{^common_tcp_profile}}
+                "profileTCP": {
+                    {{#make_tcp_ingress_profile}}
+                      "ingress": "{{tcp_ingress_topology}}",
+                    {{/make_tcp_ingress_profile}}
+                    {{^make_tcp_ingress_profile}}
+                      "ingress": {
+                        "bigip": "{{tcp_ingress_profile_name}}"
+                      },
+                    {{/make_tcp_ingress_profile}}
+                    {{#make_tcp_egress_profile}}
+                      "egress": "{{tcp_egress_topology}}"
+                    {{/make_tcp_egress_profile}}
+                    {{^make_tcp_egress_profile}}
+                      "egress": {
+                        "bigip": "{{tcp_egress_profile_name}}"
+                      }
+                    {{/make_tcp_egress_profile}}
+                },
+              {{/common_tcp_profile}}
+            {{/fastl4}}
+          }
+        }
+      }
+    }
