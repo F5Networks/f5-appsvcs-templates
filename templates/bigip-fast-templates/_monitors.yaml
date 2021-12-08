@@ -29,7 +29,7 @@ monitor_base: &monitor_base
         responds correctly.
       type: string
       enumFromBigip: ltm/monitor/tcp
-      default: /Common/tcp
+      default: '/Common/tcp'
     monitor_interval:
       title: Interval
       description: Set the time between health checks, in seconds.
@@ -41,9 +41,9 @@ monitor_base: &monitor_base
       template: >-
         "monitorType": "tcp",
     monitor_partial_type_specifics:
-      template: >-
-        "receive": "",
-        "send": ""
+      template: |
+        "send": "",
+        "receive": ""
     monitor_partial_template:
       template: |
         {
@@ -91,6 +91,16 @@ smtp:
   <<: *monitor_base
   definitions: 
     <<: *monitor_base_def
+    monitor_name:
+      title: Monitor
+      description: Select an existing BIG-IP pool monitor. Monitors are used to determine the health of the application on each
+        server. If an application instance does not respond or responds incorrectly, the
+        system will cease to send client requests to that web server. The system will
+        continue to monitor the instance and will begin sending requests once the application
+        responds correctly.
+      type: string
+      enumFromBigip: ltm/monitor/smtp
+      default: ''
     monitor_domain:
       title: Domain Name
       description: Specify the domain name for the SMTP server to accept mail.
@@ -135,7 +145,7 @@ ldap:
         continue to monitor the instance and will begin sending requests once the application responds correctly.
       type: string
       enumFromBigip: ltm/monitor/ldap
-      default: /Common/ldap
+      default: '/Common/ldap'
     monitor_username:
       title: User Name
       description: Set the credentials to be used by the monitor during each health check.
@@ -147,6 +157,7 @@ ldap:
       format: password
       contentEncoding: base64
       minLength: 2
+      default: ''
     monitor_base:
       title: Directory Level
       description: Enter the directory level to be searched in the health check.
@@ -171,12 +182,12 @@ ldap:
         "filter": "{{monitor_filter}}"
   template: |
     {{> monitor_partial_template}}
-  parameters:
-    monitor_passphrase: ''
 
 # subtemplate for http monitor
 http:
   <<: *monitor_base
+  parameters:
+    monitor_send_string: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
   definitions: 
     <<: *monitor_base_def
     enable_tls_client:
@@ -189,7 +200,7 @@ http:
         system will block client requests to that web server.
       type: string
       enumFromBigip: ltm/monitor/http
-      default: /Common/http
+      default: '/Common/http'
       dependencies: 
         - enable_tls_client
       invertDependency:
@@ -201,7 +212,7 @@ http:
         system will block client requests to that web server.
       type: string
       enumFromBigip: ltm/monitor/https
-      default: /Common/https
+      default: '/Common/https'
       dependencies: 
         - enable_tls_client
     monitor_credentials:
@@ -224,7 +235,6 @@ http:
       title: Send String
       description: Specify data to be sent during each health check. Note that HTTP/1.1 requires the host name.
       type: string
-      default: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n'
     monitor_expected_response:
       title: Expected Response
       description: The presence of this string anywhere in the HTTP response implies availability.
@@ -305,7 +315,7 @@ dns:
         continue to monitor the instance and will begin sending requests once the application responds correctly.
       type: string
       enumFromBigip: ltm/monitor/dns
-      default: /Common/dns
+      default: '/Common/dns'
     monitor_queryName:
       title: Host Name
       description: Enter the host name for the DNS request (queryName).

@@ -5,6 +5,8 @@ fw_base: &fw_base
   contentType: application/json
   bigipDependencies:
     - afm
+  parameters:
+    firewall_allow_list: ['0.0.0.0/0']
   definitions: &fw_base_def
     enable_firewall:
       title: Firewall

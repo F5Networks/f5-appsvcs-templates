@@ -196,9 +196,13 @@ describe('Applications', function () {
             })
             .catch((e) => {
                 if (e.response) {
+                    const cfg = e.response.config;
+                    console.error(`${cfg.method} to ${cfg.url}:`);
                     console.error(e.response.data);
                 }
-                return Promise.reject(e);
+                return Promise.reject(new Error(
+                    `Failed to deploy ${templateName}: ${e.message}`
+                ));
             });
     }
 
@@ -278,6 +282,10 @@ describe('Applications', function () {
         pool_members: [
             '10.0.0.9'
         ]
+    }));
+    it('Deploy bigip-fast-templates/bluegreen', () => deployApplication('bigip-fast-templates/bluegreen', {
+        tenant_name: 'tenant',
+        app_name: 'bluegreen'
     }));
 });
 

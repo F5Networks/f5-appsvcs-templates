@@ -3,31 +3,31 @@ title: Blue-Green Deployment Template
 description: Divide application traffic between pools by percentage. Add and remove pool members Event-Driven Service Discovery.
 allOf:
   - $ref: "_as3.yaml#"
-  - $ref: "_virtual.yaml#"
+  - $ref: "_virtual.yaml#/bluegreen"
   - $ref: "_snat.yaml#"
 definitions:
   enable_bluegreen:
     title: Enable
     description: Check to enable blue-green traffic distribution. When disabled, all traffic is sent to the blue pool.
     type: boolean
+    default: true
   distribution:
     title: Percentage
     description: Specify the fraction of traffic to send to blue or green. 0 will send all traffic to blue, 1 will send all traffic to green. 0.5 will send 50% to blue and 50% to green.
     type: number
     minimum: 0
     maximum: 1
+    default: 0.5
   blue_pool:
     title: Blue Pool Name
     minLength: 2
+    default: 'blue'
   green_pool:
     title: Green Pool Name
     minLength: 2
+    default: 'green'
 parameters:
   virtual_port: 80
-  enable_bluegreen: true
-  distribution: "0.5"
-  blue_pool: blue
-  green_pool: green
 template: |
   {
     "{{tenant_name}}": {

@@ -10,7 +10,7 @@ persist_base: &persist_base
         the life of a session or during subsequent sessions.
       type: boolean
       default: true
-    use_existing_persistence_profile: 
+    use_existing_persistence_profile:
       title: Use Existing Persistence Profile
       description: Select persistence profiles from those available on the BIG-IP
       type: boolean

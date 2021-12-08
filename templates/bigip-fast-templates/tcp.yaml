@@ -17,12 +17,6 @@ anyOf:
   - $ref: "_security_policy.yaml#/tcp"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_telemetry.yaml#"
-definitions:
-  persistence_type:
-    default: source-address
-  enable_fallback_persistence:
-    type: boolean
-    default: false
 template: |
   {
     "{{tenant_name}}": {

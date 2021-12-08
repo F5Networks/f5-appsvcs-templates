@@ -1,6 +1,6 @@
 contentType: application/json
 title: Microsoft Exchange Application Template
-description: Configure high availability and optimization for Microsoft Exchange 2013 and 2016 implementations.
+description: Configure high availability and optimization for Microsoft Exchange 2016 and 2019 implementations.
 bigipMinimumAS3: 3.23
 allOf:
   - $ref: "_as3.yaml#"
@@ -18,18 +18,25 @@ definitions:
     type: string
     dependencies: 
       - single_vip
-  use_ipam:
-    title: Use IPAM Provider
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-    dependencies:
+  virtual_port:
+    title: Virtual Server Port
+    default: 443
+    dependencies: 
       - single_vip
   virtual_address:
     title: Virtual Server IP Address
     description: This IP address, combined with the port you specify below, becomes
       the BIG-IP virtual server address and port, which clients use to access the application.
       The system uses this IP:Port for distributing requests to the web servers.
+    dependencies:
+      - single_vip
+      - use_ipam
+    invertDependency:
+      -use_ipam
+  use_ipam:
+    title: Use IPAM Provider
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
     dependencies:
       - single_vip
   virtual_address_ipam:
@@ -42,14 +49,11 @@ definitions:
     default: ''
     dependencies:
       - single_vip
-  virtual_port:
-    title: Virtual Server Port
-    default: 443
+      - use_ipam
   enable_redirect:
     title: HTTP Redirect
     description: Redirect requests from port 80 to this virtual server.
     type: boolean
-    default: true
   pool_members:
     title: Pool Members
     description: Add the addresses of the Exchange servers in the pool.
@@ -79,9 +83,11 @@ definitions:
     title: SNMP-Based External Monitoring
     description: By default, FAST creates Microsoft-recommended Managed Availability monitors. You can choose to have FAST create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange deployment guide.
     type: boolean
+    default: false
     dependencies: []
   snmp_community_string:
     title: SNMP Community String
+    default: 'public'
     dependencies:
     - eav
   enable_snat:
@@ -89,8 +95,8 @@ definitions:
     description: "*Secure Network Address Translation* maps the source client IP address
       in a request to a translation address defined on the BIG-IP device."
     type: boolean
-    dependencies: []
     default: false
+    dependencies: []
   snat_automap:
     title: SNAT Automap
     description: SNAT automap uses BIG-IP self IP addresses as the translation address.
@@ -125,7 +131,6 @@ definitions:
     title: SNAT Pool Addresses
     type: array
     uniqueItems: true
-    default: ['10.0.1.1']
     items:
       type: string
       default: '10.0.1.2'
@@ -168,6 +173,7 @@ definitions:
     title: Specify the name of an existing BIG-IP serverssl profile.
     description: 'Note: TLS client profiles are of type "ltm serverssl" on BIG-IP.'
     enumFromBigip: 'ltm/profile/server-ssl'
+    default: '/Common/serverssl'
     dependencies:
     - enable_tls_client
     - make_tls_client_profile
@@ -186,19 +192,6 @@ definitions:
     title: Outlook Web App
     description: Select if you are deploying the BIG-IP system for Outlook Web App, including the Exchange Control Panel (ECP) at this time. You can always reconfigure this template at another time to add or remove Outlook Web App from the configuration.
     type: boolean
-  owa_use_ipam:
-    title: Use IPAM Provider for OWA Virtual IP
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-  owa_virtual_address_ipam:
-    title: Virtual Server IP Address from IPAM
-    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
-    ipFromIpam: true
-    default: ''
-  owa_virtual_address:
-    title: OWA Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
   owa_fqdn: 
     title: OWA Domain Name
     type: string
@@ -207,23 +200,37 @@ definitions:
       - single_vip
     invertDependency:
       - single_vip
+  owa_virtual_address:
+    title: OWA Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
+    dependencies: 
+      - owa
+      - single_vip
+      - owa_use_ipam
+    invertDependency:
+      - single_vip
+      - owa_use_ipam
+  owa_use_ipam:
+    title: Use IPAM Provider for OWA Virtual IP
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
+    default: false
+    dependencies: 
+      - owa
+      - single_vip
+    invertDependency:
+      - single_vip
+  owa_virtual_address_ipam:
+    title: Virtual Server IP Address from IPAM
+    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the Outlook Web App virtual server. This is the IP address clients will use to access OWA (or a FQDN will resolve to this address).
+    ipFromIpam: true
+    default: ''
+    dependencies:
+      - owa_use_ipam
   ews:
     title: EWS
     description: Select whether you are deploying Microsoft Outlook (including EWS and OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
-  ews_use_ipam:
-    title: Use IPAM Provider for EWS Virtual IP
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-  ews_virtual_address_ipam:
-    title: Virtual Server IP Address from IPAM
-    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the EWS virtual server.
-    ipFromIpam: true
-    default: ''
-  ews_virtual_address:
-    title: EWS Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the EWS virtual server.
   ews_fqdn: 
     title: EWS Domain Name
     type: string
@@ -232,28 +239,46 @@ definitions:
       - single_vip
     invertDependency:
       - single_vip
+  ews_virtual_address:
+    title: EWS Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the EWS virtual server.
+    dependencies: 
+      - ews
+      - single_vip
+      - ews_use_ipam
+    invertDependency:
+      - single_vip
+      - ews_use_ipam
+  ews_use_ipam:
+    title: Use IPAM Provider for EWS Virtual IP
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
+    default: false
+    dependencies: 
+      - ews
+      - single_vip
+    invertDependency:
+      - single_vip
+  ews_virtual_address_ipam:
+    title: Virtual Server IP Address from IPAM
+    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the EWS virtual server.
+    ipFromIpam: true
+    default: ''
+    dependencies: 
+      - ews_use_ipam
   outlook:
     title: Microsoft Outlook and OAB
-    description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
+    description: Select whether you are deploying Microsoft Outlook (including OAB) as a part of your Exchange 2016 or 2019 deployment. If you are, you must answer the following question about the protocol Outlook uses to connect to Exchange.
     type: boolean
   outlookMAPI:
     title: MAPI-over-HTTP
     type: boolean
+    default: true
     dependencies:
-    - outlook
-  mapi_use_ipam:
-    title: Use IPAM Provider for MAPI Virtual IP
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-  mapi_virtual_address_ipam:
-    title: Virtual Server IP Address from IPAM
-    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the MAPI virtual server.
-    ipFromIpam: true
-    default: ''
-  mapi_virtual_address:
-    title: MAPI Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
+      - outlook
+      - single_vip
+    invertDependency:
+      - single_vip
   mapi_fqdn: 
     title: MAPI Domain Name
     type: string
@@ -262,25 +287,40 @@ definitions:
       - single_vip
     invertDependency:
       - single_vip
+  mapi_virtual_address:
+    title: MAPI Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the MAPI virtual server.
+    dependencies: 
+      - outlookMAPI
+      - single_vip
+      - mapi_use_ipam
+    invertDependency:
+      - single_vip
+      - mapi_use_ipam
+  mapi_use_ipam:
+    title: Use IPAM Provider for MAPI Virtual IP
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
+    default: false
+    dependencies: 
+      - outlookMAPI
+      - single_vip
+    invertDependency:
+      - single_vip
+  mapi_virtual_address_ipam:
+    title: Virtual Server IP Address from IPAM
+    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the MAPI virtual server.
+    ipFromIpam: true
+    default: ''
+    dependencies: 
+      - mapi_use_ipam
   outlookRPC:
     title: RPC-over-HTTP
     description: Microsoft Outlook clients can use MAPI-over-HTTP, RPC-over-HTTP or both to connect to Microsoft Exchange so it can create the appropriate BIG-IP objects.
     type: boolean
+    default: false
     dependencies:
     - outlook
-  oa_use_ipam:
-    title: Use IPAM Provider for Outlook Anywhere Virtual IP
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-  oa_virtual_address_ipam:
-    title: Virtual Server IP Address from IPAM
-    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the Outlook Anywhere virtual server.
-    ipFromIpam: true
-    default: ''
-  oa_virtual_address:
-    title: Outlook Anywhere Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
   oa_fqdn: 
     title: Outlook Anywhere Domain Name
     type: string
@@ -289,23 +329,37 @@ definitions:
       - single_vip
     invertDependency:
       - single_vip
+  oa_virtual_address:
+    title: Outlook Anywhere Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Outlook Anywhere virtual server.
+    dependencies: 
+      - outlookRPC
+      - single_vip
+      - oa_use_ipam
+    invertDependency:
+      - single_vip
+      - oa_use_ipam
+  oa_use_ipam:
+    title: Use IPAM Provider for Outlook Anywhere Virtual IP
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
+    default: false
+    dependencies: 
+      - outlookRPC
+      - single_vip
+    invertDependency:
+      - single_vip
+  oa_virtual_address_ipam:
+    title: Virtual Server IP Address from IPAM
+    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the Outlook Anywhere virtual server.
+    ipFromIpam: true
+    default: ''
+    dependencies: 
+      - oa_use_ipam
   activesync: 
     title: ActiveSync
     description: Select whether you are deploying the BIG-IP system for ActiveSync at this time. You can always reconfigure this template at another time to add or remove ActiveSync from the configuration.
     type: boolean
-  as_use_ipam:
-    title: Use IPAM Provider for ActiveSync Virtual IP
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-  as_virtual_address_ipam:
-    title: Virtual Server IP Address from IPAM
-    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the ActiveSync virtual server.
-    ipFromIpam: true
-    default: ''
-  as_virtual_address:
-    title: ActiveSync Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the ActiveSync virtual server.
   as_fqdn: 
     title: ActiveSync Domain Name
     type: string
@@ -314,23 +368,37 @@ definitions:
       - single_vip
     invertDependency:
       - single_vip
+  as_virtual_address:
+    title: ActiveSync Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the ActiveSync virtual server.
+    dependencies: 
+      - activesync
+      - single_vip
+      - as_use_ipam
+    invertDependency:
+      - single_vip
+      - as_use_ipam
+  as_use_ipam:
+    title: Use IPAM Provider for ActiveSync Virtual IP
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
+    default: false
+    dependencies: 
+      - activesync
+      - single_vip
+    invertDependency:
+      - single_vip
+  as_virtual_address_ipam:
+    title: Virtual Server IP Address from IPAM
+    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the ActiveSync virtual server.
+    ipFromIpam: true
+    default: ''
+    dependencies: 
+      - as_use_ipam
   autodiscover:
     title: Autodiscover
     description: Select whether you are deploying the BIG-IP system for Autodiscover at this time. You can always reconfigure this template at another time to add or remove Autodiscover from the configuration. 	To deploy Autodiscover, you must either create an 'SRV' record in DNS or create 'A' records in order for external clients to be able to make use of Autodiscover. See Additional Steps at the bottom of this template for more information.
     type: boolean
-  ad_use_ipam:
-    title: Use IPAM Provider for Autodiscover Virtual IP
-    description: Use an IP Address Management service to get an IP address
-    type: boolean
-    default: false
-  ad_virtual_address_ipam:
-    title: Virtual Server IP Address from IPAM
-    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the Autodiscover virtual server.
-    ipFromIpam: true
-    default: ''
-  ad_virtual_address:
-    title: Autodiscover Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Autodiscover virtual server.
   ad_fqdn: 
     title: Autodiscover Domain Name
     type: string
@@ -339,40 +407,95 @@ definitions:
       - single_vip
     invertDependency:
       - single_vip
+  ad_virtual_address:
+    title: Autodiscover Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the Autodiscover virtual server.
+    dependencies:
+      - autodiscover
+      - single_vip
+      - ad_use_ipam
+    invertDependency:
+      - single_vip
+      - ad_use_ipam
+  ad_use_ipam:
+    title: Use IPAM Provider for Autodiscover Virtual IP
+    description: Use an IP Address Management service to get an IP address
+    type: boolean
+    default: false
+    dependencies:
+      - autodiscover
+      - single_vip
+    invertDependency:
+      - single_vip
+  ad_virtual_address_ipam:
+    title: Virtual Server IP Address from IPAM
+    description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the Autodiscover virtual server.
+    ipFromIpam: true
+    default: ''
+    dependencies:
+      - ad_use_ipam
   pop3:
     title: POP3
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable POP3 on each of your Exchange Mailbox Servers before that service will be available. POP3 is not enabled by default on Exchange Mailbox Servers.
     type: boolean
+    default: true
+  pop3_virtual_address:
+    title: POP3 Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the POP3 virtual server.
+    dependencies:
+      - pop3
+      - single_vip
+    invertDependency:
+      - single_vip
   pop3_use_ipam:
     title: Use IPAM Provider for POP3 Virtual IP
     description: Use an IP Address Management service to get an IP address
     type: boolean
     default: false
+    dependencies:
+      - pop3
+      - single_vip
+    invertDependency:
+      - single_vip
   pop3_virtual_address_ipam:
     title: Virtual Server IP Address from IPAM
     description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the POP3 virtual server.
     ipFromIpam: true
     default: ''
-  pop3_virtual_address:
-    title: POP3 Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the POP3 virtual server.
+    dependencies:
+      - pop3_use_ipam
   imap4:
     title: IMAP4
     description: Select whether you are deploying the BIG-IP system for POP3 at this time. You can always reconfigure this template at another time to add or remove POP3 from the configuration. 	You must enable IMAP4 on each of your Exchange Mailbox Servers before that service will be available. IMAP4 is not enabled by default on Exchange Mailbox Servers.
     type: boolean
+    default: false
+  imap4_virtual_address:
+    title: IMAP4 Virtual IP
+    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the IMAP4 virtual server.
+    type: string
+    default: ''
+    dependencies: 
+      - imap4
+      - single_vip
+    invertDependency:
+      - single_vip
   imap4_use_ipam:
     title: Use IPAM Provider for IMAP4 Virtual IP
     description: Use an IP Address Management service to get an IP address
     type: boolean
     default: false
+    dependencies: 
+      - imap4
+      - single_vip
+    invertDependency:
+      - single_vip
   imap4_virtual_address_ipam:
     title: Virtual Server IP Address from IPAM
     description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the IMAP4 virtual server.
     ipFromIpam: true
     default: ''
-  imap4_virtual_address:
-    title: IMAP4 Virtual IP
-    description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the IMAP4 virtual server.
+    dependencies: 
+      - imap4_use_ipam
   app_tls_server_def:
     template: |
       {{#enable_tls_server}}
@@ -1219,12 +1342,12 @@ definitions:
               {{/use_ipam}}
             {{/single_vip}}
             {{^single_vip}}
-              {{#pop3_use_ipam}}
+              {{#imap4_use_ipam}}
                 "{{imap4_virtual_address_ipam}}"
-              {{/pop3_use_ipam}}
-              {{^pop3_use_ipam}}
+              {{/imap4_use_ipam}}
+              {{^imap4_use_ipam}}
                 "{{imap4_virtual_address:f5:ipv4_ipv6}}"
-              {{/pop3_use_ipam}}
+              {{/imap4_use_ipam}}
             {{/single_vip}}
           ],
           "pool": "exchangeVS_imap4_pool",
@@ -1300,26 +1423,26 @@ definitions:
         {{#outlook}}     
           {{#outlookMAPI}}  
             "{{app_name}}_mapi_vs": {
-            "virtualAddresses": [
-              {{#mapi_use_ipam}}
-                "{{mapi_virtual_address_ipam}}"
-              {{/mapi_use_ipam}}
-              {{^mapi_use_ipam}}
-                "{{mapi_virtual_address:f5:ipv4_ipv6}}"
-              {{/mapi_use_ipam}}
-            ],
-            "pool": "exchangeVS_mapi_pool",
-            "virtualPort": {{virtual_port:f5:port}},
-            {{> service_type_def}}
-            {{> service_tls_server_def}}
-            {{> service_tls_client_def}}
-            {{> service_http_def}}
-            {{> service_persist}}
-            {{> service_snat_def}}
-            {{> service_multiplex_def}}
-            {{> service_redirect80_def}}
-            {{> service_oneconnect_irules_def}}
-            {{> service_tcp_def}}
+              "virtualAddresses": [
+                {{#mapi_use_ipam}}
+                  "{{mapi_virtual_address_ipam}}"
+                {{/mapi_use_ipam}}
+                {{^mapi_use_ipam}}
+                  "{{mapi_virtual_address:f5:ipv4_ipv6}}"
+                {{/mapi_use_ipam}}
+              ],
+              "pool": "exchangeVS_mapi_pool",
+              "virtualPort": {{virtual_port:f5:port}},
+              {{> service_type_def}}
+              {{> service_tls_server_def}}
+              {{> service_tls_client_def}}
+              {{> service_http_def}}
+              {{> service_persist}}
+              {{> service_snat_def}}
+              {{> service_multiplex_def}}
+              {{> service_redirect80_def}}
+              {{> service_oneconnect_irules_def}}
+              {{> service_tcp_def}}
             },
           {{/outlookMAPI}}
         {{/outlook}}     
@@ -1332,7 +1455,14 @@ definitions:
         {{#outlook}}     
           {{#outlookRPC}}  
             "{{app_name}}_oa_vs": {
-              "virtualAddresses": ["{{oa_virtual_address:f5:ipv4_ipv6}}"],
+              "virtualAddresses": [
+                {{#oa_use_ipam}}
+                  "{{oa_virtual_address_ipam}}"
+                {{/oa_use_ipam}}
+                {{^oa_use_ipam}}
+                  "{{oa_virtual_address:f5:ipv4_ipv6}}"
+                {{/oa_use_ipam}}
+              ],
               "pool": "exchangeVS_oa_pool",
               "virtualPort": {{virtual_port:f5:port}},
               {{> service_type_def}}
@@ -1443,35 +1573,31 @@ definitions:
         },
       {{/single_vip}}
 parameters:
-  app_name: 'Exchange2016'
+  app_name: 'Exchange'
   app_fqdn: 'example.mycompany.com'
-  owa_fqdn: 'example.mycompany.com'
-  ews_fqdn: 'example.mycompany.com'
-  mapi_fqdn: 'example.mycompany.com'
-  oa_fqdn: 'example.mycompany.com'
-  as_fqdn: 'example.mycompany.com'
-  ad_fqdn: 'example.mycompany.com'
-  eav: false
-  single_vip: true
-  enable_multiplex: true
+  use_ipam: false
+  enable_redirect: true
+  snat_addresses: ['10.0.1.1']
+  snatpool_name: '/Common'
   enable_tls_server: true
-  enable_tls_server_chain: false
-  enable_tls_client: false
-  make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
+  enable_tls_server_chain: false
   tls_chain_name: /Common/ca-bundle.crt
-  tls_client_profile_name: /Common/serverssl
-  snatpool_name: /Common
+  make_tls_client_profile: false
+  enable_multiplex: true
   owa: true
-  outlook: true
+  owa_fqdn: 'example.mycompany.com'
   ews: true
-  outlookMAPI: true
-  outlookRPC: false
+  ews_fqdn: 'example.mycompany.com'
+  outlook: true
+  mapi_fqdn: 'example.mycompany.com'
+  oa_fqdn: 'example.mycompany.com'
   activesync: true
+  as_fqdn: 'example.mycompany.com'
   autodiscover: true
-  pop3: false
-  imap4: false
+  ad_fqdn: 'example.mycompany.com'
+  
 template: |
   {
     "{{tenant_name}}": {
@@ -1529,4 +1655,3 @@ template: |
   {{/enable_multiplex}}
   {{#enable_redirect}}
   {{/enable_redirect}}
-
