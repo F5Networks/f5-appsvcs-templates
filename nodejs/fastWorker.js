@@ -105,8 +105,8 @@ class FASTWorker {
         this.uploadPath = options.uploadPath;
         this.scratchPath = `${this.configPath}/scratch`;
 
-        this._extendedStartComplete = false;
-        this.delayStartup = options.delayStartup;
+        this._lazyInitComplete = false;
+        this.lazyInit = options.lazyInit;
 
         this.isPublic = true;
         this.isPassThrough = true;
@@ -381,11 +381,11 @@ class FASTWorker {
                     .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
             })
             .then(() => {
-                if (this.delayStartup) {
+                if (this.lazyInit) {
                     return Promise.resolve();
                 }
 
-                return this.extendedStartup();
+                return this.initWorker();
             })
             // Done
             .then(() => {
@@ -408,10 +408,10 @@ class FASTWorker {
         return success();
     }
 
-    extendedStartup(reqid) {
+    initWorker(reqid) {
         let config;
 
-        this._extendedStartComplete = true;
+        this._lazyInitComplete = true;
 
         return Promise.resolve()
             // Load config
@@ -429,14 +429,14 @@ class FASTWorker {
             });
     }
 
-    handleDelayedStartup(reqid) {
-        if (!this.delayStartup || this._extendedStartComplete) {
+    handleLazyInit(reqid) {
+        if (!this.lazyInit || this._lazyInitComplete) {
             return Promise.resolve();
         }
 
         return this.recordTransaction(
-            reqid, 'run delayed startup',
-            this.extendedStartup(reqid)
+            reqid, 'run lazy initialization',
+            this.initWorker(reqid)
         );
     }
 
@@ -1529,7 +1529,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleDelayedStartup(restOperation.requestId))
+            .then(() => this.handleLazyInit(restOperation.requestId))
             .then(() => {
                 try {
                     switch (collection) {
@@ -1787,7 +1787,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleDelayedStartup(restOperation.requestId))
+            .then(() => this.handleLazyInit(restOperation.requestId))
             .then(() => {
                 try {
                     switch (collection) {
@@ -1968,7 +1968,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleDelayedStartup(restOperation.requestId))
+            .then(() => this.handleLazyInit(restOperation.requestId))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2060,7 +2060,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleDelayedStartup(restOperation.requestId))
+            .then(() => this.handleLazyInit(restOperation.requestId))
             .then(() => {
                 try {
                     switch (collection) {
