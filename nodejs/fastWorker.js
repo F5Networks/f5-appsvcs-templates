@@ -105,6 +105,9 @@ class FASTWorker {
         this.uploadPath = options.uploadPath;
         this.scratchPath = `${this.configPath}/scratch`;
 
+        this._lazyInitComplete = false;
+        this.lazyInit = options.lazyInit;
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
@@ -340,8 +343,6 @@ class FASTWorker {
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
         this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
-        let config;
-        let saveState = true;
 
         return Promise.resolve()
             // Automatically add a block
@@ -379,28 +380,88 @@ class FASTWorker {
                     .catch(e => this.handleResponseError(e, 'to set block state'))
                     .then(() => this.exitTransaction(0, 'ensure FAST is in iApps blocks'));
             })
+            .then(() => {
+                if (this.lazyInit) {
+                    return Promise.resolve();
+                }
+
+                return this.initWorker();
+            })
+            // Done
+            .then(() => {
+                const dt = Date.now() - startTime;
+                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
+            })
+            .then(() => success())
+            // Errors
+            .catch((e) => {
+                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
+                error();
+            });
+    }
+
+    onStartCompleted(success, error, _loadedState, errMsg) {
+        if (typeof errMsg === 'string' && errMsg !== '') {
+            this.logger.error(`FAST Worker onStart error: ${errMsg}`);
+            return error();
+        }
+        return success();
+    }
+
+    initWorker(reqid) {
+        let config;
+
+        this._lazyInitComplete = true;
+
+        return Promise.resolve()
             // Load config
-            .then(() => this.getConfig(0))
+            .then(() => this.getConfig(reqid))
             .then((cfg) => {
                 config = cfg;
             })
-            .then(() => this.setDeviceInfo())
+            .then(() => this.setDeviceInfo(reqid))
             // Get the AS3 driver ready
+            .then(() => this.prepareAS3Driver(reqid, config))
+            // Load template sets from disk (i.e., those from the RPM)
+            .then(() => this.loadOnDiskTemplateSets(reqid, config))
+            .then(() => {
+                this.generateTeemReportOnStart();
+            });
+    }
+
+    handleLazyInit(reqid) {
+        if (!this.lazyInit || this._lazyInitComplete) {
+            return Promise.resolve();
+        }
+
+        return this.recordTransaction(
+            reqid, 'run lazy initialization',
+            this.initWorker(reqid)
+        );
+    }
+
+    prepareAS3Driver(reqid, config) {
+        return Promise.resolve()
             .then(() => this.recordTransaction(
-                0, 'ready AS3 driver',
+                reqid, 'ready AS3 driver',
                 this.driver.loadMixins()
             ))
             .then(() => this.recordTransaction(
-                0, 'sync AS3 driver settings',
+                reqid, 'sync AS3 driver settings',
                 Promise.resolve()
-                    .then(() => this.gatherProvisionData(0, false, true))
+                    .then(() => this.gatherProvisionData(reqid, false, true))
                     .then(provisionData => this.driver.setSettings(config, provisionData, true))
-                    .then(() => this.saveConfig(config, 0))
-            ))
-            // Load template sets from disk (i.e., those from the RPM)
-            .then(() => this.enterTransaction(0, 'loading template sets from disk'))
+                    .then(() => this.saveConfig(config, reqid))
+            ));
+    }
+
+    loadOnDiskTemplateSets(reqid, config) {
+        let saveState = true;
+
+        return Promise.resolve()
+            .then(() => this.enterTransaction(reqid, 'loading template sets from disk'))
             .then(() => this.recordTransaction(
-                0, 'gather list of templates from disk',
+                reqid, 'gather list of templates from disk',
                 this.fsTemplateProvider.listSets()
             ))
             .then((fsSets) => {
@@ -425,39 +486,19 @@ class FASTWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
-            .then(() => this.exitTransaction(0, 'loading template sets from disk'))
+            .then(() => this.exitTransaction(reqid, 'loading template sets from disk'))
             // Persist any template set changes
-            .then(() => saveState && this.recordTransaction(0, 'persist template data store', this.storage.persist()))
-            // Done
-            .then(() => {
-                const dt = Date.now() - startTime;
-                this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
-            })
-            .then(() => success())
-            // Errors
-            .catch((e) => {
-                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                error();
-            });
+            .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
 
-    onStartCompleted(success, error, _loadedState, errMsg) {
-        if (typeof errMsg === 'string' && errMsg !== '') {
-            this.logger.error(`FAST Worker onStart error: ${errMsg}`);
-            return error();
-        }
-        this.generateTeemReportOnStart();
-        return success();
-    }
-
-    setDeviceInfo() {
+    setDeviceInfo(reqid) {
         // If device-info is unavailable intermittently, this can be placed in onStart
         // and call setDeviceInfo in onStartCompleted
         // this.dependencies.push(this.restHelper.makeRestjavadUri(
         //     '/shared/identified-devices/config/device-info'
         // ));
         return Promise.resolve()
-            .then(() => this.recordTransaction(0, 'fetching device information',
+            .then(() => this.recordTransaction(reqid, 'fetching device information',
                 this.bigip.getDeviceInfo())
                 .then((data) => {
                     if (data) {
@@ -488,8 +529,8 @@ class FASTWorker {
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
-    generateTeemReportOnStart() {
-        return this.gatherInfo()
+    generateTeemReportOnStart(reqid) {
+        return this.gatherInfo(reqid)
             .then(info => this.sendTeemReport('onStart', 1, info))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
@@ -1248,6 +1289,14 @@ class FASTWorker {
             this.driver.userAgent = userAgent ? `${userAgent};${this.baseUserAgent}` : this.baseUserAgent;
         }
 
+        // Update the driver's auth header if one was provided with the request
+        if (restOp.headers && restOp.headers.Authorization) {
+            this.driver.setAuthHeader(restOp.headers.Authorization);
+        }
+        if (restOp.headers && restOp.headers.authorization) {
+            this.driver.setAuthHeader(restOp.headers.authorization);
+        }
+
         // Record the time we received the request
         this.requestTimes[restOp.requestId] = Date.now();
 
@@ -1479,28 +1528,32 @@ class FASTWorker {
 
         this.recordRestRequest(restOperation);
 
-        try {
-            switch (collection) {
-            case 'info':
-                return this.getInfo(restOperation);
-            case 'templates':
-                return this.getTemplates(restOperation, itemid);
-            case 'applications':
-                return this.getApplications(restOperation, itemid);
-            case 'tasks':
-                return this.getTasks(restOperation, itemid);
-            case 'templatesets':
-                return this.getTemplateSets(restOperation, itemid);
-            case 'settings':
-                return this.getSettings(restOperation);
-            case 'settings-schema':
-                return this.getSettingsSchema(restOperation);
-            default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
-            }
-        } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.stack);
-        }
+        return Promise.resolve()
+            .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => {
+                try {
+                    switch (collection) {
+                    case 'info':
+                        return this.getInfo(restOperation);
+                    case 'templates':
+                        return this.getTemplates(restOperation, itemid);
+                    case 'applications':
+                        return this.getApplications(restOperation, itemid);
+                    case 'tasks':
+                        return this.getTasks(restOperation, itemid);
+                    case 'templatesets':
+                        return this.getTemplateSets(restOperation, itemid);
+                    case 'settings':
+                        return this.getSettings(restOperation);
+                    case 'settings-schema':
+                        return this.getSettingsSchema(restOperation);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    }
+                } catch (e) {
+                    return this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 
     postApplications(restOperation, data) {
@@ -1733,22 +1786,26 @@ class FASTWorker {
 
         this.recordRestRequest(restOperation);
 
-        try {
-            switch (collection) {
-            case 'applications':
-                return this.postApplications(restOperation, body);
-            case 'templatesets':
-                return this.postTemplateSets(restOperation, body);
-            case 'settings':
-                return this.postSettings(restOperation, body);
-            case 'render':
-                return this.postRender(restOperation, body);
-            default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
-            }
-        } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.message);
-        }
+        return Promise.resolve()
+            .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => {
+                try {
+                    switch (collection) {
+                    case 'applications':
+                        return this.postApplications(restOperation, body);
+                    case 'templatesets':
+                        return this.postTemplateSets(restOperation, body);
+                    case 'settings':
+                        return this.postSettings(restOperation, body);
+                    case 'render':
+                        return this.postRender(restOperation, body);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    }
+                } catch (e) {
+                    return this.genRestResponse(restOperation, 500, e.message);
+                }
+            });
     }
 
     deleteApplications(restOperation, appid, data) {
@@ -1910,20 +1967,24 @@ class FASTWorker {
 
         this.recordRestRequest(restOperation);
 
-        try {
-            switch (collection) {
-            case 'applications':
-                return this.deleteApplications(restOperation, itemid, body);
-            case 'templatesets':
-                return this.deleteTemplateSets(restOperation, itemid);
-            case 'settings':
-                return this.deleteSettings(restOperation);
-            default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
-            }
-        } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.stack);
-        }
+        return Promise.resolve()
+            .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => {
+                try {
+                    switch (collection) {
+                    case 'applications':
+                        return this.deleteApplications(restOperation, itemid, body);
+                    case 'templatesets':
+                        return this.deleteTemplateSets(restOperation, itemid);
+                    case 'settings':
+                        return this.deleteSettings(restOperation);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    }
+                } catch (e) {
+                    return this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 
     patchApplications(restOperation, appid, data) {
@@ -1998,18 +2059,22 @@ class FASTWorker {
 
         this.recordRestRequest(restOperation);
 
-        try {
-            switch (collection) {
-            case 'applications':
-                return this.patchApplications(restOperation, itemid, body);
-            case 'settings':
-                return this.patchSettings(restOperation, body);
-            default:
-                return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
-            }
-        } catch (e) {
-            return this.genRestResponse(restOperation, 500, e.stack);
-        }
+        return Promise.resolve()
+            .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => {
+                try {
+                    switch (collection) {
+                    case 'applications':
+                        return this.patchApplications(restOperation, itemid, body);
+                    case 'settings':
+                        return this.patchSettings(restOperation, body);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    }
+                } catch (e) {
+                    return this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 }
 

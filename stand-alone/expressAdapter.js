@@ -93,6 +93,11 @@ function generateApp(workers, options) {
     }
     app.use(express.json());
 
+    // Load any middleware
+    if (options.middleware) {
+        options.middleware.forEach(x => app.use(x));
+    }
+
     // Patch up the workers
     workers.forEach((worker) => {
         worker.logger = {
