@@ -1,18 +1,24 @@
-title: Security DOS
-contentType: application/json
 bigipHideTemplate: true
-bigipDependencies:
-  - afm
-definitions:
-  enable_dos:
-    title: Denial of Service
-    type: boolean
-    default: false
-  dos_profile:
-    title: DoS Profile
-    description: Select an existing BIG-IP DoS profile.
-    type: string
-    enumFromBigip: security/dos/profile
+
+dos_base: &dos_base
+  title: Security DOS
+  contentType: application/json
+  bigipDependencies:
+    - afm
+  definitions:  &dos_base_def
+    enable_dos:
+      title: Denial of Service
+      type: boolean
+      default: false
+    dos_profile:
+      title: DoS Profile
+      description: Select an existing BIG-IP DoS profile.
+      type: string
+      enumFromBigip: security/dos/profile
+      default: ''
+
+# default DOS subTemplate
+<<: *dos_base
 template: |
   {
     "{{tenant_name}}": {
@@ -27,3 +33,23 @@ template: |
       }
     }
   }
+
+# fastL4 subTemplate
+fastl4:
+  <<: *dos_base
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{^fastl4}}
+            {{#enable_dos}}
+              "{{app_name}}": {
+                "profileDOS": {
+                  "bigip": "{{dos_profile}}"
+                }
+              }
+            {{/enable_dos}}
+          {{/fastl4}}
+        }
+      }
+    }

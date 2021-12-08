@@ -1,43 +1,77 @@
-title: TLS Client Profile
-contentType: application/json
 bigipHideTemplate: true
-definitions:
-  enable_tls_client:
-    title: TLS Client
-    description: Enable TLS client to encrypt server-side connections.
-    type: boolean
-    default: false
-  make_tls_client_profile:
-    title: FAST-Generated TLS Client Profile
-    description: Uncheck to use an existing TLS client profile.
-    type: boolean
-    default: true
-  tls_client_profile_name:
-    title: TLS Client Profile
-    description: Select an existing TLS client profile. TLS client profiles are of type "ltm serverssl" on BIG-IP.
-    enumFromBigip: ltm/profile/server-ssl
-    default: "/Common/serverssl"
-template: |
-  {
-    "{{tenant_name}}": {
-      "{{app_name}}": {
-        {{#enable_tls_client}}
-          {{#make_tls_client_profile}}
-            "{{app_name}}_tls_client": {
-              "class": "TLS_Client"
-            },
-            "{{app_name}}": {
-              "clientTLS": "{{app_name}}_tls_client"
-            }
-          {{/make_tls_client_profile}}
-          {{^make_tls_client_profile}}
-            "{{app_name}}": {
-              "clientTLS": {
-                "bigip": "{{tls_client_profile_name}}"
+
+tls_client_base: &tls_client_base 
+  title: TLS Client Profile
+  contentType: application/json
+  definitions: &tls_client_base_def
+    enable_tls_client: 
+      title: TLS Client
+      description: Enable TLS client to encrypt server-side connections.
+      type: boolean
+      default: false
+    make_tls_client_profile:
+      title: FAST-Generated TLS Client Profile
+      description: Uncheck to use an existing TLS client profile.
+      type: boolean
+      default: true
+    tls_client_profile_name:
+      title: TLS Client Profile
+      description: Select an existing TLS client profile. TLS client profiles are of type "ltm serverssl" on BIG-IP.
+      enumFromBigip: ltm/profile/server-ssl
+      default: "/Common/serverssl"
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{#enable_tls_client}}
+            {{#make_tls_client_profile}}
+              "{{app_name}}_tls_client": {
+                "class": "TLS_Client"
+              },
+              "{{app_name}}": {
+                "clientTLS": "{{app_name}}_tls_client"
               }
-            }
-          {{/make_tls_client_profile}}
-        {{/enable_tls_client}}
+            {{/make_tls_client_profile}}
+            {{^make_tls_client_profile}}
+              "{{app_name}}": {
+                "clientTLS": {
+                  "bigip": "{{tls_client_profile_name}}"
+                }
+              }
+            {{/make_tls_client_profile}}
+          {{/enable_tls_client}}
+        }
       }
     }
-  }
+
+<<: *tls_client_base
+
+fastl4:
+  <<: *tls_client_base
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{^fastl4}}
+            {{#enable_tls_client}}
+              {{#make_tls_client_profile}}
+                "{{app_name}}_tls_client": {
+                  "class": "TLS_Client"
+                },
+                "{{app_name}}": {
+                  "clientTLS": "{{app_name}}_tls_client"
+                }
+              {{/make_tls_client_profile}}
+              {{^make_tls_client_profile}}
+                "{{app_name}}": {
+                  "clientTLS": {
+                    "bigip": "{{tls_client_profile_name}}"
+                  }
+                }
+              {{/make_tls_client_profile}}
+            {{/enable_tls_client}}
+          {{/fastl4}}
+        }
+      }
+    }
+

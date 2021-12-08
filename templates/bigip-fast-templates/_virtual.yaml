@@ -49,6 +49,95 @@ virtual_base: &virtual_base
 template: |
   {{> virtual_partial_template}}
 
+# fastl4 subtemplate
+fastl4: &fastl4
+  <<: *virtual_base
+  definitions: &fastl4_context_def
+    <<: *virtual_base_def
+    fastl4:
+      title: Use fastL4 Protocol Profiles
+      description: The FastL4 profile can increase virtual server performance and throughput by using the embedded Packet Velocity Acceleration (ePVA) chip to accelerate traffic.
+      type: boolean
+      default: false
+    make_fastl4_profile:
+      title: FAST-Generated fastL4 Protocol Profile
+      description: Uncheck to use an existing BIG-IP fastL4 profile.
+      type: boolean
+      default: true
+    fastl4_profile_name:
+      title: fastL4 profile
+      description: Select an existing BIG-IP fastL4 profile.
+      type: string
+      enumFromBigip: ltm/profile/fastl4
+      default: "/Common/fastL4"
+  template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              "{{app_name}}": {
+                "virtualAddresses": [
+                  {{#use_ipam}}
+                    "{{virtual_address_ipam}}"
+                  {{/use_ipam}}
+                  {{^use_ipam}}
+                    "{{virtual_address:f5:ipv4_ipv6}}"
+                  {{/use_ipam}}
+                ],
+                "virtualPort": {{virtual_port:f5:port}},
+                {{#fastl4}}
+                  "class": "Service_L4",
+                  {{#make_fastl4_profile}}
+                    "profileL4": "basic",
+                  {{/make_fastl4_profile}}
+                  {{^make_fastl4_profile}}
+                    "profileL4": {
+                      "bigip": "{{fastl4_profile_name}}"
+                    },
+                  {{/make_fastl4_profile}}
+                {{/fastl4}}
+              }
+            }
+          }
+        }
+
+# tcp subTemplate
+tcp: 
+  definitions: *fastl4_context_def
+  template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              "{{app_name}}": {
+                {{#fastl4}}
+                  "class": "Service_L4",
+                {{/fastl4}}
+                {{^fastl4}}
+                  "class": "Service_TCP",
+                {{/fastl4}}
+                "virtualAddresses": [
+                  {{#use_ipam}}
+                    "{{virtual_address_ipam}}"
+                  {{/use_ipam}}
+                  {{^use_ipam}}
+                    "{{virtual_address:f5:ipv4_ipv6}}"
+                  {{/use_ipam}}
+                ],
+                "virtualPort": {{virtual_port:f5:port}},
+                {{#fastl4}}
+                  {{#make_fastl4_profile}}
+                    "profileL4": "basic",
+                  {{/make_fastl4_profile}}
+                  {{^make_fastl4_profile}}
+                    "profileL4": {
+                      "bigip": "{{fastl4_profile_name}}"
+                    },
+                  {{/make_fastl4_profile}}
+                {{/fastl4}}
+              }
+            }
+          }
+        }
+
 # subtemplate with VS names unique to DNS template
 dns:
   <<: *virtual_base

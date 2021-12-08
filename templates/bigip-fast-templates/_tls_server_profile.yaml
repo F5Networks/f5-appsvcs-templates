@@ -1,36 +1,36 @@
-title: TLS Server Profile
-contentType: application/json
 bigipHideTemplate: true
-definitions:
-  enable_tls_server:
-    title: TLS Server
-    description: Enable TLS server to decrypt client-side connections.
-    type: boolean
-    default: true
-  make_tls_server_profile:
-    title: FAST-Generated TLS Server Profile
-    description: Uncheck to use an existing BIG-IP TLS server profile.
-    type: boolean
-    default: true
-  tls_server_profile_name:
-    title: TLS Server Profile
-    description: Select an existing TLS server profile. TLS server profiles are of type "ltm clientssl" on BIG-IP.
-    enumFromBigip: ltm/profile/client-ssl
-    default: "/Common/clientssl"
-  tls_cert_name:
-    title: TLS Certificate
-    description: Select an existing BIG-IP SSL certificate.
-    enumFromBigip: sys/crypto/cert
-    default: "/Common/default.crt"
-  tls_key_name:
-    title: TLS Key
-    description: Select an existing BIG-IP SSL key.
-    enumFromBigip: sys/crypto/key
-    default: "/Common/default.key"
-template: |
-  {
-    "{{tenant_name}}": {
-      "{{app_name}}": {
+
+tls_server_base: &tls_server_base
+  title: TLS Server Profile
+  contentType: application/json
+  definitions: &tls_server_base_def
+    enable_tls_server:
+      title: TLS Server
+      description: Enable TLS server to decrypt client-side connections.
+      type: boolean
+      default: true
+    make_tls_server_profile:
+      title: FAST-Generated TLS Server Profile
+      description: Uncheck to use an existing BIG-IP TLS server profile.
+      type: boolean
+      default: true
+    tls_server_profile_name:
+      title: TLS Server Profile
+      description: Select an existing TLS server profile. TLS server profiles are of type "ltm clientssl" on BIG-IP.
+      enumFromBigip: ltm/profile/client-ssl
+      default: "/Common/clientssl"
+    tls_cert_name:
+      title: TLS Certificate
+      description: Select an existing BIG-IP SSL certificate.
+      enumFromBigip: sys/crypto/cert
+      default: "/Common/default.crt"
+    tls_key_name:
+      title: TLS Key
+      description: Select an existing BIG-IP SSL key.
+      enumFromBigip: sys/crypto/key
+      default: "/Common/default.key"
+    tls_server_partial_template:
+      template: |
         {{#enable_tls_server}}
           {{#make_tls_server_profile}}
             "{{app_name}}_tls_server": {
@@ -61,6 +61,28 @@ template: |
             "class": "Service_HTTP"
           }
         {{/enable_tls_server}}
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{>tls_server_partial_template}}
+        }
       }
     }
-  }
+
+# default TLS Server subTemplate
+<<: *tls_server_base
+
+# fastL4 version of the TLS Server subTemplate
+fastl4:
+  <<: *tls_server_base
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{^fastl4}}
+            {{>tls_server_partial_template}}
+          {{/fastl4}}
+        }
+      }
+    }
