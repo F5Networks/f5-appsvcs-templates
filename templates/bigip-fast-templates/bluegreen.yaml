@@ -17,17 +17,440 @@ definitions:
     type: number
     minimum: 0
     maximum: 1
-    default: 0.5
+  use_existing_blue_pool: # it is for re-entry that we deviate from our FAST-Generated checkbox
+    title: Existing Blue Pool 
+    description: Uncheck to use a FAST-Generated Blue Pool.
+    type: boolean
+    default: false # this needs to be false for re-entry
+  existing_blue_pool:
+      title: Blue Pool Existing on the BIG-IP Pool
+      description: Select an existing BIG-IP pool.
+      type: string
+      enumFromBigip: ltm/pool
+      default: ''
   blue_pool:
     title: Blue Pool Name
     minLength: 2
-    default: 'blue'
+  use_sd_blue_pool:
+    title: Use Blue Pool Service Discovery
+    description: Use Service Discovery for the Blue Pool's Members
+    type: boolean
+    default: true # this needs to be true for re-entry
+  blue_pool_sd:
+    title: Service Discovery Type
+    description: Select the Service Discovery type for the Green Pool's members.
+    type: array
+    default:
+      - []
+    minItems: 1
+    maxItems: 1
+    items:
+      title: Type
+      type: object
+      properties:
+        blue_pool_port:
+          title: Port
+          type: integer
+          minLength: 1
+          propertyOrder: 0
+          default: 80
+          options:
+            input_width: 100px
+        bp_sd_type:
+          title: Type
+          type: string
+          enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
+          propertyOrder: 1
+          default: "event"
+          options:
+            input_width: 100px
+        bp_sd_host:
+          title: "   "
+          description: "FQDN"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["fqdn"]
+        bp_sd_tag_key:
+          title: "   "
+          description: "tagKey"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["aws","gce"]
+        bp_sd_tag_val:
+          title: "   "
+          description: "tagValue"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["aws","gce"]
+        bp_sd_region:
+          title: "   "
+          description: "Region"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["gce"]
+        bp_sd_rg:
+          title: "   "
+          description: "Resource Group"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_sid:
+          title: "   "
+          description: "Subscription ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_rid:
+          title: "   "
+          description: "Resource ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_rtype:
+          title: "   "
+          description: "Resource Type"
+          type: string
+          enum: ["tag","scaleSet"]
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_dirid:
+          title: "   "
+          description: "Directory ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_appid:
+          title: "   "
+          description: "Application ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_apikey:
+          title: "   "
+          description: "API Key"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["azure"]
+        bp_sd_uri:
+          title: "   "
+          description: "URI"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              bp_sd_type: ["consul"]
+  blue_pool_members:
+    title: Blue Pool Members
+    description: Add the addresses of the servers in the Blue Pool. Use a connection limit
+      of 0 for unlimited connections.
+    type: array
+    uniqueItems: true
+    default:
+      - {}
+    minItems: 1
+    items:
+      type: object
+      properties:
+        serverAddresses:
+          title: Server Address
+        servicePort:
+          title: Server Port
+          default: 80
+        connectionLimit:
+          title: Connection Limit
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+        priorityGroup:
+          title: Priority Group
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+        shareNodes:
+          title: Share Node
+          type: boolean
+          default: true
+  use_existing_green_pool: # it is for re-entry that we deviate from our FAST-Generated checkbox
+    title: Use Existing Green Pool 
+    description: Uncheck to use a FAST-Generated Green Pool.
+    type: boolean
+    default: false # this needs to be false for re-entry
+  existing_green_pool:
+      title: Green Pool Existing on the BIG-IP Pool
+      description: Select an existing BIG-IP pool.
+      type: string
+      enumFromBigip: ltm/pool
+      default: ''
   green_pool:
     title: Green Pool Name
     minLength: 2
-    default: 'green'
+  use_sd_green_pool:
+    title: Use Green Pool Service Discovery
+    description: Use Service Discovery for the Green Pool's Members
+    type: boolean
+    default: true # this needs to be true for re-entry
+  green_pool_sd:
+    title: Service Discovery Type
+    description: Select the Service Discovery type for the Green Pool's members.
+    type: array
+    default:
+      - []
+    minItems: 1
+    maxItems: 1
+    items:
+      title: Type
+      type: object
+      properties:  
+        green_pool_port:
+          title: Port
+          type: integer
+          minLength: 1
+          propertyOrder: 0
+          default: 80
+          options:
+            input_width: 100px
+        gp_sd_type:
+          title: Type
+          type: string
+          enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
+          propertyOrder: 1
+          default: "event"
+          options:
+            input_width: 100px
+        gp_sd_host:
+          title: "   "
+          description: "FQDN"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["fqdn"]
+        gp_sd_tag_key:
+          title: "   "
+          description: "tagKey"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["aws","gce"]
+        gp_sd_tag_val:
+          title: "   "
+          description: "tagValue"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["aws","gce"]
+        gp_sd_region:
+          title: "   "
+          description: "Region"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["gce"]
+        gp_sd_rg:
+          title: "   "
+          description: "Resource Group"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_sid:
+          title: "   "
+          description: "Subscription ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_rid:
+          title: "   "
+          description: "Resource ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_rtype:
+          title: "   "
+          description: "Resource Type"
+          type: string
+          enum: ["tag","scaleSet"]
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_dirid:
+          title: "   "
+          description: "Directory ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_appid:
+          title: "   "
+          description: "Application ID"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_apikey:
+          title: "   "
+          description: "API Key"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["azure"]
+        gp_sd_uri:
+          title: "   "
+          description: "URI"
+          type: string
+          minLength: 0
+          maxLength: 255
+          propertyOrder: 2
+          options:
+            input_width: 100px
+            dependencies:
+              gp_sd_type: ["consul"]
+  green_pool_members:
+    title: Green Pool Members
+    description: Add the addresses of the servers in the Green Pool. Use a connection limit
+      of 0 for unlimited connections.
+    type: array
+    uniqueItems: true
+    default:
+      - {}
+    minItems: 1
+    items:
+      type: object
+      properties:
+        serverAddresses:
+          title: Server Address
+        servicePort:
+          title: Server Port
+          default: 80
+        connectionLimit:
+          title: Connection Limit
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+        priorityGroup:
+          title: Priority Group
+          type: integer
+          minimum: 0
+          maximum: 65535
+          default: 0
+        shareNodes:
+          title: Share Node
+          type: boolean
+          default: true
 parameters:
   virtual_port: 80
+  enable_bluegreen: true
+  distribution: 0.5
+  blue_pool: blue
+  green_pool: green
+  blue_pool_sd: [{}]
+  green_pool_sd: [{}]
 template: |
   {
     "{{tenant_name}}": {
@@ -35,6 +458,7 @@ template: |
       "{{app_name}}": {
         "class": "Application",
         "{{app_name}}": {
+
           "class": "Service_L4",
           "persistenceMethods": [],
           "profileL4": {
@@ -45,32 +469,99 @@ template: |
               "bluegreen_irule"
             ],
           {{/enable_bluegreen}}
-          "pool": "{{blue_pool}}"
+          {{#use_existing_blue_pool}}
+            "pool": { "bigip": "{{existing_blue_pool}}" }
+          {{/use_existing_blue_pool}}
+          {{^use_existing_blue_pool}}
+            "pool": "{{blue_pool}}"
+          {{/use_existing_blue_pool}}
         },
-        "{{blue_pool}}": {
-          "class": "Pool",
-          "loadBalancingMode": "round-robin",
-          "members": [
-            {
-              "servicePort": 80,
-              "addressDiscovery": "event",
-              "shareNodes": true
-            }
-          ],
-          "monitors": ['tcp']
-        },
-        "{{green_pool}}": {
-          "class": "Pool",
-          "loadBalancingMode": "round-robin",
-          "members": [
-            {
-              "servicePort": 80,
-              "addressDiscovery": "event",
-              "shareNodes": true
-            }
-          ],
-          "monitors": ['tcp']
-        },
+        {{^use_existing_blue_pool}}
+          "{{blue_pool}}": {
+            "class": "Pool",
+            "loadBalancingMode": "round-robin",
+            "members": [
+              {{#use_sd_blue_pool}}                
+                {{#blue_pool_sd}}
+                  {{#bp_sd_type}}
+                    { 
+                      "servicePort": {{blue_pool_port}},
+                      "addressDiscovery": "{{bp_sd_type}}",
+                      {{#bp_sd_host}}"hostname": "{{bp_sd_host}}",{{/bp_sd_host}}
+                      {{#bp_sd_tag_key}}"tagKey": "{{bp_sd_tag_key}}",{{/bp_sd_tag_key}}
+                      {{#bp_sd_tag_val}}"tagValue": "{{bp_sd_tag_val}}",{{/bp_sd_tag_val}}
+                      {{#bp_sd_region}}"region": "{{bp_sd_region}}",{{/bp_sd_region}}
+                      {{#bp_sd_rg}}"resourceGroup": "{{bp_sd_rg}}",{{/bp_sd_rg}}
+                      {{#bp_sd_sid}}"subscriptionId": "{{bp_sd_sid}}",{{/bp_sd_sid}}
+                      {{#bp_sd_rid}}"resourceId": "{{bp_sd_rid}}",{{/bp_sd_rid}}
+                      {{#bp_sd_rtype}}"resourceType": "{{bp_sd_rtype}}",{{/bp_sd_rtype}}
+                      {{#bp_sd_dirid}}"directoryId": "{{bp_sd_dirid}}",{{/bp_sd_dirid}}
+                      {{#bp_sd_appid}}"applicationId": "{{bp_sd_appid}}",{{/bp_sd_appid}}
+                      {{#bp_sd_apikey}}"apiAccessKey": "{{bp_sd_apikey}}",{{/bp_sd_apikey}}
+                      {{#bp_sd_uri}}"uri": "{{bp_sd_uri}}",{{/bp_sd_uri}}                      
+                      "shareNodes": true
+                    },
+                  {{/bp_sd_type}}
+                {{/blue_pool_sd}}
+              {{/use_sd_blue_pool}}
+              {{^use_sd_blue_pool}}
+                {{#blue_pool_members}}
+                  {
+                    "serverAddresses": [{{serverAddresses:f5:ipv4_ipv6_array}}],
+                    "servicePort": {{servicePort:f5:port}},
+                    "connectionLimit": {{connectionLimit}},
+                    "priorityGroup": {{priorityGroup}},
+                    "shareNodes": {{shareNodes::boolean}}
+                  },
+                {{/blue_pool_members}}
+              {{/use_sd_blue_pool}}
+            ],
+            "monitors": ['tcp']
+          },
+        {{/use_existing_blue_pool}}
+        {{^use_existing_green_pool}}
+          "{{green_pool}}": {
+            "class": "Pool",
+            "loadBalancingMode": "round-robin",
+            "members": [
+              {{#use_sd_green_pool}}                
+                {{#green_pool_sd}}
+                  {{#gp_sd_type}}
+                    { 
+                      "servicePort": {{green_pool_port}},
+                      "addressDiscovery": "{{gp_sd_type}}",
+                      {{#gp_sd_host}}"hostname": "{{gp_sd_host}}",{{/gp_sd_host}}
+                      {{#gp_sd_tag_key}}"tagKey": "{{gp_sd_tag_key}}",{{/gp_sd_tag_key}}
+                      {{#gp_sd_tag_val}}"tagValue": "{{gp_sd_tag_val}}",{{/gp_sd_tag_val}}
+                      {{#gp_sd_region}}"region": "{{gp_sd_region}}",{{/gp_sd_region}}
+                      {{#gp_sd_rg}}"resourceGroup": "{{gp_sd_rg}}",{{/gp_sd_rg}}
+                      {{#gp_sd_sid}}"subscriptionId": "{{gp_sd_sid}}",{{/gp_sd_sid}}
+                      {{#gp_sd_rid}}"resourceId": "{{gp_sd_rid}}",{{/gp_sd_rid}}
+                      {{#gp_sd_rtype}}"resourceType": "{{gp_sd_rtype}}",{{/gp_sd_rtype}}
+                      {{#gp_sd_dirid}}"directoryId": "{{gp_sd_dirid}}",{{/gp_sd_dirid}}
+                      {{#gp_sd_appid}}"applicationId": "{{gp_sd_appid}}",{{/gp_sd_appid}}
+                      {{#gp_sd_apikey}}"apiAccessKey": "{{gp_sd_apikey}}",{{/gp_sd_apikey}}
+                      {{#gp_sd_uri}}"uri": "{{gp_sd_uri}}",{{/gp_sd_uri}}                      
+                      "shareNodes": true
+                    },
+                  {{/gp_sd_type}}
+                {{/green_pool_sd}}
+              {{/use_sd_green_pool}}
+              {{^use_sd_green_pool}}
+                {{#green_pool_members}}
+                  {
+                    "serverAddresses": [{{serverAddresses:f5:ipv4_ipv6_array}}],
+                    "servicePort": {{servicePort:f5:port}},
+                    "connectionLimit": {{connectionLimit}},
+                    "priorityGroup": {{priorityGroup}},
+                    "shareNodes": {{shareNodes::boolean}}
+                  },
+                {{/green_pool_members}}
+              {{/use_sd_green_pool}}
+            ],
+            "monitors": ['tcp']
+          },
+        {{/use_existing_green_pool}}
         "bluegreen_datagroup": {
           "class": "Data_Group",
           "keyDataType": "string",
@@ -81,11 +572,23 @@ template: |
             },
             {
               "key": "blue_pool",
-              "value": "/{{tenant_name}}/{{app_name}}/{{blue_pool}}"
+              "value": 
+                {{#use_existing_blue_pool}}
+                  "/{{tenant_name}}/{{app_name}}/{{existing_blue_pool}}"
+                {{/use_existing_blue_pool}}
+                {{^use_existing_blue_pool}}
+                  "/{{tenant_name}}/{{app_name}}/{{blue_pool}}"
+                {{/use_existing_blue_pool}}
             },
             {
               "key": "green_pool",
-              "value": "/{{tenant_name}}/{{app_name}}/{{green_pool}}"
+              "value":
+                {{#use_existing_green_pool}}
+                  "/{{tenant_name}}/{{app_name}}/{{existing_green_pool}}"
+                {{/use_existing_green_pool}}
+                {{^use_existing_green_pool}}
+                  "/{{tenant_name}}/{{app_name}}/{{green_pool}}"
+                {{/use_existing_green_pool}}
             }
           ]
         },
