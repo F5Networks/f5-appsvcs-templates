@@ -44,6 +44,15 @@ definitions:
     type: array
     default:
       - []
+    options:
+      infoText: "<style>
+          tr[data-schemapath='root.blue_pool_sd.0'] td {
+            vertical-align: top; 
+          }
+          tr[data-schemapath='root.blue_pool_sd.0'] td:not(td[data-schemapath='root.blue_pool_sd.0.blue_pool_port']):not(td[data-schemapath='root.blue_pool_sd.0.bp_sd_type']) { 
+            display:inline; 
+          }
+        <style>"
     minItems: 1
     maxItems: 1
     items:
@@ -257,6 +266,15 @@ definitions:
     type: array
     default:
       - []
+    options:
+      infoText: "<style>
+          tr[data-schemapath='root.green_pool_sd.0'] td {
+            vertical-align: top; 
+          }
+          tr[data-schemapath='root.green_pool_sd.0'] td:not(td[data-schemapath='root.green_pool_sd.0.green_pool_port']):not(td[data-schemapath='root.green_pool_sd.0.gp_sd_type']) { 
+            display:inline; 
+          }
+        <style>"
     minItems: 1
     maxItems: 1
     items:
