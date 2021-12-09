@@ -63,7 +63,7 @@ definitions:
           type: string
           enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
-          default: "event" # this needs to be true for re-entry
+          default: "event" # this needs to be "event" for re-entry
           options:
             input_width: 100px
         bp_sd_host:
@@ -276,7 +276,7 @@ definitions:
           type: string
           enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
-          default: "event" # this needs to be true for re-entry
+          default: "event" # this needs to be "event" for re-entry
           options:
             input_width: 100px
         gp_sd_host:
