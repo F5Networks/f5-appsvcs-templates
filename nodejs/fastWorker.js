@@ -385,7 +385,7 @@ class FASTWorker {
                     return Promise.resolve();
                 }
 
-                return this.initWorker();
+                return this.initWorker(0);
             })
             // Done
             .then(() => {
@@ -409,6 +409,7 @@ class FASTWorker {
     }
 
     initWorker(reqid) {
+        reqid = reqid || 0;
         let config;
 
         this._lazyInitComplete = true;
