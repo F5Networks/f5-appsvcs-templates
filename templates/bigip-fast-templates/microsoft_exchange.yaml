@@ -276,9 +276,6 @@ definitions:
     default: true
     dependencies:
       - outlook
-      - single_vip
-    invertDependency:
-      - single_vip
   mapi_fqdn: 
     title: MAPI Domain Name
     type: string
@@ -473,7 +470,6 @@ definitions:
     title: IMAP4 Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the IMAP4 virtual server.
     type: string
-    default: ''
     dependencies: 
       - imap4
       - single_vip
@@ -1573,37 +1569,31 @@ definitions:
       {{/single_vip}}
 parameters:
   app_name: 'Exchange'
-  app_fqdn: 'example.mycompany.com'
-  owa_fqdn: 'example.mycompany.com'
-  ews_fqdn: 'example.mycompany.com'
-  mapi_fqdn: 'example.mycompany.com'
-  oa_fqdn: 'example.mycompany.com'
-  as_fqdn: 'example.mycompany.com'
-  ad_fqdn: 'example.mycompany.com'
-  eav: false
   single_vip: true
+  app_fqdn: 'example.mycompany.com'
   use_ipam: false
   enable_redirect: true
-  enable_multiplex: true
+  snat_addresses: ['10.0.1.1']
+  snatpool_name: '/Common'
   enable_tls_server: true
-  enable_tls_server_chain: false
-  enable_tls_client: false
-  make_tls_client_profile: true
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
-  tls_chain_name: /Common/ca-bundle.crt
-  tls_client_profile_name: /Common/serverssl
-  snatpool_name: /Common
+  enable_tls_server_chain: false
+  tls_chain_name: /Common/ca-bundle.crt 
+  enable_tls_client: false
+  make_tls_client_profile: false
+  enable_multiplex: true
   owa: true
-  outlook: true
+  owa_fqdn: 'example.mycompany.com'
   ews: true
-  outlookMAPI: true
-  outlookRPC: false
+  ews_fqdn: 'example.mycompany.com'
+  outlook: true
+  mapi_fqdn: 'example.mycompany.com'
+  oa_fqdn: 'example.mycompany.com'
   activesync: true
+  as_fqdn: 'example.mycompany.com'
   autodiscover: true
-  pop3: false
-  imap4: false
-  
+  ad_fqdn: 'example.mycompany.com'
 template: |
   {
     "{{tenant_name}}": {
