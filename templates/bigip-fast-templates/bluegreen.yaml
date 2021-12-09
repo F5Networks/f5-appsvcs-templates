@@ -45,7 +45,8 @@ definitions:
     default:
       - []
     options:
-      infoText: "<style>
+      infoText: "<h4>Select Service Discovery type</h4>and provide all additional information that displayed to the right of it
+        <style>
           tr[data-schemapath='root.blue_pool_sd.0'] td {
             vertical-align: top; 
           }
@@ -267,7 +268,8 @@ definitions:
     default:
       - []
     options:
-      infoText: "<style>
+      infoText: "<h4>Select Service Discovery type</h4>and provide all additional information that displayed to the right of it
+        <style>
           tr[data-schemapath='root.green_pool_sd.0'] td {
             vertical-align: top; 
           }
