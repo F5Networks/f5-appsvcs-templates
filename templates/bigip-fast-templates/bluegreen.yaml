@@ -4,6 +4,8 @@ description: Divide application traffic between pools by percentage. Add and rem
 allOf:
   - $ref: "_as3.yaml#"
   - $ref: "_virtual.yaml#/bluegreen"
+  - $ref: "_tls_server_profile.yaml#"
+  - $ref: "_tls_client_profile.yaml#"
   - $ref: "_snat.yaml#"
 definitions:
   enable_bluegreen:
@@ -61,7 +63,7 @@ definitions:
           type: string
           enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
-          default: "event"
+          default: "event" # this needs to be true for re-entry
           options:
             input_width: 100px
         bp_sd_host:
@@ -274,7 +276,7 @@ definitions:
           type: string
           enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
-          default: "event"
+          default: "event" # this needs to be true for re-entry
           options:
             input_width: 100px
         gp_sd_host:
@@ -445,6 +447,7 @@ definitions:
           default: true
 parameters:
   virtual_port: 80
+  enable_tls_server: false
   enable_bluegreen: true
   distribution: 0.5
   blue_pool: blue
@@ -459,7 +462,8 @@ template: |
         "class": "Application",
         "{{app_name}}": {
 
-          "class": "Service_L4",
+          "class": "Service_HTTP",
+          "profileHTTP": { "bigip": "/Common/http" },
           "persistenceMethods": [],
           "profileL4": {
             "bigip":"/Common/fastL4"

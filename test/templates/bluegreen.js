@@ -53,11 +53,14 @@ const expected = {
             class: 'Application',
             template: 'generic',
             app1: {
-                class: 'Service_L4',
+                class: 'Service_HTTP',
                 virtualAddresses: [view.virtual_address],
                 virtualPort: view.virtual_port,
                 snat: {
                     use: 'app1_snatpool'
+                },
+                profileHTTP: {
+                    bigip: '/Common/http'
                 },
                 persistenceMethods: [],
                 profileL4: {
