@@ -42,6 +42,29 @@ definitions:
     type: array
     default:
       - []
+    options:
+      infoText: "<h4>Select Service Discovery type</h4>and provide all additional information that displayed to the right of it
+        <style>
+          tr[data-schemapath='root.blue_pool_sd.0'] td {
+            vertical-align: top; 
+          }
+          tr[data-schemapath='root.blue_pool_sd.0'] td:not(td[data-schemapath='root.blue_pool_sd.0.blue_pool_port']):not(td[data-schemapath='root.blue_pool_sd.0.bp_sd_type']) { 
+            display:inline; 
+            padding: 0;
+          }
+          tr[data-schemapath='root.blue_pool_sd.0'] td:not(td[data-schemapath='root.blue_pool_sd.0.blue_pool_port']):not(td[data-schemapath='root.blue_pool_sd.0.bp_sd_type']) input {
+            width: 300px
+          }
+          td[data-schemapath='root.blue_pool_sd.0.bp_sd_type'] > div {
+            margin-right: 15px;
+          }
+          td[data-schemapath='root.blue_pool_sd.0.bp_sd_host'] div,
+          td[data-schemapath='root.blue_pool_sd.0.bp_sd_tag_key'] div,
+          td[data-schemapath='root.blue_pool_sd.0.bp_sd_rg'] div,
+          td[data-schemapath='root.blue_pool_sd.0.bp_sd_uri'] div  {
+            padding-top: 7px;
+          }
+        <style>"
     minItems: 1
     maxItems: 1
     items:
@@ -61,7 +84,7 @@ definitions:
           type: string
           enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
-          default: "event"
+          default: "event" # this needs to be "event" for re-entry
           options:
             input_width: 100px
         bp_sd_host:
@@ -248,13 +271,36 @@ definitions:
     title: Use Green Pool Service Discovery
     description: Use Service Discovery for the Green Pool's Members
     type: boolean
-    default: true # this needs to be true for re-entry
+    default: true # this needs to be true for re-entry  
   green_pool_sd:
     title: Service Discovery Type
     description: Select the Service Discovery type for the Green Pool's members.
     type: array
     default:
       - []
+    options:
+      infoText: "<h4>Select Service Discovery type</h4>and provide all additional information that displayed to the right of it
+        <style>
+          tr[data-schemapath='root.green_pool_sd.0'] td {
+            vertical-align: top; 
+          }
+          tr[data-schemapath='root.green_pool_sd.0'] td:not(td[data-schemapath='root.green_pool_sd.0.green_pool_port']):not(td[data-schemapath='root.green_pool_sd.0.gp_sd_type']) { 
+            display:inline; 
+            padding: 0;
+          }
+          tr[data-schemapath='root.green_pool_sd.0'] td:not(td[data-schemapath='root.green_pool_sd.0.green_pool_port']):not(td[data-schemapath='root.green_pool_sd.0.gp_sd_type']) input {
+            width: 300px
+          }
+          td[data-schemapath='root.green_pool_sd.0.gp_sd_type'] > div {
+            margin-right: 15px;
+          }
+          td[data-schemapath='root.green_pool_sd.0.gp_sd_host'] div,
+          td[data-schemapath='root.green_pool_sd.0.gp_sd_tag_key'] div,
+          td[data-schemapath='root.green_pool_sd.0.gp_sd_rg'] div,
+          td[data-schemapath='root.green_pool_sd.0.gp_sd_uri'] div  {
+            padding-top: 7px;
+          }
+        <style>"
     minItems: 1
     maxItems: 1
     items:
@@ -274,7 +320,7 @@ definitions:
           type: string
           enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
           propertyOrder: 1
-          default: "event"
+          default: "event" # this needs to be "event" for re-entry
           options:
             input_width: 100px
         gp_sd_host:
