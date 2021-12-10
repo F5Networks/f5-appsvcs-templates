@@ -5,3 +5,5 @@
 - [ ] [Merge request performance guidelines](https://docs.gitlab.com/ee/development/merge_request_performance_guidelines.html)
 - [ ] [Style guides](https://gitlab.com/gitlab-org/gitlab-ee/blob/master/doc/development/contributing/style_guides.md)
 - [ ] [Database guides](https://docs.gitlab.com/ee/development/README.html#database-guides)
+
+/assign me
