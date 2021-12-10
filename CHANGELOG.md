@@ -9,6 +9,7 @@
 
 ## Changed
 * bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in scheme.
+* Update f5-fast-core from v0.16.0 to v0.17.0
 
 # 1.13.0
 ## Added
