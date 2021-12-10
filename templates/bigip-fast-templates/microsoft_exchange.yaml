@@ -276,9 +276,6 @@ definitions:
     default: true
     dependencies:
       - outlook
-      - single_vip
-    invertDependency:
-      - single_vip
   mapi_fqdn: 
     title: MAPI Domain Name
     type: string
@@ -473,7 +470,6 @@ definitions:
     title: IMAP4 Virtual IP
     description: Because you chose different IP addresses for the different client access services, specify the IP address you want the system to use for the IMAP4 virtual server.
     type: string
-    default: ''
     dependencies: 
       - imap4
       - single_vip
@@ -493,7 +489,6 @@ definitions:
     title: Virtual Server IP Address from IPAM
     description: Because you chose different IP addresses for the different client access services, specify the IPAM provider to manage the IP address for the IMAP4 virtual server.
     ipFromIpam: true
-    default: ''
     dependencies: 
       - imap4_use_ipam
   app_tls_server_def:
@@ -1574,6 +1569,7 @@ definitions:
       {{/single_vip}}
 parameters:
   app_name: 'Exchange'
+  single_vip: true
   app_fqdn: 'example.mycompany.com'
   use_ipam: false
   enable_redirect: true
@@ -1583,7 +1579,8 @@ parameters:
   tls_cert_name: /Common/default.crt
   tls_key_name: /Common/default.key
   enable_tls_server_chain: false
-  tls_chain_name: /Common/ca-bundle.crt
+  tls_chain_name: /Common/ca-bundle.crt 
+  enable_tls_client: false
   make_tls_client_profile: false
   enable_multiplex: true
   owa: true
@@ -1597,7 +1594,6 @@ parameters:
   as_fqdn: 'example.mycompany.com'
   autodiscover: true
   ad_fqdn: 'example.mycompany.com'
-  
 template: |
   {
     "{{tenant_name}}": {
