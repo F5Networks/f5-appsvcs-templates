@@ -1,18 +1,18 @@
 # 1.14.0
 ## Added
 * bigip-fast-templates: Ability to specify a Minimum or Maximum BIG-IP version for a FAST templates
-* bigip-fast-templates: Added Bot Defense profiles to FAST templates ([#35](https://github.com/F5Networks/f5-appsvcs-templates/issues/35))
-* bigip-fast-templates: Added ASM Rapid Deployment and ASM Logging to FAST templates ([#6](https://github.com/F5Networks/f5-appsvcs-templates/issues/6))
+* bigip-fast-templates: Added Bot Defense profiles to FAST templates (issue [#35](https://github.com/F5Networks/f5-appsvcs-templates/issues/35))
+* bigip-fast-templates: Added ASM Rapid Deployment and ASM Logging to FAST templates (issue [#6](https://github.com/F5Networks/f5-appsvcs-templates/issues/6))
 * bigip-fast-templates: Support for Exchange 2019
 * bigip-fast-templates: Blue-Green template offers multiple Service Discovery options for pool members
 
 ## Fixed
 * Fix error and avoid delays when deleting or adding new templatesets
 * Fix error when updating bigip-fast-templates apps that use old pool_member definitions
-* bigip-fast-templates: Fix Exchange template dependencies so that all fields show/hide as expected ([#83](https://github.com/F5Networks/f5-appsvcs-templates/issues/83))
+* bigip-fast-templates: Fix Exchange template dependencies so that all fields show/hide as expected (issue [#83](https://github.com/F5Networks/f5-appsvcs-templates/issues/83))
 
 ## Changed
-* bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in scheme ([#81](https://github.com/F5Networks/f5-appsvcs-templates/issues/81), [#82](https://github.com/F5Networks/f5-appsvcs-templates/issues/82), [#84](https://github.com/F5Networks/f5-appsvcs-templates/issues/84))
+* bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in scheme (issues [#81](https://github.com/F5Networks/f5-appsvcs-templates/issues/81), [#82](https://github.com/F5Networks/f5-appsvcs-templates/issues/82), [#84](https://github.com/F5Networks/f5-appsvcs-templates/issues/84))
 * Update f5-fast-core from v0.16.0 to v0.17.0
 
 # 1.13.0
