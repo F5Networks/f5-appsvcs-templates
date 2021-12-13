@@ -1,8 +1,8 @@
 # 1.14.0
 ## Added
 * bigip-fast-templates: Ability to specify a Minimum or Maximum BIG-IP version for a FAST templates
-* bigip-fast-templates: Added Bot Defense profiles to FAST templates [#35](https://github.com/F5Networks/f5-appsvcs-templates/issues/35)
-* bigip-fast-templates: Added ASM Rapid Deployment and ASM Logging to FAST templates [#6](https://github.com/F5Networks/f5-appsvcs-templates/issues/6)
+* bigip-fast-templates: Added Bot Defense profiles to FAST templates ([#35](https://github.com/F5Networks/f5-appsvcs-templates/issues/35))
+* bigip-fast-templates: Added ASM Rapid Deployment and ASM Logging to FAST templates ([#6](https://github.com/F5Networks/f5-appsvcs-templates/issues/6))
 * bigip-fast-templates: Support for Exchange 2019
 * bigip-fast-templates: Blue-Green template offers multiple Service Discovery options for pool members
 
