@@ -12,7 +12,7 @@
 * bigip-fast-templates: Fix Exchange template dependencies so that all fields show/hide as expected (issue [#83](https://github.com/F5Networks/f5-appsvcs-templates/issues/83))
 
 ## Changed
-* bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in scheme (issues [#81](https://github.com/F5Networks/f5-appsvcs-templates/issues/81), [#82](https://github.com/F5Networks/f5-appsvcs-templates/issues/82), [#84](https://github.com/F5Networks/f5-appsvcs-templates/issues/84))
+* bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in schema (issues [#81](https://github.com/F5Networks/f5-appsvcs-templates/issues/81), [#82](https://github.com/F5Networks/f5-appsvcs-templates/issues/82), [#84](https://github.com/F5Networks/f5-appsvcs-templates/issues/84))
 * Update f5-fast-core from v0.16.0 to v0.17.0
 
 # 1.13.0
