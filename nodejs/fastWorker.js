@@ -186,6 +186,7 @@ class FASTWorker {
             ipamProviders: [],
             disableDeclarationCache: false
         };
+        const mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
             .then(() => Promise.all([
@@ -205,9 +206,9 @@ class FASTWorker {
                     .then(() => {
                         this.logger.info('FAST Worker: no config found, loading defaults');
                     })
-                    .then(() => this.configStorage.setItem(configKey, defaultConfig))
+                    .then(() => this.configStorage.setItem(configKey, mergedDefaults))
                     .then(() => this.configStorage.persist())
-                    .then(() => defaultConfig);
+                    .then(() => mergedDefaults);
             })
             .then((config) => {
                 this.exitTransaction(reqid, 'gathering config data');
@@ -215,7 +216,7 @@ class FASTWorker {
             })
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to load config: ${e.stack}`);
-                return Promise.resolve(defaultConfig);
+                return Promise.resolve(mergedDefaults);
             });
     }
 

@@ -277,7 +277,7 @@ describe('template worker tests', function () {
         nock.cleanAll();
         this.clock.restore();
 
-        const scratchPath = path.join(process.cwd(), 'templates', 'scratch');
+        const scratchPath = path.join(process.cwd(), 'scratch');
         if (fs.existsSync(scratchPath)) {
             fs.rmdirSync(scratchPath, { recursive: true });
         }
@@ -1152,6 +1152,31 @@ describe('template worker tests', function () {
             .then(() => assert.equal(op.status, 200))
             .then(() => worker.templateProvider.listSets())
             .then(setNames => assert.strictEqual(setNames.length, 0));
+    });
+    it('get_settings_schema', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings-schema');
+
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+
+                const configSchema = op.getBody();
+                console.log(JSON.stringify(configSchema, null, 2));
+                assert.deepStrictEqual(configSchema.properties.deletedTemplateSets, {
+                    type: 'array',
+                    items: {
+                        type: 'string'
+                    },
+                    uniqueItems: true,
+                    options: {
+                        hidden: true
+                    },
+                    // addtl props for JSONEditor
+                    propertyOrder: 0,
+                    format: 'table'
+                });
+            });
     });
     it('get_settings', function () {
         const worker = createWorker();

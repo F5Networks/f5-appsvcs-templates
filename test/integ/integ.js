@@ -321,7 +321,11 @@ describe('Settings', function () {
                 deletedTemplateSets: [],
                 ipamProviders: [],
                 enableIpam: false,
-                disableDeclarationCache: false
+                disableDeclarationCache: false,
+                // driver defaults
+                enable_telemetry: false,
+                log_asm: false,
+                log_afm: false
             },
             status: 200
         })));
