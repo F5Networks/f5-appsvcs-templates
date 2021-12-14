@@ -284,7 +284,8 @@ class FASTWorker {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
                     persisted = true;
                     return this.recordTransaction(
-                        reqid, 'persisting config',
+                        reqid,
+                        'persisting config',
                         this.configStorage.persist()
                     );
                 }
@@ -436,7 +437,8 @@ class FASTWorker {
         }
 
         return this.recordTransaction(
-            reqid, 'run lazy initialization',
+            reqid,
+            'run lazy initialization',
             this.initWorker(reqid)
         );
     }
@@ -444,11 +446,13 @@ class FASTWorker {
     prepareAS3Driver(reqid, config) {
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'ready AS3 driver',
+                reqid,
+                'ready AS3 driver',
                 this.driver.loadMixins()
             ))
             .then(() => this.recordTransaction(
-                reqid, 'sync AS3 driver settings',
+                reqid,
+                'sync AS3 driver settings',
                 Promise.resolve()
                     .then(() => this.gatherProvisionData(reqid, false, true))
                     .then(provisionData => this.driver.setSettings(config, provisionData, true))
@@ -462,7 +466,8 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'loading template sets from disk'))
             .then(() => this.recordTransaction(
-                reqid, 'gather list of templates from disk',
+                reqid,
+                'gather list of templates from disk',
                 this.fsTemplateProvider.listSets()
             ))
             .then((fsSets) => {
@@ -499,8 +504,11 @@ class FASTWorker {
         //     '/shared/identified-devices/config/device-info'
         // ));
         return Promise.resolve()
-            .then(() => this.recordTransaction(reqid, 'fetching device information',
-                this.bigip.getDeviceInfo())
+            .then(() => this.recordTransaction(
+                reqid,
+                'fetching device information',
+                this.bigip.getDeviceInfo()
+            )
                 .then((data) => {
                     if (data) {
                         this.deviceInfo = {
@@ -686,7 +694,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                requestId, 'GET to appsvcs/info',
+                requestId,
+                'GET to appsvcs/info',
                 this.driver.getInfo()
             ))
             .then((as3response) => {
@@ -719,7 +728,8 @@ class FASTWorker {
                 }
 
                 return this.recordTransaction(
-                    requestId, 'Fetching module provision information',
+                    requestId,
+                    'Fetching module provision information',
                     this.bigip.getProvisionData()
                 );
             })
@@ -743,7 +753,8 @@ class FASTWorker {
                 }
 
                 return this.recordTransaction(
-                    requestId, 'Fetching TS module information',
+                    requestId,
+                    'Fetching TS module information',
                     this.bigip.getTSInfo()
                 );
             })
@@ -759,7 +770,8 @@ class FASTWorker {
                     return Promise.resolve(this.as3Info);
                 }
                 return this.recordTransaction(
-                    requestId, 'Fetching AS3 info',
+                    requestId,
+                    'Fetching AS3 info',
                     this.driver.getInfo()
                 )
                     .then(response => response.data);
@@ -976,7 +988,8 @@ class FASTWorker {
                             }
 
                             return this.recordTransaction(
-                                requestId, `fetching data from ${endPoint}`,
+                                requestId,
+                                `fetching data from ${endPoint}`,
                                 this.bigip.getSharedObjects(endPoint)
                             )
                                 .then((items) => {
@@ -1155,7 +1168,8 @@ class FASTWorker {
     fetchTemplate(reqid, tmplid) {
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'fetching template',
+                reqid,
+                'fetching template',
                 this.templateProvider.fetch(tmplid)
             ))
             // Copy the template to avoid modifying the stored template
@@ -1219,7 +1233,8 @@ class FASTWorker {
                     return Promise.resolve();
                 })
                 .then(() => this.recordTransaction(
-                    reqid, `fetching template set data for ${setName}`,
+                    reqid,
+                    `fetching template set data for ${setName}`,
                     this.templateProvider.getSetData(setName)
                 ))
                 .then(setData => Object.assign(tsData, setData))
@@ -1232,7 +1247,8 @@ class FASTWorker {
                         .then(() => tmpl);
                 })
                 .then(tmpl => this.recordTransaction(
-                    reqid, `rendering template (${tmplData.name})`,
+                    reqid,
+                    `rendering template (${tmplData.name})`,
                     tmpl.fetchAndRender(tmplData.parameters)
                 ))
                 .then(rendered => JSON.parse(rendered))
@@ -1380,7 +1396,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'fetching template list',
+                reqid,
+                'fetching template list',
                 this.templateProvider.list()
                     .then(tmplList => this.filterTemplates(tmplList))
             ))
@@ -1400,7 +1417,8 @@ class FASTWorker {
             const app = pathElements[5];
             return Promise.resolve()
                 .then(() => this.recordTransaction(
-                    reqid, 'GET request to appsvcs/declare',
+                    reqid,
+                    'GET request to appsvcs/declare',
                     this.driver.getRawDeclaration()
                 ))
                 .then(resp => resp.data[tenant][app])
@@ -1414,7 +1432,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'gathering a list of applications from the driver',
+                reqid,
+                'gathering a list of applications from the driver',
                 this.driver.listApplications()
             ))
             .then(appsList => this.convertPoolMembers(restOperation, appsList))
@@ -1429,7 +1448,8 @@ class FASTWorker {
         if (taskid) {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
-                    reqid, 'gathering a list of tasks from the driver',
+                    reqid,
+                    'gathering a list of tasks from the driver',
                     this.driver.getTasks()
                 ))
                 .then(taskList => taskList.filter(x => x.id === taskid))
@@ -1446,7 +1466,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'gathering a list of tasks from the driver',
+                reqid,
+                'gathering a list of tasks from the driver',
                 this.driver.getTasks()
             ))
             .then((tasksList) => {
@@ -1463,7 +1484,8 @@ class FASTWorker {
         if (tsid) {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
-                    reqid, 'gathering a template set',
+                    reqid,
+                    'gathering a template set',
                     this.gatherTemplateSet(tsid)
                 ))
                 .then((tmplSet) => {
@@ -1484,11 +1506,13 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'gathering a list of template sets',
+                reqid,
+                'gathering a list of template sets',
                 (showDisabled) ? this.fsTemplateProvider.listSets() : this.templateProvider.listSets()
             ))
             .then(setList => this.recordTransaction(
-                reqid, 'gathering data for each template set',
+                reqid,
+                'gathering data for each template set',
                 Promise.all(setList.map(x => this.gatherTemplateSet(x)))
             ))
             .then(setList => ((showDisabled) ? setList.filter(x => !x.enabled) : setList))
@@ -1585,7 +1609,8 @@ class FASTWorker {
                 });
             })
             .then(() => this.recordTransaction(
-                reqid, 'requesting new application(s) from the driver',
+                reqid,
+                'requesting new application(s) from the driver',
                 this.driver.createApplications(appsData)
             ))
             .catch((e) => {
@@ -1651,7 +1676,8 @@ class FASTWorker {
             .then(() => {
                 if (fs.existsSync(onDiskPath)) {
                     return this.recordTransaction(
-                        reqid, 'copy template set from disk',
+                        reqid,
+                        'copy template set from disk',
                         fs.copy(onDiskPath, scratch)
                     );
                 }
@@ -1659,11 +1685,13 @@ class FASTWorker {
                 const setpath = `${scratch}.zip`;
                 return Promise.resolve()
                     .then(() => this.recordTransaction(
-                        reqid, 'fetch uploaded template set',
+                        reqid,
+                        'fetch uploaded template set',
                         this.bigip.copyUploadedFile(setsrc, setpath)
                     ))
                     .then(() => this.recordTransaction(
-                        reqid, 'extract template set',
+                        reqid,
+                        'extract template set',
                         new Promise((resolve, reject) => {
                             extract(setpath, { dir: scratch }, (err) => {
                                 if (err) return reject(err);
@@ -1673,7 +1701,8 @@ class FASTWorker {
                     ));
             })
             .then(() => this.recordTransaction(
-                reqid, 'validate template set',
+                reqid,
+                'validate template set',
                 this._validateTemplateSet(this.scratchPath)
             ))
             .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)))
@@ -1733,7 +1762,8 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.validateConfig(config))
             .catch(e => Promise.reject(this.genRestResponse(
-                restOperation, 422,
+                restOperation,
+                422,
                 `supplied settings were not valid:\n${e.message}`
             )))
             .then(() => this.getConfig(reqid))
@@ -1829,7 +1859,8 @@ class FASTWorker {
         let appsData;
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'requesting application data from driver',
+                reqid,
+                'requesting application data from driver',
                 Promise.all(appNames.map(x => this.driver.getApplication(...x)))
             ))
             .then((value) => {
@@ -1837,7 +1868,8 @@ class FASTWorker {
             })
             .then(() => this.releaseIPAMAddressesFromApps(reqid, appsData))
             .then(() => this.recordTransaction(
-                reqid, 'deleting applications',
+                reqid,
+                'deleting applications',
                 this.driver.deleteApplications(appNames)
             ))
             .then((result) => {
@@ -1867,7 +1899,8 @@ class FASTWorker {
         if (tsid) {
             return Promise.resolve()
                 .then(() => this.recordTransaction(
-                    reqid, `gathering template set data for ${tsid}`,
+                    reqid,
+                    `gathering template set data for ${tsid}`,
                     this.gatherTemplateSet(tsid)
                 ))
                 .then((setData) => {
@@ -1883,7 +1916,8 @@ class FASTWorker {
                     return Promise.resolve();
                 })
                 .then(() => this.recordTransaction(
-                    reqid, 'deleting a template set from the data store',
+                    reqid,
+                    'deleting a template set from the data store',
                     this.templateProvider.removeSet(tsid)
                 ))
                 .then(() => this.getConfig(reqid))
@@ -1898,7 +1932,8 @@ class FASTWorker {
                         return Promise.resolve();
                     }
                     return this.recordTransaction(
-                        reqid, 'persisting the data store',
+                        reqid,
+                        'persisting the data store',
                         this.storage.persist()
                     );
                 })
@@ -1917,7 +1952,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'gathering a list of template sets',
+                reqid,
+                'gathering a list of template sets',
                 this.templateProvider.listSets()
             ))
             .then((setList) => {
@@ -1925,7 +1961,8 @@ class FASTWorker {
                 setList.forEach((set) => {
                     promiseChain = promiseChain
                         .then(() => this.recordTransaction(
-                            reqid, `deleting template set: ${set}`,
+                            reqid,
+                            `deleting template set: ${set}`,
                             this.templateProvider.removeSet(set)
                         ));
                 });
@@ -1941,7 +1978,8 @@ class FASTWorker {
                             return Promise.resolve();
                         }
                         return this.recordTransaction(
-                            reqid, 'persisting the data store',
+                            reqid,
+                            'persisting the data store',
                             this.storage.persist()
                         );
                     });
@@ -1991,9 +2029,7 @@ class FASTWorker {
     patchApplications(restOperation, appid, data) {
         if (!appid) {
             return Promise.resolve()
-                .then(() => this.genRestResponse(
-                    restOperation, 400, 'PATCH is not supported on this endpoint'
-                ));
+                .then(() => this.genRestResponse(restOperation, 400, 'PATCH is not supported on this endpoint'));
         }
 
         const reqid = restOperation.requestId;
@@ -2008,7 +2044,8 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
-                reqid, 'Fetching application data from AS3',
+                reqid,
+                'Fetching application data from AS3',
                 this.driver.getApplication(tenant, app)
             ))
             .then((appData) => {
@@ -2035,7 +2072,8 @@ class FASTWorker {
             })
             .then(() => this.validateConfig(combinedConfig))
             .catch(e => Promise.reject(this.genRestResponse(
-                restOperation, 422,
+                restOperation,
+                422,
                 `supplied settings were not valid:\n${e.message}`
             )))
             .then(() => this.gatherProvisionData(reqid, true))

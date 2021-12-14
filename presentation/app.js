@@ -26,7 +26,9 @@ const Vue = require('vue').default;
 const endPointUrl = '/mgmt/shared/fast';
 const userAgent = 'FASTGUI/NA';
 
-const wait = delay => new Promise(resolve => setTimeout(resolve, delay));
+const wait = delay => new Promise((resolve) => {
+    setTimeout(resolve, delay);
+});
 
 const auth = {};
 

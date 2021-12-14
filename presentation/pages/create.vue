@@ -252,12 +252,15 @@ export default {
                     };
                     document.getElementById('view-template-tab').onclick = () => setTabElements.call(this, 'Template', tmpl.sourceText);
                     document.getElementById('view-schema-tab').onclick = () => setTabElements.call(this, 'Schema', JSON.stringify(schema, null, 2));
-                    document.getElementById('view-inputs-tab').onclick = () => setTabElements.call(this, 'Inputs',
+                    document.getElementById('view-inputs-tab').onclick = () => setTabElements.call(
+                        this,
+                        'Inputs',
                         JSON.stringify(
                             tmpl.getCombinedParameters(editor.getValue()),
                             null,
                             2
-                        ));
+                        )
+                    );
                     document.getElementById('view-rendered-tab').onclick = () => {
                         let msg;
                         setTabElements('Rendered', 'Rendering...');
