@@ -1,5 +1,8 @@
 # 1.15.0
 
+## Changed
+* Documentation: the Revision History page will no longer duplicate the release information, but will link to the release page on GitHub
+
 # 1.14.0
 ## Added
 * bigip-fast-templates: Ability to specify a Minimum or Maximum BIG-IP version for a FAST templates
