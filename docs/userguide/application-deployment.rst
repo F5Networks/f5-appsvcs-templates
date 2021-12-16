@@ -43,18 +43,18 @@ Using cURL to do this would look like:
 
    .. code-block:: shell
 
-      curl -sku <BIG-IP username>:<BIG-IP password> -H "Content-Type: application/json" -X POST https://<IP address of BIG-IP>/mgmt/shared/fast/applications -d " \
-      { \
-         "name": "examples/simple_http", \
-         "parameters": { \
-           "tenant_name": "Tenant1", \
-           "application_name": "Application1", \
-           "virtual_port": 443, \
-           "virtual_address": 192.168.1.0, \
-           "server_port": 80, \
-           "server_addresses": ["10.10.10.1"] \
-         } \
-      }"
+      curl -sku <BIG-IP username>:<BIG-IP password> -H "Content-Type: application/json" -X POST https://<IP address of BIG-IP>/mgmt/shared/fast/applications -d ' 
+      { 
+         "name": "examples/simple_http", 
+         "parameters": { 
+            "tenant_name": "Tenant1", 
+            "application_name": "Application1", 
+            "virtual_port": 443, 
+            "virtual_address": "192.168.1.0", 
+            "server_port": 80, 
+            "server_addresses": ["10.10.10.1"] 
+         } 
+      }'
 
 This job is asynchronous and a successful response indicates that the task was submitted, not that it completed successfully.
 The response payload contains an `id` that can be used to query `mgmt/shared/fast/tasks/<task ID>` for the current status of the task.
