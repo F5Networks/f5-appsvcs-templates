@@ -3,13 +3,20 @@
 Document Revision History
 =========================
 
+Beginning with FAST version 1.15.0 the Revision History document will redirect to the GitHub page for that release.
+
 .. list-table::
       :widths: 15 100 15
       :header-rows: 1
 
+      
       * - Doc Revision
         - Description
         - Date
+
+      * - 19.0
+        - FAST **v1.15** can be found `here <https://github.com/F5Networks/f5-appsvcs-templates/releases/tag/v1.15.0>`_
+        - 01-25-22
 
       * - 18.0 
         - **Updated the documentation for FAST v1.14** |br| This release contains the following changes:  |br| |br| Added: |br| * bigip-fast-templates: Support for Exchange 2019 |br| * bigip-fast-templates: Ability to specify a Minimum or Maximum BIG-IP version for a FAST templates |br| * bigip-fast-templates: Added Bot Defense profiles to FAST templates |br| * bigip-fast-templates: Added ASM Rapid Deployment and ASM Logging to FAST templates |br| * bigip-fast-templates: Blue-Green template offers multiple Service Discovery options for pool members |br| |br| Changed:  |br| |br| * bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in schema |br| * Updated f5-fast-core from v0.16.0 to v0.17.0 |br| |br| Fixed: |br| * Fixed error and avoid delays when deleting or adding new templatesets |br| * Fixed error when updating bigip-fast-templates apps that use old pool_member definitions |br| * bigip-fast-templates: Fixed Exchange template dependencies so all fields show/hide as expected
