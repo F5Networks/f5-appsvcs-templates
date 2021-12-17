@@ -1819,6 +1819,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateContentType(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -1836,7 +1837,8 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
     deleteApplications(restOperation, appid, data) {
@@ -2100,6 +2102,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateContentType(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2113,7 +2116,23 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
+    }
+
+    validateContentType(restOperation) {
+        const contentType = restOperation.getHeader('content-type');
+        switch (restOperation.getMethod()) {
+        case 'Post':
+        case 'Patch':
+            if (restOperation.getContentType() !== contentType) {
+                return Promise.reject(new Error(`JSON data is required; Content-Type ${contentType} is not accepted`));
+            }
+            break;
+        default:
+            return false;
+        }
+        return false;
     }
 }
 
