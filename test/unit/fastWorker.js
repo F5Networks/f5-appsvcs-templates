@@ -42,9 +42,14 @@ class RestOp {
         this.uri = uri;
         this.body = '';
         this.status = 200;
+        this.headers = { 'content-type': 'application/json' };
     }
 
     setHeaders() {}
+
+    getHeader(name) {
+        return this.headers[name];
+    }
 
     setStatusCode(status) {
         this.status = status;
@@ -1164,6 +1169,20 @@ describe('template worker tests', function () {
                 const config = op.getBody();
                 console.log(JSON.stringify(config, null, 2));
                 assert.ok(config.deletedTemplateSets);
+            });
+    });
+    it('get_settings_schema', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings-schema');
+
+        return worker.onGet(op)
+            .then(() => {
+                assert.strictEqual(op.status, 200);
+
+                const config = op.getBody();
+                console.log(JSON.stringify(config, null, 2));
+                assert.ok(config.properties.deletedTemplateSets);
+                assert.ok(config.required);
             });
     });
     it('delete_settings', function () {
