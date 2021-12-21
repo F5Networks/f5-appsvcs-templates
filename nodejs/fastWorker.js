@@ -2124,17 +2124,11 @@ class FASTWorker {
         // use default Content-Type if no user supplied content-type header - which is the case in our integration tests
         const contentType = restOperation.getHeader('content-type') || restOperation.getContentType();
 
-        switch (restOperation.getMethod()) {
-        case 'Post':
-        case 'Patch':
-            // if no json payload or content-length header is provided, then it is not our integration tests
-            if (restOperation.getContentType() !== contentType || restOperation.getBody() === {}) {
-                return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
-            }
-            break;
-        default:
-            return false;
+        // if content-type is not application/json or there is no json body then throw a content-type error
+        if (restOperation.getContentType() !== contentType || restOperation.getBody() === {}) {
+            return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
         }
+
         return false;
     }
 }
