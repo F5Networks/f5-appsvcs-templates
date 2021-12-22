@@ -46,6 +46,7 @@ function setResponseFromRestOp(restOp, res) {
     const headers = restOp.getHeaders() || {};
 
     Object.keys(headers).forEach((headerName) => {
+        if (headerName === 'content-type') { return; }
         const header = headers[headerName];
         res.set(headerName, header);
     });
