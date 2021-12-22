@@ -1340,11 +1340,13 @@ class FASTWorker {
     }
 
     genRestResponse(restOperation, code, message) {
+        this.logger.info(`code: ${code}; genRestResp: ${message}`);
         let doParse = false;
         if (typeof message !== 'string') {
             message = JSON.stringify(message, null, 2);
             doParse = true;
         }
+        this.logger.info(`genRestResp: ${message}`);
         message = message
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
@@ -1555,6 +1557,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -1578,7 +1581,8 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
     postApplications(restOperation, data) {
@@ -1819,7 +1823,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
-            .then(() => this.validateContentType(restOperation))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2010,6 +2014,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2025,7 +2030,8 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
     patchApplications(restOperation, appid, data) {
@@ -2102,7 +2108,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
-            .then(() => this.validateContentType(restOperation))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2120,16 +2126,18 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
-    validateContentType(restOperation) {
-        // use default Content-Type if no user supplied content-type header - which is the case in our integration tests
-        const contentType = restOperation.getHeader('content-type') || restOperation.getContentType();
-
-        // if content-type is not application/json or there is no json body then throw a content-type error
-        if (restOperation.getContentType() !== contentType || restOperation.getBody() === {}) {
+    validateRequest(restOperation) {
+        const contentType = restOperation.getHeader('content-type');
+        // if POST or PATCH and content-type is not application/json
+        if (['Post', 'Patch'].includes(restOperation.getMethod()) && contentType !== 'application/json') {
+            // if there is a json body, even with no content-type, this is integration tests
+            if (JSON.stringify(restOperation.getBody()) !== '{}') {
+                return true;
+            }
+            // content-type is not application/json and not integration tests as there is no json payload
             return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
         }
-
-        return false;
+        return true;
     }
 }
 
