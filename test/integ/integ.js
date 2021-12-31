@@ -51,7 +51,7 @@ function waitForCompletedTask(taskid) {
     return Promise.resolve()
         .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
         .then((response) => {
-            if (response.data.code === 0) {
+            if (response.data.message === 'in progress') {
                 return promiseDelay(1000)
                     .then(() => waitForCompletedTask(taskid));
             }

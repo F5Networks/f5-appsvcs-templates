@@ -30,8 +30,9 @@ const RestOperation = require('./restOperation');
 function restOpFromRequest(req) {
     const restOp = new RestOperation();
     const uri = url.parse(req.url.replace('/mgmt/', '/'), true);
+    const body = Object.keys(req.body).length !== 0 ? req.body : undefined;
     restOp.setUri(uri)
-        .setBody(req.body)
+        .setBody(body)
         .setMethod(RestOperation.Methods[req.method]);
 
     Object.keys(req.headers).forEach((headerName) => {
