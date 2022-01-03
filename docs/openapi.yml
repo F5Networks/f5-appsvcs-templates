@@ -71,7 +71,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: schema/appsvcs-templates.yaml#/ApplicationList
+                $ref: "#/components/schemas/ApplicationList"
         '500':
           description: Internal error. A bug report should be filed.
           content:
