@@ -494,7 +494,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorErrorResponse"
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       tags:
         - Template Management
