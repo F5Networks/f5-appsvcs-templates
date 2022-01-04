@@ -5,13 +5,13 @@ x-errors:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponse"
     default: &defaultResponse
       description: unexpected error
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/ErrorResponse"
 info:
   version: 1.15.0-rc.3
   title: F5 Application Services Templates API
@@ -99,19 +99,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      description: task ID, can be used to query task state
-                    name:
-                      description: name of the new application
-                      type: string
-                    parameters:
-                      description: parameters used to create the new application
-                      type: object
+                $ref: "#/components/schemas/ApplicationResponse"
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
@@ -140,8 +128,14 @@ paths:
                 type: string
                 description: application paths (e.g., 'tenant/app')
       responses:
-        '200':
-          description: OK
+        '202':
+          description: Delete job submitted successfully.
+        '404':
+          description: Tenant or app not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -176,7 +170,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Application"
+                $ref: "#/components/schemas/AS3App"
         '404':
           description: Application or Tenant was not found.
           content:
@@ -213,19 +207,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      description: The task ID which can be used to query task state.
-                    name:
-                      description: The name of the updated application.
-                      type: string
-                    parameters:
-                      description: The parameters used to update the application.
-                      type: object
+                $ref: "#/components/schemas/ApplicationResponse"
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
@@ -247,6 +229,12 @@ paths:
       responses:
         '200':
           description: OK
+        '404':
+          description: Tenant or app not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -307,7 +295,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -370,6 +358,13 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /templatesets:
     get:
+      parameters:
+        - name: showDisabled
+          in: query
+          required: false
+          description: Whether to show only disabled template sets.
+          schema:
+            type: boolean
       summary: Get template sets
       description: List all installed template sets.
       operationId: getFASTTemplateSets
@@ -383,7 +378,19 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: schema/appsvcs-templates.yaml#/TemplateSet
+                  $ref: "#/components/schemas/TemplateSetList"
+        '400':
+          description: Invalid template set request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Template set not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -469,13 +476,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: schema/appsvcs-templates.yaml#/TemplateSet
+                $ref: "#/components/schemas/TemplateSet"
+        '400':
+          description: Template set in use.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Template set not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: "#/components/schemas/ErrorErrorResponse"
     delete:
       tags:
         - Template Management
@@ -507,6 +526,10 @@ paths:
       responses:
         '200':
           description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -568,6 +591,10 @@ paths:
       responses:
         '200':
           description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsSchema"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -602,7 +629,7 @@ paths:
       description: Render application templates without posting them to AS3 NOTE - The rendered template results are not stitched with other AS3 applications on the box. In other words, posting these results to AS3 directly can result in data loss.
       operationId: postFASTRender
       requestBody:
-        description: A task definition, including the name of the template to render and the template parameters.
+        description: An application definition, including the name of the template to render and the template parameters.
         required: true
         content:
           application/json:
@@ -624,13 +651,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
         '404':
           description: The specified template could not be found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Internal error. A bug report should be filed.
           content:
@@ -642,6 +669,13 @@ components:
     ParametersDefinition:
       type: object
       description: Object must conform to specified template's schema.
+    AS3App:
+      type: object
+      description: The resulting AS3 application.
+      properties:
+        class:
+          type: string
+          pattern: '.*'
     ApplicationDefinition:
       type: object
       description: Application Definition.
@@ -667,16 +701,12 @@ components:
       description: Application.
       required:
         - template
-        - parameters
-        - lastModified
         - tenant
         - name
       properties:
         template:
           description: must be valid template in the system
           type: string
-        parameters:
-          $ref: "#/components/schemas/ParametersDefinition"
         lastModified:
           type: string
           format: date-time
@@ -694,6 +724,28 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Application"
+    ApplicationResponse:
+      type: object
+      description: The response message when performing application operations.
+      properties:
+        code:
+          type: integer
+          minimum: 100
+          maximum: 600
+        message:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The task ID which can be used to query task state.
+              name:
+                description: The name of the created/updated application.
+                type: string
+              parameters:
+                description: The parameters used to create/update the application.
+                type: object
     Task:
       type: object
       description: Task.
@@ -716,7 +768,7 @@ components:
           $ref: "#/components/schemas/ParametersDefinition"
         code:
           description: current status code of the task
-          type: string
+          type: integer
         message:
           description: any messages (such as "success" or "in progress") for the task
           type: string
@@ -752,13 +804,10 @@ components:
       type: array
       description: Template List.
       items:
-        type: object
-        properties:
-          name:
-            type: string
+        type: string
       example:
-        - name: example/httpTemplate
-        - name: example/httpsTemplate
+        - example/httpTemplate
+        - example/httpsTemplate
     TemplateSet:
       type: object
       properties:
@@ -788,42 +837,59 @@ components:
         enabled:
           type: boolean
           description: template set is installed and ready to use
+    TemplateSetList:
+      type: array
+      description: Template Set List.
+      items:
+        $ref: "#/components/schemas/TemplateSet"
+    Settings:
+      type: object
+      description: current config for the FAST iApps LX
+      properties:
+          deletedTemplateSets:
+            type: array
+            description: Template sets that have been removed.
+            items:
+              type: string
+          disableDeclarationCache:
+            type: boolean
+            description: Do not cache AS3 declarations.
+          enableIpam:
+            type: boolean
+            description: Enable IPAM for Official F5 FAST Templates (Experimental/Beta).
+          ipamProviders:
+            type: array
+            description: IPAM Providers configuration (Experimental/Beta).
+            items:
+              oneOf:
+                - $ref: "#/components/schemas/IpamInfoblox"
+                - $ref: "#/components/schemas/IpamGeneric"
+    SettingsSchema:
+      type: object
+      description: Schema for current FAST Config.
+      properties:
+        properties:
+          type: object
+          description: Schema properties.
+        type:
+          type: string
+          description: Schema type. 
+          pattern: '.*'
+
     Info:
       type: object
       properties:
         version:
           type: string
           description: the version string for FAST
+          pattern: '.*'
         as3Info:
           type: object
           description: data from AS3's /info endpoint
         installedTemplates:
-          type: array
-          description: list of TemplateSets
-          items:
-            $ref: "#/components/schemas/TemplateSet"
+            $ref: "#/components/schemas/TemplateSetList"
         config:
-          type: object
-          description: current config for the FAST iApps LX
-          properties:
-              deletedTemplateSets:
-                type: array
-                description: Template sets that have been removed.
-                items:
-                  type: string
-              disableDeclarationCache:
-                type: boolean
-                description: Do not cache AS3 declarations.
-              enableIpam:
-                type: boolean
-                description: Enable IPAM for Official F5 FAST Templates (Experimental/Beta).
-              ipamProviders:
-                type: array
-                description: IPAM Providers configuration (Experimental/Beta).
-                items:
-                  oneOf:
-                    - $ref: "#/components/schemas/IpamInfoblox"
-                    - $ref: "#/components/schemas/IpamGeneric"
+            $ref: "#/components/schemas/Settings"
     ErrorResponse:
       type: object
       description: Error Response.
