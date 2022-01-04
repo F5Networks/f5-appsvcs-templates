@@ -294,38 +294,6 @@ describe('fastWorker tests', function () {
     });
 
     describe('endpoints', function () {
-        it('get_bad_end_point', function () {
-            const worker = createWorker();
-            const op = new RestOp('bad');
-            return worker.onGet(op)
-                .then(() => {
-                    assert.equal(op.status, 404);
-                });
-        });
-        it('post_bad_end_point', function () {
-            const worker = createWorker();
-            const op = new RestOp('bad');
-            return worker.onPost(op)
-                .then(() => {
-                    assert.equal(op.status, 404);
-                });
-        });
-        it('delete_bad_end_point', function () {
-            const worker = createWorker();
-            const op = new RestOp('bad');
-            return worker.onDelete(op)
-                .then(() => {
-                    assert.equal(op.status, 404);
-                });
-        });
-        it('patch_bad_end_point', function () {
-            const worker = createWorker();
-            const op = new RestOp('bad');
-            return worker.onPatch(op)
-                .then(() => {
-                    assert.equal(op.status, 404);
-                });
-        });
         it('get_info', function () {
             const worker = createWorker();
             const op = new RestOp('info');
@@ -1299,6 +1267,41 @@ describe('fastWorker tests', function () {
                     assert.strictEqual(op.status, 200);
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.strictEqual(op.body.foo, undefined);
+                });
+        });
+    });
+
+    describe('bad endpoints', function () {
+        it('get_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onGet(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
+        it('post_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onPost(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
+        it('delete_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onDelete(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
+        it('patch_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onPatch(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
                 });
         });
     });
