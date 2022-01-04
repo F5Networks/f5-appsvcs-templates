@@ -230,6 +230,7 @@ texinfo_documents = [
 linkcheck_ignore = [
     'https://github.com/json-editor/json-editor#format',
     'https://github.com/json-editor/json-editor#ref-and-definitions',
+    'https://github.com/F5Networks/f5-appsvcs-templates/releases/tag/v1.15.0', # not available yet
 ]
 
 
