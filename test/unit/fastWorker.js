@@ -26,6 +26,12 @@ const fs = require('fs');
 const assert = require('assert').strict;
 const nock = require('nock');
 const sinon = require('sinon');
+const chai = require('chai');
+
+const expect = chai.expect;
+const chaiResponseValidator = require('chai-openapi-response-validator').default;
+
+chai.use(chaiResponseValidator(path.join(__dirname, '../../docs/openapi.yml')));
 
 const fast = require('@f5devcentral/f5-fast-core');
 
@@ -173,7 +179,7 @@ function resetScope(scope) {
     return scope;
 }
 
-describe('template worker tests', function () {
+describe('fastWorker tests', function () {
     this.timeout(3000);
     const host = 'http://localhost:8100';
     const as3ep = '/mgmt/shared/appsvcs/declare';
@@ -322,6 +328,7 @@ describe('template worker tests', function () {
                 const config = info.config;
                 assert.ok(config);
                 assert.ok(config.deletedTemplateSets);
+                expect(info).to.satisfySchemaInApiSpec('Info');
             });
     });
     it('get_info_without_as3', function () {
@@ -341,14 +348,7 @@ describe('template worker tests', function () {
                 const tsNames = info.installedTemplates.map(x => x.name);
                 assert(tsNames.includes('bigip-fast-templates'));
                 assert(tsNames.includes('examples'));
-            });
-    });
-    it('get_bad_end_point', function () {
-        const worker = createWorker();
-        const op = new RestOp('bad');
-        return worker.onGet(op)
-            .then(() => {
-                assert.equal(op.status, 404);
+                expect(info).to.satisfySchemaInApiSpec('Info');
             });
     });
     it('get_templates', function () {
@@ -359,6 +359,7 @@ describe('template worker tests', function () {
                 const templates = op.body;
                 assert.notEqual(op.status, 404);
                 assert.notEqual(templates.length, 0);
+                expect(templates).to.satisfySchemaInApiSpec('TemplateList');
             });
     });
     it('get_template_bad', function () {
@@ -378,6 +379,7 @@ describe('template worker tests', function () {
                 console.log(op.body.message);
                 assert.strictEqual(op.status, 200);
                 assert.notEqual(tmpl, {});
+                expect(tmpl).to.satisfySchemaInApiSpec('Template');
             });
     });
     it('get_template_ipam', function () {
@@ -472,6 +474,7 @@ describe('template worker tests', function () {
                     tenant: 'tenant',
                     template: 'foo/bar'
                 }]);
+                expect(op.body).to.satisfySchemaInApiSpec('ApplicationList');
             });
     });
     it('get_apps_empty', function () {
@@ -501,6 +504,7 @@ describe('template worker tests', function () {
         return worker.onGet(op)
             .then(() => {
                 assert.deepEqual(op.body, as3App);
+                expect(op.body).to.satisfySchemaInApiSpec('AS3App');
             });
     });
     it('get_tasks', function () {
@@ -537,6 +541,7 @@ describe('template worker tests', function () {
                     timestamp: new Date().toISOString(),
                     host: 'localhost'
                 }]);
+                expect(op.body).to.satisfySchemaInApiSpec('TaskList');
             });
     });
     it('get_tasks_item', function () {
@@ -573,6 +578,7 @@ describe('template worker tests', function () {
                     timestamp: new Date().toISOString(),
                     host: 'localhost'
                 });
+                expect(op.body).to.satisfySchemaInApiSpec('Task');
             });
     });
     it('get_tasks_bad', function () {
@@ -600,6 +606,7 @@ describe('template worker tests', function () {
                 const foundSets = op.body.map(x => x.name);
                 assert(foundSets.includes('bigip-fast-templates'));
                 assert(foundSets.includes('examples'));
+                expect(op.body).to.satisfySchemaInApiSpec('TemplateSetList');
             });
     });
     it('get_templatesets_item', function () {
@@ -614,6 +621,7 @@ describe('template worker tests', function () {
                 assert.notDeepEqual(ts, {});
                 assert.strictEqual(ts.name, 'bigip-fast-templates');
                 assert.notDeepEqual(ts.templates, []);
+                expect(ts).to.satisfySchemaInApiSpec('TemplateSet');
             });
     });
     it('get_templatesets_bad', function () {
@@ -622,14 +630,6 @@ describe('template worker tests', function () {
         return worker.onGet(op)
             .then(() => {
                 assert.strictEqual(op.status, 404);
-            });
-    });
-    it('post_bad_end_point', function () {
-        const worker = createWorker();
-        const op = new RestOp('bad');
-        return worker.onPost(op)
-            .then(() => {
-                assert.equal(op.status, 404);
             });
     });
     it('post_apps_bad_tmplid', function () {
@@ -816,40 +816,72 @@ describe('template worker tests', function () {
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.status, 202);
+                expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
             });
     });
-    it('post_settings', function () {
+    it('post_render', function () {
         const worker = createWorker();
-        const op = new RestOp('settings');
+        const op = new RestOp('render');
         op.setBody({
-            deletedTemplateSets: [
-                'foo'
-            ],
-            enableIpam: true,
-            ipamProviders: [
-                { name: 'test', password: 'foobar', serviceType: 'Generic' }
-            ]
+            name: 'examples/simple_udp_defaults',
+            parameters: {}
         });
         return worker.onPost(op)
             .then(() => {
-                console.log(JSON.stringify(op.body, null, 2));
+                console.log(JSON.stringify(op.body, null, 3));
                 assert.equal(op.status, 200);
-            })
-            .then(() => worker.getConfig(0))
-            .then((config) => {
-                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
-                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                assert(Array.isArray(op.body.message));
             });
     });
-    it('post_settings_bad', function () {
+    it('post_render_bad_tmplid', function () {
         const worker = createWorker();
-        const op = new RestOp('settings');
+        const op = new RestOp('render');
         op.setBody({
+            name: 'foobar/does_not_exist',
+            parameters: {}
+        });
+        return worker.onPost(op)
+            .then(() => {
+                assert.equal(op.status, 404);
+                assert.match(op.body.message, /Could not find template/);
+            });
+    });
+    it('post_render_bad_params', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+            name: 'examples/simple_udp_defaults',
+            parameters: {
+                virtual_port: 'foobar'
+            }
         });
         return worker.onPost(op)
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 422);
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /Parameters failed validation/);
+            });
+    });
+    it('post_render_bad_properties', function () {
+        const worker = createWorker();
+        const op = new RestOp('render');
+        op.setBody({
+        });
+
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /name property is missing/);
+            })
+            .then(() => op.setBody({
+                name: 'examples/simple_udp_defaults'
+            }))
+            .then(() => worker.onPost(op))
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 400);
+                assert.match(op.body.message, /parameters property is missing/);
             });
     });
     it('delete_app_bad', function () {
@@ -932,59 +964,11 @@ describe('template worker tests', function () {
             .then(() => {
                 console.log(JSON.stringify(op.body, null, 2));
                 assert.equal(op.status, 202);
+                // TODO: investigate why this is failing with this particular test (issue #526)
+                // expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
             });
     });
-    it('patch_bad_end_point', function () {
-        const worker = createWorker();
-        const op = new RestOp('bad');
-        return worker.onPatch(op)
-            .then(() => {
-                assert.equal(op.status, 404);
-            });
-    });
-    it('patch_settings', function () {
-        const worker = createWorker();
-        const op = new RestOp('settings');
-        op.setBody({
-            deletedTemplateSets: [
-                'foo'
-            ],
-            enableIpam: true,
-            ipamProviders: [
-                { name: 'test', password: 'foobar', serviceType: 'Generic' }
-            ]
-        });
-        return worker.onPatch(op)
-            .then(() => {
-                console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 200);
-            })
-            .then(() => worker.getConfig(0))
-            .then((config) => {
-                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
-                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
-            });
-    });
-    it('patch_settings_bad', function () {
-        const worker = createWorker();
-        const op = new RestOp('settings');
-        op.setBody({
-            deletedTemplateSets: 5
-        });
-        return worker.onPatch(op)
-            .then(() => {
-                console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 422);
-            });
-    });
-    it('delete_bad_end_point', function () {
-        const worker = createWorker();
-        const op = new RestOp('bad');
-        return worker.onDelete(op)
-            .then(() => {
-                assert.equal(op.status, 404);
-            });
-    });
+    // run settings and templatesets last as they can interfere with the other tests
     it('post_templateset_missing', function () {
         const worker = createWorker();
         const op = new RestOp('templatesets');
@@ -1153,6 +1137,76 @@ describe('template worker tests', function () {
             .then(() => worker.templateProvider.listSets())
             .then(setNames => assert.strictEqual(setNames.length, 0));
     });
+    it('post_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: [
+                'foo'
+            ],
+            enableIpam: true,
+            ipamProviders: [
+                { name: 'test', password: 'foobar', serviceType: 'Generic' }
+            ]
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 200);
+                expect(op.body).to.satisfySchemaInApiSpec('Settings');
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+            });
+    });
+    it('post_settings_bad', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+        });
+        return worker.onPost(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 422);
+            });
+    });
+    it('patch_settings', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: [
+                'foo'
+            ],
+            enableIpam: true,
+            ipamProviders: [
+                { name: 'test', password: 'foobar', serviceType: 'Generic' }
+            ]
+        });
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 200);
+            })
+            .then(() => worker.getConfig(0))
+            .then((config) => {
+                assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+            });
+    });
+    it('patch_settings_bad', function () {
+        const worker = createWorker();
+        const op = new RestOp('settings');
+        op.setBody({
+            deletedTemplateSets: 5
+        });
+        return worker.onPatch(op)
+            .then(() => {
+                console.log(JSON.stringify(op.body, null, 2));
+                assert.equal(op.status, 422);
+            });
+    });
     it('get_settings_schema', function () {
         const worker = createWorker();
         const op = new RestOp('settings-schema');
@@ -1163,6 +1217,7 @@ describe('template worker tests', function () {
 
                 const configSchema = op.getBody();
                 console.log(JSON.stringify(configSchema, null, 2));
+                expect(configSchema).to.satisfySchemaInApiSpec('SettingsSchema');
                 assert.deepStrictEqual(configSchema.properties.deletedTemplateSets, {
                     type: 'array',
                     items: {
@@ -1189,6 +1244,7 @@ describe('template worker tests', function () {
                 const config = op.getBody();
                 console.log(JSON.stringify(config, null, 2));
                 assert.ok(config.deletedTemplateSets);
+                expect(config).to.satisfySchemaInApiSpec('Settings');
             });
     });
     it('delete_settings', function () {
@@ -1212,535 +1268,508 @@ describe('template worker tests', function () {
                 assert.strictEqual(op.body.foo, undefined);
             });
     });
-    it('on_start', function () {
-        const worker = createWorker();
 
-        // Clear the data store
-        worker.storage.data = {};
-
-        nock(host)
-            .persist()
-            .post(`${as3ep}/Common?async=true`)
-            .reply(202, {});
-
-        const scope = nock('http://localhost:8100')
-            .get('/mgmt/shared/iapp/blocks')
-            .reply(200, { items: [] })
-            .post('/mgmt/shared/iapp/blocks')
-            .reply(200, {});
-
-        return worker.onStart(
-            () => {}, // success callback
-            () => assert(false) // error callback
-        )
-            .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
-            .then(() => worker.templateProvider.list())
-            .then((tmplList) => {
-                assert(tmplList.includes('examples/simple_http'));
-            })
-            .then(() => {
-                assert.deepStrictEqual(worker.deviceInfo, {
-                    build: '0.140.4',
-                    edition: 'Engineering Hotfix',
-                    fullVersion: '13.1.1.4-0.140.4',
-                    hostname: 'fast.unit.test.host',
-                    platform: 'Z100',
-                    platformName: 'BIG-IP Virtual Edition',
-                    product: 'BIG-IP',
-                    version: '13.1.1.4'
-                }, 'device info should be set');
-            });
+    describe('bad endpoints', function () {
+        it('get_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onGet(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
+        it('post_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onPost(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
+        it('delete_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onDelete(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
+        it('patch_bad_end_point', function () {
+            const worker = createWorker();
+            const op = new RestOp('bad');
+            return worker.onPatch(op)
+                .then(() => {
+                    assert.equal(op.status, 404);
+                });
+        });
     });
-    it('onStartCompleted', function () {
-        const worker = createWorker();
-        nock('http://localhost:8100')
-            .get('/mgmt/shared/appsvcs/info')
-            .reply(200, {});
-        return Promise.resolve()
-            .then(() => worker.onStartCompleted(
+
+    describe('worker methods', function () {
+        it('on_start', function () {
+            const worker = createWorker();
+
+            // Clear the data store
+            worker.storage.data = {};
+
+            nock(host)
+                .persist()
+                .post(`${as3ep}/Common?async=true`)
+                .reply(202, {});
+
+            const scope = nock('http://localhost:8100')
+                .get('/mgmt/shared/iapp/blocks')
+                .reply(200, { items: [] })
+                .post('/mgmt/shared/iapp/blocks')
+                .reply(200, {});
+
+            return worker.onStart(
                 () => {}, // success callback
-                () => assert(false), // error callback
-                undefined,
-                ''
-            ));
-    });
-    it('hydrateSchema', function () {
-        const worker = createWorker();
-        worker.configStorage.data.config = {
-            ipamProviders: [
-                { name: 'bar' }
-            ]
-        };
+                () => assert(false) // error callback
+            )
+                .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
+                .then(() => worker.templateProvider.list())
+                .then((tmplList) => {
+                    assert(tmplList.includes('examples/simple_http'));
+                })
+                .then(() => {
+                    assert.deepStrictEqual(worker.deviceInfo, {
+                        build: '0.140.4',
+                        edition: 'Engineering Hotfix',
+                        fullVersion: '13.1.1.4-0.140.4',
+                        hostname: 'fast.unit.test.host',
+                        platform: 'Z100',
+                        platformName: 'BIG-IP Virtual Edition',
+                        product: 'BIG-IP',
+                        version: '13.1.1.4'
+                    }, 'device info should be set');
+                });
+        });
+        it('onStartCompleted', function () {
+            const worker = createWorker();
+            nock('http://localhost:8100')
+                .get('/mgmt/shared/appsvcs/info')
+                .reply(200, {});
+            return Promise.resolve()
+                .then(() => worker.onStartCompleted(
+                    () => {}, // success callback
+                    () => assert(false), // error callback
+                    undefined,
+                    ''
+                ));
+        });
+        it('hydrateSchema', function () {
+            const worker = createWorker();
+            worker.configStorage.data.config = {
+                ipamProviders: [
+                    { name: 'bar' }
+                ]
+            };
 
-        const inputSchema = {
-            properties: {
-                foo: {
-                    type: 'string',
-                    enumFromBigip: 'ltm/profile/http-compression'
-                },
-                fooItems: {
-                    type: 'array',
-                    items: {
+            const inputSchema = {
+                properties: {
+                    foo: {
                         type: 'string',
                         enumFromBigip: 'ltm/profile/http-compression'
-                    }
-                },
-                multipleEndpoints: {
-                    type: 'string',
-                    enumFromBigip: [
-                        'ltm/profile/http-compression',
-                        'ltm/profile/http-compression2'
-                    ]
-                },
-                fooIpam: {
-                    type: 'string',
-                    ipFromIpam: true
-                },
-                fooIpamItems: {
-                    type: 'array',
-                    items: {
+                    },
+                    fooItems: {
+                        type: 'array',
+                        items: {
+                            type: 'string',
+                            enumFromBigip: 'ltm/profile/http-compression'
+                        }
+                    },
+                    multipleEndpoints: {
+                        type: 'string',
+                        enumFromBigip: [
+                            'ltm/profile/http-compression',
+                            'ltm/profile/http-compression2'
+                        ]
+                    },
+                    fooIpam: {
                         type: 'string',
                         ipFromIpam: true
-                    }
-                }
-            }
-        };
-        nock('http://localhost:8100')
-            .persist()
-            .get('/mgmt/tm/ltm/profile/http-compression?$select=fullPath')
-            .reply(200, {
-                kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
-                selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression?$select=fullPath&ver=15.0.1.1',
-                items: [
-                    { fullPath: '/Common/httpcompression' },
-                    { fullPath: '/Common/wan-optimized-compression' }
-                ]
-            })
-            .get('/mgmt/tm/ltm/profile/http-compression2?$select=fullPath')
-            .reply(200, {
-                kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
-                selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression2?$select=fullPath&ver=15.0.1.1',
-                items: [
-                    { fullPath: '/Common/httpcompression2' },
-                    { fullPath: '/Common/wan-optimized-compression2' }
-                ]
-            });
-
-        const tmpl = {
-            _parametersSchema: inputSchema
-        };
-        return worker.hydrateSchema(tmpl, 0)
-            .then((schema) => {
-                console.log(schema);
-                assert.deepEqual(schema.properties.foo.enum, [
-                    '/Common/httpcompression',
-                    '/Common/wan-optimized-compression'
-                ]);
-                assert.deepEqual(schema.properties.fooItems.items.enum, [
-                    '/Common/httpcompression',
-                    '/Common/wan-optimized-compression'
-                ]);
-                assert.deepEqual(schema.properties.multipleEndpoints.enum, [
-                    '/Common/httpcompression',
-                    '/Common/wan-optimized-compression',
-                    '/Common/httpcompression2',
-                    '/Common/wan-optimized-compression2'
-                ]);
-                assert.deepEqual(schema.properties.fooIpam.enum, [
-                    'bar'
-                ]);
-                assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
-                    'bar'
-                ]);
-            });
-    });
-    it('bigipDependencies', function () {
-        const worker = createWorker();
-
-        const checkTmplDeps = (yamltext) => {
-            let retTmpl;
-            return Promise.resolve()
-                .then(() => fast.Template.loadYaml(yamltext))
-                .then((tmpl) => {
-                    retTmpl = tmpl;
-                    return tmpl;
-                })
-                .then(tmpl => worker.checkDependencies(tmpl, 0))
-                .then(() => retTmpl);
-        };
-
-        return Promise.resolve()
-            .then(() => checkTmplDeps(`
-                title: root simple pass
-                bigipDependencies:
-                    - asm
-                template: |
-                    Some text
-            `))
-            .catch(e => assert(false, e.message))
-            .then(() => checkTmplDeps(`
-                title: root simple fail
-                bigipDependencies:
-                    - cgnat
-                template: |
-                    Some text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /missing modules: cgnat/))
-            .then(() => checkTmplDeps(`
-                title: root anyOf
-                anyOf:
-                    - {}
-                    - title: asm
-                      bigipDependencies: [asm]
-                      template: foo
-                    - title: cgnat
-                      bigipDependencies: [cgnat]
-                      template: bar
-                template: |
-                    Some text
-            `))
-            .then((tmpl) => {
-                assert.strictEqual(tmpl._anyOf.length, 2);
-                assert.strictEqual(tmpl._anyOf[1].title, 'asm');
-            })
-            .then(() => checkTmplDeps(`
-                title: root allOf
-                allOf:
-                    - title: cgnat
-                      bigipDependencies: [cgnat]
-                      template: bar
-                template: |
-                    Some text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /missing modules: cgnat/))
-            .then(() => checkTmplDeps(`
-                title: root oneOf fail
-                oneOf:
-                    - title: cgnat
-                      bigipDependencies: [cgnat]
-                      template: bar
-                template: |
-                    Some text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /no single oneOf had valid/))
-            .then(() => checkTmplDeps(`
-                title: root oneOf pass
-                oneOf:
-                    - title: cgnat
-                      bigipDependencies: [cgnat]
-                      template: bar
-                    - title: asm
-                      bigipDependencies: [asm]
-                      template: foo
-                template: |
-                    Some text
-            `))
-            .then((tmpl) => {
-                assert.strictEqual(tmpl._oneOf.length, 1);
-                assert.strictEqual(tmpl._oneOf[0].title, 'asm');
-            });
-    });
-    it('as3_version_check', function () {
-        const worker = createWorker();
-
-        const checkVersion = (yamltext) => {
-            let retTmpl;
-            return Promise.resolve()
-                .then(() => fast.Template.loadYaml(yamltext))
-                .then((tmpl) => {
-                    retTmpl = tmpl;
-                    return tmpl;
-                })
-                .then(tmpl => worker.checkDependencies(tmpl, 0))
-                .then(() => retTmpl);
-        };
-
-        return Promise.resolve()
-            .then(() => checkVersion(`
-                title: no version
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkVersion(`
-                title: version met
-                bigipMinimumAS3: 3.16.0
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkVersion(`
-                title: version not met
-                bigipMinimumAS3: 3.23
-                template: text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /since it requires AS3 >= 3.23/));
-    });
-    it('bigip_version_check', function () {
-        const worker = createWorker();
-
-        const checkBigipVersion = (yamltext) => {
-            let retTmpl;
-            return Promise.resolve()
-                .then(() => fast.Template.loadYaml(yamltext))
-                .then((tmpl) => {
-                    retTmpl = tmpl;
-                    return tmpl;
-                })
-                .then(tmpl => worker.checkDependencies(tmpl, 0))
-                .then(() => retTmpl);
-        };
-
-        return Promise.resolve()
-            .then(() => checkBigipVersion(`
-                title: no version
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkBigipVersion(`
-                title: min version met
-                bigipMinimumVersion: 13.1
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkBigipVersion(`
-                title: min version not met
-                bigipMinimumVersion: 16.3
-                template: text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /since it requires BIG-IP >= 16.3/))
-            .then(() => checkBigipVersion(`
-                title: max version met
-                bigipMaximumVersion: 16.3
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkBigipVersion(`
-                title: max version not met
-                bigipMaximumVersion: 13.1
-                template: text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /since it requires BIG-IP maximum version of 13.1/))
-            .then(() => checkBigipVersion(`
-                title: min and version met
-                bigipMinimumVersion: 13.1
-                bigipMaximumVersion: 16.3
-                template: text
-            `))
-            .catch(e => assert(false, e.stack));
-    });
-    it('max_bigip_version_check', function () {
-        const worker = createWorker();
-
-        const checkBigipVersion = (yamltext) => {
-            let retTmpl;
-            return Promise.resolve()
-                .then(() => fast.Template.loadYaml(yamltext))
-                .then((tmpl) => {
-                    retTmpl = tmpl;
-                    return tmpl;
-                })
-                .then(tmpl => worker.checkDependencies(tmpl, 0))
-                .then(() => retTmpl);
-        };
-
-        return Promise.resolve()
-            .then(() => checkBigipVersion(`
-                title: no version
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkBigipVersion(`
-                title: version met
-                bigipMinimumVersion: 13.1
-                template: text
-            `))
-            .catch(e => assert(false, e.stack))
-            .then(() => checkBigipVersion(`
-                title: version not met
-                bigipMinimumVersion: 16.3
-                template: text
-            `))
-            .then(() => assert(false, 'expected template to fail'))
-            .catch(e => assert.match(e.message, /since it requires BIG-IP >= /));
-    });
-    it('convert_pool_members', function () {
-        const worker = createWorker();
-
-        as3Scope = resetScope(as3Scope)
-            .get(as3ep)
-            .query(true)
-            .reply(200, Object.assign({}, as3stub, {
-                tenant: {
-                    class: 'Tenant',
-                    http: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: {
-                                template: 'bigip-fast-templates/http',
-                                view: {
-                                    tenant_name: 'tenant',
-                                    app_name: 'http',
-                                    enable_pool: true,
-                                    make_pool: true,
-                                    pool_port: 80,
-                                    pool_members: [
-                                        '10.0.0.1'
-                                    ]
-                                }
-                            }
-                        }
                     },
-                    tcp: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: {
-                                template: 'bigip-fast-templates/tcp',
-                                view: {
-                                    tenant_name: 'tenant',
-                                    app_name: 'tcp',
-                                    enable_pool: true,
-                                    make_pool: true,
-                                    pool_members: [
-                                        '10.0.0.2'
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    tcpNew: {
-                        class: 'Application',
-                        constants: {
-                            [AS3DriverConstantsKey]: {
-                                template: 'bigip-fast-templates/tcp',
-                                view: {
-                                    enable_pool: true,
-                                    make_pool: true,
-                                    pool_members: [
-                                        {
-                                            serverAddresses: [
-                                                '10.0.0.1'
-                                            ],
-                                            servicePort: 389,
-                                            connectionLimit: 0,
-                                            priorityGroup: 0,
-                                            shareNodes: true
-                                        }
-                                    ]
-                                }
-                            }
+                    fooIpamItems: {
+                        type: 'array',
+                        items: {
+                            type: 'string',
+                            ipFromIpam: true
                         }
                     }
                 }
-            }))
-            .persist()
-            .post(`${as3ep}/tenant?async=true`)
-            .reply(202, {
-                code: 202,
-                message: [
-                    { id: '0' }
-                ]
-            });
+            };
+            nock('http://localhost:8100')
+                .persist()
+                .get('/mgmt/tm/ltm/profile/http-compression?$select=fullPath')
+                .reply(200, {
+                    kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
+                    selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression?$select=fullPath&ver=15.0.1.1',
+                    items: [
+                        { fullPath: '/Common/httpcompression' },
+                        { fullPath: '/Common/wan-optimized-compression' }
+                    ]
+                })
+                .get('/mgmt/tm/ltm/profile/http-compression2?$select=fullPath')
+                .reply(200, {
+                    kind: 'tm:ltm:profile:http-compression:http-compressioncollectionstate',
+                    selfLink: 'https://localhost/mgmt/tm/ltm/profile/http-compression2?$select=fullPath&ver=15.0.1.1',
+                    items: [
+                        { fullPath: '/Common/httpcompression2' },
+                        { fullPath: '/Common/wan-optimized-compression2' }
+                    ]
+                });
 
-        nock('http://localhost:8100')
-            .persist()
-            .get(/mgmt\/tm\/.*\?\$select=fullPath/)
-            .reply(200, {
-                items: [
-                    { fullPath: '/Common/httpcompression' },
-                    { fullPath: '/Common/wan-optimized-compression' }
-                ]
-            });
+            const tmpl = {
+                _parametersSchema: inputSchema
+            };
+            return worker.hydrateSchema(tmpl, 0)
+                .then((schema) => {
+                    console.log(schema);
+                    assert.deepEqual(schema.properties.foo.enum, [
+                        '/Common/httpcompression',
+                        '/Common/wan-optimized-compression'
+                    ]);
+                    assert.deepEqual(schema.properties.fooItems.items.enum, [
+                        '/Common/httpcompression',
+                        '/Common/wan-optimized-compression'
+                    ]);
+                    assert.deepEqual(schema.properties.multipleEndpoints.enum, [
+                        '/Common/httpcompression',
+                        '/Common/wan-optimized-compression',
+                        '/Common/httpcompression2',
+                        '/Common/wan-optimized-compression2'
+                    ]);
+                    assert.deepEqual(schema.properties.fooIpam.enum, [
+                        'bar'
+                    ]);
+                    assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
+                        'bar'
+                    ]);
+                });
+        });
+        it('bigipDependencies', function () {
+            const worker = createWorker();
 
-        const op = new RestOp('applications');
-        return worker.onGet(op)
-            .then(() => {
-                console.log(op.body);
-                assert(as3Scope.isDone());
-            });
-    });
-    it('post_render_bad_tmplid', function () {
-        const worker = createWorker();
-        const op = new RestOp('render');
-        op.setBody({
-            name: 'foobar/does_not_exist',
-            parameters: {}
-        });
-        return worker.onPost(op)
-            .then(() => {
-                assert.equal(op.status, 404);
-                assert.match(op.body.message, /Could not find template/);
-            });
-    });
-    it('post_render_bad_params', function () {
-        const worker = createWorker();
-        const op = new RestOp('render');
-        op.setBody({
-            name: 'examples/simple_udp_defaults',
-            parameters: {
-                virtual_port: 'foobar'
-            }
-        });
-        return worker.onPost(op)
-            .then(() => {
-                console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 400);
-                assert.match(op.body.message, /Parameters failed validation/);
-            });
-    });
-    it('post_render_bad_properties', function () {
-        const worker = createWorker();
-        const op = new RestOp('render');
-        op.setBody({
-        });
+            const checkTmplDeps = (yamltext) => {
+                let retTmpl;
+                return Promise.resolve()
+                    .then(() => fast.Template.loadYaml(yamltext))
+                    .then((tmpl) => {
+                        retTmpl = tmpl;
+                        return tmpl;
+                    })
+                    .then(tmpl => worker.checkDependencies(tmpl, 0))
+                    .then(() => retTmpl);
+            };
 
-        return worker.onPost(op)
-            .then(() => {
-                console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 400);
-                assert.match(op.body.message, /name property is missing/);
-            })
-            .then(() => op.setBody({
-                name: 'examples/simple_udp_defaults'
-            }))
-            .then(() => worker.onPost(op))
-            .then(() => {
-                console.log(JSON.stringify(op.body, null, 2));
-                assert.equal(op.status, 400);
-                assert.match(op.body.message, /parameters property is missing/);
-            });
-    });
-    it('post_render', function () {
-        const worker = createWorker();
-        const op = new RestOp('render');
-        op.setBody({
-            name: 'examples/simple_udp_defaults',
-            parameters: {}
+            return Promise.resolve()
+                .then(() => checkTmplDeps(`
+                    title: root simple pass
+                    bigipDependencies:
+                        - asm
+                    template: |
+                        Some text
+                `))
+                .catch(e => assert(false, e.message))
+                .then(() => checkTmplDeps(`
+                    title: root simple fail
+                    bigipDependencies:
+                        - cgnat
+                    template: |
+                        Some text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /missing modules: cgnat/))
+                .then(() => checkTmplDeps(`
+                    title: root anyOf
+                    anyOf:
+                        - {}
+                        - title: asm
+                          bigipDependencies: [asm]
+                          template: foo
+                        - title: cgnat
+                          bigipDependencies: [cgnat]
+                          template: bar
+                    template: |
+                        Some text
+                `))
+                .then((tmpl) => {
+                    assert.strictEqual(tmpl._anyOf.length, 2);
+                    assert.strictEqual(tmpl._anyOf[1].title, 'asm');
+                })
+                .then(() => checkTmplDeps(`
+                    title: root allOf
+                    allOf:
+                        - title: cgnat
+                          bigipDependencies: [cgnat]
+                          template: bar
+                    template: |
+                        Some text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /missing modules: cgnat/))
+                .then(() => checkTmplDeps(`
+                    title: root oneOf fail
+                    oneOf:
+                        - title: cgnat
+                          bigipDependencies: [cgnat]
+                          template: bar
+                    template: |
+                        Some text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /no single oneOf had valid/))
+                .then(() => checkTmplDeps(`
+                    title: root oneOf pass
+                    oneOf:
+                        - title: cgnat
+                          bigipDependencies: [cgnat]
+                          template: bar
+                        - title: asm
+                          bigipDependencies: [asm]
+                          template: foo
+                    template: |
+                        Some text
+                `))
+                .then((tmpl) => {
+                    assert.strictEqual(tmpl._oneOf.length, 1);
+                    assert.strictEqual(tmpl._oneOf[0].title, 'asm');
+                });
         });
-        return worker.onPost(op)
-            .then(() => {
-                console.log(JSON.stringify(op.body, null, 3));
-                assert.equal(op.status, 200);
-                assert(Array.isArray(op.body.message));
-            });
-    });
-    it('record_user_agent', function () {
-        const worker = createWorker();
-        const op = new RestOp('applications?userAgent=test/v1.1');
-        return worker.onGet(op)
-            .then(() => {
-                assert.strictEqual(
-                    worker.incomingUserAgent,
-                    'test/v1.1'
-                );
-                assert.strictEqual(
-                    worker.driver.userAgent,
-                    `test/v1.1;${worker.baseUserAgent}`
-                );
-            });
+        it('as3_version_check', function () {
+            const worker = createWorker();
+
+            const checkVersion = (yamltext) => {
+                let retTmpl;
+                return Promise.resolve()
+                    .then(() => fast.Template.loadYaml(yamltext))
+                    .then((tmpl) => {
+                        retTmpl = tmpl;
+                        return tmpl;
+                    })
+                    .then(tmpl => worker.checkDependencies(tmpl, 0))
+                    .then(() => retTmpl);
+            };
+
+            return Promise.resolve()
+                .then(() => checkVersion(`
+                    title: no version
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkVersion(`
+                    title: version met
+                    bigipMinimumAS3: 3.16.0
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkVersion(`
+                    title: version not met
+                    bigipMinimumAS3: 3.23
+                    template: text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /since it requires AS3 >= 3.23/));
+        });
+        it('bigip_version_check', function () {
+            const worker = createWorker();
+
+            const checkBigipVersion = (yamltext) => {
+                let retTmpl;
+                return Promise.resolve()
+                    .then(() => fast.Template.loadYaml(yamltext))
+                    .then((tmpl) => {
+                        retTmpl = tmpl;
+                        return tmpl;
+                    })
+                    .then(tmpl => worker.checkDependencies(tmpl, 0))
+                    .then(() => retTmpl);
+            };
+
+            return Promise.resolve()
+                .then(() => checkBigipVersion(`
+                    title: no version
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkBigipVersion(`
+                    title: min version met
+                    bigipMinimumVersion: 13.1
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkBigipVersion(`
+                    title: min version not met
+                    bigipMinimumVersion: 16.3
+                    template: text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /since it requires BIG-IP >= 16.3/))
+                .then(() => checkBigipVersion(`
+                    title: max version met
+                    bigipMaximumVersion: 16.3
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkBigipVersion(`
+                    title: max version not met
+                    bigipMaximumVersion: 13.1
+                    template: text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /since it requires BIG-IP maximum version of 13.1/))
+                .then(() => checkBigipVersion(`
+                    title: min and version met
+                    bigipMinimumVersion: 13.1
+                    bigipMaximumVersion: 16.3
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack));
+        });
+        it('max_bigip_version_check', function () {
+            const worker = createWorker();
+
+            const checkBigipVersion = (yamltext) => {
+                let retTmpl;
+                return Promise.resolve()
+                    .then(() => fast.Template.loadYaml(yamltext))
+                    .then((tmpl) => {
+                        retTmpl = tmpl;
+                        return tmpl;
+                    })
+                    .then(tmpl => worker.checkDependencies(tmpl, 0))
+                    .then(() => retTmpl);
+            };
+
+            return Promise.resolve()
+                .then(() => checkBigipVersion(`
+                    title: no version
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkBigipVersion(`
+                    title: version met
+                    bigipMinimumVersion: 13.1
+                    template: text
+                `))
+                .catch(e => assert(false, e.stack))
+                .then(() => checkBigipVersion(`
+                    title: version not met
+                    bigipMinimumVersion: 16.3
+                    template: text
+                `))
+                .then(() => assert(false, 'expected template to fail'))
+                .catch(e => assert.match(e.message, /since it requires BIG-IP >= /));
+        });
+        it('convert_pool_members', function () {
+            const worker = createWorker();
+
+            as3Scope = resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        http: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/http',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'http',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_port: 80,
+                                        pool_members: [
+                                            '10.0.0.1'
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        tcp: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/tcp',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'tcp',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_members: [
+                                            '10.0.0.2'
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        tcpNew: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/tcp',
+                                    view: {
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_members: [
+                                            {
+                                                serverAddresses: [
+                                                    '10.0.0.1'
+                                                ],
+                                                servicePort: 389,
+                                                connectionLimit: 0,
+                                                priorityGroup: 0,
+                                                shareNodes: true
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist()
+                .post(`${as3ep}/tenant?async=true`)
+                .reply(202, {
+                    code: 202,
+                    message: [
+                        { id: '0' }
+                    ]
+                });
+
+            nock('http://localhost:8100')
+                .persist()
+                .get(/mgmt\/tm\/.*\?\$select=fullPath/)
+                .reply(200, {
+                    items: [
+                        { fullPath: '/Common/httpcompression' },
+                        { fullPath: '/Common/wan-optimized-compression' }
+                    ]
+                });
+
+            const op = new RestOp('applications');
+            return worker.onGet(op)
+                .then(() => {
+                    console.log(op.body);
+                    assert(as3Scope.isDone());
+                });
+        });
+        it('record_user_agent', function () {
+            const worker = createWorker();
+            const op = new RestOp('applications?userAgent=test/v1.1');
+            return worker.onGet(op)
+                .then(() => {
+                    assert.strictEqual(
+                        worker.incomingUserAgent,
+                        'test/v1.1'
+                    );
+                    assert.strictEqual(
+                        worker.driver.userAgent,
+                        `test/v1.1;${worker.baseUserAgent}`
+                    );
+                });
+        });
     });
 });
