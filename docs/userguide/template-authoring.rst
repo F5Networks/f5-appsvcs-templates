@@ -26,7 +26,7 @@ For more information on a given command use the ``--help`` flag combined with a 
 
 | Use the following command to install the npm module:  ``npm install -g @f5devcentral/f5-fast-core``
 | Use the following command to validate your template ``fast validate <filename>``
-| Use one of the following commands to zip your template ``zip <zipfile.zip> <sourcefile.mst>`` or  ``fast packageTemplateSet <templateSetPath>``
+| Use the following command to package your template ``fast packageTemplateSet <templateSetPath>``
 | Upload and install your zip file using steps 8 and 9 from the *Hello World example* below
 |
 | For VSCode users, installing the F5 Automated Toolchain Extension helps with managing templates/declarations.
@@ -168,7 +168,7 @@ Once the declaration is parameterized to fit your needs, it is the template you 
       }
 
 #. Using this file, the following command will show an example render: ``fast render hello.mst params.json``
-#. To add this to the system, the template can be placed into a zip file. From the command line:  ``zip hello.zip hello.mst``
+#. To add this to the system, the template can be placed into a template set package. From the command line:  ``fast packageTemplateSet <folder containing mst>``
 #. Make note of the file location, and the size of the file (in bytes).
    **Note:** file size must be less than 1MB or the transfer fails.
 #. Upload the file to the BIG-IP system using cURL from a Linux shell using the following syntax:
