@@ -2,6 +2,7 @@
 
 ## Changed
 * Documentation: the Revision History page will no longer duplicate the release information, but will link to the release page on GitHub
+* Documentation: OpenAPI spec has been updated for more up to date info.
 
 # 1.14.0
 ## Added
