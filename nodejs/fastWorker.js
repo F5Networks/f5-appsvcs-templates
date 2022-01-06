@@ -2127,17 +2127,12 @@ class FASTWorker {
     }
 
     validateRequest(restOperation) {
-        const contentType = restOperation.getHeader('content-type');
-        // if POST or PATCH and content-type is not application/json
+        const requestContentType = restOperation.getHeader('content-type');
+        const contentType = JSON.stringify(restOperation.getBody()) !== '{}' && requestContentType !== 'application/json' ? 'application/json' : requestContentType;
         if (['Post', 'Patch'].includes(restOperation.getMethod()) && contentType !== 'application/json') {
-            // if there is a json body, even with no content-type, this is integration tests
-            if (JSON.stringify(restOperation.getBody()) !== '{}') {
-                return true;
-            }
-            // content-type is not application/json and not integration tests as there is no json payload
             return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
         }
-        return true;
+        return Promise.resolve();
     }
 }
 
