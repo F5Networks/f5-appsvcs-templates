@@ -23,6 +23,9 @@ const https = require('https');
 const axios = require('axios');
 const assert = require('assert');
 
+const { execSync } = require('child_process');
+const fs = require('fs');
+
 const bigipTarget = process.env.BIGIP_TARGET;
 const bigipCreds = process.env.BIGIP_CREDS;
 
@@ -96,6 +99,7 @@ function deleteAllApplications() {
 describe('Template Sets', function () {
     this.timeout(120000);
     const url = '/mgmt/shared/fast/templatesets';
+    let uploadedFileSize = 0;
 
     function assertGet(expected, templateSetId) {
         const fullUrl = templateSetId ? `${url}/${templateSetId}` : url;
@@ -164,6 +168,30 @@ describe('Template Sets', function () {
             assert.strictEqual(actual.status, 200);
             assert.deepStrictEqual(actual.data, { code: 200, message: '' });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
+        }));
+    it('POST package, upload and install custom template set', () => Promise.resolve()
+        .then(() => execSync(`fast packageTemplateSet test/integ/test_integ /var/config/rest/downloads/test_integ.zip`))
+        .then(() => fs.statSync('/var/config/rest/downloads/test_integ.zip'))
+        .then((stats) => {
+            uploadedFileSize = stats.size;
+            return fs.readFileSync('/var/config/rest/downloads/test_integ.zip');
+        })
+        .then((file) => endpoint.post(
+            '/mgmt/shared/file-transfer/uploads/test_integ.zip',
+            file,
+            {
+                headers: {
+                    'Authorization': `Basic ${bigipCreds.toString('base64')}`,
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Range': `0-${uploadedFileSize - 1}/${uploadedFileSize}`,
+                }
+            }
+        ))
+        .then(() => endpoint.post(url, { name: 'test_integ' }))
+        .then((actual) => {
+            assert.strictEqual(actual.status, 200);
+            assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+            return assertGet({ data: [{ name: 'test_integ', supported: false }], status: 200 }, 'test_integ');
         }));
 });
 
