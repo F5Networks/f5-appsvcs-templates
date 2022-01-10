@@ -99,6 +99,7 @@ function deleteAllApplications() {
 describe('Template Sets', function () {
     this.timeout(120000);
     const url = '/mgmt/shared/fast/templatesets';
+    const zipFileName = 'test_integ.zip';
     let uploadedFileSize = 0;
 
     function assertGet(expected, templateSetId) {
@@ -170,11 +171,10 @@ describe('Template Sets', function () {
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST package, upload and install custom template set', () => Promise.resolve()
-        .then(() => execSync('fast packageTemplateSet test/integ/testTemplateSet ./test_integ.zip'))
-        .then(() => fs.statSync('test_integ.zip'))
-        .then((stats) => {
-            uploadedFileSize = stats.size
-            return fs.readFileSync('test_integ.zip');
+        .then(() => execSync(`fast packageTemplateSet test/integ/testTemplateSet ${zipFileName}`))
+        .then(() => {
+            uploadedFileSize = fs.statSync(zipFileName).size;
+            return fs.readFileSync(zipFileName);
         })
         .then(file => endpoint.post(
             '/mgmt/shared/file-transfer/uploads/test_integ.zip',
