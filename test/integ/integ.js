@@ -23,7 +23,8 @@ const https = require('https');
 const axios = require('axios');
 const assert = require('assert');
 
-const { execSync } = require('child_process');
+const fast = require('@f5devcentral/f5-fast-core');
+const FsTemplateProvider = fast.FsTemplateProvider;
 const fs = require('fs');
 
 const bigipTarget = process.env.BIGIP_TARGET;
@@ -171,7 +172,10 @@ describe('Template Sets', function () {
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST package, upload and install custom template set', () => Promise.resolve()
-        .then(() => execSync(`fast packageTemplateSet test/integ/testTemplateSet ${zipFileName}`))
+        .then(() => {
+            const tmplProvider = new FsTemplateProvider('test/integ');
+            return tmplProvider.buildPackage('testTemplateSet', zipFileName);
+        })
         .then(() => {
             uploadedFileSize = fs.statSync(zipFileName).size;
             return fs.readFileSync(zipFileName);
