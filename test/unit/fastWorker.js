@@ -48,9 +48,18 @@ class RestOp {
         this.uri = uri;
         this.body = '';
         this.status = 200;
+        this.headers = { 'content-type': 'application/json' };
     }
 
     setHeaders() {}
+
+    getHeader(name) {
+        return this.headers[name];
+    }
+
+    getContentType() {
+        return this.headers['content-type'];
+    }
 
     setStatusCode(status) {
         this.status = status;

@@ -1556,6 +1556,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -1579,7 +1580,8 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
     postApplications(restOperation, data) {
@@ -1820,6 +1822,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -1837,7 +1840,8 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
     deleteApplications(restOperation, appid, data) {
@@ -2009,6 +2013,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2024,7 +2029,8 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
     }
 
     patchApplications(restOperation, appid, data) {
@@ -2101,6 +2107,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.handleLazyInit(restOperation.requestId))
+            .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
                     switch (collection) {
@@ -2114,7 +2121,17 @@ class FASTWorker {
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
                 }
-            });
+            })
+            .catch(e => this.genRestResponse(restOperation, 400, e.message));
+    }
+
+    validateRequest(restOperation) {
+        const requestContentType = restOperation.getHeader('content-type');
+        const contentType = JSON.stringify(restOperation.getBody()) !== '{}' && requestContentType !== 'application/json' ? 'application/json' : requestContentType;
+        if (['Post', 'Patch'].includes(restOperation.getMethod()) && contentType !== 'application/json') {
+            return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
+        }
+        return Promise.resolve();
     }
 }
 

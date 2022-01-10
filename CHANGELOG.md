@@ -3,6 +3,7 @@
 ## Changed
 * Documentation: the Revision History page will no longer duplicate the release information, but will link to the release page on GitHub
 * Documentation: OpenAPI spec has been updated for more up to date info.
+* Return better error messages in response to requests without application/json specified in the content-type header
 
 # 1.14.0
 ## Added
