@@ -170,11 +170,11 @@ describe('Template Sets', function () {
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST package, upload and install custom template set', () => Promise.resolve()
-        .then(() => execSync('fast packageTemplateSet test/integ/test_integ /var/config/rest/downloads/test_integ.zip'))
-        .then(() => fs.statSync('/var/config/rest/downloads/test_integ.zip'))
+        .then(() => execSync('fast packageTemplateSet test/integ/testTemplateSet ./test_integ.zip'))
+        .then(() => fs.statSync('test_integ.zip'))
         .then((stats) => {
-            uploadedFileSize = stats.size;
-            return fs.readFileSync('/var/config/rest/downloads/test_integ.zip');
+            uploadedFileSize = stats.size
+            return fs.readFileSync('test_integ.zip');
         })
         .then(file => endpoint.post(
             '/mgmt/shared/file-transfer/uploads/test_integ.zip',
