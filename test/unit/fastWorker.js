@@ -34,6 +34,7 @@ const chaiResponseValidator = require('chai-openapi-response-validator').default
 chai.use(chaiResponseValidator(path.join(__dirname, '../../docs/openapi.yml')));
 
 const fast = require('@f5devcentral/f5-fast-core');
+const atgStorage = require('@f5devcentral/atg-storage');
 
 const AS3DriverConstantsKey = require('../../lib/drivers').AS3DriverConstantsKey;
 const { SecretsBase64 } = require('../../lib/secrets');
@@ -164,7 +165,7 @@ class TeemDeviceMock {
 function createWorker() {
     const worker = new FASTWorker({
         templateStorage: testStorage,
-        configStorage: new fast.dataStores.StorageMemory(),
+        configStorage: new atgStorage.StorageMemory(),
         secretsManager: new SecretsBase64(),
         fsTemplateList: [
             'examples',
@@ -212,7 +213,7 @@ describe('fastWorker tests', function () {
             'bigip-fast-templates',
             'examples'
         ];
-        testStorage = new fast.dataStores.StorageMemory();
+        testStorage = new atgStorage.StorageMemory();
         return fast.DataStoreTemplateProvider.fromFs(testStorage, templatesPath, tsNames);
     });
 

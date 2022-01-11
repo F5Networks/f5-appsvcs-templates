@@ -29,6 +29,7 @@ const Mustache = require('mustache');
 const semver = require('semver');
 
 const fast = require('@f5devcentral/f5-fast-core');
+const atgStorage = require('@f5devcentral/atg-storage');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const drivers = require('../lib/drivers');
@@ -36,7 +37,7 @@ const { SecretsSecureVault } = require('../lib/secrets');
 
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
-const StorageDataGroup = fast.dataStores.StorageDataGroup;
+const StorageDataGroup = atgStorage.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');

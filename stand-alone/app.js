@@ -19,7 +19,7 @@
 
 const path = require('path');
 
-const fast = require('@f5devcentral/f5-fast-core');
+const atgStorage = require('@f5devcentral/atg-storage');
 
 const FastWorker = require('../nodejs/fastWorker');
 const expressAdapter = require('./expressAdapter');
@@ -45,8 +45,8 @@ const bigipInfo = {
 const worker = new FastWorker({
     configPath: '.',
     templatesPath: path.join(__dirname, '..', 'templates'),
-    templateStorage: new fast.dataStores.StorageMemory(),
-    configStorage: new fast.dataStores.StorageJsonFile('config.json'),
+    templateStorage: new atgStorage.StorageMemory(),
+    configStorage: new atgStorage.StorageJsonFile('config.json'),
     secretsManager: new SecretsBase64(),
     bigipInfo
 });
