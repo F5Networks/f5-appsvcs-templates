@@ -287,6 +287,22 @@ describe('fastWorker tests', function () {
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
             });
+        nock('http://localhost:8100')
+            .persist()
+            .get('/mgmt/tm/cm/sync-status')
+            .reply(200, {
+                entries: {
+                    'https://localhost/mgmt/tm/cm/sync-status/0': {
+                        nestedStats: {
+                            entries: {
+                                status: {
+                                    description: 'Standalone'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
     });
 
     afterEach(function () {
