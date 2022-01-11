@@ -30,44 +30,48 @@ const assert = chai.assert;
 const { AS3Driver, AS3DriverConstantsKey } = require('../../lib/drivers');
 
 describe('AS3 Driver tests', function () {
-    const appDef = {
-        tenantName: {
-            class: 'Tenant',
-            appName: {
-                class: 'Application'
-            }
-        }
-    };
     const as3ep = '/mgmt/shared/appsvcs/declare';
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
-    const as3stub = {
-        class: 'ADC',
-        schemaVersion: '3.0.0'
-    };
-    const appMetadata = {
-        template: 'foo',
-        tenant: 'tenantName',
-        name: 'appName',
-        view: {
-            bar: 'baz'
-        }
-    };
-    const as3WithApp = Object.assign({}, as3stub, {
-        tenantName: {
-            class: 'Tenant',
-            appName: {
-                class: 'Application',
-                constants: {
-                    class: 'Constants',
-                    [AS3DriverConstantsKey]: appMetadata
-                }
-            }
-        }
-    });
-
     const host = 'http://localhost:8100';
 
+    let appDef;
+    let as3stub;
+    let appMetadata;
+    let as3WithApp;
+
     beforeEach(function () {
+        appDef = {
+            tenantName: {
+                class: 'Tenant',
+                appName: {
+                    class: 'Application'
+                }
+            }
+        };
+        as3stub = {
+            class: 'ADC',
+            schemaVersion: '3.0.0'
+        };
+        appMetadata = {
+            template: 'foo',
+            tenant: 'tenantName',
+            name: 'appName',
+            view: {
+                bar: 'baz'
+            }
+        };
+        as3WithApp = Object.assign({}, as3stub, {
+            tenantName: {
+                class: 'Tenant',
+                appName: {
+                    class: 'Application',
+                    constants: {
+                        class: 'Constants',
+                        [AS3DriverConstantsKey]: appMetadata
+                    }
+                }
+            }
+        });
         this.clock = sinon.useFakeTimers();
     });
 
