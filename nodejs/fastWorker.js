@@ -438,8 +438,10 @@ class FASTWorker {
     onConfigSync() {
         return Promise.resolve()
             .then(() => {
-                this.storage.keys();
-                this.fsTemplateProvider.invalidateCache();
+                this.storage.clearCache();
+                this.configStorage.clearCache();
+                this.templatePrvider.invalidateCache();
+                this.driver.invalidateCache();
             });
     }
 
