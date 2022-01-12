@@ -1,7 +1,7 @@
 # 1.15.0
 
 ## Fixed
-* Clear cache whenever a configSync is completed, so updates from the peer will no longer require restarting restnoded
+* Clear cache whenever a config-sync is completed, so updates from the peer will no longer require restarting restnoded
 
 ## Changed
 * Documentation: the Revision History page will no longer duplicate the release information, but will link to the release page on GitHub
