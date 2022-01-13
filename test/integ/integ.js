@@ -99,8 +99,6 @@ function deleteAllApplications() {
 describe('Template Sets', function () {
     this.timeout(120000);
     const url = '/mgmt/shared/fast/templatesets';
-    const zipFileName = 'test_integ.zip';
-    let uploadedFileSize = 0;
 
     function assertGet(expected, templateSetId) {
         const fullUrl = templateSetId ? `${url}/${templateSetId}` : url;
@@ -170,33 +168,38 @@ describe('Template Sets', function () {
             assert.deepStrictEqual(actual.data, { code: 200, message: '' });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
-    it('POST package, upload and install custom template set', () => Promise.resolve()
-        .then(() => {
-            const tmplProvider = new fast.FsTemplateProvider('test/integ');
-            return tmplProvider.buildPackage('testTemplateSet', zipFileName);
-        })
-        .then(() => {
-            uploadedFileSize = fs.statSync(zipFileName).size;
-            return fs.readFileSync(zipFileName);
-        })
-        .then(file => endpoint.post(
-            '/mgmt/shared/file-transfer/uploads/test_integ.zip',
-            file,
-            {
-                headers: {
-                    Authorization: `Basic ${bigipCreds.toString('base64')}`,
-                    'Content-Type': 'application/octet-stream',
-                    'Content-Range': `0-${uploadedFileSize - 1}/${uploadedFileSize}`
+    it('POST package, upload and install custom template set', () => {
+        const zipFileName = 'test_integ.zip';
+        let uploadedFileSize = 0;
+
+        return Promise.resolve()
+            .then(() => {
+                const tmplProvider = new fast.FsTemplateProvider('test/integ');
+                return tmplProvider.buildPackage('testTemplateSet', zipFileName);
+            })
+            .then(() => {
+                uploadedFileSize = fs.statSync(zipFileName).size;
+                return fs.readFileSync(zipFileName);
+            })
+            .then(file => endpoint.post(
+                '/mgmt/shared/file-transfer/uploads/test_integ.zip',
+                file,
+                {
+                    headers: {
+                        Authorization: `Basic ${bigipCreds.toString('base64')}`,
+                        'Content-Type': 'application/octet-stream',
+                        'Content-Range': `0-${uploadedFileSize - 1}/${uploadedFileSize}`
+                    }
                 }
-            }
-        ))
-        .then(() => endpoint.post(url, { name: 'test_integ' }))
-        .then((actual) => {
-            assert.strictEqual(actual.status, 200);
-            assert.deepStrictEqual(actual.data, { code: 200, message: '' });
-            return assertGet({ data: [{ name: 'test_integ', supported: false }], status: 200 }, 'test_integ');
-        })
-        .finally(() => fs.unlinkSync(zipFileName)));
+            ))
+            .then(() => endpoint.post(url, { name: 'test_integ' }))
+            .then((actual) => {
+                assert.strictEqual(actual.status, 200);
+                assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+                return assertGet({ data: [{ name: 'test_integ', supported: false }], status: 200 }, 'test_integ');
+            })
+            .finally(() => fs.unlinkSync(zipFileName));
+    });
 });
 
 describe('Applications', function () {
