@@ -1609,7 +1609,7 @@ class FASTWorker {
             })
             .then(() => {
                 appsData.forEach((appData) => {
-                    this.generateTeemReportApplication('modify', appData.template);
+                    this.generateTeemReportApplication('modify', appData.metaData.template);
                 });
             })
             .then(() => this.recordTransaction(
