@@ -741,7 +741,7 @@ components:
                 type: string
                 description: The task ID which can be used to query task state.
               name:
-                description: The name of the created/updated application.
+                description: The name of the template used.
                 type: string
               parameters:
                 description: The parameters used to create/update the application.
