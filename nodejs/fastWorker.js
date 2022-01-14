@@ -2127,7 +2127,7 @@ class FASTWorker {
     }
 
     validateRequest(restOperation) {
-        const requestContentType = restOperation.getHeader('content-type');
+        const requestContentType = restOperation.getHeader ? restOperation.getHeader('content-type') : 'application/json';
         const contentType = JSON.stringify(restOperation.getBody()) !== '{}' && requestContentType !== 'application/json' ? 'application/json' : requestContentType;
         if (['Post', 'Patch'].includes(restOperation.getMethod()) && contentType !== 'application/json') {
             return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
