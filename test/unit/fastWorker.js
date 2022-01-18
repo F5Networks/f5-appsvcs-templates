@@ -276,7 +276,12 @@ describe('fastWorker tests', function () {
     }
 
     function workerOnStart() {
-        const worker = createWorker();
+        if (arguments[0]) {
+            console.log('JDK worker received');
+        } else {
+            console.log('JDK create new worker');
+        }
+        const worker = arguments[0] ? arguments[0] : createWorker();
         return worker.onStart(
             () => {}, // success callback
             () => assert(false) // error callback
@@ -346,7 +351,7 @@ describe('fastWorker tests', function () {
 
             const scope = nockBlocks();
 
-            return workerOnStart()
+            return workerOnStart(worker)
                 .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
                 .then(() => worker.templateProvider.list())
                 .then((tmplList) => {
