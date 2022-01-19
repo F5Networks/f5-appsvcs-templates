@@ -162,9 +162,13 @@ class TeemDeviceMock {
     }
 }
 
+function copyStorage(src) {
+    return new atgStorage.StorageMemory(Object.assign({}, src.data));
+}
+
 function createWorker() {
     const worker = new FASTWorker({
-        templateStorage: testStorage,
+        templateStorage: copyStorage(testStorage),
         configStorage: new atgStorage.StorageMemory(),
         secretsManager: new SecretsBase64(),
         fsTemplateList: [
