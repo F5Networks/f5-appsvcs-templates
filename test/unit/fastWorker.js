@@ -162,9 +162,13 @@ class TeemDeviceMock {
     }
 }
 
+function copyStorage(src) {
+    return new atgStorage.StorageMemory(Object.assign({}, src.data));
+}
+
 function createWorker() {
     const worker = new FASTWorker({
-        templateStorage: testStorage,
+        templateStorage: copyStorage(testStorage),
         configStorage: new atgStorage.StorageMemory(),
         secretsManager: new SecretsBase64(),
         fsTemplateList: [
@@ -208,7 +212,18 @@ describe('fastWorker tests', function () {
     };
     let as3Scope;
 
-    function nockProvision() {
+    before(function () {
+        const tsNames = [
+            'bigip-fast-templates',
+            'examples'
+        ];
+        testStorage = new atgStorage.StorageMemory();
+        return fast.DataStoreTemplateProvider.fromFs(testStorage, templatesPath, tsNames);
+    });
+
+    beforeEach(function () {
+        this.clock = sinon.useFakeTimers();
+
         nock(host)
             .persist()
             .get('/mgmt/tm/sys/provision')
@@ -240,15 +255,13 @@ describe('fastWorker tests', function () {
                     }
                 ]
             });
-    }
-    function nockTelemetryInfo() {
+
         nock(host)
             .persist()
             .get('/mgmt/shared/telemetry/info')
             .reply(200, {
             });
-    }
-    function nockDeviceInfo() {
+
         nock(host)
             .persist()
             .get('/mgmt/shared/identified-devices/config/device-info')
@@ -265,44 +278,6 @@ describe('fastWorker tests', function () {
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
             });
-    }
-
-    function nockBlocks() {
-        return nock(host)
-            .get('/mgmt/shared/iapp/blocks')
-            .reply(200, { items: [] })
-            .post('/mgmt/shared/iapp/blocks')
-            .reply(200, {});
-    }
-
-    function workerOnStart() {
-        if (arguments[0]) {
-            console.log('JDK worker received');
-        } else {
-            console.log('JDK create new worker');
-        }
-        const worker = arguments[0] ? arguments[0] : createWorker();
-        return worker.onStart(
-            () => {}, // success callback
-            () => assert(false) // error callback
-        );
-    }
-
-    before(function () {
-        const tsNames = [
-            'bigip-fast-templates',
-            'examples'
-        ];
-        testStorage = new atgStorage.StorageMemory();
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, templatesPath, tsNames);
-    });
-
-    beforeEach(function () {
-        this.clock = sinon.useFakeTimers();
-
-        nockProvision();
-        nockTelemetryInfo();
-        nockDeviceInfo();
 
         nock(host)
             .persist()
@@ -349,9 +324,16 @@ describe('fastWorker tests', function () {
                 .post(`${as3ep}/Common?async=true`)
                 .reply(202, {});
 
-            const scope = nockBlocks();
+            const scope = nock(host)
+                .get('/mgmt/shared/iapp/blocks')
+                .reply(200, { items: [] })
+                .post('/mgmt/shared/iapp/blocks')
+                .reply(200, {});
 
-            return workerOnStart(worker)
+            return worker.onStart(
+                    () => {}, // success callback
+                    () => assert(false) // error callback
+                )
                 .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
                 .then(() => worker.templateProvider.list())
                 .then((tmplList) => {
@@ -1368,16 +1350,6 @@ describe('fastWorker tests', function () {
     });
 
     describe('applications', function () {
-        before(function () {
-            nockProvision();
-            nockTelemetryInfo();
-            nockDeviceInfo();
-
-            nockBlocks();
-
-            workerOnStart();
-        });
-
         it('get_apps', function () {
             const worker = createWorker();
             const op = new RestOp('applications');
