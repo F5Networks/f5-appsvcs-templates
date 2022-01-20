@@ -29,9 +29,9 @@
   ],
   "devDependencies": {
     "@babel/cli": "^7.16.8",
-    "@babel/core": "^7.16.7",
-    "@babel/plugin-transform-runtime": "^7.16.8",
-    "@babel/preset-env": "^7.16.8",
+    "@babel/core": "^7.16.10",
+    "@babel/plugin-transform-runtime": "^7.16.10",
+    "@babel/preset-env": "^7.16.11",
     "@f5devcentral/eslint-config-f5-atg": "^0.1.7",
     "@json-editor/json-editor": "^2.6.1",
     "chai": "^4.3.3",
