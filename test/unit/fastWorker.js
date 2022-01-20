@@ -331,9 +331,9 @@ describe('fastWorker tests', function () {
                 .reply(200, {});
 
             return worker.onStart(
-                    () => {}, // success callback
-                    () => assert(false) // error callback
-                )
+                () => {}, // success callback
+                () => assert(false) // error callback
+            )
                 .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
                 .then(() => worker.templateProvider.list())
                 .then((tmplList) => {
