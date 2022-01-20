@@ -60,6 +60,6 @@ This job is asynchronous and a successful response indicates that the task was s
 The response payload contains an `id` that can be used to query `mgmt/shared/fast/tasks/<task ID>` for the current status of the task.
 
 Submitting another task while a previous one is still in progress can result in an error from AS3.
-It is recommended to either wait on the result of a previous deployment task before submitting another one or to enable `Burst Handling <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/burst-handling.html>`_ for AS3.
+It is recommended to wait on the result of a previous deployment task before submitting another one.
 
 .. seealso:: :ref:`api-ref` for a reference of the FAST REST API.
