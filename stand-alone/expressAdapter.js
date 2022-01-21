@@ -24,6 +24,7 @@ const axios = require('axios');
 const express = require('express');
 const http = require('http');
 const https = require('https');
+const fs = require('fs');
 
 const RestOperation = require('./restOperation');
 
@@ -166,6 +167,64 @@ function generateApp(workers, options) {
         .then(() => app);
 }
 
+function startHttpsServer(app, options) {
+    let key;
+    let cert;
+    let errors = '';
+
+    const port = options.port || 8080;
+    const allowLocalCert = options.allowLocalCert;
+
+    // Try getting TLS file locations from the env
+    const tlsKeyFileName = process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'];
+    if (tlsKeyFileName) {
+        try {
+            key = fs.readFileSync(tlsKeyFileName, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    const tlsCertFileName = process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'];
+    if (tlsCertFileName) {
+        try {
+            cert = fs.readFileSync(tlsCertFileName, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    // Grab from a dev location as a fallback
+    if (allowLocalCert && (!key || !cert)) {
+        const tlsKeyLocal = options.tlsKeyLocalName || 'certs/key.pem';
+        try {
+            key = fs.readFileSync(tlsKeyLocal, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+
+        const tlsCertLocal = options.tlsKeyLocalName || 'certs/certificate.pem';
+        try {
+            cert = fs.readFileSync(tlsCertLocal, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    if (!key || !cert) {
+        return Promise.reject(new Error(
+            `Failed to load TLS key and certificate: ${errors.trim()}`
+        ));
+    }
+
+    https
+        .createServer({ key, cert }, app)
+        .listen(port);
+
+    return Promise.resolve();
+}
+
 module.exports = {
-    generateApp
+    generateApp,
+    startHttpsServer
 };
