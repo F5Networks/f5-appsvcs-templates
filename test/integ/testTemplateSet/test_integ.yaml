@@ -1,0 +1,42 @@
+# Simple UDP template with parameters defined outside of the template
+title: Simple UDP Application
+parameters:
+  tenant_name: foo
+  application_name: bar
+  virtual_address: 192.0.2.11
+  virtual_port: 5555
+  server_addresses:
+    - 192.0.2.22
+  service_port: 5555
+template: |
+  {
+    "class": "ADC",
+    "schemaVersion": "3.0.0",
+    "{{tenant_name}}": {
+      "class": "Tenant",
+      "{{application_name}}": {
+        "class": "Application",
+        "template": "udp",
+        "serviceMain": {
+          "class": "Service_UDP",
+          "virtualAddresses": [
+            "{{virtual_address}}"
+          ],
+          "virtualPort": {{virtual_port}},
+          "pool": "{{application_name}}_Pool1"
+        },
+        "{{application_name}}_Pool1": {
+          "class": "Pool",
+          "monitors": [
+            "icmp"
+          ],
+          "members": [
+            {
+              "serverAddresses": {{server_addresses::array}},
+              "servicePort": {{service_port}}
+            }
+          ]
+        }
+      }
+    }
+  }
