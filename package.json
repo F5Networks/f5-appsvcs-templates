@@ -118,7 +118,7 @@
     "@babel/runtime": "^7.16.7",
     "@f5devcentral/atg-shared-utilities": "^0.4.1",
     "@f5devcentral/atg-storage": "^1.3.0",
-    "@f5devcentral/f5-fast-core": "^0.17.0",
+    "@f5devcentral/f5-fast-core": "^0.18.0",
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
     "axios": "^0.25.0",
