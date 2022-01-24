@@ -1,3 +1,10 @@
+# 1.16.0
+## Fixed
+* Fix "can't set headers" errors when performing PATCH requests on /applications/{tenant}/{app}
+
+## Changed
+## Added
+
 # 1.15.0
 
 ## Fixed

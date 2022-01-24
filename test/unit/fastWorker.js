@@ -1676,11 +1676,11 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
-                    // TODO: investigate why this is failing with this particular test (issue #526)
-                    // expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
                 });
         });
         it('convert_pool_members', function () {
+            const worker = createWorker();
             as3Scope = resetScope(as3Scope)
                 .get(as3ep)
                 .query(true)
@@ -1764,6 +1764,12 @@ describe('fastWorker tests', function () {
                         { fullPath: '/Common/httpcompression' },
                         { fullPath: '/Common/wan-optimized-compression' }
                     ]
+                });
+            const op = new RestOp('applications');
+            return worker.onGet(op)
+                .then(() => {
+                    console.log(op.body);
+                    assert(as3Scope.isDone());
                 });
         });
     });
