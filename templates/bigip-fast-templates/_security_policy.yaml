@@ -103,6 +103,23 @@ waf_policy: &waf_policy
       description: Requires BIG-IP version 14.1 or greater
       type: boolean
       default: false
+    make_waf_policy:
+      title: FAST-Generated WAF Security Policy
+      type: boolean
+      default: true
+    asm_waf_policy:
+      title: Existing WAF Securitry Policy
+      description: Select the existing WAF Securitry Policy to use.
+      type: string
+      enumFromBigip: asm/policies
+      default: ''
+    minItems: 1
+    maxItems: 1
+    dependencies:
+      - enable_waf_policy
+      - make_waf_policy
+    invertDependency:
+      - make_waf_policy
   #### ASM is not setting the encoding value specified by AS3 
   #  waf_policy_encoding:
   #    title: WAF Policy Encoding
@@ -114,9 +131,16 @@ waf_policy: &waf_policy
     waf_partial_profiles: 
       template: |
             {{#enable_waf_policy}}
-              "policyWAF": {
-                "use": "{{app_name}}_waf_policy"
-              }
+              {{#make_waf_policy}}
+                "policyWAF": {
+                  "use": "{{app_name}}_waf_policy"
+                }
+              {{/make_waf_policy}}
+              {{^make_waf_policy}}
+                "policyWAF": {
+                  "bigip": {{asm_waf_policy}}
+                }
+              {{/make_waf_policy}}
             {{/enable_waf_policy}}
     waf_partial_vs:
       template: |
@@ -126,13 +150,15 @@ waf_policy: &waf_policy
     waf_partial_policy:
       template: |
         {{#enable_waf_policy}}
-          "{{app_name}}_waf_policy": {
-            "class": "WAF_Policy",
-            "policy": {
-              "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
-            },
-            "ignoreChanges": true
-          }
+          {{#make_waf_policy}}
+            "{{app_name}}_waf_policy": {
+              "class": "WAF_Policy",
+              "policy": {
+                "text": "{ \"policy\": { \"template\": { \"name\": \"POLICY_TEMPLATE_RAPID_DEPLOYMENT\" } } }"
+              },
+              "ignoreChanges": true
+            }
+          {{/make_waf_policy}}
         {{/enable_waf_policy}}
     waf_partial_template:
       template: |
