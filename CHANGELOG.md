@@ -1,4 +1,6 @@
 # 1.15.0
+## Fixed
+* Fix FAST GUI idle timeout error when "Idle Time Before Automatic Logout" in System->Preferences has a value greater than 36,000  (issue [#88](https://github.com/F5Networks/f5-appsvcs-templates/issues/88))
 
 ## Fixed
 * Clear cache whenever a config-sync is completed, so updates from the peer will no longer require restarting restnoded
@@ -7,6 +9,7 @@
 * Documentation: the Revision History page will no longer duplicate the release information, but will link to the release page on GitHub
 * Documentation: OpenAPI spec has been updated for more up to date info.
 * Return better error messages in response to requests without application/json specified in the content-type header
+* Update f5-fast-core from v0.17.0 to v0.18.0
 
 # 1.14.0
 ## Added
@@ -15,11 +18,13 @@
 * bigip-fast-templates: Added ASM Rapid Deployment and ASM Logging to FAST templates (issue [#6](https://github.com/F5Networks/f5-appsvcs-templates/issues/6))
 * bigip-fast-templates: Support for Exchange 2019
 * bigip-fast-templates: Blue-Green template offers multiple Service Discovery options for pool members
+* bigip-fast-templates: Added the FastL4 protocol profile options in the TCP and HTTP templates
 
 ## Fixed
-* Fix error and avoid delays when deleting or adding new templatesets
+* Fix error and avoid delays when deleting or adding new templatesets (issue [#74](https://github.com/F5Networks/f5-appsvcs-templates/issues/74))
 * Fix error when updating bigip-fast-templates apps that use old pool_member definitions
 * bigip-fast-templates: Fix Exchange template dependencies so that all fields show/hide as expected (issue [#83](https://github.com/F5Networks/f5-appsvcs-templates/issues/83))
+ 
 
 ## Changed
 * bigip-fast-templates: Moved many default values to pre-filled/example defaults in parameters, and vice-a-versa, so that only logical defaults were in schema (issues [#81](https://github.com/F5Networks/f5-appsvcs-templates/issues/81), [#82](https://github.com/F5Networks/f5-appsvcs-templates/issues/82), [#84](https://github.com/F5Networks/f5-appsvcs-templates/issues/84))

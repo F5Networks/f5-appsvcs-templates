@@ -238,19 +238,20 @@ const vueApp = new Vue({
     mounted() {
         // by default token is 1200s/20min
         if (auth.token && auth.timeout > 1200) {
+            const authTimeout = auth.timeout > 36000 ? 36000 : auth.timeout;
             const extendToken = () => safeFetch(`/mgmt/shared/authz/tokens/${auth.token}`, {
                 method: 'PATCH',
                 headers: {
                     'X-F5-Auth-Token': auth.token,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ timeout: auth.timeout })
+                body: JSON.stringify({ timeout: authTimeout })
             })
                 .catch((err) => {
                     console.log(`Error extending token timeout: ${err.message}`);
                 });
             extendToken();
-            auth.tokenExtension = setInterval(extendToken, ((auth.timeout - 120) * 1000));
+            auth.tokenExtension = setInterval(extendToken, ((authTimeout - 120) * 1000));
         }
     },
     beforeUnmount() {

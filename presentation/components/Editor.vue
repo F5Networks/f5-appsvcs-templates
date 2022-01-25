@@ -9,7 +9,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 const { JSONEditor } = require('@json-editor/json-editor');
 // eslint-disable-next-line import/no-extraneous-dependencies
-const marked = require('marked');
+const { marked } = require('marked');
 const { guiUtils } = require('@f5devcentral/f5-fast-core');
 
 // eslint-disable-next-line no-undef
