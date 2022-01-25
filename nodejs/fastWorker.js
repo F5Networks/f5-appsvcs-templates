@@ -1106,8 +1106,9 @@ class FASTWorker {
         });
 
         let promiseChain = Promise.resolve();
-
+        // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
         if (newApps.length > 0) {
@@ -2048,8 +2049,9 @@ class FASTWorker {
         const tenant = pathElements[4];
         const app = pathElements[5];
         const newParameters = data.parameters;
-
+        // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
         return Promise.resolve()
@@ -2065,7 +2067,11 @@ class FASTWorker {
                 });
                 return this.onPost(postOp);
             })
-            .then(() => this.genRestResponse(restOperation, postOp.getStatusCode(), postOp.getBody()))
+            .then(() => {
+                let respBody = postOp.getBody();
+                respBody = respBody.message || respBody;
+                this.genRestResponse(restOperation, postOp.getStatusCode(), respBody);
+            })
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
