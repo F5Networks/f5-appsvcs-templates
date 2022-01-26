@@ -23,6 +23,7 @@ const path = require('path');
 const url = require('url');
 
 const fs = require('fs');
+const mockfs = require('mock-fs');
 const assert = require('assert').strict;
 const nock = require('nock');
 const sinon = require('sinon');
@@ -154,6 +155,13 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onPost');
     ensureCompletedOp('onDelete');
     ensureCompletedOp('onPatch');
+
+    mockfs({
+        [worker.uploadPath]: mockfs.load(worker.uploadPath, { recursive: true }),
+        [worker.scratchPath]: {},
+        [worker.templatesPath]: mockfs.load(path.join(process.cwd(), 'templates'), { recursive: true }),
+        [(path.join(process.cwd(), 'lib'))]: mockfs.load(path.join(process.cwd(), 'lib'), { lazy: false, recursive: true })
+    });
 };
 
 let testStorage = null;
@@ -309,15 +317,7 @@ describe('fastWorker tests', function () {
     afterEach(function () {
         nock.cleanAll();
         this.clock.restore();
-
-        const scratchPath = path.join(process.cwd(), 'scratch');
-        if (fs.existsSync(scratchPath)) {
-            fs.rmdirSync(scratchPath, { recursive: true });
-        }
-    });
-
-    after(() => {
-        delete process.env.FAST_UPLOAD_DIR;
+        mockfs.restore();
     });
 
     describe('worker methods', function () {
@@ -1209,7 +1209,6 @@ describe('fastWorker tests', function () {
             const infoOp = new RestOp('info');
 
             this.clock.restore();
-
             op.setBody({
                 name: 'testset'
             });
@@ -1220,11 +1219,11 @@ describe('fastWorker tests', function () {
 
             return worker.onPost(op)
                 .then(() => {
+                    assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert.equal(op.status, 200);
                 })
                 .then(() => worker.templateProvider.listSets())
                 .then((tmplSets) => {
-                    assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert(tmplSets.includes('testset'));
                 })
                 .then(() => worker.onGet(infoOp))
