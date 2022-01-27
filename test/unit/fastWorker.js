@@ -284,10 +284,11 @@ describe('fastWorker tests', function () {
                 edition: 'Engineering Hotfix',
                 build: '0.140.4',
                 restFrameworkVersion: '13.1.1.4-0.0.4',
+                mcpDeviceName: 'bigip.b',
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
             });
-        nock('http://localhost:8100')
+        nock(host)
             .persist()
             .get('/mgmt/tm/cm/sync-status')
             .reply(200, {
@@ -297,6 +298,64 @@ describe('fastWorker tests', function () {
                             entries: {
                                 status: {
                                     description: 'Standalone'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        nock(host)
+            .persist()
+            .get('/mgmt/tm/cm/device-group')
+            .reply(200, {
+                items: [
+                    {
+                        name: 'device_trust_group',
+                        partition: 'Common'
+                    },
+                    {
+                        name: 'gtm',
+                        partition: 'Common'
+                    },
+                    {
+                        name: 'datasync-global-dg',
+                        partition: 'Common'
+                    },
+                    {
+                        name: 'dos-global-dg',
+                        partition: 'Common'
+                    },
+                    {
+                        name: 'sync_failover_dg',
+                        partition: 'Common'
+                    }
+                ]
+            });
+        nock(host)
+            .persist()
+            .get('/mgmt/tm/cm/device-group/sync_failover_dg/stats')
+            .reply(200, {
+                entries: {
+                    'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip13.a.localhost/stats': {
+                        nestedStats: {
+                            entries: {
+                                device: {
+                                    description: '/Common/bigip.a'
+                                },
+                                timeSinceLastSync: {
+                                    description: 59999
+                                }
+                            }
+                        }
+                    },
+                    'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.b/stats': {
+                        nestedStats: {
+                            entries: {
+                                device: {
+                                    description: '/Common/bigip.b'
+                                },
+                                timeSinceLastSync: {
+                                    description: 60001
                                 }
                             }
                         }
