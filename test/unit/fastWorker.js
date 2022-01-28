@@ -456,6 +456,7 @@ describe('fastWorker tests', function () {
             worker.driver.invalidateCache = () => { worker.driver.cache = {}; };
 
             resetScope(syncStatusScope)
+                .persist()
                 .get('/mgmt/tm/cm/sync-status')
                 .reply(200, {
                     entries: {
@@ -561,6 +562,8 @@ describe('fastWorker tests', function () {
                     assert.equal(JSON.stringify(worker.templateProvider.cache), '{}');
                     assert.equal(JSON.stringify(worker.configStorage.cache), '{}');
                     assert.equal(JSON.stringify(worker.driver.cache), '{}');
+
+                    return worker.bigip.watchConfigSyncStatus(worker.onConfigSync(worker));
                 });
         });
         it('onStartCompleted', function () {
