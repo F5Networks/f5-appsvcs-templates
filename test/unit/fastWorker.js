@@ -440,20 +440,10 @@ describe('fastWorker tests', function () {
         it('on_config_sync', function () {
             const worker = createWorker();
 
-            const configStorageCache = {
-                enableIpam: true,
-                ipamProviders: [
-                    { name: 'bar' }
-                ]
-            };
-            worker.storage.cache = configStorageCache;
-            worker.configStorage.cache = configStorageCache;
-            worker.templateProvider.cache = configStorageCache;
-            worker.driver.cache = configStorageCache;
-            worker.storage.clearCache = () => { worker.storage.cache = {}; };
-            worker.configStorage.clearCache = () => { worker.configStorage.cache = {}; };
-            worker.templateProvider.invalidateCache = () => { worker.templateProvider.cache = {}; };
-            worker.driver.invalidateCache = () => { worker.driver.cache = {}; };
+            worker.storage.clearCache = sinon.fake();
+            worker.configStorage.clearCache = sinon.fake();
+            worker.templateProvider.invalidateCache = sinon.fake();
+            worker.driver.invalidateCache = sinon.fake();
 
             resetScope(syncStatusScope)
                 .persist()
@@ -550,20 +540,13 @@ describe('fastWorker tests', function () {
                         }
                     });
 
-                    assert.equal(worker.storage.cache, configStorageCache);
-                    assert.equal(worker.configStorage.cache, configStorageCache);
-                    assert.equal(worker.templateProvider.cache, configStorageCache);
-                    assert.equal(worker.driver.cache, configStorageCache);
-
-                    return worker.onConfigSync();
+                    return worker.bigip.watchConfigSyncStatus(worker.onConfigSync(worker));
                 })
                 .then(() => {
-                    assert.equal(JSON.stringify(worker.storage.cache), '{}');
-                    assert.equal(JSON.stringify(worker.templateProvider.cache), '{}');
-                    assert.equal(JSON.stringify(worker.configStorage.cache), '{}');
-                    assert.equal(JSON.stringify(worker.driver.cache), '{}');
-
-                    return worker.bigip.watchConfigSyncStatus(worker.onConfigSync(worker));
+                    assert(worker.storage.clearCache.calledOnce);
+                    assert(worker.configStorage.clearCache.calledOnce);
+                    assert(worker.templateProvider.invalidateCache.calledOnce);
+                    assert(worker.templateProvider.invalidateCache.calledOnce);
                 });
         });
         it('onStartCompleted', function () {
