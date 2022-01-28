@@ -13,7 +13,7 @@ x-errors:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
 info:
-  version: 1.15.0-rc.4
+  version: 1.15.0-rc.6
   title: F5 Application Services Templates API
   license:
     name: Apache 2.0
@@ -741,7 +741,7 @@ components:
                 type: string
                 description: The task ID which can be used to query task state.
               name:
-                description: The name of the created/updated application.
+                description: The name of the template used.
                 type: string
               parameters:
                 description: The parameters used to create/update the application.

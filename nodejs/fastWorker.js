@@ -71,6 +71,8 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '0ecfa04cb45fcafb6a067dcd06ba2271a6bd819fc686b2877745424c112f0c38', // v1.16
+        '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.15
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.14
         '55e71bb2a511a1399bc41e9e34e657b2c0de447261ce3a1b92927094d988621e', // v1.13
         '42bd34feb4a63060df71c19bc4c23f9ec584507d4d3868ad75db51af8b449437', // v1.12
@@ -1116,8 +1118,9 @@ class FASTWorker {
         });
 
         let promiseChain = Promise.resolve();
-
+        // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
         if (newApps.length > 0) {
@@ -1621,7 +1624,7 @@ class FASTWorker {
             })
             .then(() => {
                 appsData.forEach((appData) => {
-                    this.generateTeemReportApplication('modify', appData.template);
+                    this.generateTeemReportApplication('modify', appData.metaData.template);
                 });
             })
             .then(() => this.recordTransaction(
@@ -2058,8 +2061,9 @@ class FASTWorker {
         const tenant = pathElements[4];
         const app = pathElements[5];
         const newParameters = data.parameters;
-
+        // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
         return Promise.resolve()
@@ -2075,7 +2079,11 @@ class FASTWorker {
                 });
                 return this.onPost(postOp);
             })
-            .then(() => this.genRestResponse(restOperation, postOp.getStatusCode(), postOp.getBody()))
+            .then(() => {
+                let respBody = postOp.getBody();
+                respBody = respBody.message || respBody;
+                this.genRestResponse(restOperation, postOp.getStatusCode(), respBody);
+            })
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 
@@ -2139,7 +2147,7 @@ class FASTWorker {
     }
 
     validateRequest(restOperation) {
-        const requestContentType = restOperation.getHeader('content-type');
+        const requestContentType = restOperation.getHeader ? restOperation.getHeader('content-type') : 'application/json';
         const contentType = JSON.stringify(restOperation.getBody()) !== '{}' && requestContentType !== 'application/json' ? 'application/json' : requestContentType;
         if (['Post', 'Patch'].includes(restOperation.getMethod()) && contentType !== 'application/json') {
             return Promise.reject(new Error(`Content-Type application/json is required, got ${contentType}`));
