@@ -227,6 +227,8 @@ describe('fastWorker tests', function () {
         }
     };
     let as3Scope;
+    let deviceInfoScope;
+    let syncStatusScope;
 
     before(function () {
         const tsNames = [
@@ -278,7 +280,7 @@ describe('fastWorker tests', function () {
             .reply(200, {
             });
 
-        nock(host)
+        deviceInfoScope = nock(host)
             .persist()
             .get('/mgmt/shared/identified-devices/config/device-info')
             .reply(200, {
@@ -291,11 +293,11 @@ describe('fastWorker tests', function () {
                 edition: 'Engineering Hotfix',
                 build: '0.140.4',
                 restFrameworkVersion: '13.1.1.4-0.0.4',
-                mcpDeviceName: 'bigip.b',
+                mcpDeviceName: 'bigip.a',
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
             });
-        nock(host)
+        syncStatusScope = nock(host)
             .persist()
             .get('/mgmt/tm/cm/sync-status')
             .reply(200, {
@@ -343,14 +345,14 @@ describe('fastWorker tests', function () {
             .get('/mgmt/tm/cm/device-group/sync_failover_dg/stats')
             .reply(200, {
                 entries: {
-                    'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip13.a.localhost/stats': {
+                    'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.a/stats': {
                         nestedStats: {
                             entries: {
                                 device: {
                                     description: '/Common/bigip.a'
                                 },
                                 timeSinceLastSync: {
-                                    description: 59999
+                                    description: 61
                                 }
                             }
                         }
@@ -362,7 +364,7 @@ describe('fastWorker tests', function () {
                                     description: '/Common/bigip.b'
                                 },
                                 timeSinceLastSync: {
-                                    description: 60001
+                                    description: 59
                                 }
                             }
                         }
@@ -433,6 +435,132 @@ describe('fastWorker tests', function () {
                         product: 'BIG-IP',
                         version: '13.1.1.4'
                     }, 'device info should be set');
+                });
+        });
+        it('on_config_sync', function () {
+            const worker = createWorker();
+
+            const configStorageCache = {
+                enableIpam: true,
+                ipamProviders: [
+                    { name: 'bar' }
+                ]
+            };
+            worker.storage.cache = configStorageCache;
+            worker.configStorage.cache = configStorageCache;
+            worker.templateProvider.cache = configStorageCache;
+            worker.driver.cache = configStorageCache;
+            worker.storage.clearCache = () => { worker.storage.cache = {}; };
+            worker.configStorage.clearCache = () => { worker.configStorage.cache = {}; };
+            worker.templateProvider.invalidateCache = () => { worker.templateProvider.cache = {}; };
+            worker.driver.invalidateCache = () => { worker.driver.cache = {}; };
+
+            resetScope(syncStatusScope)
+                .get('/mgmt/tm/cm/sync-status')
+                .reply(200, {
+                    entries: {
+                        'https://localhost/mgmt/tm/cm/sync-status/0': {
+                            nestedStats: {
+                                entries: {
+                                    status: {
+                                        description: 'Changes Pending'
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            resetScope(deviceInfoScope)
+                .persist()
+                .get('/mgmt/shared/identified-devices/config/device-info')
+                .reply(200, {
+                    platform: 'Z100',
+                    machineId: 'some-guid',
+                    hostname: 'fast.unit.test.host',
+                    version: '13.1.1.4',
+                    product: 'BIG-IP',
+                    platformMarketingName: 'BIG-IP Virtual Edition',
+                    edition: 'Engineering Hotfix',
+                    build: '0.140.4',
+                    restFrameworkVersion: '13.1.1.4-0.0.4',
+                    mcpDeviceName: 'bigip.b',
+                    kind: 'shared:resolver:device-groups:deviceinfostate',
+                    selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
+                });
+
+            return worker.bigip.getSyncStatus()
+                .then(syncStatus => assert.equal(syncStatus, 'Changes Pending'))
+                .then(() => worker.bigip.getDeviceInfo())
+                .then((deviceInfo) => {
+                    assert.equal(deviceInfo.mcpDeviceName, 'bigip.b');
+
+                    return worker.bigip.getDeviceGroups();
+                })
+                .then((deviceGroups) => {
+                    assert.deepStrictEqual(deviceGroups, [
+                        {
+                            name: 'device_trust_group',
+                            partition: 'Common'
+                        },
+                        {
+                            name: 'gtm',
+                            partition: 'Common'
+                        },
+                        {
+                            name: 'datasync-global-dg',
+                            partition: 'Common'
+                        },
+                        {
+                            name: 'dos-global-dg',
+                            partition: 'Common'
+                        },
+                        {
+                            name: 'sync_failover_dg',
+                            partition: 'Common'
+                        }
+                    ]);
+                })
+                .then(() => worker.bigip.getDeviceGroupStatus('sync_failover_dg'))
+                .then((dgStats) => {
+                    assert.deepStrictEqual(dgStats, {
+                        'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.a/stats': {
+                            nestedStats: {
+                                entries: {
+                                    device: {
+                                        description: '/Common/bigip.a'
+                                    },
+                                    timeSinceLastSync: {
+                                        description: 61
+                                    }
+                                }
+                            }
+                        },
+                        'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.b/stats': {
+                            nestedStats: {
+                                entries: {
+                                    device: {
+                                        description: '/Common/bigip.b'
+                                    },
+                                    timeSinceLastSync: {
+                                        description: 59
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    assert.equal(worker.storage.cache, configStorageCache);
+                    assert.equal(worker.configStorage.cache, configStorageCache);
+                    assert.equal(worker.templateProvider.cache, configStorageCache);
+                    assert.equal(worker.driver.cache, configStorageCache);
+
+                    return worker.onConfigSync();
+                })
+                .then(() => {
+                    assert.equal(JSON.stringify(worker.storage.cache), '{}');
+                    assert.equal(JSON.stringify(worker.templateProvider.cache), '{}');
+                    assert.equal(JSON.stringify(worker.configStorage.cache), '{}');
+                    assert.equal(JSON.stringify(worker.driver.cache), '{}');
                 });
         });
         it('onStartCompleted', function () {
