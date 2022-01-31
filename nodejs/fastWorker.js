@@ -439,12 +439,10 @@ class FASTWorker {
 
     onConfigSync() {
         return Promise.resolve()
-            .then(() => {
-                this.storage.clearCache();
-                this.configStorage.clearCache();
-                this.templateProvider.invalidateCache();
-                this.driver.invalidateCache();
-            });
+            .then(() => this.storage.clearCache())
+            .then(() => this.configStorage.clearCache())
+            .then(() => this.driver.invalidateCache())
+            .then(() => this.templateProvider.invalidateCache());
     }
 
     handleLazyInit(reqid) {
