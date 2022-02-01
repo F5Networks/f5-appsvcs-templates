@@ -637,7 +637,7 @@ class FASTWorker {
             .then(tmpls => tmpls.map(x => x[0]));
     }
 
-    gatherTemplateSet(tsid) {
+    gatherTemplateSet(tsid, skipApps) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
@@ -656,7 +656,7 @@ class FASTWorker {
                             return fsTsData;
                         });
                 }),
-            this.driver.listApplications()
+            skipApps ? Promise.resolve([]) : this.driver.listApplications()
         ])
             .then(([tsData, appsList]) => {
                 if (!tsData) {
@@ -695,6 +695,7 @@ class FASTWorker {
             as3Info: {},
             installedTemplates: []
         };
+        let skipApps = false;
 
         return Promise.resolve()
             .then(() => this.recordTransaction(
@@ -703,12 +704,24 @@ class FASTWorker {
                 this.driver.getInfo()
             ))
             .then((as3response) => {
+                if (as3response.status >= 400) {
+                    skipApps = true;
+                    return {
+                        data: {
+                            error: `failed to reach AS3 (status ${as3response.status}): ${as3response.data.message}`
+                        }
+                    };
+                }
+
+                return as3response;
+            })
+            .then((as3response) => {
                 info.as3Info = as3response.data;
                 this.as3Info = info.as3Info;
             })
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
             .then(() => this.templateProvider.listSets())
-            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName))))
+            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName, skipApps))))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
