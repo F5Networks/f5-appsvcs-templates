@@ -227,8 +227,6 @@ describe('fastWorker tests', function () {
         }
     };
     let as3Scope;
-    let deviceInfoScope;
-    let syncStatusScope;
 
     before(function () {
         const tsNames = [
@@ -280,7 +278,7 @@ describe('fastWorker tests', function () {
             .reply(200, {
             });
 
-        deviceInfoScope = nock(host)
+        nock(host)
             .persist()
             .get('/mgmt/shared/identified-devices/config/device-info')
             .reply(200, {
@@ -293,11 +291,12 @@ describe('fastWorker tests', function () {
                 edition: 'Engineering Hotfix',
                 build: '0.140.4',
                 restFrameworkVersion: '13.1.1.4-0.0.4',
-                mcpDeviceName: 'bigip.a',
+                mcpDeviceName: '/Common/bigip.a',
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
             });
-        syncStatusScope = nock(host)
+
+        nock(host)
             .persist()
             .get('/mgmt/tm/cm/sync-status')
             .reply(200, {
@@ -307,64 +306,6 @@ describe('fastWorker tests', function () {
                             entries: {
                                 status: {
                                     description: 'Standalone'
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        nock(host)
-            .persist()
-            .get('/mgmt/tm/cm/device-group')
-            .reply(200, {
-                items: [
-                    {
-                        name: 'device_trust_group',
-                        partition: 'Common'
-                    },
-                    {
-                        name: 'gtm',
-                        partition: 'Common'
-                    },
-                    {
-                        name: 'datasync-global-dg',
-                        partition: 'Common'
-                    },
-                    {
-                        name: 'dos-global-dg',
-                        partition: 'Common'
-                    },
-                    {
-                        name: 'sync_failover_dg',
-                        partition: 'Common'
-                    }
-                ]
-            });
-        nock(host)
-            .persist()
-            .get('/mgmt/tm/cm/device-group/sync_failover_dg/stats')
-            .reply(200, {
-                entries: {
-                    'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.a/stats': {
-                        nestedStats: {
-                            entries: {
-                                device: {
-                                    description: '/Common/bigip.a'
-                                },
-                                timeSinceLastSync: {
-                                    description: 61
-                                }
-                            }
-                        }
-                    },
-                    'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.b/stats': {
-                        nestedStats: {
-                            entries: {
-                                device: {
-                                    description: '/Common/bigip.b'
-                                },
-                                timeSinceLastSync: {
-                                    description: 59
                                 }
                             }
                         }
@@ -437,111 +378,14 @@ describe('fastWorker tests', function () {
                     }, 'device info should be set');
                 });
         });
-        it('on_config_sync', function () {
+        it('onConfigSync', function () {
             const worker = createWorker();
-
             worker.storage.clearCache = sinon.fake();
             worker.configStorage.clearCache = sinon.fake();
             worker.templateProvider.invalidateCache = sinon.fake();
             worker.driver.invalidateCache = sinon.fake();
 
-            resetScope(syncStatusScope)
-                .persist()
-                .get('/mgmt/tm/cm/sync-status')
-                .reply(200, {
-                    entries: {
-                        'https://localhost/mgmt/tm/cm/sync-status/0': {
-                            nestedStats: {
-                                entries: {
-                                    status: {
-                                        description: 'Changes Pending'
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            resetScope(deviceInfoScope)
-                .persist()
-                .get('/mgmt/shared/identified-devices/config/device-info')
-                .reply(200, {
-                    platform: 'Z100',
-                    machineId: 'some-guid',
-                    hostname: 'fast.unit.test.host',
-                    version: '13.1.1.4',
-                    product: 'BIG-IP',
-                    platformMarketingName: 'BIG-IP Virtual Edition',
-                    edition: 'Engineering Hotfix',
-                    build: '0.140.4',
-                    restFrameworkVersion: '13.1.1.4-0.0.4',
-                    mcpDeviceName: 'bigip.b',
-                    kind: 'shared:resolver:device-groups:deviceinfostate',
-                    selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
-                });
-
-            return worker.bigip.getSyncStatus()
-                .then(syncStatus => assert.equal(syncStatus, 'Changes Pending'))
-                .then(() => worker.bigip.getDeviceInfo())
-                .then((deviceInfo) => {
-                    assert.equal(deviceInfo.mcpDeviceName, 'bigip.b');
-
-                    return worker.bigip.getDeviceGroups();
-                })
-                .then((deviceGroups) => {
-                    assert.deepStrictEqual(deviceGroups, [
-                        {
-                            name: 'device_trust_group',
-                            partition: 'Common'
-                        },
-                        {
-                            name: 'gtm',
-                            partition: 'Common'
-                        },
-                        {
-                            name: 'datasync-global-dg',
-                            partition: 'Common'
-                        },
-                        {
-                            name: 'dos-global-dg',
-                            partition: 'Common'
-                        },
-                        {
-                            name: 'sync_failover_dg',
-                            partition: 'Common'
-                        }
-                    ]);
-                })
-                .then(() => worker.bigip.getDeviceGroupStatus('sync_failover_dg'))
-                .then((dgStats) => {
-                    assert.deepStrictEqual(dgStats, {
-                        'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.a/stats': {
-                            nestedStats: {
-                                entries: {
-                                    device: {
-                                        description: '/Common/bigip.a'
-                                    },
-                                    timeSinceLastSync: {
-                                        description: 61
-                                    }
-                                }
-                            }
-                        },
-                        'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.b/stats': {
-                            nestedStats: {
-                                entries: {
-                                    device: {
-                                        description: '/Common/bigip.b'
-                                    },
-                                    timeSinceLastSync: {
-                                        description: 59
-                                    }
-                                }
-                            }
-                        }
-                    });
-
-                    return worker.bigip.watchConfigSyncStatus(worker.onConfigSync(worker));
-                })
+            return worker.onConfigSync()
                 .then(() => {
                     assert(worker.storage.clearCache.calledOnce);
                     assert(worker.configStorage.clearCache.calledOnce);
