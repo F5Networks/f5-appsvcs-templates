@@ -39,26 +39,11 @@ describe('BigipDeviceClassic tests', function () {
     this.timeout(3000);
     const host = 'http://localhost:8100';
     const deviceGroupItems = [
-        {
-            name: 'device_trust_group',
-            partition: 'Common'
-        },
-        {
-            name: 'gtm',
-            partition: 'Common'
-        },
-        {
-            name: 'datasync-global-dg',
-            partition: 'Common'
-        },
-        {
-            name: 'dos-global-dg',
-            partition: 'Common'
-        },
-        {
-            name: 'sync_failover_dg',
-            partition: 'Common'
-        }
+        { name: 'device_trust_group', partition: 'Common' },
+        { name: 'gtm', partition: 'Common' },
+        { name: 'datasync-global-dg', partition: 'Common' },
+        { name: 'dos-global-dg', partition: 'Common' },
+        { name: 'sync_failover_dg', partition: 'Common' }
     ];
     const dgStatEntries = {
         'https://localhost/mgmt/tm/cm/device-group/syncFailover/~Common~syncFailover:~Common~bigip.a/stats': {
@@ -86,8 +71,10 @@ describe('BigipDeviceClassic tests', function () {
             }
         }
     };
-    let deviceInfoScope;
     let syncStatusScope;
+    let deviceInfoScope;
+    let deviceGroupScope;
+    let dgStatsScope;
 
     function resetSyncStatusScope(status, url = false) {
         return (url ? nock(url) : resetScope(syncStatusScope))
@@ -99,7 +86,7 @@ describe('BigipDeviceClassic tests', function () {
                         nestedStats: {
                             entries: {
                                 status: {
-                                    description: `${status}`
+                                    description: status
                                 }
                             }
                         }
@@ -108,26 +95,34 @@ describe('BigipDeviceClassic tests', function () {
             });
     }
 
-    beforeEach(function () {
-        this.clock = sinon.useFakeTimers();
-
-        syncStatusScope = resetSyncStatusScope('Standalone', host);
-
-        deviceInfoScope = nock(host)
+    function resetDeviceInfoScope(deviceName, url = false) {
+        return (url ? nock(url) : resetScope(deviceInfoScope))
             .persist()
             .get('/mgmt/shared/identified-devices/config/device-info')
             .reply(200, {
-                mcpDeviceName: '/Common/bigip.a'
+                mcpDeviceName: deviceName
             });
+    }
 
-        nock(host)
+    function resetDeviceGroupScope(arrItems, url = false) {
+        return (url ? nock(url) : resetScope(deviceGroupScope))
             .persist()
             .get('/mgmt/tm/cm/device-group')
             .reply(200, {
-                items: deviceGroupItems
+                items: arrItems
             });
+    }
 
-        nock(host)
+    beforeEach(function () {
+        // we store the configSync timer in a property of the bigip object
+        // so there could be existing timers we will be trying to clear
+        const sinonTimerConfig = { shouldClearNativeTimers: true };
+        this.clock = sinon.useFakeTimers(sinonTimerConfig);
+
+        syncStatusScope = resetSyncStatusScope('Standalone', host);
+        deviceInfoScope = resetDeviceInfoScope('/Common/bigip.a', host);
+        deviceGroupScope = resetDeviceGroupScope(deviceGroupItems, host);
+        dgStatsScope = nock(host)
             .persist()
             .get('/mgmt/tm/cm/device-group/sync_failover_dg/stats')
             .reply(200, {
@@ -169,39 +164,54 @@ describe('BigipDeviceClassic tests', function () {
                 .then(dgStats => assert.deepStrictEqual(dgStats, dgStatEntries));
         });
 
-        it('watchConfigSyncStatus_standalone', function () {
+        it('watchConfigSyncStatus Standalone', function () {
             const bigip = new BigipDeviceClassic();
             bigip.getDeviceInfo = sinon.fake();
 
-            return bigip.watchConfigSyncStatus(bigip.getDeviceInfo, true)
+            return bigip.watchConfigSyncStatus(bigip.getDeviceInfo)
                 .then(() => assert.isFalse(bigip.getDeviceInfo.calledOnce));
         });
 
-        it('watchConfigSyncStatus_noChanges', function () {
+        it('watchConfigSyncStatus Changes Pending', function () {
             const bigip = new BigipDeviceClassic();
             bigip.onConfigSync = sinon.fake();
 
             resetSyncStatusScope('Changes Pending');
+            return bigip.watchConfigSyncStatus(bigip.onConfigSync)
+                .then(() => {
+                    assert.isFalse(bigip.onConfigSync.calledOnce);
 
-            return bigip.watchConfigSyncStatus(bigip.onConfigSync, true)
-                .then(() => assert.isFalse(bigip.onConfigSync.calledOnce));
+                    resetDeviceInfoScope('/Common/bigip.b');
+
+                    return bigip.watchConfigSyncStatus(bigip.onConfigSync);
+                })
+                .then(() => {
+                    assert(bigip.onConfigSync.calledOnce);
+                });
         });
 
-        it('watchConfigSyncStatus_changesPending', function () {
+        it('watchConfigSyncStatus Errors', function () {
             const bigip = new BigipDeviceClassic();
             bigip.onConfigSync = sinon.fake();
 
             resetSyncStatusScope('Changes Pending');
+            resetDeviceGroupScope('strNotArray');
 
-            deviceInfoScope = resetScope(deviceInfoScope)
-                .persist()
-                .get('/mgmt/shared/identified-devices/config/device-info')
-                .reply(200, {
-                    mcpDeviceName: '/Common/bigip.b'
-                });
+            return bigip.watchConfigSyncStatus(bigip.onConfigSync)
+                .catch(e => assert.match(e.message, /FAST BigipDevice Error in Device Group: /))
+                .then(() => {
+                    resetDeviceGroupScope(deviceGroupItems);
+                    resetDeviceInfoScope('/Common/bigip.b');
+                    resetScope(dgStatsScope)
+                        .persist()
+                        .get('/mgmt/tm/cm/device-group/sync_failover_dg/stats')
+                        .reply(200, {
+                            entries: 'strNotArray'
+                        });
 
-            return bigip.watchConfigSyncStatus(bigip.onConfigSync, true)
-                .then(() => assert(bigip.onConfigSync.calledOnce));
+                    return bigip.watchConfigSyncStatus(bigip.onConfigSync);
+                })
+                .catch(e => assert.match(e.message, /FAST BigipDevice Error in Device Group Stats: /));
         });
     });
 });
