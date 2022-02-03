@@ -426,6 +426,8 @@ class FASTWorker {
                 config = cfg;
             })
             .then(() => this.setDeviceInfo(reqid))
+            // watch for configSync logs, if device is in an HA Pair
+            .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
             // Get the AS3 driver ready
             .then(() => this.prepareAS3Driver(reqid, config))
             // Load template sets from disk (i.e., those from the RPM)
@@ -433,6 +435,14 @@ class FASTWorker {
             .then(() => {
                 this.generateTeemReportOnStart();
             });
+    }
+
+    onConfigSync() {
+        return Promise.resolve()
+            .then(() => this.storage.clearCache())
+            .then(() => this.configStorage.clearCache())
+            .then(() => this.driver.invalidateCache())
+            .then(() => this.templateProvider.invalidateCache());
     }
 
     handleLazyInit(reqid) {

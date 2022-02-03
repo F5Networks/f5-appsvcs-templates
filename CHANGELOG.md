@@ -11,6 +11,9 @@
 ## Fixed
 * Fix FAST GUI idle timeout error when "Idle Time Before Automatic Logout" in System->Preferences has a value greater than 36,000  (issue [#88](https://github.com/F5Networks/f5-appsvcs-templates/issues/88))
 
+## Fixed
+* Clear cache whenever a config-sync is completed, so updates from the peer will no longer require restarting restnoded
+
 ## Changed
 * Documentation: the Revision History page will no longer duplicate the release information, but will link to the release page on GitHub
 * Documentation: OpenAPI spec has been updated for more up to date info.
