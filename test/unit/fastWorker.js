@@ -291,8 +291,26 @@ describe('fastWorker tests', function () {
                 edition: 'Engineering Hotfix',
                 build: '0.140.4',
                 restFrameworkVersion: '13.1.1.4-0.0.4',
+                mcpDeviceName: '/Common/bigip.a',
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
+            });
+
+        nock(host)
+            .persist()
+            .get('/mgmt/tm/cm/sync-status')
+            .reply(200, {
+                entries: {
+                    'https://localhost/mgmt/tm/cm/sync-status/0': {
+                        nestedStats: {
+                            entries: {
+                                status: {
+                                    description: 'Standalone'
+                                }
+                            }
+                        }
+                    }
+                }
             });
 
         nock(host)
@@ -358,6 +376,21 @@ describe('fastWorker tests', function () {
                         product: 'BIG-IP',
                         version: '13.1.1.4'
                     }, 'device info should be set');
+                });
+        });
+        it('onConfigSync', function () {
+            const worker = createWorker();
+            worker.storage.clearCache = sinon.fake();
+            worker.configStorage.clearCache = sinon.fake();
+            worker.templateProvider.invalidateCache = sinon.fake();
+            worker.driver.invalidateCache = sinon.fake();
+
+            return worker.onConfigSync()
+                .then(() => {
+                    assert(worker.storage.clearCache.calledOnce);
+                    assert(worker.configStorage.clearCache.calledOnce);
+                    assert(worker.templateProvider.invalidateCache.calledOnce);
+                    assert(worker.templateProvider.invalidateCache.calledOnce);
                 });
         });
         it('onStartCompleted', function () {
