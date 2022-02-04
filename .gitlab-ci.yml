@@ -1,9 +1,27 @@
 image: $DOCKERHUB_URL/node:12-buster
 
 stages:
+    - lint
     - test_build
     - build
     - publish
+
+lint:dockerfile:
+  stage: lint
+  image: "artifactory.f5net.com/f5-f5dev-docker/tc-dockerfile-linter:v0.0.1"
+  script:
+    - hadolint Dockerfile
+  allow_failure: true
+
+lint:image:
+  stage: lint
+  image: artifactory.f5net.com/f5-f5dev-docker/tc-dive-tool:v0.0.1
+  dependencies:
+    - release
+  script:
+    - TAG=v$(cat .next-version)
+    - /src/lint.sh "${DOCKER_IMAGE}:${TAG}"
+  allow_failure: true
 
 coverage:
     stage: test_build
