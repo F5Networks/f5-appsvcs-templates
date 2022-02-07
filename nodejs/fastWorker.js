@@ -398,8 +398,7 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                // if we failed to get provisionData, try again 
+                // if we failed to get provisionData, try again
                 if (e.message === 'Request failed with status code 404' && e.config.url === '/mgmt/tm/sys/provision') {
                     return Promise.resolve()
                         .then(() => this.initWorker(0))
@@ -408,9 +407,13 @@ class FASTWorker {
                             this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
                         })
                         .then(() => success())
-                        .catch((e) => error());
+                        .catch((err) => {
+                            this.logger.severe(`FAST Worker: Failed to start: ${err.stack}`);
+                            error();
+                        });
                 }
-                error();
+                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
+                return error();
             });
     }
 
@@ -774,7 +777,7 @@ class FASTWorker {
             .then((response) => {
                 const config = this._provisionConfigCache;
                 // don't throw an error if we get no response from getTSInfo
-                const responseStatus = typeof response === undefined ? 404 : response.status;
+                const responseStatus = typeof response === 'undefined' ? 404 : response.status;
                 this.provisionData.items.push({
                     name: 'ts',
                     level: (responseStatus === 200 && config.enable_telemetry) ? 'nominal' : 'none'
