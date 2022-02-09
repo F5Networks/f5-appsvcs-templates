@@ -338,7 +338,6 @@ describe('fastWorker tests', function () {
                 .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
                 .then(() => worker.templateProvider.list())
                 .then((tmplList) => {
-                    console.log(`JDK ${JSON.stringify(tmplList)}`);
                     assert(tmplList.includes('examples/simple_http'));
                 })
                 .then(() => {
@@ -390,12 +389,12 @@ describe('fastWorker tests', function () {
 
             return worker.onStart(
                 () => {}, // success callback
-                () => assert(false) // error callback                    
+                () => assert(false) // error callback
             )
                 .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
                 .then(() => worker.templateProvider.list())
                 .then((tmplList) => {
-                    assert(! tmplList.includes('examples/simple_http'));
+                    assert(!tmplList.includes('examples/simple_http'));
                 })
                 .then(() => {
                     assert.deepStrictEqual(worker.deviceInfo, {
