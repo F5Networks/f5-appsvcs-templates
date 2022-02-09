@@ -398,20 +398,6 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                // if we failed to get provisionData, try again
-                if (e.message === 'Request failed with status code 404' && e.config.url === '/mgmt/tm/sys/provision') {
-                    return Promise.resolve()
-                        .then(() => this.initWorker(0))
-                        .then(() => {
-                            const dt = Date.now() - startTime;
-                            this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
-                        })
-                        .then(() => success())
-                        .catch((err) => {
-                            this.logger.severe(`FAST Worker: Failed to start: ${err.stack}`);
-                            error();
-                        });
-                }
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
                 return error();
             });
@@ -426,6 +412,41 @@ class FASTWorker {
     }
 
     initWorker(reqid) {
+        reqid = reqid || 0;
+        let config;
+
+        this._lazyInitComplete = true;
+
+        return Promise.resolve()
+            // Load config
+            .then(() => this.getConfig(reqid))
+            .then((cfg) => {
+                config = cfg;
+            })
+            .then(() => this.setDeviceInfo(reqid))
+            .then(() => {
+                const deviceVersion = semver.coerce(this.deviceInfo.version || '16.1');
+                const delayVersion = semver.coerce('16.1');
+                // if not already performing a lazyInit and on v16.1 or greater
+                if (!this.lazyInit && semver.gte(deviceVersion, delayVersion)) {
+                    // wait for lazy init - since prepareAS3Driver's call to gatherProvisionData can fail
+                    this.lazyInit = true;
+                    this._lazyInitComplete = false;
+                    return Promise.resolve();
+                }
+
+                return Promise.resolve()
+                    // Get the AS3 driver ready
+                    .then(() => this.prepareAS3Driver(reqid, config))
+                    // Load template sets from disk (i.e., those from the RPM)
+                    .then(() => this.loadOnDiskTemplateSets(reqid, config))
+                    .then(() => {
+                        this.generateTeemReportOnStart();
+                    });
+            });
+    }
+
+    jdkinitWorker(reqid) {
         reqid = reqid || 0;
         let config;
 
@@ -776,11 +797,9 @@ class FASTWorker {
             })
             .then((response) => {
                 const config = this._provisionConfigCache;
-                // don't throw an error if we get no response from getTSInfo
-                const responseStatus = typeof response === 'undefined' ? 404 : response.status;
                 this.provisionData.items.push({
                     name: 'ts',
-                    level: (responseStatus === 200 && config.enable_telemetry) ? 'nominal' : 'none'
+                    level: (response && response.status === 200 && config.enable_telemetry) ? 'nominal' : 'none'
                 });
             })
             .then(() => {
