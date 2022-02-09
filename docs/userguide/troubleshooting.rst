@@ -99,6 +99,9 @@ To correct this condition:
 FAST UI not Updating after Config-sync
 ----------------------------------------
 
+Beginning in v1.16.0, FAST checks for a successful config-sync, reloading caches within 1 minute of the check. 
+If you are running a FAST version prior to v1.16.0, and the FAST UI is not updating, refer to the instructions below.
+
 FAST stores all config in data-groups, which are synched via device-groups. 
 When a FAST app is deployed on device A, the resulting BIG-IP config appears on device B, including the data-groups. 
 On device B, FAST has the information it needs, however the FAST UI has not been notified to reload. 

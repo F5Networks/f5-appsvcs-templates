@@ -1,6 +1,6 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.15.0",
+  "version": "1.15.0-rc.8",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
@@ -44,6 +44,7 @@
     "express": "^4.17.2",
     "marked": "^4.0.10",
     "mocha": "^9.2.0",
+    "mock-fs": "^5.1.2",
     "nock": "^13.2.2",
     "node-polyfill-webpack-plugin": "^1.1.4",
     "npm-watch": "^0.11.0",

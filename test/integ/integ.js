@@ -50,6 +50,17 @@ function promiseDelay(timems) {
     });
 }
 
+function handleHTTPError(err, description) {
+    if (err.response) {
+        const cfg = err.response.config;
+        console.error(`${cfg.method} to ${cfg.url}:`);
+        console.error(err.response.data);
+    }
+    return Promise.reject(new Error(
+        `Failed to ${description}: ${err.message}`
+    ));
+}
+
 function waitForCompletedTask(taskid) {
     return Promise.resolve()
         .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
@@ -59,7 +70,8 @@ function waitForCompletedTask(taskid) {
                     .then(() => waitForCompletedTask(taskid));
             }
             return response.data;
-        });
+        })
+        .catch(e => handleHTTPError(e, 'get task status'));
 }
 
 function getAuthToken() {
@@ -73,7 +85,7 @@ function getAuthToken() {
             const token = response.data.token.token;
             endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
         })
-        .catch(err => Promise.reject(new Error(`Unable to generate auth token: ${err.message}`)));
+        .catch(e => handleHTTPError(e, 'generate auth token'));
 }
 
 function deleteAllApplications() {
@@ -93,7 +105,7 @@ function deleteAllApplications() {
             }
             assert.strictEqual(task.code, 200);
         })
-        .catch(err => Promise.reject(new Error(`Failed to delete applications: ${err.message}`)));
+        .catch(e => handleHTTPError(e, 'delete applications'));
 }
 
 describe('Template Sets', function () {
@@ -156,6 +168,7 @@ describe('Template Sets', function () {
         })));
     it('DELETE template set by ID', () => Promise.resolve()
         .then(() => endpoint.delete(`${url}/examples`))
+        .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
             assert.deepStrictEqual(actual.data, { code: 200, message: 'success' });
@@ -163,6 +176,7 @@ describe('Template Sets', function () {
         }));
     it('POST re-install template set and GET by ID', () => Promise.resolve()
         .then(() => endpoint.post(url, { name: 'examples' }))
+        .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
             assert.deepStrictEqual(actual.data, { code: 200, message: '' });
@@ -192,7 +206,9 @@ describe('Template Sets', function () {
                     }
                 }
             ))
+            .catch(e => handleHTTPError(e, 'upload test_integ.zip'))
             .then(() => endpoint.post(url, { name: 'test_integ' }))
+            .catch(e => handleHTTPError(e, 'install test_integ template set'))
             .then((actual) => {
                 assert.strictEqual(actual.status, 200);
                 assert.deepStrictEqual(actual.data, { code: 200, message: '' });
@@ -229,16 +245,7 @@ describe('Applications', function () {
                 assert.strictEqual(task.code, 200);
                 assert.strictEqual(task.message, 'success');
             })
-            .catch((e) => {
-                if (e.response) {
-                    const cfg = e.response.config;
-                    console.error(`${cfg.method} to ${cfg.url}:`);
-                    console.error(e.response.data);
-                }
-                return Promise.reject(new Error(
-                    `Failed to deploy ${templateName}: ${e.message}`
-                ));
-            });
+            .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
     it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
