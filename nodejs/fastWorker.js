@@ -110,6 +110,7 @@ class FASTWorker {
 
         this._lazyInitComplete = false;
         this.lazyInit = options.lazyInit;
+        this.lazyInitRetries = 0;
 
         this.isPublic = true;
         this.isPassThrough = true;
@@ -400,8 +401,20 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
+                // only retry 3 times
+                if (this.lazyInitRetries <= 2 && e.message === 'Request failed with status code 404' && e.config.url === '/mgmt/tm/sys/provision') {
+                    // retry w/lazyInit when prepareAS3Driver's call to gatherProvisionData fails, but only 3 times
+                    this.lazyInit = true;
+                    this._lazyInitComplete = false;
+                    this.lazyInitRetries = this.lazyInitRetries + 1 || 1;
+
+                    this.logger.info(`FAST Worker: /mgmt/tm/sys/provision is not available; retry lazyInit #${this.lazyInitRetries}`);
+
+                    return Promise.resolve();
+                }
+
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                error();
+                return error();
             });
     }
 
@@ -426,27 +439,14 @@ class FASTWorker {
                 config = cfg;
             })
             .then(() => this.setDeviceInfo(reqid))
+            // watch for configSync logs, if device is in an HA Pair
+            .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
+            // Get the AS3 driver ready
+            .then(() => this.prepareAS3Driver(reqid, config))
+            // Load template sets from disk (i.e., those from the RPM)
+            .then(() => this.loadOnDiskTemplateSets(reqid, config))
             .then(() => {
-                const deviceVersion = semver.coerce(this.deviceInfo.version || '16.1');
-                const delayVersion = semver.coerce('16.1');
-                // if not already performing a lazyInit and on v16.1 or greater
-                if (!this.lazyInit && semver.gte(deviceVersion, delayVersion)) {
-                    // wait for lazy init - since prepareAS3Driver's call to gatherProvisionData can fail
-                    this.lazyInit = true;
-                    this._lazyInitComplete = false;
-                    return Promise.resolve();
-                }
-
-                return Promise.resolve()
-                    // watch for configSync logs, if device is in an HA Pair
-                    .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
-                    // Get the AS3 driver ready
-                    .then(() => this.prepareAS3Driver(reqid, config))
-                    // Load template sets from disk (i.e., those from the RPM)
-                    .then(() => this.loadOnDiskTemplateSets(reqid, config))
-                    .then(() => {
-                        this.generateTeemReportOnStart();
-                    });
+                this.generateTeemReportOnStart();
             });
     }
 

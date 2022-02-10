@@ -227,7 +227,6 @@ describe('fastWorker tests', function () {
         }
     };
     let as3Scope;
-    let deviceInfoScope;
 
     before(function () {
         const tsNames = [
@@ -279,7 +278,7 @@ describe('fastWorker tests', function () {
             .reply(200, {
             });
 
-        deviceInfoScope = nock(host)
+        nock(host)
             .persist()
             .get('/mgmt/shared/identified-devices/config/device-info')
             .reply(200, {
@@ -376,62 +375,6 @@ describe('fastWorker tests', function () {
                         platformName: 'BIG-IP Virtual Edition',
                         product: 'BIG-IP',
                         version: '13.1.1.4'
-                    }, 'device info should be set');
-                });
-        });
-        it('on_start v16.1', function () {
-            const worker = createWorker();
-
-            // Clear the data store
-            worker.storage.data = {};
-
-            nock(host)
-                .persist()
-                .post(`${as3ep}/Common?async=true`)
-                .reply(202, {});
-
-            const scope = nock(host)
-                .get('/mgmt/shared/iapp/blocks')
-                .reply(200, { items: [] })
-                .post('/mgmt/shared/iapp/blocks')
-                .reply(200, {});
-
-            resetScope(deviceInfoScope)
-                .persist()
-                .get('/mgmt/shared/identified-devices/config/device-info')
-                .reply(200, {
-                    platform: 'Z100',
-                    machineId: 'some-guid',
-                    hostname: 'fast.unit.test.host',
-                    version: '16.1.1.4',
-                    product: 'BIG-IP',
-                    platformMarketingName: 'BIG-IP Virtual Edition',
-                    edition: 'Engineering Hotfix',
-                    build: '0.140.4',
-                    restFrameworkVersion: '16.1.1.4-0.0.4',
-                    kind: 'shared:resolver:device-groups:deviceinfostate',
-                    selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
-                });
-
-            return worker.onStart(
-                () => {}, // success callback
-                () => assert(false) // error callback
-            )
-                .then(() => assert(scope.isDone(), 'iApps block storage endpoint was not accessed'))
-                .then(() => worker.templateProvider.list())
-                .then((tmplList) => {
-                    assert(!tmplList.includes('examples/simple_http'));
-                })
-                .then(() => {
-                    assert.deepStrictEqual(worker.deviceInfo, {
-                        build: '0.140.4',
-                        edition: 'Engineering Hotfix',
-                        fullVersion: '16.1.1.4-0.140.4',
-                        hostname: 'fast.unit.test.host',
-                        platform: 'Z100',
-                        platformName: 'BIG-IP Virtual Edition',
-                        product: 'BIG-IP',
-                        version: '16.1.1.4'
                     }, 'device info should be set');
                 });
         });
