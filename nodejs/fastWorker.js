@@ -401,8 +401,9 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
+                const maxInitWorkerRetries = 2;
                 // only retry 3 times
-                if (this.lazyInitRetries <= 2 && e.message === 'Request failed with status code 404' && e.config.url === '/mgmt/tm/sys/provision') {
+                if (this.lazyInitRetries <= maxInitWorkerRetries && e.message === 'Request failed with status code 404' && e.config.url === '/mgmt/tm/sys/provision') {
                     // retry w/lazyInit when prepareAS3Driver's call to gatherProvisionData fails, but only 3 times
                     this.lazyInit = true;
                     this._lazyInitComplete = false;
@@ -776,7 +777,7 @@ class FASTWorker {
             .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
                 if (tsInfo) {
-                    return Promise.resolve({ status: (tsInfo && tsInfo.level === 'nominal') ? 200 : 404 });
+                    return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
                 }
 
                 return this.recordTransaction(
@@ -789,7 +790,7 @@ class FASTWorker {
                 const config = this._provisionConfigCache;
                 this.provisionData.items.push({
                     name: 'ts',
-                    level: (response && response.status === 200 && config.enable_telemetry) ? 'nominal' : 'none'
+                    level: (response.status === 200 && config.enable_telemetry) ? 'nominal' : 'none'
                 });
             })
             .then(() => {
