@@ -789,17 +789,46 @@ components:
         $ref: "#/components/schemas/Task"
     Template:
       type: object
-      description: A template object.
+      description: An JSON-serialized, f5-fast-core Template object. All fields prefixed with an underscore should be treated as internal/private and only intended for Template.fromJson(). As such, they are not documented here.
       properties:
-        templateText:
-          type: string
-          description: Template value.
         title:
           type: string
-          description: Template title.
+          description: A "pretty name" for the template
         description:
           type: string
-          description: Template description.
+          description: Template description
+        definitions:
+          type: object
+          description: Additional properties for parameters. Object keys must match a parameter found in the template text.
+        target:
+          type: string
+          default: 'as3'
+          description: A hint to template consumers about the intended purpose of the template
+        templateText:
+          type: string
+          description: A Mustache-templated string
+        defaultParameters:
+          type: object
+          description: Default values for parameters. Object keys must match a parameter found in the template text.
+        sourceType:
+          type: string
+          description: A hint on where templateText originated from (e.g., "MST" for loading via Template.loadMst())
+        sourceText:
+          type: string
+          description: The raw text of the source the Template class parsed
+        sourceHash:
+          type: string
+          description: A sha256 hash of the sourceText (useful for determining if a template has changed)
+        contentType:
+          type: string
+          description: A MIME type for the intended output of Template.render()
+          default: text/plain
+        httpForward:
+          description: Information for forwarding the rendered result to an HTTP endpoint. Either a URL string or an Axios config object
+          oneOf:
+            - type: string
+            - type: object
+            - type: "null"
     TemplateList:
       type: array
       description: Template List.
