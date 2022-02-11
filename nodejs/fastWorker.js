@@ -91,8 +91,6 @@ const supportedHashes = {
     ]
 };
 
-const maxInitWorkerRetries = 2;
-
 class FASTWorker {
     constructor(options) {
         options = options || {};
@@ -402,14 +400,7 @@ class FASTWorker {
             })
             .then(() => success())
             // Errors
-            .catch((e) => {
-                if (e.message === 'Request failed with status code 404') {
-                    return this.retryInit();
-                }
-
-                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                return error();
-            });
+            .catch(e => this.handleInitRetry(e, error));
     }
 
     onStartCompleted(success, error, _loadedState, errMsg) {
@@ -454,24 +445,22 @@ class FASTWorker {
             'run lazy initialization',
             this.initWorker(reqid)
         )
-            .catch((e) => {
-                if (this.lazyInitRetries <= maxInitWorkerRetries && e.message === 'Request failed with status code 404') {
-                    return this.retryInit();
-                }
-
-                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                return Promise.reject();
-            });
+            .catch(e => this.handleInitRetry(e));
     }
 
-    retryInit() {
-        this.logger.info(`FAST Worker: endpoint is not available; retrying initialization #${this.lazyInitRetries}`);
+    handleInitRetry({ message, stack }, errCallback = () => {}) {
+        const maxInitWorkerRetries = 2;
+        if (this.lazyInitRetries <= maxInitWorkerRetries && message === 'Request failed with status code 404') {
+            this.lazyInit = true;
+            this._lazyInitComplete = false;
+            this.lazyInitRetries = this.lazyInitRetries + 1 || 1;
 
-        this.lazyInit = true;
-        this._lazyInitComplete = false;
-        this.lazyInitRetries = this.lazyInitRetries + 1 || 1;
-
-        return Promise.resolve();
+            this.logger.info(`FAST Worker: endpoint is not available; retrying initialization #${this.lazyInitRetries}`);
+            return Promise.resolve();
+        }
+        this.logger.severe(`FAST Worker: Failed to start: ${stack}`);
+        errCallback(); // the error callback is not always a Promise.reject(), so we return a different one afterwards
+        return Promise.reject();
     }
 
     prepareAS3Driver(reqid, config) {
