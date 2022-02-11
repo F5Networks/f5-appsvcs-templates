@@ -91,6 +91,9 @@ const supportedHashes = {
     ]
 };
 
+const initRetryUris = ['mgmt/tm/cm/sync-status', '/mgmt/tm/sys/provision'];
+const maxInitWorkerRetries = 2;
+
 class FASTWorker {
     constructor(options) {
         options = options || {};
@@ -401,17 +404,8 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                const maxInitWorkerRetries = 2;
-                // only retry 3 times
-                if (this.lazyInitRetries <= maxInitWorkerRetries && e.message === 'Request failed with status code 404' && e.config.url === '/mgmt/tm/sys/provision') {
-                    // retry w/lazyInit when prepareAS3Driver's call to gatherProvisionData fails, but only 3 times
-                    this.lazyInit = true;
-                    this._lazyInitComplete = false;
-                    this.lazyInitRetries = this.lazyInitRetries + 1 || 1;
-
-                    this.logger.info(`FAST Worker: /mgmt/tm/sys/provision is not available; retry lazyInit #${this.lazyInitRetries}`);
-
-                    return Promise.resolve();
+                if (e.message === 'Request failed with status code 404' && initRetryUris.includes(e.config.url)) {
+                    return this.setupInitRetry();
                 }
 
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
@@ -451,14 +445,6 @@ class FASTWorker {
             });
     }
 
-    onConfigSync() {
-        return Promise.resolve()
-            .then(() => this.storage.clearCache())
-            .then(() => this.configStorage.clearCache())
-            .then(() => this.driver.invalidateCache())
-            .then(() => this.templateProvider.invalidateCache());
-    }
-
     handleLazyInit(reqid) {
         if (!this.lazyInit || this._lazyInitComplete) {
             return Promise.resolve();
@@ -468,7 +454,25 @@ class FASTWorker {
             reqid,
             'run lazy initialization',
             this.initWorker(reqid)
-        );
+        )
+            .catch((e) => {
+                if (this.lazyInitRetries <= maxInitWorkerRetries && e.message.match(/404$/) && initRetryUris.includes(e.config.url)) {
+                    return this.setupInitRetries();
+                }
+
+                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
+                return Promise.reject();
+            });
+    }
+
+    setupInitRetry() {
+        this.logger.info(`FAST Worker: endpoint is not available; retrying initialization #${this.lazyInitRetries}`);
+
+        this.lazyInit = true;
+        this._lazyInitComplete = false;
+        this.lazyInitRetries = this.lazyInitRetries + 1 || 1;
+
+        return Promise.resolve();
     }
 
     prepareAS3Driver(reqid, config) {
@@ -523,6 +527,14 @@ class FASTWorker {
             .then(() => this.exitTransaction(reqid, 'loading template sets from disk'))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
+    }
+
+    onConfigSync() {
+        return Promise.resolve()
+            .then(() => this.storage.clearCache())
+            .then(() => this.configStorage.clearCache())
+            .then(() => this.driver.invalidateCache())
+            .then(() => this.templateProvider.invalidateCache());
     }
 
     setDeviceInfo(reqid) {
