@@ -91,7 +91,6 @@ const supportedHashes = {
     ]
 };
 
-const initRetryUris = ['mgmt/tm/cm/sync-status', '/mgmt/tm/sys/provision'];
 const maxInitWorkerRetries = 2;
 
 class FASTWorker {
@@ -404,8 +403,8 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                if (e.message === 'Request failed with status code 404' && initRetryUris.includes(e.config.url)) {
-                    return this.setupInitRetry();
+                if (e.message === 'Request failed with status code 404') {
+                    return this.retryInit();
                 }
 
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
@@ -456,8 +455,8 @@ class FASTWorker {
             this.initWorker(reqid)
         )
             .catch((e) => {
-                if (this.lazyInitRetries <= maxInitWorkerRetries && e.message.match(/404$/) && initRetryUris.includes(e.config.url)) {
-                    return this.setupInitRetries();
+                if (this.lazyInitRetries <= maxInitWorkerRetries && e.message === 'Request failed with status code 404') {
+                    return this.retryInit();
                 }
 
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
@@ -465,7 +464,7 @@ class FASTWorker {
             });
     }
 
-    setupInitRetry() {
+    retryInit() {
         this.logger.info(`FAST Worker: endpoint is not available; retrying initialization #${this.lazyInitRetries}`);
 
         this.lazyInit = true;
