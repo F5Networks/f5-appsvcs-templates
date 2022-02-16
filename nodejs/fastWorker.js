@@ -110,7 +110,10 @@ class FASTWorker {
 
         this._lazyInitComplete = false;
         this.lazyInit = options.lazyInit;
-        this.lazyInitRetries = 0;
+
+        this.initRetries = 0;
+        this.initMaxRetries = 2;
+        this.initTimeout = false;
 
         this.isPublic = true;
         this.isPassThrough = true;
@@ -400,7 +403,15 @@ class FASTWorker {
             })
             .then(() => success())
             // Errors
-            .catch(e => this.handleInitRetry(e, error));
+            .catch((e) => {
+                // we tell Express to start whenever the exception is any 404
+                if (e.message.match(/404$/)) {
+                    this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
+                    return success();
+                }
+                this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
+                return error();
+            });
     }
 
     onStartCompleted(success, error, _loadedState, errMsg) {
@@ -424,6 +435,19 @@ class FASTWorker {
                 config = cfg;
             })
             .then(() => this.setDeviceInfo(reqid))
+            .catch(() => {
+                if (this.initTimeout) {
+                    clearTimeout(this.initTimeout);
+                }
+                // we will retry initWorker 3 times
+                if (this.initRetries <= this.initMaxRetries) {
+                    this.initRetries += 1;
+                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
+                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
+                    return Promise.reject(new Error(`FAST Worker: initWorker failed; Retry #${this.initRetries}`));
+                }
+                return Promise.resolve();
+            })
             // Get the AS3 driver ready
             .then(() => this.prepareAS3Driver(reqid, config))
             // Load template sets from disk (i.e., those from the RPM)
@@ -444,23 +468,7 @@ class FASTWorker {
             reqid,
             'run lazy initialization',
             this.initWorker(reqid)
-        )
-            .catch(e => this.handleInitRetry(e));
-    }
-
-    handleInitRetry({ message, stack }, errCallback = () => {}) {
-        const maxInitWorkerRetries = 2;
-        if (this.lazyInitRetries <= maxInitWorkerRetries && message === 'Request failed with status code 404') {
-            this.lazyInit = true;
-            this._lazyInitComplete = false;
-            this.lazyInitRetries = this.lazyInitRetries + 1 || 1;
-
-            this.logger.info(`FAST Worker: endpoint is not available; retrying initialization #${this.lazyInitRetries}`);
-            return Promise.resolve();
-        }
-        this.logger.severe(`FAST Worker: Failed to start: ${stack}`);
-        errCallback(); // the error callback is not always a Promise.reject(), so we return a different one afterwards
-        return Promise.reject();
+        );
     }
 
     prepareAS3Driver(reqid, config) {
