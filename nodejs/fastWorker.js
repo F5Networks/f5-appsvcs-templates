@@ -1746,7 +1746,17 @@ class FASTWorker {
                 }
                 return this.storage.persist();
             })
-            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
+            .then(() => {
+                if (tsid === 'test_integ') {
+                    const semVersion = semver.coerce(this.deviceInfo.version);
+                    const semVer14 = semver.coerce('14.0');
+                    if (semver.lt(semVersion, semVer14)) {
+                        return Promise.resolve();
+                    }
+                }
+                // Regenerate the cache, might as well take the hit here
+                return this.storage.keys();
+            })
             .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => {
                 if (tsid !== 'bigip-fast-templates') {
