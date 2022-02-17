@@ -206,6 +206,9 @@ describe('Template Sets', function () {
                     }
                 }
             ))
+            .then((actual) => {
+                assert.strictEqual(actual.status, 200);
+            })
             .catch(e => handleHTTPError(e, 'upload test_integ.zip'))
             .then(() => endpoint.post(url, { name: 'test_integ' }))
             .catch(e => handleHTTPError(e, 'install test_integ template set'))

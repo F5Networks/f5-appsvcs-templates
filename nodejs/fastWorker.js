@@ -29,7 +29,7 @@ const Mustache = require('mustache');
 const semver = require('semver');
 
 const fast = require('@f5devcentral/f5-fast-core');
-const atgStorage = require('@f5devcentral/atg-storage');
+// const atgStorage = require('@f5devcentral/atg-storage');
 const TeemDevice = require('@f5devcentral/f5-teem').Device;
 
 const drivers = require('../lib/drivers');
@@ -37,7 +37,8 @@ const { SecretsSecureVault } = require('../lib/secrets');
 
 const FsTemplateProvider = fast.FsTemplateProvider;
 const DataStoreTemplateProvider = fast.DataStoreTemplateProvider;
-const StorageDataGroup = atgStorage.StorageDataGroup;
+// const StorageDataGroup = atgStorage.StorageDataGroup;
+const StorageDataGroup = fast.dataStores.StorageDataGroup;
 const AS3Driver = drivers.AS3Driver;
 const TransactionLogger = fast.TransactionLogger;
 const IpamProviders = require('../lib/ipam');
@@ -1751,7 +1752,7 @@ class FASTWorker {
                     const semVersion = semver.coerce(this.deviceInfo.version);
                     const semVer14 = semver.coerce('14.0');
                     if (semver.lt(semVersion, semVer14)) {
-                        return Promise.resolve();
+                        return this.storage.getItem('test_integ');
                     }
                 }
                 // Regenerate the cache, might as well take the hit here
