@@ -1746,10 +1746,7 @@ class FASTWorker {
                 }
                 return this.storage.persist();
             })
-            .then(() => {
-                // Regenerate the cache, might as well take the hit here
-                return this.storage.getItem(tsid);
-            })
+            .then(() => this.storage.getItem(tsid)) // Add new templateset to cache
             .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => {
                 if (tsid !== 'bigip-fast-templates') {
