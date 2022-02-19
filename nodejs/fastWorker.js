@@ -435,19 +435,6 @@ class FASTWorker {
                 config = cfg;
             })
             .then(() => this.setDeviceInfo(reqid))
-            .catch(() => {
-                if (this.initTimeout) {
-                    clearTimeout(this.initTimeout);
-                }
-                // we will retry initWorker 3 times
-                if (this.initRetries <= this.initMaxRetries) {
-                    this.initRetries += 1;
-                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
-                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
-                    return Promise.reject(new Error(`FAST Worker: initWorker failed; Retry #${this.initRetries}`));
-                }
-                return Promise.resolve();
-            })
             // Get the AS3 driver ready
             .then(() => this.prepareAS3Driver(reqid, config))
             // Load template sets from disk (i.e., those from the RPM)
@@ -456,6 +443,19 @@ class FASTWorker {
             .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
             .then(() => {
                 this.generateTeemReportOnStart();
+            })
+            .catch((e) => {
+                if (this.initTimeout) {
+                    clearTimeout(this.initTimeout);
+                }
+                // we will retry initWorker 3 times for 404 errors
+                if (this.initRetries <= this.initMaxRetries && e.message.match(/404$/)) {
+                    this.initRetries += 1;
+                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
+                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
+                    return Promise.reject(new Error(`FAST Worker: initWorker failed; Retry #${this.initRetries}`));
+                }
+                return Promise.resolve();
             });
     }
 
