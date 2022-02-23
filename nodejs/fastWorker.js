@@ -404,7 +404,7 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                if (e.status === 404 || e.message.match(/ 404$/)) {
+                if ((e.status && e.status === 404) || e.message.match(/ 404/)) {
                     this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
                     return success();
                 }
@@ -448,7 +448,7 @@ class FASTWorker {
                     clearTimeout(this.initTimeout);
                 }
                 // we will retry initWorker 3 times for 404 errors
-                if (this.initRetries <= this.initMaxRetries && (e.status === 404 || e.message.match(/ 404$/))) {
+                if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
                     this.initRetries += 1;
                     this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
