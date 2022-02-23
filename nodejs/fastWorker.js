@@ -404,7 +404,6 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
-                // we tell Express to start whenever the exception is any 404
                 if (e.message.match(/404$/)) {
                     this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
                     return success();
