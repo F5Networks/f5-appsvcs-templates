@@ -111,6 +111,10 @@ class FASTWorker {
         this._lazyInitComplete = false;
         this.lazyInit = options.lazyInit;
 
+        this.initRetries = 0;
+        this.initMaxRetries = 2;
+        this.initTimeout = false;
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
@@ -400,8 +404,12 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
+                if ((e.status && e.status === 404) || e.message.match(/ 404/)) {
+                    this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
+                    return success();
+                }
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                error();
+                return error();
             });
     }
 
@@ -426,23 +434,28 @@ class FASTWorker {
                 config = cfg;
             })
             .then(() => this.setDeviceInfo(reqid))
-            // watch for configSync logs, if device is in an HA Pair
-            .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
             // Get the AS3 driver ready
             .then(() => this.prepareAS3Driver(reqid, config))
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.loadOnDiskTemplateSets(reqid, config))
+            // watch for configSync logs, if device is in an HA Pair
+            .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
             .then(() => {
                 this.generateTeemReportOnStart();
+            })
+            .catch((e) => {
+                if (this.initTimeout) {
+                    clearTimeout(this.initTimeout);
+                }
+                // we will retry initWorker 3 times for 404 errors
+                if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
+                    this.initRetries += 1;
+                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
+                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
+                    return Promise.reject(new Error(`FAST Worker: initWorker failed; Retry #${this.initRetries}`));
+                }
+                return Promise.resolve();
             });
-    }
-
-    onConfigSync() {
-        return Promise.resolve()
-            .then(() => this.storage.clearCache())
-            .then(() => this.configStorage.clearCache())
-            .then(() => this.driver.invalidateCache())
-            .then(() => this.templateProvider.invalidateCache());
     }
 
     handleLazyInit(reqid) {
@@ -509,6 +522,14 @@ class FASTWorker {
             .then(() => this.exitTransaction(reqid, 'loading template sets from disk'))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
+    }
+
+    onConfigSync() {
+        return Promise.resolve()
+            .then(() => this.storage.clearCache())
+            .then(() => this.configStorage.clearCache())
+            .then(() => this.driver.invalidateCache())
+            .then(() => this.templateProvider.invalidateCache());
     }
 
     setDeviceInfo(reqid) {

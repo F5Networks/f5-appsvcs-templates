@@ -4,6 +4,7 @@
 
 ## Fixed
 * Fix "can't set headers" errors when performing PATCH requests on /applications/{tenant}/{app}
+* Fix 404 response error when loading templatesets after reboot of BIG-IP versions >=16.1 (issue [#92](https://github.com/F5Networks/f5-appsvcs-templates/issues/92))
 
 ## Changed
 
