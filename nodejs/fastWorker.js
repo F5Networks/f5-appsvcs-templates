@@ -110,7 +110,6 @@ class FASTWorker {
 
         this._lazyInitComplete = false;
         this.lazyInit = options.lazyInit;
-        this.disableTeem = options.disableTeem;
 
         this.initRetries = 0;
         this.initMaxRetries = 2;
@@ -135,10 +134,14 @@ class FASTWorker {
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
         this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
-        this.teemDevice = new TeemDevice({
-            name: projectName,
-            version: pkg.version
-        });
+        if (options.disableTeem) {
+            this.teemDevice = null;
+        } else {
+            this.teemDevice = options.teemDevice || new TeemDevice({
+                name: projectName,
+                version: pkg.version
+            });
+        }
         this.secretsManager = options.secretsManager || new SecretsSecureVault();
         this.transactionLogger = new TransactionLogger(
             (transaction) => {
@@ -566,7 +569,7 @@ class FASTWorker {
      * TEEM Report Generators
      */
     sendTeemReport(reportName, reportVersion, data) {
-        if (this.disableTeem) {
+        if (!this.teemDevice) {
             return Promise.resolve();
         }
 
@@ -579,7 +582,7 @@ class FASTWorker {
     }
 
     generateTeemReportOnStart(reqid) {
-        if (this.disableTeem) {
+        if (!this.teemDevice) {
             return Promise.resolve();
         }
 
@@ -589,7 +592,7 @@ class FASTWorker {
     }
 
     generateTeemReportApplication(action, templateName) {
-        if (this.disableTeem) {
+        if (!this.teemDevice) {
             return Promise.resolve();
         }
 
@@ -603,7 +606,7 @@ class FASTWorker {
     }
 
     generateTeemReportTemplateSet(action, templateSetName) {
-        if (this.disableTeem) {
+        if (!this.teemDevice) {
             return Promise.resolve();
         }
 
@@ -630,7 +633,7 @@ class FASTWorker {
     }
 
     generateTeemReportError(restOp) {
-        if (this.disableTeem) {
+        if (!this.teemDevice) {
             return Promise.resolve();
         }
 
