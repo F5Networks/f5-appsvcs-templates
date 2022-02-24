@@ -110,6 +110,7 @@ class FASTWorker {
 
         this._lazyInitComplete = false;
         this.lazyInit = options.lazyInit;
+        this.disableTeem = options.disableTeem;
 
         this.initRetries = 0;
         this.initMaxRetries = 2;
@@ -565,6 +566,10 @@ class FASTWorker {
      * TEEM Report Generators
      */
     sendTeemReport(reportName, reportVersion, data) {
+        if (this.disableTeem) {
+            return Promise.resolve();
+        }
+
         const documentName = `${projectName}: ${reportName}`;
         const baseData = {
             userAgent: this.incomingUserAgent
@@ -574,12 +579,20 @@ class FASTWorker {
     }
 
     generateTeemReportOnStart(reqid) {
+        if (this.disableTeem) {
+            return Promise.resolve();
+        }
+
         return this.gatherInfo(reqid)
             .then(info => this.sendTeemReport('onStart', 1, info))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportApplication(action, templateName) {
+        if (this.disableTeem) {
+            return Promise.resolve();
+        }
+
         const report = {
             action,
             templateName
@@ -590,6 +603,10 @@ class FASTWorker {
     }
 
     generateTeemReportTemplateSet(action, templateSetName) {
+        if (this.disableTeem) {
+            return Promise.resolve();
+        }
+
         const report = {
             action,
             templateSetName
@@ -613,6 +630,10 @@ class FASTWorker {
     }
 
     generateTeemReportError(restOp) {
+        if (this.disableTeem) {
+            return Promise.resolve();
+        }
+
         const uri = restOp.getUri();
         const pathElements = uri.pathname.split('/');
         let endpoint = pathElements.slice(0, 4).join('/');

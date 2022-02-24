@@ -45,6 +45,7 @@ const bigipInfo = {
 const worker = new FastWorker({
     configPath: '.',
     templatesPath: path.join(__dirname, '..', 'templates'),
+    disableTeem: true,
     templateStorage: new atgStorage.StorageMemory(),
     configStorage: new atgStorage.StorageJsonFile('config.json'),
     secretsManager: new SecretsBase64(),
