@@ -134,10 +134,14 @@ class FASTWorker {
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
         this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
-        this.teemDevice = new TeemDevice({
-            name: projectName,
-            version: pkg.version
-        });
+        if (options.disableTeem) {
+            this.teemDevice = null;
+        } else {
+            this.teemDevice = options.teemDevice || new TeemDevice({
+                name: projectName,
+                version: pkg.version
+            });
+        }
         this.secretsManager = options.secretsManager || new SecretsSecureVault();
         this.transactionLogger = new TransactionLogger(
             (transaction) => {
@@ -565,6 +569,10 @@ class FASTWorker {
      * TEEM Report Generators
      */
     sendTeemReport(reportName, reportVersion, data) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const documentName = `${projectName}: ${reportName}`;
         const baseData = {
             userAgent: this.incomingUserAgent
@@ -574,12 +582,20 @@ class FASTWorker {
     }
 
     generateTeemReportOnStart(reqid) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         return this.gatherInfo(reqid)
             .then(info => this.sendTeemReport('onStart', 1, info))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportApplication(action, templateName) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const report = {
             action,
             templateName
@@ -590,6 +606,10 @@ class FASTWorker {
     }
 
     generateTeemReportTemplateSet(action, templateSetName) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const report = {
             action,
             templateSetName
@@ -613,6 +633,10 @@ class FASTWorker {
     }
 
     generateTeemReportError(restOp) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const uri = restOp.getUri();
         const pathElements = uri.pathname.split('/');
         let endpoint = pathElements.slice(0, 4).join('/');
