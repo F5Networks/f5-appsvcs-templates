@@ -97,7 +97,7 @@ To correct this condition:
 * Re-deploy the FAST template
 
 FAST UI not Updating after Config-sync
-----------------------------------------
+--------------------------------------
 
 Beginning in v1.16.0, FAST checks for a successful config-sync, reloading caches within 1 minute of the check. 
 If you are running a FAST version prior to v1.16.0, and the FAST UI is not updating, refer to the instructions below.
@@ -119,6 +119,21 @@ To restart the daemon, run the following command in a BIG-IP terminal:
 The restart should only take a few seconds with the BIG-IP having limited REST access to the control plane during the process.
 
 See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for information on BIG-IP daemons.
+
+FAST Returns 404 After BIG-IP Reboot
+------------------------------------
+
+Running a BIG-IP VE version 16.1 with limited resources, along with a FAST version prior to 1.16.0, and performing a reboot, may result in the following error::
+
+  {
+  "code": 404,
+  "message": "",
+  "referer": "https://10.1.2.100/iapps/f5-appsvcs-templates/index.html",
+  "errorStack": []
+  }
+
+The resolution is to upgrade to FAST version 1.16.0 or later.
+
 
 Known Issues
 ------------
