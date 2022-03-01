@@ -123,7 +123,7 @@ See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ 
 FAST Returns 404 After BIG-IP Reboot
 ------------------------------------
 
-Running a BIG-IP VE version 16.1 with limited resources, along with FAST version 1.14.0 or 1.15.0, and performing a reboot may result in the following error::
+Running a BIG-IP VE version 16.1 with limited resources, along with a FAST version prior to 1.16.0, and performing a reboot, may result in the following error::
 
   {
   "code": 404,
