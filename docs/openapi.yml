@@ -127,6 +127,8 @@ paths:
               items:
                 type: string
                 description: application paths (e.g., 'tenant/app')
+              example:
+                - tenant/app
       responses:
         '202':
           description: Delete job submitted successfully.
@@ -416,6 +418,7 @@ paths:
                   title: Template set name.
                   description: The name of the template set to install (excluding the .zip extension).
                   type: string
+                  example: new_template_set
           multipart/form-data:
             schema:
               description: a zip file containing template schema or mustache files.
@@ -669,6 +672,7 @@ components:
     ParametersDefinition:
       type: object
       description: Object must conform to specified template's schema.
+      example: {}
     AS3App:
       type: object
       description: The resulting AS3 application.
@@ -686,6 +690,7 @@ components:
         name:
           description: Must be valid template in the system.
           type: string
+          example: examples/simple_udp_defaults
         parameters:
           $ref: "#/components/schemas/ParametersDefinition"
         allowOverwrite:
@@ -707,6 +712,7 @@ components:
         template:
           description: must be valid template in the system
           type: string
+          example: examples/simple_udp_defaults
         lastModified:
           type: string
           format: date-time
@@ -714,12 +720,15 @@ components:
         tenant:
           type: string
           description: the tenant the application belongs to
+          example: tenant
         name:
           type: string
           description: the name of the application
+          example: app
         setHash:
           type: string
           description: the hash of the template set used to deploy this application
+          example: 0ecfa04cb45fcafb6a067dcd06ba2271a6bd819fc686b2877745424c112f0c38
     ApplicationList:
       type: array
       items:
@@ -730,8 +739,9 @@ components:
       properties:
         code:
           type: integer
-          minimum: 100
-          maximum: 600
+          minimum: 202
+          maximum: 599
+          example: 202
         message:
           type: array
           items:
@@ -740,12 +750,15 @@ components:
               id:
                 type: string
                 description: The task ID which can be used to query task state.
+                example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
               name:
                 description: The name of the template used.
                 type: string
+                example: examples/simple_udp_defaults
               parameters:
                 description: The parameters used to create/update the application.
                 type: object
+                example: {}
     Task:
       type: object
       description: Task.
@@ -761,23 +774,29 @@ components:
         id:
           description: The taskID of this task
           type: string
+          example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
         name:
           description: must be valid template in the system
           type: string
+          example: examples/simple_udp_defaults
         parameters:
           $ref: "#/components/schemas/ParametersDefinition"
         code:
           description: current status code of the task
           type: integer
+          example: 200
         message:
           description: any messages (such as "success" or "in progress") for the task
           type: string
+          example: success
         tenant:
           description: tenant associated with the task
           type: string
+          example: tenant
         application:
           description: application associated with the task
           type: string
+          example: app
         timestamp:
           description: timestamp of when the job was submitted (or updated for in progress jobs)
           type: string
@@ -794,31 +813,47 @@ components:
         title:
           type: string
           description: A "pretty name" for the template
+          example: Simple UDP Application
         description:
           type: string
           description: Template description
+          example: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This template is an example of how one might build a simple UDP application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
         definitions:
           type: object
           description: Additional properties for parameters. Object keys must match a parameter found in the template text.
+          example: {}
         target:
           type: string
           default: 'as3'
           description: A hint to template consumers about the intended purpose of the template
+          example: as3
         templateText:
           type: string
           description: A Mustache-templated string
+          example: "{\n  \"class\": \"ADC\",\n  \"schemaVersion\": \"3.0.0\",\n  \"{{tenant_name}}\": {\n    \"class\": \"Tenant\",\n    \"{{application_name}}\": {\n      \"class\": \"Application\",\n      \"template\": \"udp\",\n      \"serviceMain\": {\n        \"class\": \"Service_UDP\",\n        \"virtualAddresses\": [\n          \"{{virtual_address}}\"\n        ],\n        \"virtualPort\": {{virtual_port:types:port}},\n        \"pool\": \"{{application_name}}_Pool1\"\n      },\n      \"{{application_name}}_Pool1\": {\n        \"class\": \"Pool\",\n        \"monitors\": [\n          \"icmp\"\n        ],\n        \"members\": [\n          {\n            \"serverAddresses\": {{server_addresses::array}},\n            \"servicePort\": {{service_port:types:port}}\n          }\n        ]\n      }\n    }\n  }\n}\n"
         defaultParameters:
           type: object
           description: Default values for parameters. Object keys must match a parameter found in the template text.
+          example:
+            tenant_name: foo
+            application_name: bar
+            virtual_address: 192.0.2.11
+            virtual_port: 5555
+            server_addresses:
+              - 192.0.2.22
+            service_port: 5555
         sourceType:
           type: string
           description: A hint on where templateText originated from (e.g., "MST" for loading via Template.loadMst())
+          example: YAML
         sourceText:
           type: string
           description: The raw text of the source the Template class parsed
+          example: "# Simple UDP template with parameters defined outside of the template\ntitle: Simple UDP Application\ndescription:  \"** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This template is an example of how one might build a simple UDP application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP.\"\nparameters:\n  tenant_name: foo\n  application_name: bar\n  virtual_address: 192.0.2.11\n  virtual_port: 5555\n  server_addresses:\n    - 192.0.2.22\n  service_port: 5555\ntemplate: |\n  {\n    \"class\": \"ADC\",\n    \"schemaVersion\": \"3.0.0\",\n    \"{{tenant_name}}\": {\n      \"class\": \"Tenant\",\n      \"{{application_name}}\": {\n        \"class\": \"Application\",\n        \"template\": \"udp\",\n        \"serviceMain\": {\n          \"class\": \"Service_UDP\",\n          \"virtualAddresses\": [\n            \"{{virtual_address}}\"\n          ],\n          \"virtualPort\": {{virtual_port:types:port}},\n          \"pool\": \"{{application_name}}_Pool1\"\n        },\n        \"{{application_name}}_Pool1\": {\n          \"class\": \"Pool\",\n          \"monitors\": [\n            \"icmp\"\n          ],\n          \"members\": [\n            {\n              \"serverAddresses\": {{server_addresses::array}},\n              \"servicePort\": {{service_port:types:port}}\n            }\n          ]\n        }\n      }\n    }\n  }\n"
         sourceHash:
           type: string
           description: A sha256 hash of the sourceText (useful for determining if a template has changed)
+          example: a52a2f6cd3d03f7cdec09248fd59fc75b30fa14fa067a137628e7e6ee0b43b4f
         contentType:
           type: string
           description: A MIME type for the intended output of Template.render()
@@ -829,6 +864,7 @@ components:
             - type: string
             - type: object
             - type: "null"
+          example: null
     TemplateList:
       type: array
       description: Template List.
@@ -843,29 +879,36 @@ components:
         name:
           type: string
           description: Name of the template set.
+          example: examples
         hash:
           type: string
           description: A sha256 hash of the template hashes.
+          example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
         templates:
-          description: The templates included in the set.
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Name of the template.
-              hash:
-                type: string
-                description: sha256 of the template source text
-              appsList:
-                type: array
-                description: list of applications using the template
-                items:
-                  $ref: "#/components/schemas/ApplicationDefinition"
+          $ref: "#/components/schemas/TemplateSetList"
         enabled:
           type: boolean
           description: template set is installed and ready to use
+          example: true
+        supported:
+          type: boolean
+          description: the template set is officially supported by F5
+          example: false
+        schemas:
+          type: array
+          description: a list of user-supplied schema
+          items:
+            type: object
+            properties:
+              name: 
+                type: string
+                description: schema name
+              hash:
+                type: string
+                description: A sha256 hash of the schema
+          example:
+            - name: examples/types
+              hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
     TemplateSetList:
       type: array
       description: Template Set List.
@@ -880,12 +923,15 @@ components:
             description: Template sets that have been removed.
             items:
               type: string
+            example: []
           disableDeclarationCache:
             type: boolean
             description: Do not cache AS3 declarations.
+            example: false
           enableIpam:
             type: boolean
             description: Enable IPAM for Official F5 FAST Templates (Experimental/Beta).
+            example: true
           ipamProviders:
             type: array
             description: IPAM Providers configuration (Experimental/Beta).
@@ -893,18 +939,10 @@ components:
               oneOf:
                 - $ref: "#/components/schemas/IpamInfoblox"
                 - $ref: "#/components/schemas/IpamGeneric"
+            example: []
     SettingsSchema:
       type: object
-      description: Schema for current FAST Config.
-      properties:
-        properties:
-          type: object
-          description: Schema properties.
-        type:
-          type: string
-          description: Schema type. 
-          pattern: '.*'
-
+      description: JSON Schema for FAST settings
     Info:
       type: object
       properties:
@@ -912,6 +950,7 @@ components:
           type: string
           description: the version string for FAST
           pattern: '.*'
+          example: 1.0.0
         as3Info:
           type: object
           description: data from AS3's /info endpoint
@@ -929,10 +968,12 @@ components:
         code:
           type: integer
           format: int32
-          minimum: 100
-          maximum: 600
+          minimum: 400
+          maximum: 599
+          example: 404
         message:
           type: string
+          example: resource not found
     IpamInfoblox:
       type: object
       title: Infoblox
