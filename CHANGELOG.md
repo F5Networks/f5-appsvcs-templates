@@ -7,6 +7,7 @@
 * Fix 404 response error when loading templatesets after reboot of BIG-IP versions >=16.1 (issue [#92](https://github.com/F5Networks/f5-appsvcs-templates/issues/92))
 
 ## Changed
+* Update f5-fast-core from v0.18.0 to v0.19.0
 
 # 1.15.0
 ## Fixed
