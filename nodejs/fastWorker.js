@@ -71,6 +71,8 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '0acc8d8b76793c30e847257b85e30df708341c7fb347be25bb745a63ad411cc4', // v1.16
+        '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.15
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.14
         '55e71bb2a511a1399bc41e9e34e657b2c0de447261ce3a1b92927094d988621e', // v1.13
         '42bd34feb4a63060df71c19bc4c23f9ec584507d4d3868ad75db51af8b449437', // v1.12
@@ -109,6 +111,10 @@ class FASTWorker {
         this._lazyInitComplete = false;
         this.lazyInit = options.lazyInit;
 
+        this.initRetries = 0;
+        this.initMaxRetries = 2;
+        this.initTimeout = false;
+
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
@@ -128,10 +134,14 @@ class FASTWorker {
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
         this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
         this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
-        this.teemDevice = new TeemDevice({
-            name: projectName,
-            version: pkg.version
-        });
+        if (options.disableTeem) {
+            this.teemDevice = null;
+        } else {
+            this.teemDevice = options.teemDevice || new TeemDevice({
+                name: projectName,
+                version: pkg.version
+            });
+        }
         this.secretsManager = options.secretsManager || new SecretsSecureVault();
         this.transactionLogger = new TransactionLogger(
             (transaction) => {
@@ -398,8 +408,12 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
+                if ((e.status && e.status === 404) || e.message.match(/ 404/)) {
+                    this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
+                    return success();
+                }
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                error();
+                return error();
             });
     }
 
@@ -428,8 +442,23 @@ class FASTWorker {
             .then(() => this.prepareAS3Driver(reqid, config))
             // Load template sets from disk (i.e., those from the RPM)
             .then(() => this.loadOnDiskTemplateSets(reqid, config))
+            // watch for configSync logs, if device is in an HA Pair
+            .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
             .then(() => {
                 this.generateTeemReportOnStart();
+            })
+            .catch((e) => {
+                if (this.initTimeout) {
+                    clearTimeout(this.initTimeout);
+                }
+                // we will retry initWorker 3 times for 404 errors
+                if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
+                    this.initRetries += 1;
+                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
+                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
+                    return Promise.reject(new Error(`FAST Worker: initWorker failed; Retry #${this.initRetries}`));
+                }
+                return Promise.resolve();
             });
     }
 
@@ -499,6 +528,14 @@ class FASTWorker {
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
 
+    onConfigSync() {
+        return Promise.resolve()
+            .then(() => this.storage.clearCache())
+            .then(() => this.configStorage.clearCache())
+            .then(() => this.driver.invalidateCache())
+            .then(() => this.templateProvider.invalidateCache());
+    }
+
     setDeviceInfo(reqid) {
         // If device-info is unavailable intermittently, this can be placed in onStart
         // and call setDeviceInfo in onStartCompleted
@@ -532,6 +569,10 @@ class FASTWorker {
      * TEEM Report Generators
      */
     sendTeemReport(reportName, reportVersion, data) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const documentName = `${projectName}: ${reportName}`;
         const baseData = {
             userAgent: this.incomingUserAgent
@@ -541,12 +582,20 @@ class FASTWorker {
     }
 
     generateTeemReportOnStart(reqid) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         return this.gatherInfo(reqid)
             .then(info => this.sendTeemReport('onStart', 1, info))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
 
     generateTeemReportApplication(action, templateName) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const report = {
             action,
             templateName
@@ -557,6 +606,10 @@ class FASTWorker {
     }
 
     generateTeemReportTemplateSet(action, templateSetName) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const report = {
             action,
             templateSetName
@@ -580,6 +633,10 @@ class FASTWorker {
     }
 
     generateTeemReportError(restOp) {
+        if (!this.teemDevice) {
+            return Promise.resolve();
+        }
+
         const uri = restOp.getUri();
         const pathElements = uri.pathname.split('/');
         let endpoint = pathElements.slice(0, 4).join('/');
@@ -1104,8 +1161,9 @@ class FASTWorker {
         });
 
         let promiseChain = Promise.resolve();
-
+        // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
         if (newApps.length > 0) {
@@ -2046,8 +2104,9 @@ class FASTWorker {
         const tenant = pathElements[4];
         const app = pathElements[5];
         const newParameters = data.parameters;
-
+        // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
+        postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
         return Promise.resolve()
@@ -2063,7 +2122,11 @@ class FASTWorker {
                 });
                 return this.onPost(postOp);
             })
-            .then(() => this.genRestResponse(restOperation, postOp.getStatusCode(), postOp.getBody()))
+            .then(() => {
+                let respBody = postOp.getBody();
+                respBody = respBody.message || respBody;
+                this.genRestResponse(restOperation, postOp.getStatusCode(), respBody);
+            })
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
 

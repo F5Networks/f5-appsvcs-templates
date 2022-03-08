@@ -25,6 +25,7 @@ const express = require('express');
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
+const path = require('path');
 
 const RestOperation = require('./restOperation');
 
@@ -145,6 +146,7 @@ function generateApp(workers, options) {
             .then(() => endpoint.request({
                 method: req.method,
                 url: req.url,
+                data: req.body,
                 validateStatus: () => true // pass on failures
             }))
             .then(epRsp => res
@@ -169,26 +171,28 @@ function generateApp(workers, options) {
 
 function startHttpsServer(app, options) {
     let key;
+    let keyPath;
     let cert;
+    let certPath;
     let errors = '';
 
     const port = options.port || 8080;
     const allowLocalCert = options.allowLocalCert;
 
     // Try getting TLS file locations from the env
-    const tlsKeyFileName = process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'];
-    if (tlsKeyFileName) {
+    keyPath = process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'];
+    if (keyPath) {
         try {
-            key = fs.readFileSync(tlsKeyFileName, 'utf8');
+            key = fs.readFileSync(keyPath, 'utf8');
         } catch (err) {
             errors = `${errors}\n${err.message}`;
         }
     }
 
-    const tlsCertFileName = process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'];
-    if (tlsCertFileName) {
+    certPath = process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'];
+    if (certPath) {
         try {
-            cert = fs.readFileSync(tlsCertFileName, 'utf8');
+            cert = fs.readFileSync(certPath, 'utf8');
         } catch (err) {
             errors = `${errors}\n${err.message}`;
         }
@@ -196,16 +200,16 @@ function startHttpsServer(app, options) {
 
     // Grab from a dev location as a fallback
     if (allowLocalCert && (!key || !cert)) {
-        const tlsKeyLocal = options.tlsKeyLocalName || 'certs/key.pem';
+        keyPath = options.tlsKeyLocalName || 'certs/key.pem';
         try {
-            key = fs.readFileSync(tlsKeyLocal, 'utf8');
+            key = fs.readFileSync(keyPath, 'utf8');
         } catch (err) {
             errors = `${errors}\n${err.message}`;
         }
 
-        const tlsCertLocal = options.tlsKeyLocalName || 'certs/certificate.pem';
+        certPath = options.tlsKeyLocalName || 'certs/certificate.pem';
         try {
-            cert = fs.readFileSync(tlsCertLocal, 'utf8');
+            cert = fs.readFileSync(certPath, 'utf8');
         } catch (err) {
             errors = `${errors}\n${err.message}`;
         }
@@ -217,9 +221,36 @@ function startHttpsServer(app, options) {
         ));
     }
 
-    https
-        .createServer({ key, cert }, app)
-        .listen(port);
+    // Create server
+    const server = https.createServer({ key, cert }, app);
+
+    // Watch for cert changes
+    const watchPaths = [
+        path.basename(keyPath),
+        path.basename(certPath)
+    ];
+    fs.watch(path.dirname(keyPath), (event, fname) => {
+        if (!watchPaths.includes(fname)) {
+            return;
+        }
+
+        console.log(`Certificate change detected (${event}:${fname}); reloading`);
+        try {
+            key = fs.readFileSync(keyPath, 'utf8');
+            cert = fs.readFileSync(certPath, 'utf8');
+            server.setSecureContext({
+                key,
+                cert
+            });
+            console.log('Certificate reload complete');
+        } catch (e) {
+            console.log(e);
+            console.log('Certificate reload failed');
+        }
+    });
+
+    // Start listening
+    server.listen(port);
 
     return Promise.resolve();
 }

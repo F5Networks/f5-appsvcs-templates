@@ -324,6 +324,18 @@ describe('AS3 Driver tests', function () {
                 }
             }), /Only one application/));
     });
+    it('create_app_return_200', function () {
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+        mockAS3(as3stub);
+
+        nock(host)
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(200, {});
+
+        return assert.isRejected(driver.createApplication(appDef, appMetadata));
+    });
     it('get_app_bad', function () {
         const driver = new AS3Driver();
         mockAS3(as3WithApp);

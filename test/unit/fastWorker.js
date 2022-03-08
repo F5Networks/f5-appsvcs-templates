@@ -23,6 +23,7 @@ const path = require('path');
 const url = require('url');
 
 const fs = require('fs');
+const mockfs = require('mock-fs');
 const assert = require('assert').strict;
 const nock = require('nock');
 const sinon = require('sinon');
@@ -104,6 +105,13 @@ class RestOp {
 
     setMethod() {
     }
+
+    complete() {
+        if (this.completed) {
+            throw new Error('REST operation has already been completed');
+        }
+        this.completed = true;
+    }
 }
 
 // Update worker instance to mimic iControl LX environment
@@ -129,6 +137,7 @@ const patchWorker = (worker) => {
         console.log('Completed REST Operation:');
         console.log(JSON.stringify(op, null, 2));
         this.completedRestOp = true;
+        op.complete();
     };
     const ensureCompletedOp = (fn) => {
         worker[`_${fn}`] = worker[fn];
@@ -146,6 +155,13 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onPost');
     ensureCompletedOp('onDelete');
     ensureCompletedOp('onPatch');
+
+    mockfs({
+        [worker.uploadPath]: mockfs.load(worker.uploadPath, { recursive: true }),
+        [worker.scratchPath]: {},
+        [worker.templatesPath]: mockfs.load(path.join(process.cwd(), 'templates'), { recursive: true }),
+        [(path.join(process.cwd(), 'lib'))]: mockfs.load(path.join(process.cwd(), 'lib'), { lazy: false, recursive: true })
+    });
 };
 
 let testStorage = null;
@@ -275,8 +291,26 @@ describe('fastWorker tests', function () {
                 edition: 'Engineering Hotfix',
                 build: '0.140.4',
                 restFrameworkVersion: '13.1.1.4-0.0.4',
+                mcpDeviceName: '/Common/bigip.a',
                 kind: 'shared:resolver:device-groups:deviceinfostate',
                 selfLink: 'https://localhost/mgmt/shared/identified-devices/config/device-info'
+            });
+
+        nock(host)
+            .persist()
+            .get('/mgmt/tm/cm/sync-status')
+            .reply(200, {
+                entries: {
+                    'https://localhost/mgmt/tm/cm/sync-status/0': {
+                        nestedStats: {
+                            entries: {
+                                status: {
+                                    description: 'Standalone'
+                                }
+                            }
+                        }
+                    }
+                }
             });
 
         nock(host)
@@ -301,15 +335,7 @@ describe('fastWorker tests', function () {
     afterEach(function () {
         nock.cleanAll();
         this.clock.restore();
-
-        const scratchPath = path.join(process.cwd(), 'scratch');
-        if (fs.existsSync(scratchPath)) {
-            fs.rmdirSync(scratchPath, { recursive: true });
-        }
-    });
-
-    after(() => {
-        delete process.env.FAST_UPLOAD_DIR;
+        mockfs.restore();
     });
 
     describe('worker methods', function () {
@@ -350,6 +376,21 @@ describe('fastWorker tests', function () {
                         product: 'BIG-IP',
                         version: '13.1.1.4'
                     }, 'device info should be set');
+                });
+        });
+        it('onConfigSync', function () {
+            const worker = createWorker();
+            worker.storage.clearCache = sinon.fake();
+            worker.configStorage.clearCache = sinon.fake();
+            worker.templateProvider.invalidateCache = sinon.fake();
+            worker.driver.invalidateCache = sinon.fake();
+
+            return worker.onConfigSync()
+                .then(() => {
+                    assert(worker.storage.clearCache.calledOnce);
+                    assert(worker.configStorage.clearCache.calledOnce);
+                    assert(worker.templateProvider.invalidateCache.calledOnce);
+                    assert(worker.templateProvider.invalidateCache.calledOnce);
                 });
         });
         it('onStartCompleted', function () {
@@ -784,23 +825,24 @@ describe('fastWorker tests', function () {
         });
         it('delete_settings', function () {
             const worker = createWorker();
-            const op = new RestOp('settings');
+            const getOp = new RestOp('settings');
+            const deleteOp = new RestOp('settings');
 
             return worker.getConfig(0)
                 .then((config) => {
                     config.foo = 'bar';
                 })
-                .then(() => worker.onGet(op))
+                .then(() => worker.onGet(getOp))
                 .then(() => {
-                    assert.strictEqual(op.status, 200);
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.ok(op.body.foo);
+                    assert.strictEqual(getOp.status, 200);
+                    console.log(JSON.stringify(getOp.body, null, 2));
+                    assert.ok(getOp.body.foo);
                 })
-                .then(() => worker.onDelete(op))
+                .then(() => worker.onDelete(deleteOp))
                 .then(() => {
-                    assert.strictEqual(op.status, 200);
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.strictEqual(op.body.foo, undefined);
+                    assert.strictEqual(deleteOp.status, 200);
+                    console.log(JSON.stringify(deleteOp.body, null, 2));
+                    assert.strictEqual(deleteOp.body.foo, undefined);
                 });
         });
     });
@@ -1003,24 +1045,24 @@ describe('fastWorker tests', function () {
         });
         it('post_render_bad_properties', function () {
             const worker = createWorker();
-            const op = new RestOp('render');
-            op.setBody({
+            const emptyOp = new RestOp('render');
+            emptyOp.setBody({});
+            const nameOnlyOp = new RestOp('render');
+            nameOnlyOp.setBody({
+                name: 'examples/simple_udp_defaults'
             });
 
-            return worker.onPost(op)
+            return worker.onPost(emptyOp)
                 .then(() => {
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.equal(op.status, 400);
-                    assert.match(op.body.message, /name property is missing/);
+                    console.log(JSON.stringify(emptyOp.body, null, 2));
+                    assert.equal(emptyOp.status, 400);
+                    assert.match(emptyOp.body.message, /name property is missing/);
                 })
-                .then(() => op.setBody({
-                    name: 'examples/simple_udp_defaults'
-                }))
-                .then(() => worker.onPost(op))
+                .then(() => worker.onPost(nameOnlyOp))
                 .then(() => {
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.equal(op.status, 400);
-                    assert.match(op.body.message, /parameters property is missing/);
+                    console.log(JSON.stringify(nameOnlyOp.body, null, 2));
+                    assert.equal(nameOnlyOp.status, 400);
+                    assert.match(nameOnlyOp.body.message, /parameters property is missing/);
                 });
         });
     });
@@ -1059,7 +1101,8 @@ describe('fastWorker tests', function () {
         });
         it('get_template_ipam', function () {
             const worker = createWorker();
-            const op = new RestOp('templates/bigip-fast-templates/dns');
+            const getOp1 = new RestOp('templates/bigip-fast-templates/dns');
+            const getOp2 = new RestOp('templates/bigip-fast-templates/dns');
 
             worker.configStorage.data.config = {
                 enableIpam: false
@@ -1073,10 +1116,10 @@ describe('fastWorker tests', function () {
                 });
             return Promise.resolve()
                 // IPAM disabled
-                .then(() => worker.onGet(op))
+                .then(() => worker.onGet(getOp1))
                 .then(() => {
-                    assert.strictEqual(op.status, 200);
-                    return fast.Template.fromJson(op.body);
+                    assert.strictEqual(getOp1.status, 200);
+                    return fast.Template.fromJson(getOp1.body);
                 })
                 .then((tmpl) => {
                     const schema = fast.guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
@@ -1097,10 +1140,10 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     worker.configStorage.data.config.enableIpam = true;
                 })
-                .then(() => worker.onGet(op))
+                .then(() => worker.onGet(getOp2))
                 .then(() => {
-                    assert.strictEqual(op.status, 200);
-                    return fast.Template.fromJson(op.body);
+                    assert.strictEqual(getOp2.status, 200);
+                    return fast.Template.fromJson(getOp2.body);
                 })
                 .then((tmpl) => {
                     const schema = fast.guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());
@@ -1181,18 +1224,17 @@ describe('fastWorker tests', function () {
         // run settings and templatesets last as they can interfere with the other tests
         it('post_templateset_missing', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets');
-            op.setBody({
+            const noMatchOp = new RestOp('templatesets');
+            noMatchOp.setBody({
                 name: 'badname'
             });
+            const emptyOp = new RestOp('templatesets');
+            emptyOp.setBody({});
 
-            return worker.onPost(op)
-                .then(() => assert.equal(op.status, 404))
-                .then(() => {
-                    op.setBody({});
-                    return worker.onPost(op);
-                })
-                .then(() => assert.equal(op.status, 400));
+            return worker.onPost(noMatchOp)
+                .then(() => assert.equal(noMatchOp.status, 404))
+                .then(() => worker.onPost(emptyOp))
+                .then(() => assert.equal(emptyOp.status, 400));
         });
         it('post_templateset', function () {
             const worker = createWorker();
@@ -1200,7 +1242,6 @@ describe('fastWorker tests', function () {
             const infoOp = new RestOp('info');
 
             this.clock.restore();
-
             op.setBody({
                 name: 'testset'
             });
@@ -1211,11 +1252,11 @@ describe('fastWorker tests', function () {
 
             return worker.onPost(op)
                 .then(() => {
+                    assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert.equal(op.status, 200);
                 })
                 .then(() => worker.templateProvider.listSets())
                 .then((tmplSets) => {
-                    assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert(tmplSets.includes('testset'));
                 })
                 .then(() => worker.onGet(infoOp))
@@ -1228,12 +1269,14 @@ describe('fastWorker tests', function () {
         });
         it('post_templateset_deleted', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets');
-            const getTsOp = new RestOp('templatesets?showDisabled=true');
-
-            op.setBody({
+            const postOp = new RestOp('templatesets');
+            postOp.setBody({
                 name: 'examples'
             });
+            const getTsOpAll1 = new RestOp('templatesets?showDisabled=true');
+            const getTsOpAll2 = new RestOp('templatesets?showDisabled=true');
+            const getTsOpEnabled = new RestOp('templatesets');
+
             worker.storage.deleteItem('examples');
             worker.configStorage.data = {
                 config: {
@@ -1246,35 +1289,32 @@ describe('fastWorker tests', function () {
                 return acc;
             }, {});
 
-            return worker.onGet(getTsOp)
+            return worker.onGet(getTsOpAll1)
                 .then(() => {
-                    assert.equal(getTsOp.status, 200);
-                    console.log(JSON.stringify(getTsOp.body, null, 2));
+                    assert.equal(getTsOpAll1.status, 200);
+                    console.log(JSON.stringify(getTsOpAll1.body, null, 2));
 
-                    const sets = objFromSets(getTsOp.body);
+                    const sets = objFromSets(getTsOpAll1.body);
                     assert.equal(sets.examples.enabled, false);
                 })
-                .then(() => worker.onPost(op))
+                .then(() => worker.onPost(postOp))
                 .then(() => {
-                    assert.equal(op.status, 200);
+                    assert.equal(postOp.status, 200);
                 })
-                .then(() => worker.onGet(getTsOp))
+                .then(() => worker.onGet(getTsOpAll2))
                 .then(() => {
-                    assert.equal(getTsOp.status, 200);
-                    console.log(JSON.stringify(getTsOp.body, null, 2));
+                    assert.equal(getTsOpAll2.status, 200);
+                    console.log(JSON.stringify(getTsOpAll2.body, null, 2));
 
-                    const sets = objFromSets(getTsOp.body);
+                    const sets = objFromSets(getTsOpAll2.body);
                     assert(!sets.examples, 'examples should no longer be in the disabled list');
                 })
+                .then(() => worker.onGet(getTsOpEnabled))
                 .then(() => {
-                    getTsOp.setUri('templatesets');
-                    return worker.onGet(getTsOp);
-                })
-                .then(() => {
-                    assert.equal(getTsOp.status, 200);
-                    console.log(JSON.stringify(getTsOp.body, null, 2));
+                    assert.equal(getTsOpEnabled.status, 200);
+                    console.log(JSON.stringify(getTsOpEnabled.body, null, 2));
 
-                    const sets = objFromSets(getTsOp.body);
+                    const sets = objFromSets(getTsOpEnabled.body);
                     assert.equal(sets.examples.enabled, true);
                 })
                 .then(() => worker.getConfig(0))
@@ -1422,24 +1462,21 @@ describe('fastWorker tests', function () {
         });
         it('post_apps_bad_properties', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
-            op.setBody({
-            });
-
-            return worker.onPost(op)
+            const emptyOp = new RestOp('applications');
+            emptyOp.setBody({});
+            const nameOnlyOp = new RestOp('applications');
+            nameOnlyOp.setBody({ name: 'examples/simple_udp_defaults' });
+            return worker.onPost(emptyOp)
                 .then(() => {
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.equal(op.status, 400);
-                    assert.match(op.body.message, /name property is missing/);
+                    console.log(JSON.stringify(emptyOp.body, null, 2));
+                    assert.equal(emptyOp.status, 400);
+                    assert.match(emptyOp.body.message, /name property is missing/);
                 })
-                .then(() => op.setBody({
-                    name: 'examples/simple_udp_defaults'
-                }))
-                .then(() => worker.onPost(op))
+                .then(() => worker.onPost(nameOnlyOp))
                 .then(() => {
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.equal(op.status, 400);
-                    assert.match(op.body.message, /parameters property is missing/);
+                    console.log(JSON.stringify(nameOnlyOp.body, null, 2));
+                    assert.equal(nameOnlyOp.status, 400);
+                    assert.match(nameOnlyOp.body.message, /parameters property is missing/);
                 });
         });
         it('delete_app_bad', function () {
@@ -1588,20 +1625,21 @@ describe('fastWorker tests', function () {
                     return true;
                 })
                 .reply(202, {});
-            // initial create
-            const op = new RestOp('applications');
-            op.setBody(initialBody);
-            return worker.onPost(op)
+
+            const createOp = new RestOp('applications');
+            createOp.setBody(initialBody);
+            const updateOp = new RestOp('applications');
+            return worker.onPost(createOp)
                 .then(() => {
-                    console.log(JSON.stringify(op.body, null, 2));
-                    assert.equal(op.status, 202);
+                    console.log(JSON.stringify(createOp.body, null, 2));
+                    assert.equal(createOp.status, 202);
                     assert.strictEqual(retrievedAddr, '192.0.0.0', 'should use address from IPAM');
 
                     // simulate update to a non-ipam to trigger release
                     initialBody.ipamAddrs = {
                         testing: [retrievedAddr]
                     };
-                    op.setBody({
+                    updateOp.setBody({
                         name: 'examples/simple_udp_ipam',
                         parameters: {
                             use_ipam_addrs: false,
@@ -1610,10 +1648,10 @@ describe('fastWorker tests', function () {
                         },
                         previousDef: initialBody
                     });
-                    return worker.onPost(op);
+                    return worker.onPost(updateOp);
                 })
                 .then(() => {
-                    console.log(JSON.stringify(op.body, null, 2));
+                    console.log(JSON.stringify(updateOp.body, null, 2));
                     assert.strictEqual(releasedAddr, '192.0.0.0', 'should release previous IPAM address');
                     assert.strictEqual(retrievedAddr, '10.10.1.2', 'should update to non-IPAM address');
                 });
@@ -1676,11 +1714,11 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
-                    // TODO: investigate why this is failing with this particular test (issue #526)
-                    // expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
                 });
         });
         it('convert_pool_members', function () {
+            const worker = createWorker();
             as3Scope = resetScope(as3Scope)
                 .get(as3ep)
                 .query(true)
@@ -1764,6 +1802,12 @@ describe('fastWorker tests', function () {
                         { fullPath: '/Common/httpcompression' },
                         { fullPath: '/Common/wan-optimized-compression' }
                     ]
+                });
+            const op = new RestOp('applications');
+            return worker.onGet(op)
+                .then(() => {
+                    console.log(op.body);
+                    assert(as3Scope.isDone());
                 });
         });
     });
