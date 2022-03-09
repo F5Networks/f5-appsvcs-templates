@@ -1791,7 +1791,6 @@ class FASTWorker {
                 }
                 return this.storage.persist();
             })
-            .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
             .then(() => this.exitTransaction(reqid, 'write new template set to data store'))
             .then(() => {
                 if (tsid !== 'bigip-fast-templates') {
@@ -2001,7 +2000,6 @@ class FASTWorker {
                         this.storage.persist()
                     );
                 })
-                .then(() => this.storage.keys()) // Regenerate the cache, might as well take the hit here
                 .then(() => this.genRestResponse(restOperation, 200, 'success'))
                 .catch((e) => {
                     if (e.message.match(/failed to find template set/)) {
