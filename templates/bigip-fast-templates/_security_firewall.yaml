@@ -12,6 +12,23 @@ fw_base: &fw_base
       title: Firewall
       type: boolean
       default: false
+    make_afm_policy:
+      title: FAST-Generated AFM Firewall Security Policy
+      type: boolean
+      default: true
+      dependencies:
+        - enable_firewall
+    existing_firewall_policy:
+      title: Existing AFM Firewall Security Policy
+      description: Select the existing AFM Firewall Security Policy to use.
+      type: string
+      enumFromBigip: 'security/firewall/policy'
+      default: ''
+      dependencies:
+        - enable_firewall
+        - make_afm_policy
+      invertDependency:
+        - make_afm_policy
     firewall_allow_list:
       title: Allowed Networks
       description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
@@ -20,6 +37,9 @@ fw_base: &fw_base
       items:
         type: string
       default: ['0.0.0.0/0']
+      dependencies:
+        - enable_firewall
+        - make_afm_policy
     fw_partial_rules:
       template: |
         {
@@ -52,7 +72,12 @@ fw_base: &fw_base
       template: |
         "{{app_name}}": {
           "policyFirewallEnforced": {
-            "use": "{{app_name}}_fw_policy"
+            {{#make_afm_policy}}
+              "use": "{{app_name}}_fw_policy"
+            {{/make_afm_policy}}
+            {{^make_afm_policy}}
+              "bigip": "{{existing_firewall_policy}}"
+            {{/make_afm_policy}}
           }
         }
     fw_partial_template:
@@ -61,28 +86,31 @@ fw_base: &fw_base
           "{{tenant_name}}": {
             "{{app_name}}": {
               {{#enable_firewall}}
-                "{{app_name}}_fw_allow_list": {
-                  "class": "Firewall_Address_List",
-                  "addresses": {{firewall_allow_list}}
-                },
-                "default_fw_deny_list": {
-                  "class": "Firewall_Address_List",
-                  "addresses": ["0.0.0.0/0"]
-                },
-                "{{app_name}}_fw_rules": {
-                  "class": "Firewall_Rule_List",
-                  "rules": [
-                    {{> fw_partial_rules}}
-                  ]
-                },
-                "{{app_name}}_fw_policy": {
-                  "class": "Firewall_Policy",
-                  "rules": [
-                      {
-                          "use": "{{app_name}}_fw_rules"
-                      }
-                  ]
-                },
+                {{#make_afm_policy}}
+                  "{{app_name}}_fw_allow_list": {
+                    "class": "Firewall_Address_List",
+                    "addresses": {{firewall_allow_list}}
+                  },
+                  "default_fw_deny_list": {
+                    "class": "Firewall_Address_List",
+                    "addresses": ["0.0.0.0/0"]
+                  },
+                  "{{app_name}}_fw_rules": {
+                    "class": "Firewall_Rule_List",
+                    "rules": [
+                      {{> fw_partial_rules}}
+                    ]
+                  },
+                  "{{app_name}}_fw_policy": {
+                    "class": "Firewall_Policy",
+                    "rules": [
+                        {
+                            "use": "{{app_name}}_fw_rules"
+                        }
+                    ]
+                  },
+                {{/make_afm_policy}}
+
                 {{> fw_partial_vs}}
               {{/enable_firewall}}
             }
@@ -107,7 +135,12 @@ definitions:
     template: |
       "{{app_name}}": {
         "policyFirewallEnforced": {
-          "use": "{{app_name}}_fw_policy"
+          {{#make_afm_policy}}
+            "use": "{{app_name}}_fw_policy"
+          {{/make_afm_policy}}
+          {{^make_afm_policy}}
+            "bigip": "{{existing_firewall_policy}}"
+          {{/make_afm_policy}}
         }
         {{#enable_firewall_staging_policy}},
           "policyFirewallStaged": {
@@ -131,6 +164,9 @@ dns:
       items:
         type: string
       default: ['0.0.0.0/0']
+      dependencies:
+        - enable_firewall
+        - make_afm_policy
     fw_partial_rules:
       template: |
         {
@@ -176,12 +212,22 @@ dns:
       template: |
         "{{app_name}}_tcp": {
           "policyFirewallEnforced": {
-            "use": "{{app_name}}_fw_policy"
+            {{#make_afm_policy}}
+              "use": "{{app_name}}_fw_policy"
+            {{/make_afm_policy}}
+            {{^make_afm_policy}}
+              "bigip": "{{existing_firewall_policy}}"
+            {{/make_afm_policy}}
           }
         },
         "{{app_name}}_udp": {
           "policyFirewallEnforced": {
-            "use": "{{app_name}}_fw_policy"
+            {{#make_afm_policy}}
+              "use": "{{app_name}}_fw_policy"
+            {{/make_afm_policy}}
+            {{^make_afm_policy}}
+              "bigip": "{{existing_firewall_policy}}"
+            {{/make_afm_policy}}
           }
         }
   template: |
