@@ -100,10 +100,12 @@ function deleteAllApplications() {
             return waitForCompletedTask(taskid);
         })
         .then((task) => {
-            if (task.code !== 200) {
+            // TODO: temporarily allow '' for Deletes
+            const okCode = task.code === '' ? '' : 200;
+            if (task.code !== okCode) {
                 console.log(task);
             }
-            assert.strictEqual(task.code, 200);
+            assert.strictEqual(task.code, okCode);
         })
         .catch(e => handleHTTPError(e, 'delete applications'));
 }
@@ -155,15 +157,18 @@ describe('Template Sets', function () {
             });
     }
 
-    before(() => getAuthToken());
-    before('Delete all applications', deleteAllApplications);
+    before('Setup', () => Promise.resolve()
+        .then(() => getAuthToken())
+        .then(() => deleteAllApplications()));
 
-    it('GET built-in template sets', () => Promise.resolve()
+    it('GET template sets include "bigip-fast-templates"', () => Promise.resolve()
         .then(() => assertGet({
-            data: [
-                { name: 'bigip-fast-templates', supported: true },
-                { name: 'examples', supported: false }
-            ],
+            data: [{ name: 'bigip-fast-templates', supported: true }],
+            status: 200
+        })));
+    it('GET template sets include "examples"', () => Promise.resolve()
+        .then(() => assertGet({
+            data: [{ name: 'examples', supported: false }],
             status: 200
         })));
     it('DELETE template set by ID', () => Promise.resolve()
@@ -220,8 +225,6 @@ describe('Template Sets', function () {
 
 describe('Applications', function () {
     this.timeout(120000);
-    before(() => getAuthToken());
-    before('Delete all applications', deleteAllApplications);
 
     function deployApplication(templateName, parameters) {
         parameters = parameters || {};
@@ -247,6 +250,10 @@ describe('Applications', function () {
             })
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
+
+    before('Setup', () => Promise.resolve()
+        .then(() => getAuthToken())
+        .then(() => deleteAllApplications()));
 
     it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
 
@@ -349,13 +356,15 @@ describe('Settings', function () {
             });
     }
 
-    before(() => getAuthToken());
-    before('DELETE existing settings', () => Promise.resolve()
+    before('Setup', () => Promise.resolve()
+        .then(() => getAuthToken())
+        .then(() => deleteAllApplications())
         .then(() => endpoint.delete(url))
         .then(actual => assert(actual, {
             data: { code: 200, message: 'success' },
             status: 200
         })));
+
     it('GET default settings', () => Promise.resolve()
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
@@ -372,6 +381,33 @@ describe('Settings', function () {
             status: 200
         })));
     it('POST then GET settings', () => {
+        const postBody = {
+            enable_telemetry: false,
+            deletedTemplateSets: [],
+            enableIpam: false
+        };
+        const expected = {
+            data: { code: 200, message: '' },
+            status: 200
+        };
+        return endpoint.post(url, postBody)
+            .then(actual => assertResponse(actual, expected))
+            .then(() => endpoint.get(url))
+            .then((actual) => {
+                expected.data = {
+                    deletedTemplateSets: [],
+                    ipamProviders: [],
+                    enableIpam: false,
+                    disableDeclarationCache: false,
+                    // driver defaults
+                    enable_telemetry: false,
+                    log_asm: false,
+                    log_afm: false
+                };
+                return assertResponse(actual, expected);
+            });
+    });
+    it('POST then GET settings with IPAM', () => {
         const postBody = {
             enable_telemetry: false,
             deletedTemplateSets: [],
