@@ -209,7 +209,7 @@ describe('Template Sets', function () {
             ))
             .catch(e => handleHTTPError(e, `upload ${zipFileName}`))
             .then(() => {
-                assert(fs.existsSync(`${worker.uploadPath}/${zipFileName}`));
+                assert(fs.existsSync(`/var/config/rest/downloads/${zipFileName}`));
             })
             .then(() => endpoint.post(url, { name: 'test_integ' }))
             .catch(e => handleHTTPError(e, `install ${testSetName} template set`))
