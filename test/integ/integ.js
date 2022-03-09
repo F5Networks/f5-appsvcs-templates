@@ -183,7 +183,8 @@ describe('Template Sets', function () {
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST package, upload and install custom template set', () => {
-        const zipFileName = 'test_integ.zip';
+        const testSetName = 'test_integ';
+        const zipFileName = `${testSetName}.zip`;
         let uploadedFileSize = 0;
 
         return Promise.resolve()
@@ -196,7 +197,7 @@ describe('Template Sets', function () {
                 return fs.readFileSync(zipFileName);
             })
             .then(file => endpoint.post(
-                '/mgmt/shared/file-transfer/uploads/test_integ.zip',
+                `/mgmt/shared/file-transfer/uploads/${zipFileName}`,
                 file,
                 {
                     headers: {
@@ -206,13 +207,16 @@ describe('Template Sets', function () {
                     }
                 }
             ))
-            .catch(e => handleHTTPError(e, 'upload test_integ.zip'))
+            .catch(e => handleHTTPError(e, `upload ${zipFileName}`))
+            .then(() => {
+                assert(fs.existsSync(`${worker.uploadPath}/${zipFileName}`));
+            })
             .then(() => endpoint.post(url, { name: 'test_integ' }))
-            .catch(e => handleHTTPError(e, 'install test_integ template set'))
+            .catch(e => handleHTTPError(e, `install ${testSetName} template set`))
             .then((actual) => {
                 assert.strictEqual(actual.status, 200);
                 assert.deepStrictEqual(actual.data, { code: 200, message: '' });
-                return assertGet({ data: [{ name: 'test_integ', supported: false }], status: 200 }, 'test_integ');
+                return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
             .finally(() => fs.unlinkSync(zipFileName));
     });
