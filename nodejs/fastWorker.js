@@ -2055,7 +2055,8 @@ class FASTWorker {
     deleteSettings(restOperation) {
         return Promise.resolve()
             .then(() => this.configStorage.deleteItem(configKey))
-            .then(() => this.configStorage.persist())
+            .then(() => (this.configStorage instanceof StorageDataGroup
+                ? Promise.resolve() : this.configStorage.persist()))
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
