@@ -144,6 +144,16 @@ describe('AS3 Driver tests', function () {
         console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplications(), [appMetadata]);
     });
+    it('list_apps_500_error', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3ep)
+            .query(true)
+            .reply(500, {})
+            .persist();
+
+        return assert.isRejected(driver.listApplicationNames(), 'AS3 Driver failed to GET declaration');
+    });
     it('get_app', function () {
         const driver = new AS3Driver();
         mockAS3(as3WithApp);
@@ -429,6 +439,15 @@ describe('AS3 Driver tests', function () {
                 host: 'foobar'
             }
         ]);
+    });
+    it('get_tasks_500_error', function () {
+        const driver = new AS3Driver();
+        nock(host)
+            .get(as3TaskEp)
+            .reply(500, {})
+            .persist();
+
+        return assert.isRejected(driver.getTasks(), 'AS3 Driver failed to GET tasks');
     });
     it('set_auth_token', function () {
         const getAuthToken = () => Promise.resolve('secret');
