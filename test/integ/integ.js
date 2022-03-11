@@ -106,6 +106,7 @@ function deleteAllApplications() {
                 console.log(task);
             }
             assert.strictEqual(task.code, okCode);
+            return promiseDelay(10000);
         })
         .catch(e => handleHTTPError(e, 'delete applications'));
 }
