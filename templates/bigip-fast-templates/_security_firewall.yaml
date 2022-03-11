@@ -14,6 +14,7 @@ fw_base: &fw_base
       default: false
     make_afm_policy:
       title: FAST-Generated AFM Firewall Security Policy
+      description: Uncheck to use an existing AFM Firewall Security Policy
       type: boolean
       default: true
       dependencies:
