@@ -18,7 +18,7 @@ fw_base: &fw_base
       default: true
       dependencies:
         - enable_firewall
-    existing_firewall_policy:
+    firewall_policy_name:
       title: Existing AFM Firewall Security Policy
       description: Select the existing AFM Firewall Security Policy to use.
       type: string
@@ -76,7 +76,7 @@ fw_base: &fw_base
               "use": "{{app_name}}_fw_policy"
             {{/make_afm_policy}}
             {{^make_afm_policy}}
-              "bigip": "{{existing_firewall_policy}}"
+              "bigip": "{{firewall_policy_name}}"
             {{/make_afm_policy}}
           }
         }
@@ -139,7 +139,7 @@ definitions:
             "use": "{{app_name}}_fw_policy"
           {{/make_afm_policy}}
           {{^make_afm_policy}}
-            "bigip": "{{existing_firewall_policy}}"
+            "bigip": "{{firewall_policy_name}}"
           {{/make_afm_policy}}
         }
         {{#enable_firewall_staging_policy}},
@@ -216,7 +216,7 @@ dns:
               "use": "{{app_name}}_fw_policy"
             {{/make_afm_policy}}
             {{^make_afm_policy}}
-              "bigip": "{{existing_firewall_policy}}"
+              "bigip": "{{firewall_policy_name}}"
             {{/make_afm_policy}}
           }
         },
@@ -226,7 +226,7 @@ dns:
               "use": "{{app_name}}_fw_policy"
             {{/make_afm_policy}}
             {{^make_afm_policy}}
-              "bigip": "{{existing_firewall_policy}}"
+              "bigip": "{{firewall_policy_name}}"
             {{/make_afm_policy}}
           }
         }
