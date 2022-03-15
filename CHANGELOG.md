@@ -1,6 +1,5 @@
 # 1.17.0
 ## Added
-* Allow verifying an SSL certificate used with the stand-alone Express app's chain of trust with a CA file
 
 ## Fixed
 
