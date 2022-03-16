@@ -456,10 +456,11 @@ class FASTWorker {
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
                     this.initRetries += 1;
                     this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
-                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}`);
-                    return Promise.reject(new Error(`FAST Worker: initWorker failed; Retry #${this.initRetries}`));
+                    this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
+                    return Promise.resolve();
                 }
-                return Promise.resolve();
+                this.logger.severe(`FAST Worker: initWorker failed. ${e.message}`);
+                return Promise.reject(e);
             });
     }
 
@@ -2054,6 +2055,8 @@ class FASTWorker {
     deleteSettings(restOperation) {
         return Promise.resolve()
             .then(() => this.configStorage.deleteItem(configKey))
+            .then(() => (this.configStorage instanceof StorageDataGroup
+                ? Promise.resolve() : this.configStorage.persist()))
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
             .catch(e => this.genRestResponse(restOperation, 500, e.stack));
     }
