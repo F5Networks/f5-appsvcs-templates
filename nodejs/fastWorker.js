@@ -101,7 +101,8 @@ class FASTWorker {
 
         this.state = {};
 
-        this.baseUserAgent = `${pkg.name}/${pkg.version}`;
+        this.version = options.version || pkg.version;
+        this.baseUserAgent = `${pkg.name}/${this.version}`;
         this.incomingUserAgent = '';
 
         this.configPath = options.configPath || `/var/config/rest/iapps/${projectName}`;
@@ -140,7 +141,7 @@ class FASTWorker {
         } else {
             this.teemDevice = options.teemDevice || new TeemDevice({
                 name: projectName,
-                version: pkg.version
+                version: this.version
             });
         }
         this.secretsManager = options.secretsManager || new SecretsSecureVault();
@@ -354,7 +355,7 @@ class FASTWorker {
             logger: this.logger
         });
 
-        this.logger.fine(`FAST Worker: Starting ${pkg.name} v${pkg.version}`);
+        this.logger.fine(`FAST Worker: Starting ${pkg.name} v${this.version}`);
         this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
 
@@ -748,7 +749,7 @@ class FASTWorker {
     gatherInfo(requestId) {
         requestId = requestId || 0;
         const info = {
-            version: pkg.version,
+            version: this.version,
             as3Info: {},
             installedTemplates: []
         };
