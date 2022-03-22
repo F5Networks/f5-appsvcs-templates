@@ -166,7 +166,10 @@ function generateApp(workers, options) {
             '', // loadedState
             '' // errMsg
         ))))
-        .then(() => app);
+        .then(() => app)
+        .catch((e) => {
+            console.log(`Exception caught while generating app: ${e}`);
+        });
 }
 
 function startHttpsServer(app, options) {
