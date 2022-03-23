@@ -169,16 +169,16 @@ function generateApp(workers, options) {
         .then(() => app)
         .catch((e) => {
             const maxRetryCount = 3;
-            try {
+            if (fs.existsSync('retryCount.tmp')) {
                 const retryCount = fs.readFileSync('retryCount.tmp', 'utf8');
                 if (parseInt(retryCount, 10) < maxRetryCount) {
                     fs.writeFileSync('retryCount.tmp', (parseInt(retryCount, 10) + 1).toString());
                     console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                     return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount - parseInt(retryCount, 10)}`));
                 }
-                console.log(`FAST express adapter error encountered: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
+                console.log(`FAST app error encountered: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                 fs.unlinkSync('retryCount.tmp');
-            } catch {
+            } else {
                 fs.writeFileSync('retryCount.tmp', '0');
                 console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                 return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
