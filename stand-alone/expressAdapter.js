@@ -170,17 +170,17 @@ function generateApp(workers, options) {
         .catch((e) => {
             try {
                 const retryCount = fs.readFileSync('retryCount.tmp', 'utf8');
-                if (parseInt(retryCount) !== 3) {
-                    fs.writeFileSync('retryCount.tmp', (parseInt(retryCount)+1).toString());
+                if (parseInt(retryCount, 10) !== 3) {
+                    fs.writeFileSync('retryCount.tmp', (parseInt(retryCount) + 1, 10).toString());
                     console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
-                    return Promise.reject(new Error(`Retrying... Attempts Left: ${3 - parseInt(retryCount)}`));
+                    return Promise.reject(new Error(`Retrying... Attempts Left: ${3 - parseInt(retryCount, 10)}`));
                 }
                 console.log(`FAST app error encountered: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                 fs.unlinkSync('retryCount.tmp');
             } catch {
                 fs.writeFileSync('retryCount.tmp', '0');
                 console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
-                return Promise.reject( new Error(`Retrying... Attempts Left: ${3}`));
+                return Promise.reject(new Error(`Retrying... Attempts Left: ${3}`));
             }
         });
 }
