@@ -176,7 +176,7 @@ function generateApp(workers, options) {
                     console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                     return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount - parseInt(retryCount, 10)}`));
                 }
-                console.log(`FAST app error encountered: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
+                console.log(`FAST express adapter error encountered: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                 fs.unlinkSync('retryCount.tmp');
             } else {
                 fs.writeFileSync('retryCount.tmp', '0');
