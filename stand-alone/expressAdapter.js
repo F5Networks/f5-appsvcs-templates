@@ -178,10 +178,12 @@ function generateApp(workers, options) {
                 }
                 console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
                 fs.unlinkSync('retryCount.tmp');
+            } else {
+                fs.writeFileSync('retryCount.tmp', '0');
+                console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
+                return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
             }
-            fs.writeFileSync('retryCount.tmp', '0');
-            console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
-            return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
+            return Promise.resolve();
         });
 }
 
