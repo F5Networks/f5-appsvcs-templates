@@ -415,14 +415,14 @@ class FASTWorker {
                     return success();
                 }
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                return error();
+                return error(e);
             });
     }
 
     onStartCompleted(success, error, _loadedState, errMsg) {
         if (typeof errMsg === 'string' && errMsg !== '') {
             this.logger.error(`FAST Worker onStart error: ${errMsg}`);
-            return error();
+            return error(new Error(errMsg));
         }
         return success();
     }

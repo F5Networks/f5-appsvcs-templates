@@ -158,11 +158,11 @@ function generateApp(workers, options) {
     return Promise.all(workers.map(worker => Promise.resolve()
         .then(() => worker.onStart(
             () => {}, // success
-            () => Promise.reject() // error
+            (err) => Promise.reject(err) // error
         ))
         .then(() => worker.onStartCompleted(
             () => {}, // success
-            () => Promise.reject(), // error
+            (err) => Promise.reject(err), // error
             '', // loadedState
             '' // errMsg
         ))))
