@@ -14,9 +14,8 @@ Requirements:
 * BIG-IP v13.1 or later.
 * AS3 v3.16 or later must be installed, see  `Downloading and Installing AS3 <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html>`_.
 
-| 1. Download the FAST extension RPM from `FAST GitHub <https://github.com/F5networks/f5-appsvcs-templates>`_
+| 1. Download the FAST extension RPM from `FAST GitHub <https://github.com/F5Networks/f5-appsvcs-templates/tags>`_
 
-   * Click the **tags** tab
    * Choose the most current version
    * Under the **Assets** section, click the .rpm file, downloading to a location accessible from the BIG-IP
 2. From the BIG-IP management GUI, install the extension by navigating to **iApps > Package Management LX**

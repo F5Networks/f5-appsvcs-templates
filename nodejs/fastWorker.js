@@ -1682,10 +1682,11 @@ class FASTWorker {
                 if (restOperation.getStatusCode() >= 400) {
                     return Promise.reject();
                 }
+                const code = (e.response) ? e.response.status : 500;
                 return this.releaseIPAMAddressesFromApps(reqid, appsData)
                     .then(() => Promise.reject(this.genRestResponse(
                         restOperation,
-                        400,
+                        code,
                         `error generating AS3 declaration\n${e.stack}`
                     )));
             })
