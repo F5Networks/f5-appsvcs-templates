@@ -173,17 +173,17 @@ function generateApp(workers, options) {
                 const retryCount = fs.readFileSync('retryCount.tmp', 'utf8');
                 if (parseInt(retryCount, 10) < maxRetryCount) {
                     fs.writeFileSync('retryCount.tmp', (parseInt(retryCount, 10) + 1).toString());
-                    console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
-                    return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount - parseInt(retryCount, 10)}`));
+                    console.log(`FAST express adapter error: ${e ? e.message : e}`);
+                    return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount - (parseInt(retryCount, 10) + 1)}`));
                 }
-                console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
+                console.log('Max retries reached. Continue with error to prevent further container restarts.');
+                console.log(`FAST express adapter error: ${e ? e.message : e} at ${e ? e.stack : undefined}`);
                 fs.unlinkSync('retryCount.tmp');
-            } else {
-                fs.writeFileSync('retryCount.tmp', '0');
-                console.log(`FAST express adapter error: ${e.message ? e.message : e} at ${e ? e.stack : e}`);
-                return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
+                return Promise.resolve();
             }
-            return Promise.resolve();
+            fs.writeFileSync('retryCount.tmp', '0');
+            console.log(`FAST express adapter error: ${e ? e.message : e} at ${e ? e.stack : undefined}`);
+            return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
         });
 }
 
