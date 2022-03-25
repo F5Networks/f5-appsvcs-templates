@@ -169,21 +169,27 @@ function generateApp(workers, options) {
         .then(() => app)
         .catch((e) => {
             const maxRetryCount = 3;
-            if (fs.existsSync('retryCount.tmp')) {
-                const retryCount = fs.readFileSync('retryCount.tmp', 'utf8');
-                if (parseInt(retryCount, 10) < maxRetryCount) {
-                    fs.writeFileSync('retryCount.tmp', (parseInt(retryCount, 10) + 1).toString());
-                    console.log(`FAST express adapter error: ${e ? e.message : e}`);
-                    return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount - (parseInt(retryCount, 10) + 1)}`));
+            const errMsg = e ? e.message : e;
+            const errStack = e ? e.stack : undefined;
+            try {
+                let retryCount = fs.readFileSync('retryCount.tmp', 'utf8');
+                retryCount = parseInt(retryCount, 10);
+                if (typeof retryCount === 'number' && retryCount < maxRetryCount) {
+                    if (retryCount < maxRetryCount) {
+                        fs.writeFileSync('retryCount.tmp', (retryCount + 1).toString());
+                        console.log(`Express adapter error: ${errMsg}`);
+                        return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount - (retryCount + 1)}`));
+                    }
                 }
-                console.log('Max retries reached. Continue with error to prevent further container restarts.');
-                console.log(`FAST express adapter error: ${e ? e.message : e} at ${e ? e.stack : undefined}`);
+                console.log(`Continue with error to prevent further potential restarts.`);
+                console.log(`Express adapter error: ${errMsg} at ${errStack}`);
                 fs.unlinkSync('retryCount.tmp');
                 return Promise.resolve();
+            } catch {
+                fs.writeFileSync('retryCount.tmp', '0');
+                console.log(`Express adapter error: ${errMsg} at ${errStack}`);
+                return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
             }
-            fs.writeFileSync('retryCount.tmp', '0');
-            console.log(`FAST express adapter error: ${e ? e.message : e} at ${e ? e.stack : undefined}`);
-            return Promise.reject(new Error(`Retrying... Attempts Left: ${maxRetryCount}`));
         });
 }
 
