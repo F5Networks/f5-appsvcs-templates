@@ -82,7 +82,7 @@ components:
             properties:
               id:
                 type: string
-                description: The task ID which can be used to query task state.
+                description: The Task ID which can be used to query Task state.
                 example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
               name:
                 description: The name of the template used.
@@ -105,7 +105,7 @@ components:
         - application
       properties: &taskProps
         id:
-          description: The taskID of this task
+          description: The Task ID of this Task
           type: string
           example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
         name:
@@ -115,51 +115,53 @@ components:
         parameters:
           $ref: "#/components/schemas/ParametersDefinition"
         code:
-          description: current status code of the task
+          description: current status code of the Task
           type: integer
           example: 200
         message:
-          description: any messages (such as "success" or "in progress") for the task
+          description: any messages (such as "success" or "in progress") for the Task
           type: string
           example: success
         tenant:
-          description: tenant associated with the task
+          description: tenant associated with the Task
           type: string
           example: tenant
         application:
-          description: application associated with the task
+          description: application associated with the Task
           type: string
           example: app
-        timestamp:
+        timestamp: &taskTimestamp
           description: timestamp of when the job was submitted (or updated for in progress jobs)
           type: string
           format: date-time
+      example: &taskExample
+        id: "ff70c2c0-af21-44c8-8fec-18e2d82eabf0"
+        name: "examples/simple_udp_defaults"
+        parameters: { }
+        code: 200
+        message: "success"
+        tenant: "tenant"
+        application: "app"
+        timestamp: "2019-08-24T14:15:22Z"
     TaskList:
-      type: array
       description: Task List.
+      type: array
       items:
-        - *task
-        - <<: *task
-          properties:
-            <<: *taskProps
-            code:
-              example: 0
-            message:
-              example: in progress
-        - <<: *task
-          properties:
-            <<: *taskProps
-            code:
-              example: 202
-            message:
-              example: in progress
-        - <<: *task
-          properties:
-            <<: *taskProps
-            code:
-              example: 500
-            message:
-              example: internal server error
+        $ref: "#/components/schemas/Task"
+      example:
+        - *taskExample
+        - <<: *taskExample
+          id: 301ee9ed-e73e-4108-a9a2-3104509d7880
+          code: 0
+          message: in progress
+        - <<: *taskExample
+          id: 7908d0b0-c4cc-41ed-a7e0-9d2d376a3c7b
+          code: 202
+          message: in progress
+        - <<: *taskExample
+          id: 21697cbe-56b9-4d50-bd54-fd84f8c056de
+          code: 422
+          message: declaration is invalid
     Template:
       type: object
       description: An JSON-serialized, f5-fast-core Template object. All fields prefixed with an underscore should be treated as internal/private and only intended for Template.fromJson(). As such, they are not documented here.
@@ -319,13 +321,13 @@ components:
         - code
         - message
       properties: &errorResponseProps
-        code:
+        code: &errorResponseCode
           type: integer
           format: int32
           minimum: 400
           maximum: 599
           example: 404
-        message:
+        message: 
           type: string
           example: resource not found
     IpamInfoblox:
@@ -473,8 +475,10 @@ x-errors:
             properties: 
               <<: *errorResponseProps
               code:
+                <<: *errorResponseCode
                 example: 400
               message:
+                type: string
                 example: the request was not successful
     '404': &fileNotFound
       description: The specified Template could not be found
@@ -493,8 +497,10 @@ x-errors:
             properties:
               <<: *errorResponseProps
               code:
+                <<: *errorResponseCode
                 example: 500
               message:
+                type: string
                 example: internal server error
     default: &defaultResponse
       description: unexpected error
@@ -522,9 +528,9 @@ info:
 
     ## Task Tracking
 
-    When an application is created, it may not happen instantly. A task is run to
+    When an application is created, it may not happen instantly. A Task is run to
     deploy the AS3 declaration. These endpoints are for retrieving information
-    about currently running and previously run tasks. These endpoints will report
+    about currently running and previously run Tasks. These endpoints will report
     the success or failure of a particular deployment action, such as creating
     or editing an application.
 
@@ -567,10 +573,10 @@ paths:
       tags:
         - Application Management
       summary: Create one or more applications from templates
-      description: This is the main method to deploy a templated application. The parameters posted will be used to render a template, and that template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A task will be returned upon successful parameter submission that can track the progress of the deployment.
+      description: This is the main method to deploy a templated application. The parameters posted will be used to render a template, and that template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A Task will be returned upon successful parameter submission that can track the progress of the deployment.
       operationId: postFASTApplications
       requestBody:
-        description: A task definition, including the name of the template to run and the parameters needed to render and post the output.
+        description: A Task definition, including the name of the template to run and the parameters needed to render and post the output.
         required: true
         content:
           application/json:
@@ -580,7 +586,7 @@ paths:
                 - $ref: "#/components/schemas/ApplicationDefinitionList"
       responses:
         '202':
-          description: Template Job Submitted Successfully, check the provided task id to get the status of the deployment.
+          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
           content:
             application/json:
               schema:
@@ -664,7 +670,7 @@ paths:
                 - parameters
       responses:
         '202':
-          description: Template Job Submitted Successfully, check the provided task id to get the status of the deployment.
+          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
           content:
             application/json:
               schema:
@@ -734,8 +740,8 @@ paths:
         '500': *serverError
   /tasks:
     get:
-      summary: Get tasks
-      description: List all running and completed tasks.
+      summary: Get Tasks
+      description: List all running and completed Tasks.
       operationId: getFASTTasks
       tags:
         - Task Tracking
@@ -746,19 +752,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TaskList"
+        '422':
+          description: declaration is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskList"
         '500': *serverError
   /tasks/{taskId}:
     parameters:
       - name: taskId
         in: path
         required: true
-        description: The ID of the task to retrieve.
+        description: The ID of the Task to retrieve.
         schema:
           $ref: '../../global-types/ietf-types.yaml#/uuid'
         example: 86657e15-439d-4cef-97bc-58a6c119976b
     get:
-      summary: Get information about a specific task
-      description: Get detailed information about a specific task. Tasks are tracked on a best effort basis, an interupption in service to the iControl LX platform may result in lost results.
+      summary: Get information about a specific Task
+      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interupption in service to the iControl LX platform may result in lost results.
       operationId: getFASTTaskById
       tags:
         - Task Tracking
