@@ -3,6 +3,7 @@
 * bigip-fast-templates: Existing AFM Firewal Policies can be selected instead of generating a new one (issue [#94](https://github.com/F5Networks/f5-appsvcs-templates/issues/94))
 
 ## Fixed
+* worker: Forward AS3 4xx error codes when POSTing an application
 
 ## Changed
 
