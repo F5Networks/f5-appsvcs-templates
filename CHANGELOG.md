@@ -4,6 +4,7 @@
 
 ## Fixed
 * worker: Forward AS3 4xx error codes when POSTing an application
+* bigip-fast-templates: Fixed HTTP template health monitors to display correctly - even when enabling TLS_Client or FastL4
 
 ## Changed
 
