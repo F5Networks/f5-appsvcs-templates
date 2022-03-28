@@ -772,8 +772,7 @@ paths:
               type: object
               properties:
                 parameters:
-                  description: Parameters used to update the Application.
-                  type: object
+                  $ref: "#/components/schemas/ParametersDefinition"
               required:
                 - parameters
             example: { "virtualAddresses": [ "10.0.0.1" ] }
