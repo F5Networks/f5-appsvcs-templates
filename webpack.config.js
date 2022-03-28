@@ -30,6 +30,7 @@ module.exports = {
         fallback: {
             child_process: false,
             crypto: false,
+            dgram: false,
             fs: false,
             http: false,
             https: false,
