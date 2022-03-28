@@ -4,11 +4,11 @@ components:
   schemas:
     ParametersDefinition:
       type: object
-      description: Object must conform to specified template's schema.
+      description: Object must conform to specified Template's schema.
       example: {}
     AS3App:
       type: object
-      description: The resulting AS3 application.
+      description: The resulting AS3 Application.
       properties:
         class:
           type: string
@@ -21,19 +21,26 @@ components:
         - parameters
       properties:
         name:
-          description: Must be valid template in the system.
+          description: Must be valid Template in the system.
           type: string
-          example: examples/simple_udp_defaults
         parameters:
           $ref: "#/components/schemas/ParametersDefinition"
         allowOverwrite:
-          description: Do not error if an application with the same name already exists in the tenant.
+          description: Do not error if an Application with the same name already exists in the tenant.
           type: boolean
           default: true
+      example: &AppDefExample
+        name: examples/simple_udp_defaults
+        parameters: {}
+        allowOverwrite: true
     ApplicationDefinitionList:
       type: array
       items:
         $ref: "#/components/schemas/ApplicationDefinition"
+      example:
+        - *AppDefExample
+        - <<: *AppDefExample
+          name: tenant/app
     Application:
       type: object
       description: Application.
@@ -43,32 +50,39 @@ components:
         - name
       properties:
         template:
-          description: must be valid template in the system
+          description: must be valid Template in the system
           type: string
           example: examples/simple_udp_defaults
+        setHash:
+          type: string
+          description: the hash of the Template Set used to deploy this Application
+          example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
+        view:
+          description: The parameters used to create the Application 
+          type: object
+          example: { "tenant_name": "tenant", "application_name": "app" }
         lastModified:
           type: string
           format: date-time
-          description: timestamp of when the application was last modified
+          description: timestamp of when the Application was last modified
+        ipamAddrs: 
+          type: object
+          example: {}
         tenant:
           type: string
-          description: the tenant the application belongs to
+          description: the tenant the Application belongs to
           example: tenant
         name:
           type: string
-          description: the name of the application
+          description: the name of the Application
           example: app
-        setHash:
-          type: string
-          description: the hash of the template set used to deploy this application
-          example: 0ecfa04cb45fcafb6a067dcd06ba2271a6bd819fc686b2877745424c112f0c38
     ApplicationList:
       type: array
       items:
         $ref: "#/components/schemas/Application"
     ApplicationResponse:
       type: object
-      description: The response message when performing application operations.
+      description: The response message when performing Application operations.
       properties:
         code:
           type: integer
@@ -85,14 +99,42 @@ components:
                 description: The Task ID which can be used to query Task state.
                 example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
               name:
-                description: The name of the template used.
+                description: The name of the Template used.
                 type: string
                 example: examples/simple_udp_defaults
               parameters:
-                description: The parameters used to create/update the application.
+                description: The parameters used to create/update the Application.
                 type: object
-                example: {}
-    Task: &task
+                example: { "tenant_name": "tenant", "application_name": "app" }
+    ApplicationDeleteResponse:
+      type: object
+      description: The response message when deleting a specific Application.
+      properties:
+        results:
+          type: array
+        declaration:
+          description: the AS3 declaration that was used to create the deleted Application.
+          type: object
+        id:
+          type: string
+          description: The Task ID which can be used to query Task state.
+        selfLink:
+          description: The URL which can be used to query Task state.
+          type: string
+      example: &appDeleteExample
+          results: []
+          declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%examples%simple_udp%2","tenant":{"class":"Tenant","app":{"class":"Application","template":"udp","serviceMain":{"class":"Service_UDP","virtualAddresses":["192.0.2.11"],"virtualPort":5555,"pool":"app_Pool1","enable":true,"persistenceMethods":["source-address"]},"app_Pool1":{"class":"Pool","monitors":["icmp"],"members":[{"serverAddresses":["192.0.2.22"],"servicePort":5555}],"loadBalancingMode":"round-robin"},"constants":{"class":"Constants","fast":{"template":"examples/simple_udp_defaults","setHash":"b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715","view":{"tenant_name":"tenant","application_name":"app"},"lastModified":"2022-03-26T00:16:52.666Z","ipamAddrs":{}}}}}}
+          id: 62c587f1-374e-49a8-b418-0db766a219ee
+          selfLink: "https://f5-csm-api-engine:5443/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
+    ApplicationsDeleteResponse:
+      type: array
+      description: The response message when deleting multiple Applications.
+      items:
+        $ref: "#/components/schemas/ApplicationDeleteResponse"
+      example:
+        - <<: *appDeleteExample
+          declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%%%7"}
+    Task:
       type: object
       description: Task.
       required:
@@ -103,13 +145,13 @@ components:
         - message
         - tenant
         - application
-      properties: &taskProps
+      properties:
         id:
           description: The Task ID of this Task
           type: string
           example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
         name:
-          description: must be valid template in the system
+          description: must be valid Template in the system
           type: string
           example: examples/simple_udp_defaults
         parameters:
@@ -127,17 +169,17 @@ components:
           type: string
           example: tenant
         application:
-          description: application associated with the Task
+          description: Application associated with the Task
           type: string
           example: app
-        timestamp: &taskTimestamp
+        timestamp:
           description: timestamp of when the job was submitted (or updated for in progress jobs)
           type: string
           format: date-time
       example: &taskExample
         id: "ff70c2c0-af21-44c8-8fec-18e2d82eabf0"
         name: "examples/simple_udp_defaults"
-        parameters: { }
+        parameters: {}
         code: 200
         message: "success"
         tenant: "tenant"
@@ -168,20 +210,20 @@ components:
       properties:
         title:
           type: string
-          description: A "pretty name" for the template
+          description: A "pretty name" for the Template
           example: Simple UDP Application
         description:
           type: string
           description: Template description
-          example: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This template is an example of how one might build a simple UDP application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
+          example: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This Template is an example of how one might build a simple UDP Application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the Template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
         definitions:
           type: object
-          description: Additional properties for parameters. Object keys must match a parameter found in the template text.
+          description: Additional properties for parameters. Object keys must match a parameter found in the Template text.
           example: {}
         target:
           type: string
           default: 'as3'
-          description: A hint to template consumers about the intended purpose of the template
+          description: A hint to Template consumers about the intended purpose of the Template
           example: as3
         templateText:
           type: string
@@ -189,7 +231,7 @@ components:
           example: "{\n  \"class\": \"ADC\",\n  \"schemaVersion\": \"3.0.0\",\n  \"{{tenant_name}}\": {\n    \"class\": \"Tenant\",\n    \"{{application_name}}\": {\n      \"class\": \"Application\",\n      \"template\": \"udp\",\n      \"serviceMain\": {\n        \"class\": \"Service_UDP\",\n        \"virtualAddresses\": [\n          \"{{virtual_address}}\"\n        ],\n        \"virtualPort\": {{virtual_port:types:port}},\n        \"pool\": \"{{application_name}}_Pool1\"\n      },\n      \"{{application_name}}_Pool1\": {\n        \"class\": \"Pool\",\n        \"monitors\": [\n          \"icmp\"\n        ],\n        \"members\": [\n          {\n            \"serverAddresses\": {{server_addresses::array}},\n            \"servicePort\": {{service_port:types:port}}\n          }\n        ]\n      }\n    }\n  }\n}\n"
         defaultParameters:
           type: object
-          description: Default values for parameters. Object keys must match a parameter found in the template text.
+          description: Default values for parameters. Object keys must match a parameter found in the Template text.
           example:
             tenant_name: foo
             application_name: bar
@@ -205,10 +247,10 @@ components:
         sourceText:
           type: string
           description: The raw text of the source the Template class parsed
-          example: "# Simple UDP template with parameters defined outside of the template\ntitle: Simple UDP Application\ndescription:  \"** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This template is an example of how one might build a simple UDP application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP.\"\nparameters:\n  tenant_name: foo\n  application_name: bar\n  virtual_address: 192.0.2.11\n  virtual_port: 5555\n  server_addresses:\n    - 192.0.2.22\n  service_port: 5555\ntemplate: |\n  {\n    \"class\": \"ADC\",\n    \"schemaVersion\": \"3.0.0\",\n    \"{{tenant_name}}\": {\n      \"class\": \"Tenant\",\n      \"{{application_name}}\": {\n        \"class\": \"Application\",\n        \"template\": \"udp\",\n        \"serviceMain\": {\n          \"class\": \"Service_UDP\",\n          \"virtualAddresses\": [\n            \"{{virtual_address}}\"\n          ],\n          \"virtualPort\": {{virtual_port:types:port}},\n          \"pool\": \"{{application_name}}_Pool1\"\n        },\n        \"{{application_name}}_Pool1\": {\n          \"class\": \"Pool\",\n          \"monitors\": [\n            \"icmp\"\n          ],\n          \"members\": [\n            {\n              \"serverAddresses\": {{server_addresses::array}},\n              \"servicePort\": {{service_port:types:port}}\n            }\n          ]\n        }\n      }\n    }\n  }\n"
+          example: "# Simple UDP Template with parameters defined outside of the Template\ntitle: Simple UDP Application\ndescription:  \"** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This Template is an example of how one might build a simple UDP Application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the Template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP.\"\nparameters:\n  tenant_name: foo\n  application_name: bar\n  virtual_address: 192.0.2.11\n  virtual_port: 5555\n  server_addresses:\n    - 192.0.2.22\n  service_port: 5555\ntemplate: |\n  {\n    \"class\": \"ADC\",\n    \"schemaVersion\": \"3.0.0\",\n    \"{{tenant_name}}\": {\n      \"class\": \"Tenant\",\n      \"{{application_name}}\": {\n        \"class\": \"Application\",\n        \"template\": \"udp\",\n        \"serviceMain\": {\n          \"class\": \"Service_UDP\",\n          \"virtualAddresses\": [\n            \"{{virtual_address}}\"\n          ],\n          \"virtualPort\": {{virtual_port:types:port}},\n          \"pool\": \"{{application_name}}_Pool1\"\n        },\n        \"{{application_name}}_Pool1\": {\n          \"class\": \"Pool\",\n          \"monitors\": [\n            \"icmp\"\n          ],\n          \"members\": [\n            {\n              \"serverAddresses\": {{server_addresses::array}},\n              \"servicePort\": {{service_port:types:port}}\n            }\n          ]\n        }\n      }\n    }\n  }\n"
         sourceHash:
           type: string
-          description: A sha256 hash of the sourceText (useful for determining if a template has changed)
+          description: A sha256 hash of the sourceText (useful for determining if a Template has changed)
           example: a52a2f6cd3d03f7cdec09248fd59fc75b30fa14fa067a137628e7e6ee0b43b4f
         contentType:
           type: string
@@ -234,21 +276,21 @@ components:
       properties:
         name:
           type: string
-          description: Name of the template set.
+          description: Name of the Template Set.
           example: examples
         hash:
           type: string
-          description: A sha256 hash of the template hashes.
+          description: A sha256 hash of the Template hashes.
           example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
         templates:
           $ref: "#/components/schemas/TemplateSetList"
         enabled:
           type: boolean
-          description: template set is installed and ready to use
+          description: Template Set is installed and ready to use
           example: true
         supported:
           type: boolean
-          description: the template set is officially supported by F5
+          description: the Template Set is officially supported by F5
           example: false
         schemas:
           type: array
@@ -274,31 +316,65 @@ components:
       type: object
       description: current config for the FAST iApps LX
       properties:
-          deletedTemplateSets:
-            type: array
-            description: Template sets that have been removed.
-            items:
-              type: string
-            example: []
-          disableDeclarationCache:
-            type: boolean
-            description: Do not cache AS3 declarations.
-            example: false
-          enableIpam:
-            type: boolean
-            description: Enable IPAM for Official F5 FAST Templates (Experimental/Beta).
-            example: true
-          ipamProviders:
-            type: array
-            description: IPAM Providers configuration (Experimental/Beta).
-            items:
-              oneOf:
-                - $ref: "#/components/schemas/IpamInfoblox"
-                - $ref: "#/components/schemas/IpamGeneric"
-            example: []
+        deletedTemplateSets:
+          type: array
+          description: Template Sets that have been deleted.
+          items:
+            type: string
+          example: []
+        enableIpam:
+          type: boolean
+          description: Enable IPAM for Official F5 FAST Templates (Experimental/Beta).
+          example: false
+        ipamProviders:
+          type: array
+          description: IPAM Providers configuration (Experimental/Beta).
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/IpamInfoblox"
+              - $ref: "#/components/schemas/IpamGeneric"
+          example: []
+        disableDeclarationCache:
+          type: boolean
+          description: Do not cache AS3 declarations.
+          example: false
+        enable_telemetry:
+          type: boolean
+          description: Enable Telemetry Streaming related options in templates.
+          example: false
+        log_asm:
+          type: boolean
+          description: Enable ASM related options in templates.
+          example: false
+        log_afm:
+          type: boolean
+          description: Enable AFM related options in templates.
+          example: false
     SettingsSchema:
       type: object
-      description: JSON Schema for FAST settings
+      description: JSON Schema for FAST Settings
+      properties:
+        type:
+          type: string
+          description: "Type of Settings: JSON object."
+        properties:
+          type: object
+          description: Schema of all possible Settings.
+        required:
+          type: array
+          description: List of required Settings.
+        dependencies:
+          type: object
+          description: Description of dependencies.
+        title:
+          type: string
+        description:
+          type: string
+        definitions:
+          type: object
+        $schema:
+          type: string 
+      example: {type: "object",properties: {enable_telemetry: {type: "boolean",title: "Enable Telemetry Streaming log forwarding",description: "Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.\nMore information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)\n",propertyOrder: 0,format: "checkbox"},log_afm: {type: "boolean",title: "Forward AFM logs to Telemetry Streaming",description: "Requires AFM and ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 1,format: "checkbox"},log_asm: {type: "boolean",title: "Forward ASM logs to Telemetry Streaming",description: "Requires ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 2,format: "checkbox"},deletedTemplateSets: {type: "array",items: {type: "string"},\uniqueItems: true,options: {hidden: true},propertyOrder: 0,format: "table"},disableDeclarationCache: {title: "Disable AS3 Declaration Cache",type: "boolean",description: "Do not cache AS3 declarations. This ensures FAST is always using up-to-date declarations from AS3, which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config. Disabling declaration caching will negatively impact FAST performance.",propertyOrder: 1,format: "checkbox"},enableIpam: {title: "Enable IPAM for Official F5 FAST Templates (Experimental/Beta)",description: "**NOTE: An IPAM provider must be configured to deploy a valid application using IPAM.**",type: "boolean",propertyOrder: 2,format: "checkbox"},ipamProviders: {title: "IPAM Providers (Experimental/Beta)",description: "Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses",type: "array",items: {oneOf: [{type: "object",title: "Infoblox",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Infoblox"],default: "Infoblox",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/fixedaddress?_return_as_object=1&_return_fields=ipv4addr"},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{'ipv4addr': 'func: nextavailableip: network/{{network}}','mac': '00: 00: 00: 00: 00: 00','comment': 'Created by F5 Application Services Templates'}",options: {grid_columns: 4,grid_break: true,hidden: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$.result.ipv4addr",options: {grid_columns: 4,hidden: true}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "$.result._ref",options: {grid_columns: 4,grid_break: true,hidden: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/{{addressRef}}"},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,hidden: true}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "delete",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "",options: {hidden: true}},authHeaderValue: {title: "Authorization Header Value",type: "string",default: "",options: {hidden: true}},apiVersion: {title: "API Version",type: "string",default: "v2.4",options: {grid_columns: 2}},network: {title: "Network Name",type: "string",options: {grid_columns: 3,grid_break: true}}}},{type: "object",title: "Generic",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Generic"],default: "Generic",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4}},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,grid_break: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$",options: {grid_columns: 4}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "",options: {grid_columns: 4,grid_break: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4}},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "post",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "Authorization"},authHeaderValue: {title: "Authorization Header Value",type: "string"}}}]},propertyOrder: 3,format: "table"}},required: ["enable_telemetry","deletedTemplateSets"],dependencies: {log_afm: ["enable_telemetry"],log_asm: ["enable_telemetry"]},title: "FAST Settings",description: "",definitions: {},$schema: "http://json-schema.org/schema#"}
     Info:
       type: object
       properties:
@@ -466,6 +542,22 @@ components:
           type: string
 
 x-errors:
+    '200': &ok
+      description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
+      content:
+        application/json:
+          schema:
+            <<: *errorResponse
+            properties: 
+              <<: *errorResponseProps
+              code:
+                <<: *errorResponseCode
+                minimum: 202
+                maximum: 599
+                example: 200
+              message:
+                type: string
+                example: success
     '400': &badRequest
       description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
       content:
@@ -488,6 +580,18 @@ x-errors:
             $ref: "#/components/schemas/ErrorResponse"
     '422': &unprocessableEntity
       description: supplied configuration was invalid
+      content:
+        application/json:
+          schema:
+            <<: *errorResponse
+            properties: 
+              <<: *errorResponseProps
+              code:
+                <<: *errorResponseCode
+                example: 422
+              message:
+                type: string
+                example: supplied configuration was invalid
     '500': &serverError
       description: Internal error. A bug report should be filed.
       content:
@@ -522,25 +626,25 @@ info:
 
     ## Application Management
 
-    These are endpoints related to managing the lifecycle of your applications.
-    These endpoints help you create, edit, and query the applications managed by
+    These are endpoints related to managing the lifecycle of your Applications.
+    These endpoints help you create, edit, and query the Applications managed by
     FAST.
 
     ## Task Tracking
 
-    When an application is created, it may not happen instantly. A Task is run to
+    When an Application is created, it may not happen instantly. A Task is run to
     deploy the AS3 declaration. These endpoints are for retrieving information
     about currently running and previously run Tasks. These endpoints will report
     the success or failure of a particular deployment action, such as creating
-    or editing an application.
+    or editing an Application.
 
     ## Package Management
 
-    This is the API for loading and unloading new template sets into the system.
+    This is the API for loading and unloading new Template Sets into the system.
 
     ## Template Management
 
-    This is the API for Querying templates that are loaded into the system.
+    This is the API for Querying Templates that are loaded into the system.
 
     ## FAST Extension
 
@@ -559,7 +663,7 @@ paths:
       tags:
         - Application Management
       summary: Fetch List of FAST Applications
-      description: Responds with a list of applications that are currently deployed in the system.
+      description: Responds with a list of Applications that are currently deployed in the system.
       operationId: getFASTApplications
       responses:
         '200':
@@ -572,11 +676,11 @@ paths:
     post:
       tags:
         - Application Management
-      summary: Create one or more applications from templates
-      description: This is the main method to deploy a templated application. The parameters posted will be used to render a template, and that template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A Task will be returned upon successful parameter submission that can track the progress of the deployment.
+      summary: Create one or more Applications from Templates
+      description: This is the main method to deploy a templated Application. The parameters posted will be used to render a Template, and that Template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A Task will be returned upon successful parameter submission that can track the progress of the deployment.
       operationId: postFASTApplications
       requestBody:
-        description: A Task definition, including the name of the template to run and the parameters needed to render and post the output.
+        description: A Task definition, including the name of the Template to run and the parameters needed to render and post the output.
         required: true
         content:
           application/json:
@@ -597,7 +701,7 @@ paths:
       tags:
         - Application Management
       summary: Delete FAST Applications
-      description: Delete multiple FAST managed applications (all if no body is provided).
+      description: Delete multiple FAST managed Applications (all if no body is provided).
       operationId: deleteFASTApplications
       requestBody:
         required: false
@@ -607,12 +711,16 @@ paths:
               type: array
               items:
                 type: string
-                description: application paths (e.g., 'tenant/app')
+                description: Application paths (e.g., 'tenant/app')
               example:
                 - tenant/app
       responses:
         '202':
           description: Delete job submitted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationsDeleteResponse"
         '404':
           <<: *fileNotFound
           description: Tenant or Application not found.
@@ -634,8 +742,8 @@ paths:
           type: string
           pattern: '.*'
     get:
-      summary: Fetch an individual application
-      description: Fetches the AS3 application class for the given FAST application.
+      summary: Fetch an individual Application
+      description: Fetches the AS3 Application class for the given FAST Application.
       operationId: getFASTApplication
       tags:
         - Application Management
@@ -651,8 +759,8 @@ paths:
           description: Application or Tenant was not found.
         '500': *serverError
     patch:
-      summary: Update application parameters
-      description: Update an existing, deployed FAST application with the supplied parameters. Existing parameter values from the deployed application will be used as defaults for any missing parameter values.
+      summary: Update Application parameters
+      description: Update an existing, deployed FAST Application with the supplied parameters. Existing parameter values from the deployed Application will be used as defaults for any missing parameter values.
       operationId: updateFASTApplication
       tags:
         - Application Management
@@ -664,8 +772,9 @@ paths:
               type: object
               properties:
                 parameters:
-                  description: Parameters used to update the application.
-                  type: object
+                  description: Parameters used to update the Application.
+                  type: 
+                  example: { "virtualAddresses": [ "10.11.12.13" ] }
               required:
                 - parameters
       responses:
@@ -680,20 +789,24 @@ paths:
     delete:
       tags:
         - Application Management
-      summary: Delete application
-      description: Delete an individual application.
+      summary: Delete Application
+      description: Delete an individual Application.
       operationId: deleteFASTApplication
       responses:
         '200': 
           description: The Application was deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationDeleteResponse"
         '404':
           <<: *fileNotFound
           description: Tenant or Application not found.
         '500': *serverError
   /templates:
     get:
-      summary: List all templates
-      description: List all installed templates.
+      summary: List all Templates
+      description: List all installed Templates.
       operationId: getFASTTemplates
       tags:
         - Template Management
@@ -710,20 +823,20 @@ paths:
       - name: templateName
         in: path
         required: true
-        description: The name of the template to retrieve.
+        description: The name of the Template to retrieve.
         schema:
           type: string
           pattern: '.*'
       - name: setName
         in: path
         required: true
-        description: The name of template set the template belongs to.
+        description: The name of Template Set the Template belongs to.
         schema:
           type: string
           pattern: '.*'
     get:
-      summary: Get the specified template
-      description: Get the template by template name and template set name.
+      summary: Get specified Template
+      description: Get the Template by Template name and Template Set name.
       operationId: getFASTTemplateBySetAndTemplateName
       tags:
         - Template Management
@@ -748,12 +861,6 @@ paths:
       responses:
         '200':
           description: An array of Tasks and their status.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TaskList"
-        '422':
-          description: declaration is invalid
           content:
             application/json:
               schema:
@@ -791,11 +898,11 @@ paths:
         - name: showDisabled
           in: query
           required: false
-          description: Whether to show only disabled template sets.
+          description: Whether to show only disabled Template Sets.
           schema:
             type: boolean
-      summary: Get template sets
-      description: List all installed template sets.
+      summary: Get Template Sets
+      description: List all installed Template Sets.
       operationId: getFASTTemplateSets
       tags:
         - Template Management
@@ -805,9 +912,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TemplateSetList"
+                $ref: "#/components/schemas/TemplateSetList"
         '400': 
           <<: *badRequest
           description: Invalid Template Set request.
@@ -816,8 +921,8 @@ paths:
           description: Template Set not found.
         '500': *serverError
     post:
-      summary: Install a new template set
-      description: Installs a previously uploaded template set zip.
+      summary: Install a new Template Set
+      description: Installs a previously uploaded Template Set zip.
       operationId: postFASTTemplateSets
       tags:
         - Template Management
@@ -831,13 +936,13 @@ paths:
                 - name
               properties:
                 name:
-                  title: Template set name.
-                  description: The name of the template set to install (excluding the .zip extension).
+                  title: Template Set name.
+                  description: The name of the Template Set to install (excluding the .zip extension).
                   type: string
                   example: new_template_set
           multipart/form-data:
             schema:
-              description: a zip file containing template schema or mustache files.
+              description: a zip file containing Template schema or mustache files.
       responses:
         '200':
           description: The Template Set installed successfully.
@@ -851,11 +956,12 @@ paths:
     delete:
       tags:
         - Template Management
-      summary: Delete template sets
-      description: Delete all installed template sets.
+      summary: Delete Template Sets
+      description: Delete all installed Template Sets.
       operationId: deleteFASTTemplateSets
       responses:
         '200': 
+          <<: *ok
           description: All Template Sets were deleted successfully.
         '500': *serverError
   /templatesets/{setName}:
@@ -863,15 +969,15 @@ paths:
       - name: setName
         in: path
         required: true
-        description: The name of the template set.
+        description: The name of the Template Set.
         schema:
           type: string
           pattern: '.*'
     get:
       tags:
         - Template Management
-      summary: Get template information
-      description: Get information of template set with {setName}.
+      summary: Get Template information
+      description: Get information of Template Set with {setName}.
       operationId: getFASTTemplateSetsByName
       responses:
         '200':
@@ -890,12 +996,16 @@ paths:
     delete:
       tags:
         - Template Management
-      summary: Removes an installed template set
-      description: Removes an installed template set specified by its name.
+      summary: Delete specified Template Set
+      description: Deletes an installed Template Set specified by its name.
       operationId: deleteFASTTemplateSetByName
       responses:
         '200':
+          <<: *ok
           description: The specified Template Set was deleted successfully.
+        '400':
+          <<: *badRequest
+          description: Cannot delete Template Set, it is being used
         '404':
           <<: *fileNotFound
           description: The Set name was not found
@@ -923,9 +1033,10 @@ paths:
       operationId: deleteFASTSettings
       responses:
         '200':
+          <<: *ok
           description: Delete/Reset the FAST Settings configuration.
         '500': *serverError
-        default: *defaultResponse
+        # default: *defaultResponse
     post:
       tags:
         - FAST Extension
@@ -934,9 +1045,9 @@ paths:
       operationId: postFASTSettings
       responses:
         '200':
+          <<: *ok
           description: Replace the FAST Settings configuration.
-        '422':
-          description: supplied configuration was invalid
+        '422': *unprocessableEntity
         '500': *serverError
     patch:
       tags:
@@ -946,9 +1057,9 @@ paths:
       operationId: patchFASTSettings
       responses:
         '200':
+          <<: *ok
           description: Update the FAST Settings configuration.
-        '422':
-          description: supplied configuration was invalid
+        '422': *unprocessableEntity
         '500': *serverError
   /settings-schema:
     get:
@@ -970,7 +1081,7 @@ paths:
       tags:
        - FAST Extension
       summary: Information about the FAST Extension
-      description: This endpoint returns data pertaining to the version of FAST currently in use, as well as loaded template sets and other information useful for debug. This endpoint is recommended for use when verifying that FAST is installed and ready to use.
+      description: This endpoint returns data pertaining to the version of FAST currently in use, as well as loaded Template Sets and other information useful for debug. This endpoint is recommended for use when verifying that FAST is installed and ready to use.
       operationId: getFASTInfo
       responses:
         '200':
@@ -984,11 +1095,11 @@ paths:
     post:
       tags:
         - Application Management
-      summary: Render one or more applications from templates
-      description: Render application templates without posting them to AS3 NOTE - The rendered template results are not stitched with other AS3 applications on the box. In other words, posting these results to AS3 directly can result in data loss.
+      summary: Render one or more Applications from Templates
+      description: Render Application Templates without posting them to AS3 NOTE - The rendered Template results are not stitched with other AS3 Applications on the box. In other words, posting these results to AS3 directly can result in data loss.
       operationId: postFASTRender
       requestBody:
-        description: An application definition, including the name of the template to render and the template parameters.
+        description: An Application definition, including the name of the Template to render and the Template parameters.
         required: true
         content:
           application/json:
@@ -1005,6 +1116,57 @@ paths:
                 type: array
                 items:
                   type: object
+                  example:
+                    code: 200,
+                    message: 
+                      [
+                        {
+                          "appDef": {
+                            "class": "ADC",
+                            "schemaVersion": "3.0.0",
+                            "tenant": {
+                              "class": "Tenant",
+                              "bar": {
+                                "class": "Application",
+                                "template": "udp",
+                                "serviceMain": {
+                                    "class": "Service_UDP",
+                                    "virtualAddresses": [
+                                        "192.0.2.11"
+                                    ],
+                                    "virtualPort": 5555,
+                                    "pool": "bar_Pool1"
+                                },
+                                "bar_Pool1": {
+                                  "class": "Pool",
+                                  "monitors": [
+                                    "icmp"
+                                  ],
+                                  "members": [
+                                    {
+                                      "serverAddresses": [
+                                        "192.0.2.22"
+                                      ],
+                                      "servicePort": 5555
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "metaData": {
+                            "template": "examples/simple_udp_defaults",
+                            "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715",
+                            "view": {
+                              "tenant_name": "tenant",
+                              "app_name": "app"
+                            },
+                            "lastModified": "2022-03-26T23:34:23.873Z",
+                            "ipamAddrs": {}
+                          }
+                        }
+                      ]
+
         '400':
           <<: *badRequest
           description: An improper Application definition was submitted
