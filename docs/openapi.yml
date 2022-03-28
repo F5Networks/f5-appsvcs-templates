@@ -773,10 +773,10 @@ paths:
               properties:
                 parameters:
                   description: Parameters used to update the Application.
-                  type: 
-                  example: { "virtualAddresses": [ "10.11.12.13" ] }
+                  type: object
               required:
                 - parameters
+            example: { "virtualAddresses": [ "10.0.0.1" ] }
       responses:
         '202':
           description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
