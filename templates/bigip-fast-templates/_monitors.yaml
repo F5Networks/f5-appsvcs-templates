@@ -193,6 +193,22 @@ http:
     enable_tls_client:
       type: boolean
       dependencies: []
+    fastl4:
+      type: boolean
+      dependencies: []
+    monitor_name:
+      title: HTTPS Monitor
+      description: Select an existing BIG-IP HTTPS pool monitor. Monitors are used to determine
+        the health of the application on each server. If an application instance does not respond
+        system will block client requests to that web server.
+      type: string
+      enumFromBigip: ltm/monitor/https
+      default: '/Common/https'
+      dependencies:
+        - make_monitor
+        - enable_tls_client
+      invertDependency:
+        - make_monitor
     monitor_name_http:
       title: HTTP Monitor
       description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
@@ -202,19 +218,24 @@ http:
       enumFromBigip: ltm/monitor/http
       default: '/Common/http'
       dependencies: 
+        - make_monitor
         - enable_tls_client
       invertDependency:
+        - make_monitor
         - enable_tls_client
-    monitor_name:
-      title: HTTPS Monitor
-      description: Select an existing BIG-IP HTTPS pool monitor. Monitors are used to determine
+    monitor_name_http_fastl4:
+      title: HTTP Monitor
+      description: Select an existing BIG-IP HTTP pool monitor. Monitors are used to determine
         the health of the application on each server. If an application instance does not respond
         system will block client requests to that web server.
       type: string
-      enumFromBigip: ltm/monitor/https
-      default: '/Common/https'
+      enumFromBigip: ltm/monitor/http
+      default: '/Common/http'
       dependencies: 
-        - enable_tls_client
+        - make_monitor
+        - fastl4
+      invertDependency:
+        - make_monitor
     monitor_credentials:
       title: Credentials
       description: Check this box if the servers require login credentials for web access.
@@ -242,6 +263,7 @@ http:
       default: ''
     monitor_partial_type:
       template: |
+        {{protected_host}}
         {{#enable_tls_client}}
           "monitorType": "https",
         {{/enable_tls_client}}
@@ -288,7 +310,12 @@ http:
                             "bigip": "{{monitor_name}}"
                           {{/enable_tls_client}}
                           {{^enable_tls_client}}
-                            "bigip": "{{monitor_name_http}}"
+                            {{#fastl4}}
+                              "bigip": "{{monitor_name_http_fastl4}}"
+                            {{/fastl4}}
+                            {{^fastl4}}
+                              "bigip": "{{monitor_name_http}}"
+                            {{/fastl4}}
                           {{/enable_tls_client}}
                         }]
                       }
