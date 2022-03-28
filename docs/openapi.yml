@@ -606,12 +606,6 @@ x-errors:
               message:
                 type: string
                 example: internal server error
-    default: &defaultResponse
-      description: unexpected error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
 info:
   version: 1.17.0-rc.1
   title: F5 Application Services Templates API
@@ -1035,7 +1029,6 @@ paths:
           <<: *ok
           description: Delete/Reset the FAST Settings configuration.
         '500': *serverError
-        # default: *defaultResponse
     post:
       tags:
         - FAST Extension
