@@ -2120,9 +2120,47 @@ class FASTWorker {
                 this.driver.getApplication(tenant, app)
             ))
             .then((appData) => {
+                Object.assign(appData.view, newParameters);
+                return appData;
+            })
+            .then(appData => Promise.all([
+                appData,
+                this.renderTemplates(reqid, [{
+                    name: appData.template,
+                    parameters: appData.view
+                }])
+            ]))
+            .then(([appData, rendered]) => Promise.all([
+                appData,
+                this.driver.getTenantAndAppFromDecl(rendered[0].appDef)
+            ]))
+            .then(([appData, tenantAndApp]) => {
+                const [tenantName, appName] = tenantAndApp;
+                if (tenantName !== tenant) {
+                    return Promise.reject(
+                        this.genRestResponse(
+                            restOperation,
+                            422,
+                            `PATCH would change tenant name from ${tenant} to ${tenantName}`
+                        )
+                    );
+                }
+                if (appName !== app) {
+                    return Promise.reject(
+                        this.genRestResponse(
+                            restOperation,
+                            422,
+                            `PATCH would change application name from ${app} to ${appName}`
+                        )
+                    );
+                }
+
+                return appData;
+            })
+            .then((appData) => {
                 postOp.setBody({
                     name: appData.template,
-                    parameters: Object.assign({}, appData.view, newParameters)
+                    parameters: appData.view
                 });
                 return this.onPost(postOp);
             })
@@ -2131,7 +2169,11 @@ class FASTWorker {
                 respBody = respBody.message || respBody;
                 this.genRestResponse(restOperation, postOp.getStatusCode(), respBody);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+            .catch((e) => {
+                if (restOperation.getStatusCode() < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 
     patchSettings(restOperation, config) {
