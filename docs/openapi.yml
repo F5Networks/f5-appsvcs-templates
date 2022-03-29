@@ -734,13 +734,6 @@ components:
       type: object
       description: Object must conform to specified Template's schema.
       example: {}
-    AS3App:
-      type: object
-      description: The resulting AS3 Application.
-      properties:
-        class:
-          type: string
-          pattern: '.*'
     ApplicationDefinition:
       type: object
       description: Application Definition.
