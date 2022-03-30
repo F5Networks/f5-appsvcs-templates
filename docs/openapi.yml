@@ -60,6 +60,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationList"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -87,11 +88,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationResponse"
         '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/400Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -127,6 +130,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -167,6 +171,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -197,11 +202,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationResponse"
         '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/400Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -226,6 +233,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -245,6 +253,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TemplateList"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -285,6 +294,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -304,6 +314,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TaskList"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -337,6 +348,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -375,6 +387,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -422,6 +435,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -440,6 +454,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -479,6 +494,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -509,6 +525,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -528,6 +545,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Settings"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -546,6 +564,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -564,11 +583,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '422':
+          description: supplied configuration was invalid
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/422Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -587,11 +608,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '422':
+          description: supplied configuration was invalid
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/422Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -611,6 +634,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SettingsSchema"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -630,6 +654,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Info"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -723,6 +748,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -734,6 +760,13 @@ components:
       type: object
       description: Object must conform to specified Template's schema.
       example: {}
+    AS3App:
+      type: object
+      description: The resulting AS3 Application.
+      properties:
+        class:
+          type: string
+          pattern: '.*'
     ApplicationDefinition:
       type: object
       description: Application Definition.
