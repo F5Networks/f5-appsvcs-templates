@@ -1,4 +1,732 @@
 openapi: "3.0.0"
+info:
+  version: 1.17.0-rc.1
+  title: F5 Application Services Templates API
+  license:
+    name: Apache 2.0
+  description: |
+    # F5 Application Services Templates (FAST)
+
+    This is the documentation for the FAST templating extension. This document
+    catalogs the API endpoints exposed by the extension. Note that the path for
+    all endpoints must be preceded by /mgmt/shared/fast.
+
+    ## Application Management
+
+    These are endpoints related to managing the lifecycle of your Applications.
+    These endpoints help you create, edit, and query the Applications managed by
+    FAST.
+
+    ## Task Tracking
+
+    When an Application is created, it may not happen instantly. A Task is run to
+    deploy the AS3 declaration. These endpoints are for retrieving information
+    about currently running and previously run Tasks. These endpoints will report
+    the success or failure of a particular deployment action, such as creating
+    or editing an Application.
+
+    ## Package Management
+
+    This is the API for loading and unloading new Template Sets into the system.
+
+    ## Template Management
+
+    This is the API for Querying Templates that are loaded into the system.
+
+    ## FAST Extension
+
+    These endpoints are related to management of the FAST Extension itself,
+    for getting debug information or software version information.
+servers:
+ - url: http://localhost:8100/mgmt/shared/fast
+tags:
+ - name: Application Management
+ - name: Task Tracking
+ - name: Template Management
+ - name: FAST Extension
+paths:
+  /applications:
+    get:
+      tags:
+        - Application Management
+      summary: Fetch List of FAST Applications
+      description: Responds with a list of Applications that are currently deployed in the system.
+      operationId: getFASTApplications
+      responses:
+        '200':
+          description: List of FAST Applications.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationList"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    post:
+      tags:
+        - Application Management
+      summary: Create one or more Applications from Templates
+      description: This is the main method to deploy a templated Application. The parameters posted will be used to render a Template, and that Template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A Task will be returned upon successful parameter submission that can track the progress of the deployment.
+      operationId: postFASTApplications
+      requestBody:
+        description: A Task definition, including the name of the Template to run and the parameters needed to render and post the output.
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/ApplicationDefinition"
+                - $ref: "#/components/schemas/ApplicationDefinitionList"
+      responses:
+        '202':
+          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationResponse"
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    delete:
+      tags:
+        - Application Management
+      summary: Delete FAST Applications
+      description: Delete multiple FAST managed Applications (all if no body is provided).
+      operationId: deleteFASTApplications
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                description: Application paths (e.g., 'tenant/app')
+              example:
+                - tenant/app
+      responses:
+        '202':
+          description: Delete job submitted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationsDeleteResponse"
+        '404':
+          description: Tenant or Application not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /applications/{tenantName}/{appName}:
+    parameters:
+      - name: appName
+        in: path
+        required: true
+        description: The name of the app to retrieve.
+        schema:
+          type: string
+          pattern: '.*'
+      - name: tenantName
+        in: path
+        required: true
+        description: The tenant the app belongs to.
+        schema:
+          type: string
+          pattern: '.*'
+    get:
+      summary: Fetch an individual Application
+      description: Fetches the AS3 Application class for the given FAST Application.
+      operationId: getFASTApplication
+      tags:
+        - Application Management
+      responses:
+        '200':
+          description: The specified Application.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+        '404':
+          description: Application or Tenant was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    patch:
+      summary: Update Application parameters
+      description: Update an existing, deployed FAST Application with the supplied parameters. Existing parameter values from the deployed Application will be used as defaults for any missing parameter values.
+      operationId: updateFASTApplication
+      tags:
+        - Application Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parameters:
+                  $ref: "#/components/schemas/ParametersDefinition"
+              required:
+                - parameters
+            example: { "virtualAddresses": [ "10.0.0.1" ] }
+      responses:
+        '202':
+          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationResponse"
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    delete:
+      tags:
+        - Application Management
+      summary: Delete Application
+      description: Delete an individual Application.
+      operationId: deleteFASTApplication
+      responses:
+        '202':
+          description: The Application was deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationDeleteResponse"
+        '404':
+          description: Tenant or Application not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /templates:
+    get:
+      summary: List all Templates
+      description: List all installed Templates.
+      operationId: getFASTTemplates
+      tags:
+        - Template Management
+      responses:
+        '200':
+          description: An array of Template names.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateList"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /templates/{setName}/{templateName}:
+    parameters:
+      - name: templateName
+        in: path
+        required: true
+        description: The name of the Template to retrieve.
+        schema:
+          type: string
+          pattern: '.*'
+      - name: setName
+        in: path
+        required: true
+        description: The name of Template Set the Template belongs to.
+        schema:
+          type: string
+          pattern: '.*'
+    get:
+      summary: Get specified Template
+      description: Get the Template by Template name and Template Set name.
+      operationId: getFASTTemplateBySetAndTemplateName
+      tags:
+        - Template Management
+      responses:
+        '200':
+          description: A Template object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Template"
+        '404':
+          description: Set or Template was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /tasks:
+    get:
+      summary: Get Tasks
+      description: List all running and completed Tasks.
+      operationId: getFASTTasks
+      tags:
+        - Task Tracking
+      responses:
+        '200':
+          description: An array of Tasks and their status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskList"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /tasks/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        description: The ID of the Task to retrieve.
+        schema:
+          $ref: '../../global-types/ietf-types.yaml#/uuid'
+        example: 86657e15-439d-4cef-97bc-58a6c119976b
+    get:
+      summary: Get information about a specific Task
+      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interupption in service to the iControl LX platform may result in lost results.
+      operationId: getFASTTaskById
+      tags:
+        - Task Tracking
+      responses:
+        '200':
+          description: The specified Tasks and its status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        '404':
+          description: The Task ID was not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /templatesets:
+    get:
+      parameters:
+        - name: showDisabled
+          in: query
+          required: false
+          description: Whether to show only disabled Template Sets.
+          schema:
+            type: boolean
+      summary: Get Template Sets
+      description: List all installed Template Sets.
+      operationId: getFASTTemplateSets
+      tags:
+        - Template Management
+      responses:
+        '200':
+          description: A list of installed Template Sets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateSetList"
+        '400':
+          description: Invalid Template Set request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '404':
+          description: Template Set not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    post:
+      summary: Install a new Template Set
+      description: Installs a previously uploaded Template Set zip.
+      operationId: postFASTTemplateSets
+      tags:
+        - Template Management
+      requestBody:
+        description: The name of a zip file (excluding the .zip extension).
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+              properties:
+                name:
+                  title: Template Set name.
+                  description: The name of the Template Set to install (excluding the .zip extension).
+                  type: string
+                  example: new_template_set
+          multipart/form-data:
+            schema:
+              description: a zip file containing Template schema or mustache files.
+      responses:
+        '200':
+          description: The Template Set installed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200Response"
+        '400':
+          description: The supplied Template Set name is invalid or missing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '404':
+          description: The supplied Template name was not found in /var/config/rest/downloads.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    delete:
+      tags:
+        - Template Management
+      summary: Delete Template Sets
+      description: Delete all installed Template Sets.
+      operationId: deleteFASTTemplateSets
+      responses:
+        '200':
+          description: All Template Sets were deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /templatesets/{setName}:
+    parameters:
+      - name: setName
+        in: path
+        required: true
+        description: The name of the Template Set.
+        schema:
+          type: string
+          pattern: '.*'
+    get:
+      tags:
+        - Template Management
+      summary: Get Template information
+      description: Get information of Template Set with {setName}.
+      operationId: getFASTTemplateSetsByName
+      responses:
+        '200':
+          description: A Template Set object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateSet"
+        '400':
+          description: Template Set in use.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '404':
+          description: Template Set not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    delete:
+      tags:
+        - Template Management
+      summary: Delete specified Template Set
+      description: Deletes an installed Template Set specified by its name.
+      operationId: deleteFASTTemplateSetByName
+      responses:
+        '200':
+          description: The specified Template Set was deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200Response"
+        '400':
+          description: Cannot delete Template Set, it is being used
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '404':
+          description: The Set name was not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /settings:
+    get:
+      tags:
+        - FAST Extension
+      summary: Get FAST Settings
+      description: Get an object that represents the current FAST configuration.
+      operationId: getFASTSettings
+      responses:
+        '200':
+          description: The FAST Settings configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    delete:
+      tags:
+        - FAST Extension
+      summary: Delete/Reset FAST Settings
+      description: Reset FAST configuration to defaults.
+      operationId: deleteFASTSettings
+      responses:
+        '200':
+          description: Delete/Reset the FAST Settings configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    post:
+      tags:
+        - FAST Extension
+      summary: Replace FAST settings (Full overwrite)
+      description: Replace the full FAST configuration with supplied body.
+      operationId: postFASTSettings
+      responses:
+        '200':
+          description: Replace the FAST Settings configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200Response"
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/422Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+    patch:
+      tags:
+        - FAST Extension
+      summary: Update existing FAST Settings
+      description: Update existing FAST configuration with the supplied body. Allows updates of individual properties.
+      operationId: patchFASTSettings
+      responses:
+        '200':
+          description: Update the FAST Settings configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200Response"
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/422Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /settings-schema:
+    get:
+      tags:
+        - FAST Extension
+      summary: Get settings schema
+      description: Get JSON schema for the /settings endpoint.
+      operationId: getFastSettingsSchema
+      responses:
+        '200':
+          description: The FAST Settings schema.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsSchema"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /info:
+    get:
+      tags:
+       - FAST Extension
+      summary: Information about the FAST Extension
+      description: This endpoint returns data pertaining to the version of FAST currently in use, as well as loaded Template Sets and other information useful for debug. This endpoint is recommended for use when verifying that FAST is installed and ready to use.
+      operationId: getFASTInfo
+      responses:
+        '200':
+          description: Information about the extension was gathered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Info"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
+  /render:
+    post:
+      tags:
+        - Application Management
+      summary: Render one or more Applications from Templates
+      description: Render Application Templates without posting them to AS3 NOTE - The rendered Template results are not stitched with other AS3 Applications on the box. In other words, posting these results to AS3 directly can result in data loss.
+      operationId: postFASTRender
+      requestBody:
+        description: An Application definition, including the name of the Template to render and the Template parameters.
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/ApplicationDefinition"
+                - $ref: "#/components/schemas/ApplicationDefinitionList"
+      responses:
+        '200':
+          description: The rendered Templates as an array of JSON objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  example:
+                    code: 200,
+                    message:
+                      [
+                        {
+                          "appDef": {
+                            "class": "ADC",
+                            "schemaVersion": "3.0.0",
+                            "tenant": {
+                              "class": "Tenant",
+                              "bar": {
+                                "class": "Application",
+                                "template": "udp",
+                                "serviceMain": {
+                                    "class": "Service_UDP",
+                                    "virtualAddresses": [
+                                        "192.0.2.11"
+                                    ],
+                                    "virtualPort": 5555,
+                                    "pool": "bar_Pool1"
+                                },
+                                "bar_Pool1": {
+                                  "class": "Pool",
+                                  "monitors": [
+                                    "icmp"
+                                  ],
+                                  "members": [
+                                    {
+                                      "serverAddresses": [
+                                        "192.0.2.22"
+                                      ],
+                                      "servicePort": 5555
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "metaData": {
+                            "template": "examples/simple_udp_defaults",
+                            "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715",
+                            "view": {
+                              "tenant_name": "tenant",
+                              "app_name": "app"
+                            },
+                            "lastModified": "2022-03-26T23:34:23.873Z",
+                            "ipamAddrs": {}
+                          }
+                        }
+                      ]
+
+        '400':
+          description: An improper Application definition was submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Response"
+        '404':
+          description: The specified Template could not be found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404Response"
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500Response"
 
 components:
   schemas:
@@ -6,13 +734,6 @@ components:
       type: object
       description: Object must conform to specified Template's schema.
       example: {}
-    AS3App:
-      type: object
-      description: The resulting AS3 Application.
-      properties:
-        class:
-          type: string
-          pattern: '.*'
     ApplicationDefinition:
       type: object
       description: Application Definition.
@@ -29,7 +750,7 @@ components:
           description: Do not error if an Application with the same name already exists in the tenant.
           type: boolean
           default: true
-      example: &AppDefExample
+      example:
         name: examples/simple_udp_defaults
         parameters: {}
         allowOverwrite: true
@@ -38,9 +759,12 @@ components:
       items:
         $ref: "#/components/schemas/ApplicationDefinition"
       example:
-        - *AppDefExample
-        - <<: *AppDefExample
-          name: tenant/app
+        - name: examples/simple_udp_defaults
+          parameters: {}
+          allowOverwrite: true
+        - name: tenant/app
+          parameters: {}
+          allowOverwrite: true
     Application:
       type: object
       description: Application.
@@ -65,7 +789,7 @@ components:
           type: string
           format: date-time
           description: timestamp of when the Application was last modified
-        ipamAddrs: 
+        ipamAddrs:
           type: object
           example: {}
         tenant:
@@ -121,7 +845,7 @@ components:
         selfLink:
           description: The URL which can be used to query Task state.
           type: string
-      example: &appDeleteExample
+      example:
           results: []
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%examples%simple_udp%2","tenant":{"class":"Tenant","app":{"class":"Application","template":"udp","serviceMain":{"class":"Service_UDP","virtualAddresses":["192.0.2.11"],"virtualPort":5555,"pool":"app_Pool1","enable":true,"persistenceMethods":["source-address"]},"app_Pool1":{"class":"Pool","monitors":["icmp"],"members":[{"serverAddresses":["192.0.2.22"],"servicePort":5555}],"loadBalancingMode":"round-robin"},"constants":{"class":"Constants","fast":{"template":"examples/simple_udp_defaults","setHash":"b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715","view":{"tenant_name":"tenant","application_name":"app"},"lastModified":"2022-03-26T00:16:52.666Z","ipamAddrs":{}}}}}}
           id: 62c587f1-374e-49a8-b418-0db766a219ee
@@ -132,8 +856,10 @@ components:
       items:
         $ref: "#/components/schemas/ApplicationDeleteResponse"
       example:
-        - <<: *appDeleteExample
+          results: []
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%%%7"}
+          id: 62c587f1-374e-49a8-b418-0db766a219ee
+          selfLink: "https://f5-csm-api-engine:5443/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
     Task:
       type: object
       description: Task.
@@ -176,7 +902,7 @@ components:
           description: timestamp of when the job was submitted (or updated for in progress jobs)
           type: string
           format: date-time
-      example: &taskExample
+      example:
         id: "ff70c2c0-af21-44c8-8fec-18e2d82eabf0"
         name: "examples/simple_udp_defaults"
         parameters: {}
@@ -191,19 +917,38 @@ components:
       items:
         $ref: "#/components/schemas/Task"
       example:
-        - *taskExample
-        - <<: *taskExample
-          id: 301ee9ed-e73e-4108-a9a2-3104509d7880
+        - id: "ff70c2c0-af21-44c8-8fec-18e2d82eabf0"
+          name: "examples/simple_udp_defaults"
+          parameters: {}
+          code: 200
+          message: "success"
+          tenant: "tenant"
+          application: "app"
+          timestamp: "2019-08-24T14:15:22Z"
+        - id: 301ee9ed-e73e-4108-a9a2-3104509d7880
+          name: "examples/simple_udp_defaults"
+          parameters: {}
           code: 0
           message: in progress
-        - <<: *taskExample
-          id: 7908d0b0-c4cc-41ed-a7e0-9d2d376a3c7b
+          tenant: "tenant"
+          application: "app"
+          timestamp: "2019-08-24T14:15:22Z"
+        - id: "7908d0b0-c4cc-41ed-a7e0-9d2d376a3c7b"
+          name: "examples/simple_udp_defaults"
+          parameters: {}
           code: 202
           message: in progress
-        - <<: *taskExample
-          id: 21697cbe-56b9-4d50-bd54-fd84f8c056de
+          tenant: "tenant"
+          application: "app"
+          timestamp: "2019-08-24T14:15:22Z"
+        - id: 21697cbe-56b9-4d50-bd54-fd84f8c056de
+          name: "examples/simple_udp_defaults"
+          parameters: {}
           code: 422
           message: declaration is invalid
+          tenant: "tenant"
+          application: "app"
+          timestamp: "2019-08-24T14:15:22Z"
     Template:
       type: object
       description: An JSON-serialized, f5-fast-core Template object. All fields prefixed with an underscore should be treated as internal/private and only intended for Template.fromJson(). As such, they are not documented here.
@@ -298,7 +1043,7 @@ components:
           items:
             type: object
             properties:
-              name: 
+              name:
                 type: string
                 description: schema name
               hash:
@@ -390,22 +1135,86 @@ components:
             $ref: "#/components/schemas/TemplateSetList"
         config:
             $ref: "#/components/schemas/Settings"
-    ErrorResponse: &errorResponse
+    200Response:
       type: object
-      description: Error Response.
+      description: OK
       required:
         - code
         - message
-      properties: &errorResponseProps
-        code: &errorResponseCode
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 202
+          maximum: 599
+          example: 200
+        message:
+          type: string
+          example: success
+    400Response:
+      type: object
+      description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+          example: 400
+        message:
+          type: string
+          example: the request was not successful
+    404Response:
+      type: object
+      description: Error Response
+      required:
+        - code
+        - message
+      properties:
+        code:
           type: integer
           format: int32
           minimum: 400
           maximum: 599
           example: 404
-        message: 
+        message:
           type: string
           example: resource not found
+    500Response:
+      type: object
+      description: Internal error. A bug report should be filed.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+          example: 500
+        message:
+          type: string
+          example: internal server error
+    422Response:
+      type: object
+      description: supplied configuration was invalid
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 400
+          maximum: 599
+          example: 422
+        message:
+          type: string
+          example: supplied configuration was invalid
     IpamInfoblox:
       type: object
       title: Infoblox
@@ -540,629 +1349,3 @@ components:
         authHeaderValue:
           title: Authorization Header Value
           type: string
-
-x-errors:
-    '200': &ok
-      description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
-      content:
-        application/json:
-          schema:
-            <<: *errorResponse
-            properties: 
-              <<: *errorResponseProps
-              code:
-                <<: *errorResponseCode
-                minimum: 202
-                maximum: 599
-                example: 200
-              message:
-                type: string
-                example: success
-    '400': &badRequest
-      description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
-      content:
-        application/json:
-          schema:
-            <<: *errorResponse
-            properties: 
-              <<: *errorResponseProps
-              code:
-                <<: *errorResponseCode
-                example: 400
-              message:
-                type: string
-                example: the request was not successful
-    '404': &fileNotFound
-      description: The specified Template could not be found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-    '422': &unprocessableEntity
-      description: supplied configuration was invalid
-      content:
-        application/json:
-          schema:
-            <<: *errorResponse
-            properties: 
-              <<: *errorResponseProps
-              code:
-                <<: *errorResponseCode
-                example: 422
-              message:
-                type: string
-                example: supplied configuration was invalid
-    '500': &serverError
-      description: Internal error. A bug report should be filed.
-      content:
-        application/json:
-          schema:
-            <<: *errorResponse
-            properties:
-              <<: *errorResponseProps
-              code:
-                <<: *errorResponseCode
-                example: 500
-              message:
-                type: string
-                example: internal server error
-info:
-  version: 1.17.0-rc.1
-  title: F5 Application Services Templates API
-  license:
-    name: Apache 2.0
-  description: |
-    # F5 Application Services Templates (FAST)
-
-    This is the documentation for the FAST templating extension. This document
-    catalogs the API endpoints exposed by the extension. Note that the path for
-    all endpoints must be preceded by /mgmt/shared/fast.
-
-    ## Application Management
-
-    These are endpoints related to managing the lifecycle of your Applications.
-    These endpoints help you create, edit, and query the Applications managed by
-    FAST.
-
-    ## Task Tracking
-
-    When an Application is created, it may not happen instantly. A Task is run to
-    deploy the AS3 declaration. These endpoints are for retrieving information
-    about currently running and previously run Tasks. These endpoints will report
-    the success or failure of a particular deployment action, such as creating
-    or editing an Application.
-
-    ## Package Management
-
-    This is the API for loading and unloading new Template Sets into the system.
-
-    ## Template Management
-
-    This is the API for Querying Templates that are loaded into the system.
-
-    ## FAST Extension
-
-    These endpoints are related to management of the FAST Extension itself,
-    for getting debug information or software version information.
-servers:
- - url: http://localhost:8100/mgmt/shared/fast
-tags:
- - name: Application Management
- - name: Task Tracking
- - name: Template Management
- - name: FAST Extension
-paths:
-  /applications:
-    get:
-      tags:
-        - Application Management
-      summary: Fetch List of FAST Applications
-      description: Responds with a list of Applications that are currently deployed in the system.
-      operationId: getFASTApplications
-      responses:
-        '200':
-          description: List of FAST Applications.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationList"
-        '500': *serverError
-    post:
-      tags:
-        - Application Management
-      summary: Create one or more Applications from Templates
-      description: This is the main method to deploy a templated Application. The parameters posted will be used to render a Template, and that Template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A Task will be returned upon successful parameter submission that can track the progress of the deployment.
-      operationId: postFASTApplications
-      requestBody:
-        description: A Task definition, including the name of the Template to run and the parameters needed to render and post the output.
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: "#/components/schemas/ApplicationDefinition"
-                - $ref: "#/components/schemas/ApplicationDefinitionList"
-      responses:
-        '202':
-          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationResponse"
-        '400': *badRequest
-        '500': *serverError
-    delete:
-      tags:
-        - Application Management
-      summary: Delete FAST Applications
-      description: Delete multiple FAST managed Applications (all if no body is provided).
-      operationId: deleteFASTApplications
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: string
-                description: Application paths (e.g., 'tenant/app')
-              example:
-                - tenant/app
-      responses:
-        '202':
-          description: Delete job submitted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationsDeleteResponse"
-        '404':
-          <<: *fileNotFound
-          description: Tenant or Application not found.
-        '500': *serverError
-  /applications/{tenantName}/{appName}:
-    parameters:
-      - name: appName
-        in: path
-        required: true
-        description: The name of the app to retrieve.
-        schema:
-          type: string
-          pattern: '.*'
-      - name: tenantName
-        in: path
-        required: true
-        description: The tenant the app belongs to.
-        schema:
-          type: string
-          pattern: '.*'
-    get:
-      summary: Fetch an individual Application
-      description: Fetches the AS3 Application class for the given FAST Application.
-      operationId: getFASTApplication
-      tags:
-        - Application Management
-      responses:
-        '200':
-          description: The specified Application.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Application"
-        '404':
-          <<: *fileNotFound
-          description: Application or Tenant was not found.
-        '500': *serverError
-    patch:
-      summary: Update Application parameters
-      description: Update an existing, deployed FAST Application with the supplied parameters. Existing parameter values from the deployed Application will be used as defaults for any missing parameter values.
-      operationId: updateFASTApplication
-      tags:
-        - Application Management
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                parameters:
-                  $ref: "#/components/schemas/ParametersDefinition"
-              required:
-                - parameters
-            example: { "virtualAddresses": [ "10.0.0.1" ] }
-      responses:
-        '202':
-          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationResponse"
-        '400': *badRequest
-        '500': *serverError
-    delete:
-      tags:
-        - Application Management
-      summary: Delete Application
-      description: Delete an individual Application.
-      operationId: deleteFASTApplication
-      responses:
-        '202': 
-          description: The Application was deleted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationDeleteResponse"
-        '404':
-          <<: *fileNotFound
-          description: Tenant or Application not found.
-        '500': *serverError
-  /templates:
-    get:
-      summary: List all Templates
-      description: List all installed Templates.
-      operationId: getFASTTemplates
-      tags:
-        - Template Management
-      responses:
-        '200':
-          description: An array of Template names.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplateList"
-        '500': *serverError
-  /templates/{setName}/{templateName}:
-    parameters:
-      - name: templateName
-        in: path
-        required: true
-        description: The name of the Template to retrieve.
-        schema:
-          type: string
-          pattern: '.*'
-      - name: setName
-        in: path
-        required: true
-        description: The name of Template Set the Template belongs to.
-        schema:
-          type: string
-          pattern: '.*'
-    get:
-      summary: Get specified Template
-      description: Get the Template by Template name and Template Set name.
-      operationId: getFASTTemplateBySetAndTemplateName
-      tags:
-        - Template Management
-      responses:
-        '200':
-          description: A Template object.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Template"
-        '404':
-          <<: *fileNotFound
-          description: Set or Template was not found.
-        '500': *serverError
-  /tasks:
-    get:
-      summary: Get Tasks
-      description: List all running and completed Tasks.
-      operationId: getFASTTasks
-      tags:
-        - Task Tracking
-      responses:
-        '200':
-          description: An array of Tasks and their status.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TaskList"
-        '500': *serverError
-  /tasks/{taskId}:
-    parameters:
-      - name: taskId
-        in: path
-        required: true
-        description: The ID of the Task to retrieve.
-        schema:
-          $ref: '../../global-types/ietf-types.yaml#/uuid'
-        example: 86657e15-439d-4cef-97bc-58a6c119976b
-    get:
-      summary: Get information about a specific Task
-      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interupption in service to the iControl LX platform may result in lost results.
-      operationId: getFASTTaskById
-      tags:
-        - Task Tracking
-      responses:
-        '200':
-          description: The specified Tasks and its status.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Task"
-        '404':
-          <<: *fileNotFound
-          description: The Task ID was not found.
-        '500': *serverError
-  /templatesets:
-    get:
-      parameters:
-        - name: showDisabled
-          in: query
-          required: false
-          description: Whether to show only disabled Template Sets.
-          schema:
-            type: boolean
-      summary: Get Template Sets
-      description: List all installed Template Sets.
-      operationId: getFASTTemplateSets
-      tags:
-        - Template Management
-      responses:
-        '200':
-          description: A list of installed Template Sets
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplateSetList"
-        '400': 
-          <<: *badRequest
-          description: Invalid Template Set request.
-        '404':
-          <<: *fileNotFound
-          description: Template Set not found.
-        '500': *serverError
-    post:
-      summary: Install a new Template Set
-      description: Installs a previously uploaded Template Set zip.
-      operationId: postFASTTemplateSets
-      tags:
-        - Template Management
-      requestBody:
-        description: The name of a zip file (excluding the .zip extension).
-        required: true
-        content:
-          application/json:
-            schema:
-              required:
-                - name
-              properties:
-                name:
-                  title: Template Set name.
-                  description: The name of the Template Set to install (excluding the .zip extension).
-                  type: string
-                  example: new_template_set
-          multipart/form-data:
-            schema:
-              description: a zip file containing Template schema or mustache files.
-      responses:
-        '200':
-          description: The Template Set installed successfully.
-        '400':
-          <<: *badRequest
-          description: The supplied Template Set name is invalid or missing.
-        '404':
-          <<: *fileNotFound
-          description: The supplied Template name was not found in /var/config/rest/downloads.
-        '500': *serverError
-    delete:
-      tags:
-        - Template Management
-      summary: Delete Template Sets
-      description: Delete all installed Template Sets.
-      operationId: deleteFASTTemplateSets
-      responses:
-        '200': 
-          <<: *ok
-          description: All Template Sets were deleted successfully.
-        '500': *serverError
-  /templatesets/{setName}:
-    parameters:
-      - name: setName
-        in: path
-        required: true
-        description: The name of the Template Set.
-        schema:
-          type: string
-          pattern: '.*'
-    get:
-      tags:
-        - Template Management
-      summary: Get Template information
-      description: Get information of Template Set with {setName}.
-      operationId: getFASTTemplateSetsByName
-      responses:
-        '200':
-          description: A Template Set object.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplateSet"
-        '400':
-          <<: *badRequest
-          description: Template Set in use.
-        '404':
-          <<: *fileNotFound
-          description: Template Set not found.
-        '500': *serverError
-    delete:
-      tags:
-        - Template Management
-      summary: Delete specified Template Set
-      description: Deletes an installed Template Set specified by its name.
-      operationId: deleteFASTTemplateSetByName
-      responses:
-        '200':
-          <<: *ok
-          description: The specified Template Set was deleted successfully.
-        '400':
-          <<: *badRequest
-          description: Cannot delete Template Set, it is being used
-        '404':
-          <<: *fileNotFound
-          description: The Set name was not found
-        '500': *serverError
-  /settings:
-    get:
-      tags:
-        - FAST Extension
-      summary: Get FAST Settings
-      description: Get an object that represents the current FAST configuration.
-      operationId: getFASTSettings
-      responses:
-        '200':
-          description: The FAST Settings configuration.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Settings"
-        '500': *serverError
-    delete:
-      tags:
-        - FAST Extension
-      summary: Delete/Reset FAST Settings
-      description: Reset FAST configuration to defaults.
-      operationId: deleteFASTSettings
-      responses:
-        '200':
-          <<: *ok
-          description: Delete/Reset the FAST Settings configuration.
-        '500': *serverError
-    post:
-      tags:
-        - FAST Extension
-      summary: Replace FAST settings (Full overwrite)
-      description: Replace the full FAST configuration with supplied body.
-      operationId: postFASTSettings
-      responses:
-        '200':
-          <<: *ok
-          description: Replace the FAST Settings configuration.
-        '422': *unprocessableEntity
-        '500': *serverError
-    patch:
-      tags:
-        - FAST Extension
-      summary: Update existing FAST Settings
-      description: Update existing FAST configuration with the supplied body. Allows updates of individual properties.
-      operationId: patchFASTSettings
-      responses:
-        '200':
-          <<: *ok
-          description: Update the FAST Settings configuration.
-        '422': *unprocessableEntity
-        '500': *serverError
-  /settings-schema:
-    get:
-      tags:
-        - FAST Extension
-      summary: Get settings schema
-      description: Get JSON schema for the /settings endpoint.
-      operationId: getFastSettingsSchema
-      responses:
-        '200':
-          description: The FAST Settings schema.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SettingsSchema"
-        '500': *serverError
-  /info:
-    get:
-      tags:
-       - FAST Extension
-      summary: Information about the FAST Extension
-      description: This endpoint returns data pertaining to the version of FAST currently in use, as well as loaded Template Sets and other information useful for debug. This endpoint is recommended for use when verifying that FAST is installed and ready to use.
-      operationId: getFASTInfo
-      responses:
-        '200':
-          description: Information about the extension was gathered successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Info"
-        '500': *serverError
-  /render:
-    post:
-      tags:
-        - Application Management
-      summary: Render one or more Applications from Templates
-      description: Render Application Templates without posting them to AS3 NOTE - The rendered Template results are not stitched with other AS3 Applications on the box. In other words, posting these results to AS3 directly can result in data loss.
-      operationId: postFASTRender
-      requestBody:
-        description: An Application definition, including the name of the Template to render and the Template parameters.
-        required: true
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: "#/components/schemas/ApplicationDefinition"
-                - $ref: "#/components/schemas/ApplicationDefinitionList"
-      responses:
-        '200':
-          description: The rendered Templates as an array of JSON objects
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  example:
-                    code: 200,
-                    message: 
-                      [
-                        {
-                          "appDef": {
-                            "class": "ADC",
-                            "schemaVersion": "3.0.0",
-                            "tenant": {
-                              "class": "Tenant",
-                              "bar": {
-                                "class": "Application",
-                                "template": "udp",
-                                "serviceMain": {
-                                    "class": "Service_UDP",
-                                    "virtualAddresses": [
-                                        "192.0.2.11"
-                                    ],
-                                    "virtualPort": 5555,
-                                    "pool": "bar_Pool1"
-                                },
-                                "bar_Pool1": {
-                                  "class": "Pool",
-                                  "monitors": [
-                                    "icmp"
-                                  ],
-                                  "members": [
-                                    {
-                                      "serverAddresses": [
-                                        "192.0.2.22"
-                                      ],
-                                      "servicePort": 5555
-                                    }
-                                  ]
-                                }
-                              }
-                            }
-                          },
-                          "metaData": {
-                            "template": "examples/simple_udp_defaults",
-                            "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715",
-                            "view": {
-                              "tenant_name": "tenant",
-                              "app_name": "app"
-                            },
-                            "lastModified": "2022-03-26T23:34:23.873Z",
-                            "ipamAddrs": {}
-                          }
-                        }
-                      ]
-
-        '400':
-          <<: *badRequest
-          description: An improper Application definition was submitted
-        '404':
-          <<: *fileNotFound
-          description: The specified Template could not be found
-        '500': *serverError
