@@ -163,7 +163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Application"
+                $ref: "#/components/schemas/AS3App"
         '404':
           description: Application or Tenant was not found.
           content:
@@ -336,7 +336,7 @@ paths:
         - Task Tracking
       responses:
         '200':
-          description: The specified Tasks and its status.
+          description: The specified Task and its status.
           content:
             application/json:
               schema:
@@ -681,60 +681,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  example:
-                    code: 200,
-                    message:
-                      [
-                        {
-                          "appDef": {
-                            "class": "ADC",
-                            "schemaVersion": "3.0.0",
-                            "tenant": {
-                              "class": "Tenant",
-                              "bar": {
-                                "class": "Application",
-                                "template": "udp",
-                                "serviceMain": {
-                                    "class": "Service_UDP",
-                                    "virtualAddresses": [
-                                        "192.0.2.11"
-                                    ],
-                                    "virtualPort": 5555,
-                                    "pool": "bar_Pool1"
-                                },
-                                "bar_Pool1": {
-                                  "class": "Pool",
-                                  "monitors": [
-                                    "icmp"
-                                  ],
-                                  "members": [
-                                    {
-                                      "serverAddresses": [
-                                        "192.0.2.22"
-                                      ],
-                                      "servicePort": 5555
-                                    }
-                                  ]
-                                }
-                              }
-                            }
-                          },
-                          "metaData": {
-                            "template": "examples/simple_udp_defaults",
-                            "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715",
-                            "view": {
-                              "tenant_name": "tenant",
-                              "app_name": "app"
-                            },
-                            "lastModified": "2022-03-26T23:34:23.873Z",
-                            "ipamAddrs": {}
-                          }
-                        }
-                      ]
-
+                $ref: "#/components/schemas/ApplicationRenderedResponse"
         '400':
           description: An improper Application definition was submitted
           content:
@@ -798,6 +745,22 @@ components:
         - name: tenant/app
           parameters: {}
           allowOverwrite: true
+    ApplicationRenderedResponse:
+      type: object
+      description: Application Definition Response.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 200
+          maximum: 599
+          example: 200
+        message:
+          type: array
+          example: [ { "appDef": { "class": "ADC", "schemaVersion": "3.0.0", "tenant": { "class": "Tenant", "bar": { "class": "Application", "template": "udp", "serviceMain": { "class": "Service_UDP", "virtualAddresses": [ "192.0.2.11" ], "virtualPort": 5555, "pool": "bar_Pool1" }, "bar_Pool1": { "class": "Pool", "monitors": [ "icmp" ], "members": [ { "serverAddresses": [ "192.0.2.22" ], "servicePort": 5555 } ] } } } }, "metaData": { "template": "examples/simple_udp_defaults", "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715", "view": { "tenant_name": "tenant", "app_name": "app" }, "lastModified": "2022-03-26T23:34:23.873Z", "ipamAddrs": {} } } ]
     Application:
       type: object
       description: Application.
@@ -1178,7 +1141,7 @@ components:
         code:
           type: integer
           format: int32
-          minimum: 202
+          minimum: 200
           maximum: 599
           example: 200
         message:
