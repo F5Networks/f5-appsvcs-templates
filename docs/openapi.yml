@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  version: 1.17.0-rc.1
+  version: 1.17.0-rc.3
   title: F5 Application Services Templates API
   license:
     name: Apache 2.0
@@ -60,6 +60,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationList"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -87,11 +88,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationResponse"
         '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/400Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -127,6 +130,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -159,7 +163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Application"
+                $ref: "#/components/schemas/AS3App"
         '404':
           description: Application or Tenant was not found.
           content:
@@ -167,6 +171,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -197,11 +202,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApplicationResponse"
         '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/400Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -213,7 +220,7 @@ paths:
       description: Delete an individual Application.
       operationId: deleteFASTApplication
       responses:
-        '200':
+        '202':
           description: The Application was deleted successfully.
           content:
             application/json:
@@ -226,6 +233,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -245,6 +253,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TemplateList"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -285,6 +294,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -304,6 +314,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TaskList"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -319,13 +330,13 @@ paths:
         example: 86657e15-439d-4cef-97bc-58a6c119976b
     get:
       summary: Get information about a specific Task
-      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interupption in service to the iControl LX platform may result in lost results.
+      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interruption in service to the iControl LX platform may result in lost results.
       operationId: getFASTTaskById
       tags:
         - Task Tracking
       responses:
         '200':
-          description: The specified Tasks and its status.
+          description: The specified Task and its status.
           content:
             application/json:
               schema:
@@ -337,6 +348,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -375,6 +387,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -422,6 +435,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -440,6 +454,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -479,6 +494,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -509,6 +525,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -528,6 +545,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Settings"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -546,6 +564,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -564,11 +583,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '422':
+          description: supplied configuration was invalid
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/422Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -587,11 +608,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/200Response"
         '422':
+          description: supplied configuration was invalid
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/422Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -611,6 +634,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SettingsSchema"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -630,6 +654,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Info"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -656,60 +681,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  example:
-                    code: 200,
-                    message:
-                      [
-                        {
-                          "appDef": {
-                            "class": "ADC",
-                            "schemaVersion": "3.0.0",
-                            "tenant": {
-                              "class": "Tenant",
-                              "bar": {
-                                "class": "Application",
-                                "template": "udp",
-                                "serviceMain": {
-                                    "class": "Service_UDP",
-                                    "virtualAddresses": [
-                                        "192.0.2.11"
-                                    ],
-                                    "virtualPort": 5555,
-                                    "pool": "bar_Pool1"
-                                },
-                                "bar_Pool1": {
-                                  "class": "Pool",
-                                  "monitors": [
-                                    "icmp"
-                                  ],
-                                  "members": [
-                                    {
-                                      "serverAddresses": [
-                                        "192.0.2.22"
-                                      ],
-                                      "servicePort": 5555
-                                    }
-                                  ]
-                                }
-                              }
-                            }
-                          },
-                          "metaData": {
-                            "template": "examples/simple_udp_defaults",
-                            "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715",
-                            "view": {
-                              "tenant_name": "tenant",
-                              "app_name": "app"
-                            },
-                            "lastModified": "2022-03-26T23:34:23.873Z",
-                            "ipamAddrs": {}
-                          }
-                        }
-                      ]
-
+                $ref: "#/components/schemas/ApplicationRenderedResponse"
         '400':
           description: An improper Application definition was submitted
           content:
@@ -723,6 +695,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/404Response"
         '500':
+          description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
@@ -734,6 +707,13 @@ components:
       type: object
       description: Object must conform to specified Template's schema.
       example: {}
+    AS3App:
+      type: object
+      description: The resulting AS3 Application.
+      properties:
+        class:
+          type: string
+          pattern: '.*'
     ApplicationDefinition:
       type: object
       description: Application Definition.
@@ -765,6 +745,22 @@ components:
         - name: tenant/app
           parameters: {}
           allowOverwrite: true
+    ApplicationRenderedResponse:
+      type: object
+      description: Application Definition Response.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          minimum: 200
+          maximum: 599
+          example: 200
+        message:
+          type: array
+          example: [ { "appDef": { "class": "ADC", "schemaVersion": "3.0.0", "tenant": { "class": "Tenant", "bar": { "class": "Application", "template": "udp", "serviceMain": { "class": "Service_UDP", "virtualAddresses": [ "192.0.2.11" ], "virtualPort": 5555, "pool": "bar_Pool1" }, "bar_Pool1": { "class": "Pool", "monitors": [ "icmp" ], "members": [ { "serverAddresses": [ "192.0.2.22" ], "servicePort": 5555 } ] } } } }, "metaData": { "template": "examples/simple_udp_defaults", "setHash": "b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715", "view": { "tenant_name": "tenant", "app_name": "app" }, "lastModified": "2022-03-26T23:34:23.873Z", "ipamAddrs": {} } } ]
     Application:
       type: object
       description: Application.
@@ -849,7 +845,7 @@ components:
           results: []
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%examples%simple_udp%2","tenant":{"class":"Tenant","app":{"class":"Application","template":"udp","serviceMain":{"class":"Service_UDP","virtualAddresses":["192.0.2.11"],"virtualPort":5555,"pool":"app_Pool1","enable":true,"persistenceMethods":["source-address"]},"app_Pool1":{"class":"Pool","monitors":["icmp"],"members":[{"serverAddresses":["192.0.2.22"],"servicePort":5555}],"loadBalancingMode":"round-robin"},"constants":{"class":"Constants","fast":{"template":"examples/simple_udp_defaults","setHash":"b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715","view":{"tenant_name":"tenant","application_name":"app"},"lastModified":"2022-03-26T00:16:52.666Z","ipamAddrs":{}}}}}}
           id: 62c587f1-374e-49a8-b418-0db766a219ee
-          selfLink: "https://f5-csm-api-engine:5443/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
+          selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
     ApplicationsDeleteResponse:
       type: array
       description: The response message when deleting multiple Applications.
@@ -859,7 +855,7 @@ components:
           results: []
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%%%7"}
           id: 62c587f1-374e-49a8-b418-0db766a219ee
-          selfLink: "https://f5-csm-api-engine:5443/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
+          selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
     Task:
       type: object
       description: Task.
@@ -1145,7 +1141,7 @@ components:
         code:
           type: integer
           format: int32
-          minimum: 202
+          minimum: 200
           maximum: 599
           example: 200
         message:
