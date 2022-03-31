@@ -71,7 +71,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '97ef38015ded5b24ee0cdffd0f0ffe1ff8cd4d69b050251b01d77b6d65540f53', // v1.17
+        '071b908a49acde144ef02af1549fc620d7c7856c7abb49b0bfab7ad2bd94a549', // v1.17
         '0acc8d8b76793c30e847257b85e30df708341c7fb347be25bb745a63ad411cc4', // v1.16
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.15
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.14
@@ -2120,9 +2120,47 @@ class FASTWorker {
                 this.driver.getApplication(tenant, app)
             ))
             .then((appData) => {
+                Object.assign(appData.view, newParameters);
+                return appData;
+            })
+            .then(appData => Promise.all([
+                appData,
+                this.renderTemplates(reqid, [{
+                    name: appData.template,
+                    parameters: appData.view
+                }])
+            ]))
+            .then(([appData, rendered]) => Promise.all([
+                appData,
+                this.driver.getTenantAndAppFromDecl(rendered[0].appDef)
+            ]))
+            .then(([appData, tenantAndApp]) => {
+                const [tenantName, appName] = tenantAndApp;
+                if (tenantName !== tenant) {
+                    return Promise.reject(
+                        this.genRestResponse(
+                            restOperation,
+                            422,
+                            `PATCH would change tenant name from ${tenant} to ${tenantName}`
+                        )
+                    );
+                }
+                if (appName !== app) {
+                    return Promise.reject(
+                        this.genRestResponse(
+                            restOperation,
+                            422,
+                            `PATCH would change application name from ${app} to ${appName}`
+                        )
+                    );
+                }
+
+                return appData;
+            })
+            .then((appData) => {
                 postOp.setBody({
                     name: appData.template,
-                    parameters: Object.assign({}, appData.view, newParameters)
+                    parameters: appData.view
                 });
                 return this.onPost(postOp);
             })
@@ -2131,7 +2169,11 @@ class FASTWorker {
                 respBody = respBody.message || respBody;
                 this.genRestResponse(restOperation, postOp.getStatusCode(), respBody);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+            .catch((e) => {
+                if (restOperation.getStatusCode() < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 
     patchSettings(restOperation, config) {

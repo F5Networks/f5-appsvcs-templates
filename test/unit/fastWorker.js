@@ -1707,7 +1707,14 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(`${as3ep}/tenant?async=true`, (body) => {
+                    console.log(body);
+                    assert.strictEqual(
+                        body.tenant.app.serviceMain.virtualPort,
+                        5556
+                    );
+                    return true;
+                })
                 .reply(202, {});
 
             return worker.onPatch(op)
@@ -1715,6 +1722,90 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
+                });
+        });
+        it('patch_app_bad_tenant_rename', function () {
+            const worker = createWorker();
+            const op = new RestOp('applications/tenant/app');
+            op.setBody({
+                parameters: {
+                    tenant_name: 'tenant2',
+                    virtual_port: 5556
+                }
+            });
+            resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        app: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'examples/simple_udp_defaults',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        application_name: 'app',
+                                        virtual_address: '192.0.2.1',
+                                        virtual_port: 5555,
+                                        server_addresses: ['192.0.2.2'],
+                                        service_port: 5555
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist();
+
+            return worker.onPatch(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('ErrorResponse');
+                });
+        });
+        it('patch_app_bad_app_rename', function () {
+            const worker = createWorker();
+            const op = new RestOp('applications/tenant/app');
+            op.setBody({
+                parameters: {
+                    application_name: 'app2',
+                    virtual_port: 5556
+                }
+            });
+            resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        app: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'examples/simple_udp_defaults',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        application_name: 'app',
+                                        virtual_address: '192.0.2.1',
+                                        virtual_port: 5555,
+                                        server_addresses: ['192.0.2.2'],
+                                        service_port: 5555
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist();
+
+            return worker.onPatch(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('ErrorResponse');
                 });
         });
         it('convert_pool_members', function () {
