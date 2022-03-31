@@ -4,6 +4,7 @@
 
 ## Fixed
 * worker: Forward AS3 4xx error codes when POSTing an application
+* FAST Settings no longer set log_asm and log_afm to whatever value enable_telemetry has, and you can enable afm without having asm also.
 
 ## Changed
 
