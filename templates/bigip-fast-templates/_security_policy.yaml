@@ -213,11 +213,53 @@ bot_defense: &bot_defense
       }
     }
 
+# Integrated Bot Defense
+ibd_profile: &ibd_profile
+  title: Integrated Bot Defense (IBD) Profile
+  description:  Existing IBD profiles are only supported in BIG-IP version 17.0 and greater
+  contentType: application/json
+  bigipDependencies:
+    - asm
+  bigipMinimumVersion: 17.0
+  definitions: &ibd_profile_def
+    ibd_profile:
+      title: Existing Integrated Bot Defense Profiles
+      type: string
+      enumFromBigip: saas/bd/profile
+      default: ''
+    ibd_partial_profile:
+      template: |
+        "{{app_name}}": {
+          "profileIntegratedBotDefense": { 
+            "bigip": {{ibd_profile}}
+          }
+        }
+    ibd_partial_profile_fastl4: 
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{> ibd_partial_profile}}
+              {{/fastl4}}
+            }
+          }
+        }
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{> ibd_partial_profile}}
+        }
+      }
+    }
+
 # subtemplate with basic features: WAF and ASM logging
 <<: *asm_base
 anyOf: 
   - <<: *asm_base_anyof
   - *waf_policy
+  - *ibd_profile
   - *asm_logging
   - *afm_logging
 
@@ -277,6 +319,7 @@ and_bot_defense:
     - <<: *asm_base_anyof
     - *waf_policy
     - *bot_defense
+    - *ibd_profile
     - *asm_logging
     - *afm_logging
 
@@ -297,6 +340,9 @@ fastl4:
             }
           }
         }
+    - <<: *ibd_profile
+      template: |
+        {{> ibd_partial_profile_fastl4}}
     - <<: *bot_defense
       template: |
         {
@@ -334,5 +380,8 @@ tcp:
             }
           }
         }
+    - <<: *ibd_profile
+      template: |
+        {{> ibd_partial_profile_fastl4}}
     - *asm_logging
     - *afm_logging
