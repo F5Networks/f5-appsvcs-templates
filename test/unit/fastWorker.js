@@ -722,7 +722,13 @@ describe('fastWorker tests', function () {
                 ],
                 enableIpam: true,
                 ipamProviders: [
-                    { name: 'test', password: 'foobar', serviceType: 'Generic' }
+                    {
+                        name: 'test',
+                        password: 'foobar',
+                        serviceType: 'Infoblox',
+                        apiVersion: 'v2.4',
+                        network: 'foo.bar'
+                    }
                 ]
             });
             return worker.onPost(op)
@@ -735,6 +741,7 @@ describe('fastWorker tests', function () {
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamInfoblox');
                 });
         });
         it('post_settings_bad', function () {
@@ -746,6 +753,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('422Response');
                 });
         });
         it('patch_settings', function () {
@@ -769,6 +777,7 @@ describe('fastWorker tests', function () {
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamGeneric');
                 });
         });
         it('patch_settings_bad', function () {
@@ -781,6 +790,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('422Response');
                 });
         });
         it('get_settings_schema', function () {
@@ -1012,6 +1022,7 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 3));
                     assert.equal(op.status, 200);
                     assert(Array.isArray(op.body.message));
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationRenderedResponse');
                 });
         });
         it('post_render_bad_tmplid', function () {
@@ -1254,6 +1265,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('200Response');
                 })
                 .then(() => worker.templateProvider.listSets())
                 .then((tmplSets) => {
@@ -1342,6 +1354,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('404Response');
                 });
         });
         it('delete_templateset_inuse', function () {
@@ -1376,6 +1389,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert.strictEqual(op.status, 400);
                     assert.match(op.body.message, /it is being used by:\n\["tenant\/app"\]/);
+                    expect(op.body).to.satisfySchemaInApiSpec('400Response');
                 });
         });
         it('delete_all_templatesets', function () {
@@ -1497,6 +1511,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
         it('delete_all_apps', function () {
@@ -1509,6 +1524,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.strictEqual(op.status, 202);
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
         it('patch_all_apps', function () {
