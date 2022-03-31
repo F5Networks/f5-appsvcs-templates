@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  version: 1.17.0-rc.1
+  version: 1.17.0-rc.3
   title: F5 Application Services Templates API
   license:
     name: Apache 2.0
