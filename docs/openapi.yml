@@ -330,7 +330,7 @@ paths:
         example: 86657e15-439d-4cef-97bc-58a6c119976b
     get:
       summary: Get information about a specific Task
-      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interupption in service to the iControl LX platform may result in lost results.
+      description: Get detailed information about a specific Task. Tasks are tracked on a best effort basis, an interruption in service to the iControl LX platform may result in lost results.
       operationId: getFASTTaskById
       tags:
         - Task Tracking
@@ -845,7 +845,7 @@ components:
           results: []
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%examples%simple_udp%2","tenant":{"class":"Tenant","app":{"class":"Application","template":"udp","serviceMain":{"class":"Service_UDP","virtualAddresses":["192.0.2.11"],"virtualPort":5555,"pool":"app_Pool1","enable":true,"persistenceMethods":["source-address"]},"app_Pool1":{"class":"Pool","monitors":["icmp"],"members":[{"serverAddresses":["192.0.2.22"],"servicePort":5555}],"loadBalancingMode":"round-robin"},"constants":{"class":"Constants","fast":{"template":"examples/simple_udp_defaults","setHash":"b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715","view":{"tenant_name":"tenant","application_name":"app"},"lastModified":"2022-03-26T00:16:52.666Z","ipamAddrs":{}}}}}}
           id: 62c587f1-374e-49a8-b418-0db766a219ee
-          selfLink: "https://f5-csm-api-engine:5443/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
+          selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
     ApplicationsDeleteResponse:
       type: array
       description: The response message when deleting multiple Applications.
@@ -855,7 +855,7 @@ components:
           results: []
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%%%7"}
           id: 62c587f1-374e-49a8-b418-0db766a219ee
-          selfLink: "https://f5-csm-api-engine:5443/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
+          selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
     Task:
       type: object
       description: Task.
