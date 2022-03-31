@@ -1763,7 +1763,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('ErrorResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('422Response');
                 });
         });
         it('patch_app_bad_app_rename', function () {
@@ -1805,7 +1805,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('ErrorResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('422Response');
                 });
         });
         it('convert_pool_members', function () {
