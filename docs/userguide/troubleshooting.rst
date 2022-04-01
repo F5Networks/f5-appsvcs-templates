@@ -134,6 +134,15 @@ Running a BIG-IP VE version 16.1 with limited resources, along with a FAST versi
 
 The resolution is to upgrade to FAST version 1.16.0 or later.
 
+HTTP Template Health Monitors not Displaying Properly
+-----------------------------------------------------
+
+| There are 2 instances where health monitors associated with the HTTP template may not display as expected.
+|
+| 1. Combining the HTTP template with the FastL4 health monitor may result in the health monitor not displaying correctly. 
+| 2. HTTPS monitor may not hide when the FAST generated HTTPS monitor is selected.
+|
+The resolution is to upgrade to FAST version 1.17.0 or later.
 
 Known Issues
 ------------
