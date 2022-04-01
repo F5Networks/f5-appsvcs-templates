@@ -68,7 +68,7 @@ function waitForCompletedTask(taskid) {
     return Promise.resolve()
         .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
         .then((response) => {
-            if (response.data.message === 'in progress') {
+            if (response.data.message === 'in progress' || response.data.message === 'pending') {
                 return promiseDelay(1000)
                     .then(() => waitForCompletedTask(taskid));
             }
@@ -251,6 +251,7 @@ describe('Applications', function () {
                 parameters
             }))
             .then((response) => {
+                assert.strictEqual(response.status, 202);
                 const taskid = response.data.message[0].id;
                 if (!taskid) {
                     console.log(response.data);
@@ -395,6 +396,38 @@ describe('Applications', function () {
             code: 422,
             message: 'change application name'
         })));
+    it('Deploy burst of applications', () => Promise.resolve()
+        .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
+            .then(() => endpoint.post('/mgmt/shared/fast/applications', {
+                name: 'examples/simple_udp_defaults',
+                parameters: {
+                    tenant_name: 'tenant',
+                    application_name: `burst${num}`,
+                    virtual_address: `10.0.1.${num}`,
+                    server_addresses: [
+                        `10.0.1.${num}`
+                    ]
+                }
+            }))
+            .catch(e => handleHTTPError(e, `posting burst app ${num}`)))))
+        .then(responses => Promise.all(responses.map(
+            resp => waitForCompletedTask(resp.data.message[0].id)
+        )))
+        .then((tasks) => {
+            console.log(JSON.stringify(
+                tasks.map(task => ({
+                    id: task.id,
+                    code: task.code,
+                    message: task.message,
+                    application: task.application
+                })),
+                null,
+                2
+            ));
+            tasks.forEach((task) => {
+                assert.strictEqual(task.code, 200);
+            });
+        }));
 });
 
 describe('Settings', function () {
