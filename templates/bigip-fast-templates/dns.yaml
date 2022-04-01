@@ -13,6 +13,7 @@ anyOf:
   - $ref: "_analytics.yaml#/dns"
   - $ref: "_security_policy.yaml#/dns"
   - $ref: "_security_firewall.yaml#/dns"
+  - $ref: "_shape.yaml#/dns"
   - $ref: "_telemetry.yaml#/dns"
 template: |
   {

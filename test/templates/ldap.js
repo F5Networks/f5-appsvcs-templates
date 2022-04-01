@@ -77,7 +77,10 @@ const view = {
 
     // asm
     enable_asm_logging: true,
-    log_profile_names: ['log local']
+    log_profile_names: ['log local'],
+
+    // shape's Integrated Bot Defense
+    ibd_profile_name: '/Common/bd'
 };
 
 const expected = {
@@ -114,7 +117,10 @@ const expected = {
                     {
                         bigip: 'log local'
                     }
-                ]
+                ],
+                profileIntegratedBotDefense: {
+                    bigip: '/Common/bd'
+                }
             },
             app1_pool: {
                 class: 'Pool',

@@ -23,6 +23,7 @@ anyOf:
   - $ref: "_security_policy.yaml#/fastl4"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_security_dos.yaml#/fastl4"
+  - $ref: "_shape.yaml#/fastl4"
   - $ref: "_telemetry.yaml#"
 template: |
   {

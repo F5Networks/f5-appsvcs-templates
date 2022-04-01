@@ -74,7 +74,10 @@ const view = {
     // asm
     enable_waf_policy: true,
     enable_asm_logging: true,
-    log_profile_names: ['log local']
+    log_profile_names: ['log local'],
+
+    // shape's Integrated Bot Defense
+    ibd_profile_name: '/Common/bd'
 };
 
 const expected = {
@@ -120,7 +123,10 @@ const expected = {
                     {
                         bigip: 'log local'
                     }
-                ]
+                ],
+                profileIntegratedBotDefense: {
+                    bigip: '/Common/bd'
+                }
             },
             app1_pool: {
                 class: 'Pool',
@@ -287,6 +293,17 @@ describe(template, function () {
             view.snat_automap = true;
             delete expected.t1.app1.app1_snatpool;
             expected.t1.app1.app1.snat = 'auto';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('enable fastl4', function () {
+        before(() => {
+            view.fastl4 = true;
+            expected.t1.app1.app1.class = 'Service_L4';
+            expected.t1.app1.app1.profileL4 = 'basic';
+            delete expected.t1.app1.app1.profileTCP;
+            delete expected.t1.app1.app1.profileIntegratedBotDefense;
         });
         util.assertRendering(template, view, expected);
     });
