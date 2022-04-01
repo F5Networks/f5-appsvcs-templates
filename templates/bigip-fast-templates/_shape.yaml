@@ -1,0 +1,81 @@
+bigipHideTemplate: true
+
+# Integrated Bot Defense
+ibd_profile: &ibd_profile
+  title: Integrated Bot Defense (IBD) Profile
+  contentType: application/json
+  bigipMinimumVersion: 17.0
+  definitions: &ibd_profile_def
+    ibd_profile_name: &ibd_profile_name
+      title: Existing Integrated Bot Defense (IBD) Profile
+      description: Existing IBD profiles are only supported in BIG-IP version 17.0 and greater
+      type: string
+      enumFromBigip: saas/bd/profile
+      default: ''
+    ibd_partial_profile:
+      template: |
+        {{#ibd_profile_name}}
+          "profileIntegratedBotDefense": { 
+            "bigip": {{ . }}
+          }
+        {{/ibd_profile_name}}
+    ibd_partial_vs:
+      template: |
+        "{{app_name}}": {
+          {{> ibd_partial_profile}}
+        }
+    ibd_partial_fastl4: 
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              {{^fastl4}}
+                {{> ibd_partial_vs}}
+              {{/fastl4}}
+            }
+          }
+        }
+    ibd_partial_dns: 
+      template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              "{{app_name}}_tcp": {
+                {{> ibd_partial_profile}}
+              }
+            }
+          }
+        }
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{> ibd_partial_vs}}
+        }
+      }
+    }
+
+<<: *ibd_profile
+
+# subtemplate with VS names unique to DNS template
+dns:
+  <<: *ibd_profile
+  definitions:
+    <<: *ibd_profile_def
+    fastl4:
+      type: boolean
+      dependencies: []
+    idp_profile_name:
+      <<: *ibd_profile_name
+      dependencies:
+        - fastl4
+      invertDependency:
+        - fastl4
+  template: |
+    {{> ibd_partial_dns}}
+
+# http subTemplate
+fastl4:
+  <<: *ibd_profile
+  template: |
+    {{> ibd_partial_fastl4}}

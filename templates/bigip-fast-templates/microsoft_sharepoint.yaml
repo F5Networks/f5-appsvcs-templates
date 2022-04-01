@@ -20,6 +20,7 @@ anyOf:
   - $ref: "_security_policy.yaml#/and_bot_defense"
   - $ref: "_security_firewall.yaml#"
   - $ref: "_security_dos.yaml#"
+  - $ref: "_shape.yaml#"
   - $ref: "_telemetry.yaml#"
 parameters:
   app_name: "Sharepoint"
