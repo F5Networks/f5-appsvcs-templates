@@ -1041,7 +1041,15 @@ class FASTWorker {
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
-                const endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
+                let endPoints;
+                if (typeof prop.enumFromBigip === 'object' && prop.enumFromBigip.path) {
+                    endPoints = Array.isArray(prop.enumFromBigip.path)
+                        ? prop.enumFromBigip.path : [prop.enumFromBigip.path];
+                } else if (Array.isArray(prop.enumFromBigip) || typeof prop.enumFromBigip === 'string') {
+                    endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
+                } else {
+                    endPoints = [];
+                }
                 return Promise.resolve()
                     .then(() => Promise.all(endPoints.map(endPoint => Promise.resolve()
                         .then(() => {
@@ -1052,18 +1060,12 @@ class FASTWorker {
                             return this.recordTransaction(
                                 requestId,
                                 `fetching data from ${endPoint}`,
-                                this.bigip.getSharedObjects(endPoint)
+                                this.bigip.getSharedObjects(endPoint, prop.enumFromBigip.filter)
                             )
                                 .then((items) => {
                                     this._hydrateCache[endPoint] = items;
                                     return items;
                                 });
-                        })
-                        .then((items) => {
-                            if (items) {
-                                return Promise.resolve(items.map(x => x.fullPath));
-                            }
-                            return Promise.resolve([]);
                         })
                         .catch(e => this.handleResponseError(e, `GET to ${endPoint}`))
                         .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`))))))
