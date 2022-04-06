@@ -406,7 +406,7 @@ describe('fastWorker tests', function () {
                     ''
                 ));
         });
-        it('hydrateSchema', function () {
+        it('hydrateSchema - enumFromBigip is a string', function () {
             const worker = createWorker();
             worker.configStorage.data.config = {
                 ipamProviders: [
@@ -494,6 +494,68 @@ describe('fastWorker tests', function () {
                     assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
                         'bar'
                     ]);
+                });
+        });
+        it('hydrateSchema - enumFromBigip is an object', function () {
+            this.timeout(5000);
+            const worker = createWorker();
+            worker.configStorage.data.config = {
+                ipamProviders: [
+                    { name: 'bar' }
+                ]
+            };
+            worker.bigip.getSharedObjects = sinon.stub().resolves(['test_cert01.pem', 'test_cert02.pem']);
+            const inputSchema = {
+                properties: {
+                    fileWithPathOnly: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: 'files'
+                        }
+                    },
+                    fileWithPathAndFilter: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: 'files',
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    },
+                    fileWithMultiplePaths: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: [
+                                'files',
+                                'waf-policy'
+                            ],
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    },
+                    endpointWithoutPath: {
+                        type: 'string',
+                        enumFromBigip: {
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    }
+                }
+            };
+
+            const tmpl = {
+                _parametersSchema: inputSchema
+            };
+            return worker.hydrateSchema(tmpl, 0)
+                .then((schema) => {
+                    console.log(schema);
+                    console.log(worker.bigip.getSharedObjects);
+                    assert.deepEqual(worker.bigip.getSharedObjects.firstCall.args, ['files', undefined]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.secondCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.thirdCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.lastCall.args, ['waf-policy', { type: '^CERT.*' }]);
                 });
         });
         it('bigipDependencies', function () {

@@ -2,6 +2,7 @@
 ## Added
 * bigip-fast-templates: Existing AFM Firewal Policies can be selected instead of generating a new one (issue [#94](https://github.com/F5Networks/f5-appsvcs-templates/issues/94))
 * bigip-fast-templates: Shape's Integrated Bot Defense profiles can be created and then added in some FAST templates on BIG-IP v17.0+
+* Update enumFromBigip feature to support filtering condition to allow selection based on provided regex value
 
 ## Fixed
 * worker: Forward AS3 4xx error codes when POSTing an application
