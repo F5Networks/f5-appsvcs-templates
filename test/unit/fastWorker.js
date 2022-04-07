@@ -406,7 +406,7 @@ describe('fastWorker tests', function () {
                     ''
                 ));
         });
-        it('hydrateSchema', function () {
+        it('hydrateSchema - enumFromBigip is a string', function () {
             const worker = createWorker();
             worker.configStorage.data.config = {
                 ipamProviders: [
@@ -494,6 +494,68 @@ describe('fastWorker tests', function () {
                     assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
                         'bar'
                     ]);
+                });
+        });
+        it('hydrateSchema - enumFromBigip is an object', function () {
+            this.timeout(5000);
+            const worker = createWorker();
+            worker.configStorage.data.config = {
+                ipamProviders: [
+                    { name: 'bar' }
+                ]
+            };
+            worker.bigip.getSharedObjects = sinon.stub().resolves(['test_cert01.pem', 'test_cert02.pem']);
+            const inputSchema = {
+                properties: {
+                    fileWithPathOnly: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: 'files'
+                        }
+                    },
+                    fileWithPathAndFilter: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: 'files',
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    },
+                    fileWithMultiplePaths: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: [
+                                'files',
+                                'waf-policy'
+                            ],
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    },
+                    endpointWithoutPath: {
+                        type: 'string',
+                        enumFromBigip: {
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    }
+                }
+            };
+
+            const tmpl = {
+                _parametersSchema: inputSchema
+            };
+            return worker.hydrateSchema(tmpl, 0)
+                .then((schema) => {
+                    console.log(schema);
+                    console.log(worker.bigip.getSharedObjects);
+                    assert.deepEqual(worker.bigip.getSharedObjects.firstCall.args, ['files', undefined]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.secondCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.thirdCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.lastCall.args, ['waf-policy', { type: '^CERT.*' }]);
                 });
         });
         it('bigipDependencies', function () {
@@ -722,7 +784,13 @@ describe('fastWorker tests', function () {
                 ],
                 enableIpam: true,
                 ipamProviders: [
-                    { name: 'test', password: 'foobar', serviceType: 'Generic' }
+                    {
+                        name: 'test',
+                        password: 'foobar',
+                        serviceType: 'Infoblox',
+                        apiVersion: 'v2.4',
+                        network: 'foo.bar'
+                    }
                 ]
             });
             return worker.onPost(op)
@@ -735,6 +803,7 @@ describe('fastWorker tests', function () {
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamInfoblox');
                 });
         });
         it('post_settings_bad', function () {
@@ -746,6 +815,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('patch_settings', function () {
@@ -769,6 +839,7 @@ describe('fastWorker tests', function () {
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamGeneric');
                 });
         });
         it('patch_settings_bad', function () {
@@ -781,6 +852,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('get_settings_schema', function () {
@@ -1012,6 +1084,7 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 3));
                     assert.equal(op.status, 200);
                     assert(Array.isArray(op.body.message));
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationRenderedResponse');
                 });
         });
         it('post_render_bad_tmplid', function () {
@@ -1076,7 +1149,7 @@ describe('fastWorker tests', function () {
                     const templates = op.body;
                     assert.notEqual(op.status, 404);
                     assert.notEqual(templates.length, 0);
-                    expect(templates).to.satisfySchemaInApiSpec('TemplateList');
+                    expect(templates).to.satisfySchemaInApiSpec('TemplateNameList');
                 });
         });
         it('get_template_bad', function () {
@@ -1254,6 +1327,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
                 })
                 .then(() => worker.templateProvider.listSets())
                 .then((tmplSets) => {
@@ -1342,6 +1416,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response404');
                 });
         });
         it('delete_templateset_inuse', function () {
@@ -1376,6 +1451,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert.strictEqual(op.status, 400);
                     assert.match(op.body.message, /it is being used by:\n\["tenant\/app"\]/);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response400');
                 });
         });
         it('delete_all_templatesets', function () {
@@ -1497,6 +1573,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
         it('delete_all_apps', function () {
@@ -1509,6 +1586,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.strictEqual(op.status, 202);
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
         it('patch_all_apps', function () {
@@ -1763,7 +1841,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('ErrorResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('patch_app_bad_app_rename', function () {
@@ -1805,7 +1883,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('ErrorResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('convert_pool_members', function () {

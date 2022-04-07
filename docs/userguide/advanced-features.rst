@@ -37,12 +37,25 @@ Enumerated Type
 
 An *Enumerated Type (enum)* is a list of constant values.  
 In order for the property to be valid, it must match an item in the list of values.
-As it relates to BIG-IP, it is a mechanism to pull data from the BIG-IP *(enumFromBigip)* presenting it as an *enum*.  
+As it relates to BIG-IP, it is a mechanism to pull data from the BIG-IP *(enumFromBigip)* presenting it as an *enum*.
 
 An example usage would be to create drop-down lists.  
 The path on BIG-IP: ``/mgmt/tm/${enumFromBigip}?$select=fullPath``
 
 .. seealso:: BIG-IP :ref:`endpoint-list` for a list of BIG-IP endpoints.
+
+*(enumFromBigip)* supports filtering of BIG-IP metadata based on provided regex:
+.. code-block:: yaml
+
+    definitions:
+     http_profile_name:
+       title: HTTP Profile
+       description: Select an existing BIG-IP HTTP profile.
+       enumFromBigip:
+         path: ltm/profile/http
+         filter:
+            name: "^example_"
+       default: "/Common/http"
 
 .. _conttype:
 
