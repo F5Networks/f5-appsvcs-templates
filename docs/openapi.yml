@@ -478,7 +478,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateSet"
+                $ref: "#/components/schemas/TemplateSetInfo"
         '400':
           description: Template Set in use.
           content:
@@ -1037,6 +1037,14 @@ components:
           hash:
             type: string
             description: The sha256 of the template source text.
+          description:
+            type: string
+            description: Template description
+            example: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This Template is an example of how one might build a simple UDP Application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the Template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
+          title:
+            type: string
+            description: A "pretty name" for the Template
+            example: Simple UDP Application
           appsList:
             type: array
             description: A list of applications using the template.
@@ -1054,16 +1062,12 @@ components:
           type: string
           description: A sha256 hash of the Template hashes.
           example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
-        templates:
-          $ref: "#/components/schemas/TemplateList"
-        enabled:
-          type: boolean
-          description: Template Set is installed and ready to use
-          example: true
         supported:
           type: boolean
           description: the Template Set is officially supported by F5
           example: false
+        templates:
+          $ref: "#/components/schemas/TemplateList"
         schemas:
           type: array
           description: a list of user-supplied schema
@@ -1079,11 +1083,60 @@ components:
           example:
             - name: examples/types
               hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
+        dataFiles: 
+          type: array
+          example: []
+        enabled:
+          type: boolean
+          description: Template Set is installed and ready to use
+          example: true
+    TemplateSetInfo:
+      type: object
+      description: Template Set.
+      properties:
+        name:
+          type: string
+          description: Name of the Template Set.
+          example: examples
+        hash:
+          type: string
+          description: A sha256 hash of the Template hashes.
+          example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
+        supported:
+          type: boolean
+          description: the Template Set is officially supported by F5
+          example: false
+        templates:
+          $ref: "#/components/schemas/TemplateList"
+        schemas:
+          type: array
+          description: a list of user-supplied schema
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: schema name
+              hash:
+                type: string
+                description: A sha256 hash of the schema
+          example:
+            - name: examples/types
+              hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
+        enabled:
+          type: boolean
+          description: Template Set is installed and ready to use
+          example: true
     TemplateSetList:
       type: array
       description: Template Set List.
       items:
         $ref: "#/components/schemas/TemplateSet"
+    TemplateSetInfoList:
+      type: array
+      description: Template Set List.
+      items:
+        $ref: "#/components/schemas/TemplateSetInfo"
     Settings:
       type: object
       description: current config for the FAST iApps LX
@@ -1160,7 +1213,7 @@ components:
           type: object
           description: data from AS3's /info endpoint
         installedTemplates:
-            $ref: "#/components/schemas/TemplateSetList"
+            $ref: "#/components/schemas/TemplateSetInfoList"
         config:
             $ref: "#/components/schemas/Settings"
     Response200:
