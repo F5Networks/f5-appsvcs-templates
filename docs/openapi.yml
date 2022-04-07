@@ -478,7 +478,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TemplateSetInfo"
+                $ref: "#/components/schemas/TemplateSet"
         '400':
           description: Template Set in use.
           content:
@@ -1090,53 +1090,11 @@ components:
           type: boolean
           description: Template Set is installed and ready to use
           example: true
-    TemplateSetInfo:
-      type: object
-      description: Template Set.
-      properties:
-        name:
-          type: string
-          description: Name of the Template Set.
-          example: examples
-        hash:
-          type: string
-          description: A sha256 hash of the Template hashes.
-          example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
-        supported:
-          type: boolean
-          description: the Template Set is officially supported by F5
-          example: false
-        templates:
-          $ref: "#/components/schemas/TemplateList"
-        schemas:
-          type: array
-          description: a list of user-supplied schema
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: schema name
-              hash:
-                type: string
-                description: A sha256 hash of the schema
-          example:
-            - name: examples/types
-              hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
-        enabled:
-          type: boolean
-          description: Template Set is installed and ready to use
-          example: true
     TemplateSetList:
       type: array
       description: Template Set List.
       items:
         $ref: "#/components/schemas/TemplateSet"
-    TemplateSetInfoList:
-      type: array
-      description: Template Set List.
-      items:
-        $ref: "#/components/schemas/TemplateSetInfo"
     Settings:
       type: object
       description: current config for the FAST iApps LX
@@ -1213,7 +1171,7 @@ components:
           type: object
           description: data from AS3's /info endpoint
         installedTemplates:
-            $ref: "#/components/schemas/TemplateSetInfoList"
+            $ref: "#/components/schemas/TemplateSetList"
         config:
             $ref: "#/components/schemas/Settings"
     Response200:
