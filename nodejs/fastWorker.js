@@ -1699,9 +1699,9 @@ class FASTWorker {
                 return this.genRestResponse(restOperation, response.status, data.map(
                     x => ({
                         _links: {
-                            "fast:self": { href: '/applications'},
-                            "fast:task": { href: `/tasks/${response.body.id}` },
-                            curies: [{ name: "fast", href: "https://localhost/mgmt/shared/fast/{rel}", templated: true }]
+                            'fast:self': { href: '/applications' },
+                            'fast:task': { href: `/tasks/${response.body.id}` },
+                            curies: [{ name: 'fast', href: 'https://localhost/mgmt/shared/fast/{rel}', templated: true }]
                         },
                         id: response.body.id,
                         name: x.name,
