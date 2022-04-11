@@ -171,9 +171,6 @@ class FASTWorker {
         // Hook completeRestOperation() so we can add additional logging
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
-            restOperation.body['_links'] = {
-                self: `/mgmt${restOperation.uri.path}`
-            };
             this.recordRestResponse(restOperation);
             return this._prevCompleteRestOp(restOperation);
         };
@@ -1422,10 +1419,7 @@ class FASTWorker {
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
-            message,
-            '_links': {
-                self: `/mgmt${restOperation.uri.path}`
-            }
+            message
         });
         this.completeRestOperation(restOperation);
         if (code >= 400) {
@@ -1630,22 +1624,22 @@ class FASTWorker {
             .then(() => {
                 try {
                     switch (collection) {
-                        case 'info':
-                            return this.getInfo(restOperation);
-                        case 'templates':
-                            return this.getTemplates(restOperation, itemid);
-                        case 'applications':
-                            return this.getApplications(restOperation, itemid);
-                        case 'tasks':
-                            return this.getTasks(restOperation, itemid);
-                        case 'templatesets':
-                            return this.getTemplateSets(restOperation, itemid);
-                        case 'settings':
-                            return this.getSettings(restOperation);
-                        case 'settings-schema':
-                            return this.getSettingsSchema(restOperation);
-                        default:
-                            return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    case 'info':
+                        return this.getInfo(restOperation);
+                    case 'templates':
+                        return this.getTemplates(restOperation, itemid);
+                    case 'applications':
+                        return this.getApplications(restOperation, itemid);
+                    case 'tasks':
+                        return this.getTasks(restOperation, itemid);
+                    case 'templatesets':
+                        return this.getTemplateSets(restOperation, itemid);
+                    case 'settings':
+                        return this.getSettings(restOperation);
+                    case 'settings-schema':
+                        return this.getSettingsSchema(restOperation);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
@@ -1798,7 +1792,7 @@ class FASTWorker {
                 // if both template and config storage are data-group based, avoid calling persist() twice
                 // saveConfig() already calls persist() and triggers save sys config, which can cause latency
                 if (persisted && this.storage instanceof StorageDataGroup
-                    && this.configStorage instanceof StorageDataGroup) {
+                        && this.configStorage instanceof StorageDataGroup) {
                     return Promise.resolve();
                 }
                 return this.storage.persist();
@@ -1896,16 +1890,16 @@ class FASTWorker {
             .then(() => {
                 try {
                     switch (collection) {
-                        case 'applications':
-                            return this.postApplications(restOperation, body);
-                        case 'templatesets':
-                            return this.postTemplateSets(restOperation, body);
-                        case 'settings':
-                            return this.postSettings(restOperation, body);
-                        case 'render':
-                            return this.postRender(restOperation, body);
-                        default:
-                            return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    case 'applications':
+                        return this.postApplications(restOperation, body);
+                    case 'templatesets':
+                        return this.postTemplateSets(restOperation, body);
+                    case 'settings':
+                        return this.postSettings(restOperation, body);
+                    case 'render':
+                        return this.postRender(restOperation, body);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message);
@@ -2088,14 +2082,14 @@ class FASTWorker {
             .then(() => {
                 try {
                     switch (collection) {
-                        case 'applications':
-                            return this.deleteApplications(restOperation, itemid, body);
-                        case 'templatesets':
-                            return this.deleteTemplateSets(restOperation, itemid);
-                        case 'settings':
-                            return this.deleteSettings(restOperation);
-                        default:
-                            return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    case 'applications':
+                        return this.deleteApplications(restOperation, itemid, body);
+                    case 'templatesets':
+                        return this.deleteTemplateSets(restOperation, itemid);
+                    case 'settings':
+                        return this.deleteSettings(restOperation);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
@@ -2229,12 +2223,12 @@ class FASTWorker {
             .then(() => {
                 try {
                     switch (collection) {
-                        case 'applications':
-                            return this.patchApplications(restOperation, itemid, body);
-                        case 'settings':
-                            return this.patchSettings(restOperation, body);
-                        default:
-                            return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
+                    case 'applications':
+                        return this.patchApplications(restOperation, itemid, body);
+                    case 'settings':
+                        return this.patchSettings(restOperation, body);
+                    default:
+                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.stack);
