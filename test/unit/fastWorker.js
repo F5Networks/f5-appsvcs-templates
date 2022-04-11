@@ -1050,7 +1050,10 @@ describe('fastWorker tests', function () {
                         tenant: 'tenant',
                         operation: 'update',
                         timestamp: new Date().toISOString(),
-                        host: 'localhost'
+                        host: 'localhost',
+                        _links: {
+                            self: '/mgmt/tasks/foo1'
+                        }
                     });
                     expect(op.body).to.satisfySchemaInApiSpec('Task');
                 });
