@@ -171,6 +171,9 @@ class FASTWorker {
         // Hook completeRestOperation() so we can add additional logging
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
+            restOperation.body['_links'] = {
+                self: `/mgmt${restOperation.uri.path}`
+            };
             this.recordRestResponse(restOperation);
             return this._prevCompleteRestOp(restOperation);
         };
