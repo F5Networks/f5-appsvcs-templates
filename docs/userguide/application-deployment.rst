@@ -59,7 +59,7 @@ Using cURL to do this would look like:
 This job is asynchronous and a successful response indicates that the task was submitted, not that it completed successfully.
 The response payload contains an `id` that can be used to query `mgmt/shared/fast/tasks/<task ID>` for the current status of the task.
 
-Submitting another task while a previous one is still in progress can result in an error from AS3.
+Submitting another task while a previous one is still in progress can result in an error from AS3. 
 It is recommended to wait on the result of a previous deployment task before submitting another one.
 
 .. seealso:: :ref:`api-ref` for a reference of the FAST REST API.
