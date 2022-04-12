@@ -58,6 +58,9 @@ describe('AS3 Driver tests', function () {
             name: 'appName',
             view: {
                 bar: 'baz'
+            },
+            _links: {
+                self: '/mgmt/shared/fast/applications/'
             }
         };
         as3WithApp = Object.assign({}, as3stub, {
@@ -415,6 +418,9 @@ describe('AS3 Driver tests', function () {
             });
         return assert.becomes(driver.getTasks(), [
             {
+                _links: {
+                    self: "/mgmt/shared/fast/tasks/"
+                },
                 application: 'appName',
                 id: 'foo1',
                 code: 200,
@@ -427,6 +433,9 @@ describe('AS3 Driver tests', function () {
                 host: 'localhost'
             },
             {
+                _links: {
+                    self: "/mgmt/shared/fast/tasks/"
+                },
                 application: 'appName',
                 id: 'foo2',
                 code: 200,

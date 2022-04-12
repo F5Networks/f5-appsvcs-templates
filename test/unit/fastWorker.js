@@ -1004,6 +1004,9 @@ describe('fastWorker tests', function () {
                     assert.notEqual(op.status, 404);
                     assert.notEqual(op.status, 500);
                     assert.deepEqual(op.body, [{
+                        _links: {
+                            self: "/mgmt/shared/fast/tasks/"
+                        },
                         application: 'app',
                         id: 'foo1',
                         code: 200,
@@ -1478,7 +1481,10 @@ describe('fastWorker tests', function () {
                     assert.deepEqual(op.body, [{
                         name: 'app',
                         tenant: 'tenant',
-                        template: 'foo/bar'
+                        template: 'foo/bar',
+                        _links: {
+                            self: '/mgmt/shared/fast/applications/'
+                        }
                     }]);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationList');
                 });
@@ -1509,6 +1515,8 @@ describe('fastWorker tests', function () {
             const op = new RestOp('applications/tenant/app');
             return worker.onGet(op)
                 .then(() => {
+                    assert.strictEqual(op.body._links.self, '/mgmt/applications/tenant/app');
+                    delete op.body._links
                     assert.deepEqual(op.body, as3App);
                     expect(op.body).to.satisfySchemaInApiSpec('AS3App');
                 });
