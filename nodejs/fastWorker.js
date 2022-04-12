@@ -171,7 +171,7 @@ class FASTWorker {
         // Hook completeRestOperation() so we can add additional logging
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
-            if (!Array.isArray(restOperation.body) && restOperation.body.code) {
+            if (!Array.isArray(restOperation.body) && restOperation.body) {
                 restOperation.body._links = {
                     self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
                 };
