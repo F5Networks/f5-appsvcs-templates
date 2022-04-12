@@ -1005,7 +1005,7 @@ describe('fastWorker tests', function () {
                     assert.notEqual(op.status, 500);
                     assert.deepEqual(op.body, [{
                         _links: {
-                            self: "/mgmt/shared/fast/tasks/"
+                            self: '/mgmt/shared/fast/tasks/'
                         },
                         application: 'app',
                         id: 'foo1',
@@ -1516,7 +1516,7 @@ describe('fastWorker tests', function () {
             return worker.onGet(op)
                 .then(() => {
                     assert.strictEqual(op.body._links.self, '/mgmt/applications/tenant/app');
-                    delete op.body._links
+                    delete op.body._links;
                     assert.deepEqual(op.body, as3App);
                     expect(op.body).to.satisfySchemaInApiSpec('AS3App');
                 });

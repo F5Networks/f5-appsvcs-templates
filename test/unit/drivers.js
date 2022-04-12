@@ -419,7 +419,7 @@ describe('AS3 Driver tests', function () {
         return assert.becomes(driver.getTasks(), [
             {
                 _links: {
-                    self: "/mgmt/shared/fast/tasks/"
+                    self: '/mgmt/shared/fast/tasks/'
                 },
                 application: 'appName',
                 id: 'foo1',
@@ -434,7 +434,7 @@ describe('AS3 Driver tests', function () {
             },
             {
                 _links: {
-                    self: "/mgmt/shared/fast/tasks/"
+                    self: '/mgmt/shared/fast/tasks/'
                 },
                 application: 'appName',
                 id: 'foo2',
