@@ -183,4 +183,4 @@ Rendering in the GUI as the descriptor for the iRule list.
 .. image:: SNAT.png
    :width: 500
 
-.. seealso::  `Markdown Syntax <https://guides.github.com/pdfs/markdown-cheatsheet-online.pdf>`_ and `Mastering Markdown <https://guides.github.com/features/mastering-markdown/>`_ for additional information.
+.. seealso::  `Markdown Syntax <https://enterprise.github.com/downloads/en/markdown-cheatsheet.pdf>`_ and `Markdown Guide <https://www.markdownguide.org/>`_ for additional information.
