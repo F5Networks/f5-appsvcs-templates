@@ -6,6 +6,8 @@ definitions:
             Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.
             More information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)
         type: boolean
+        options:
+            hidden: true
     log_afm:
         title: Forward AFM logs to Telemetry Streaming
         description: Requires AFM and ASM to be provisioned
@@ -18,8 +20,6 @@ definitions:
         type: boolean
         options:
             hidden: true
-parameters:
-    enable_telemetry: false
 template: |
   {
     {{#enable_telemetry}}
@@ -94,55 +94,7 @@ template: |
                     },
                     "requestTemplate": "event_source=\"request_logging\",hostname=\"$BIGIP_HOSTNAME\",client_ip=\"$CLIENT_IP\",server_ip=\"$SERVER_IP\",http_method=\"$HTTP_METHOD\",http_uri=\"$HTTP_URI\",virtual_name=\"$VIRTUAL_NAME\",event_timestamp=\"$DATE_HTTP\""
                 }
-            },
-            {{#log_afm}}
-            "fast_telemetry_afm_security_log_profile": {
-                "class": "Security_Log_Profile",
-                "application": {
-                    "localStorage": false,
-                    "remoteStorage": "splunk",
-                    "protocol": "tcp",
-                    "servers": [
-                        {
-                            "address": "255.255.255.254",
-                            "port": "6514"
-                        }
-                    ],
-                    "storageFilter": {
-                        "requestType": "illegal-including-staged-signatures"
-                    }
-                },
-                "network": {
-                    "publisher": {
-                        "use": "fast_telemetry_publisher"
-                    },
-                    "logRuleMatchAccepts": false,
-                    "logRuleMatchRejects": true,
-                    "logRuleMatchDrops": true,
-                    "logIpErrors": true,
-                    "logTcpErrors": true,
-                    "logTcpEvents": true
-                }
-            },
-            {{/log_afm}}
-            {{#log_asm}}
-            "fast_telemetry_asm_security_log_profile": {
-                "class": "Security_Log_Profile",
-                "application": {
-                    "localStorage": false,
-                    "remoteStorage": "splunk",
-                    "servers": [
-                        {
-                            "address": "255.255.255.254",
-                            "port": "6514"
-                        }
-                    ],
-                    "storageFilter": {
-                        "requestType": "all"
-                    }
-                }
             }
-            {{/log_asm}}
         }
     }
     {{/enable_telemetry}}
