@@ -1,20 +1,53 @@
 bigipHideTemplate: true
 
 ts_base: &ts_base
+  title: Application Security
+  contentType: application/json
+  bigipDependencies:
+    - ts
+  anyOf: &ts_base_anyof
+    - {}
+  definitions:
+    ts:
+      type: boolean
+      default: false
+      dependencies: 
+        - enable_telemetry
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+        }
+      }
+    }
+
+telemetry: &telemetry
   title: Telemetry
   contentType: application/json
   bigipDependencies:
     - ts
-  definitions: &ts_base_def
+  parameters:
+    ts: true
+  definitions: &telemetry_def
     enable_telemetry:
-      title: Forward logs to Telemetry Streaming
+      title: Forward logs to Telemetry Streaming (TS)
       type: boolean
       default: false
+      options:
+        infoText: "<h4>This option is available because you have installed Telemetry Streaming, </h4> if you have ASM or AFM there are additional options that display when TS is enabled.
+          <style>
+            input[data-schemapath='root.enable_ts_asm'] { 
+              margin-left: 30px;
+            }
+            input[data-schemapath='root.enable_ts_afm'] { 
+              margin-left: 30px;
+            }
+          <style>"
     ts_partial_vs:
       template: |
         "{{app_name}}": {
           "profileTrafficLog": {
-            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
+            "bigip": "/Common/Shared/fast_telemetry_traffic_log_profile"
           }
         }
     ts_partial_template:
@@ -28,20 +61,32 @@ ts_base: &ts_base
             }
           }
         }
+  template: |
+      {{> ts_partial_template}}
 
 asm: &ts_asm
   title: ASM Logging
   contentType: application/json
   bigipDependencies:
     - asm
+  parameters:
+    ts: true
+    enable_ts_asm: true
   definitions: &ts_asm_def
     enable_telemetry:
       type: boolean
+      dependencies: []
+    enable_ts_asm:
+      title: Forward ASM logs to TS
+      description: Requires ASM to be provisioned
+      type: boolean
+      dependencies: 
+        - enable_telemetry
     ts_partial_asm_vs:
       template: |
         "{{app_name}}": {
           "securityLogProfiles": [
-            { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
+            { "use": "{{app_name}}_ts_log_asm" }
           ]
         }
     ts_partial_asm_template:
@@ -50,26 +95,55 @@ asm: &ts_asm
           "{{tenant_name}}": {
             "{{app_name}}": {
               {{#enable_telemetry}}
-                {{> ts_partial_asm_vs}}
+                {{#enable_ts_asm}}
+                  "{{app_name}}_ts_log_asm": {
+                    "class": "Security_Log_Profile",
+                    "application": {
+                      "localStorage": false,
+                      "remoteStorage": "splunk",
+                      "servers": [
+                        {
+                          "address": "255.255.255.254",
+                          "port": "6514"
+                        }
+                      ],
+                      "storageFilter": {
+                        "requestType": "all"
+                      }
+                    }
+                  },
+                  {{> ts_partial_asm_vs}}
+                {{/enable_ts_asm}}
               {{/enable_telemetry}}
             }
           }
         }
+  template: |
+    {{> ts_partial_asm_template}}
 
 afm: &ts_afm
   title: AFM Logging
   contentType: application/json
   bigipDependencies:
     - afm
-    - asm
+  parameters:
+    ts: true
+    enable_ts_afm: true
   definitions: &ts_afm_def
     enable_telemetry:
       type: boolean
+      dependencies: []
+    enable_ts_afm:
+      title: Forward AFM logs to TS
+      description: Requires AFM and ASM to be provisioned
+      type: boolean
+      dependencies: 
+        - enable_telemetry
     ts_partial_afm_vs:
       template: |
         "{{app_name}}": {
           "securityLogProfiles": [
-            { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
+            { "use": "{{app_name}}_ts_log_afm" }
           ]
         }
     ts_partial_afm_template:
@@ -78,44 +152,72 @@ afm: &ts_afm
           "{{tenant_name}}": {
             "{{app_name}}": {
               {{#enable_telemetry}}
-                {{> ts_partial_afm_vs}}
+                {{#enable_ts_afm}}
+                  "{{app_name}}_ts_log_afm": {
+                    "class": "Security_Log_Profile",
+                    "application": {
+                      "localStorage": false,
+                      "remoteStorage": "splunk",
+                      "protocol": "tcp",
+                      "servers": [
+                        {
+                          "address": "255.255.255.254",
+                          "port": "6514"
+                        }
+                      ],
+                      "storageFilter": {
+                        "requestType": "illegal-including-staged-signatures"
+                      }
+                    },
+                    "network": {
+                      "publisher": {
+                        "bigip": "/Common/Shared/fast_telemetry_publisher"
+                      },
+                      "logRuleMatchAccepts": false,
+                      "logRuleMatchRejects": true,
+                      "logRuleMatchDrops": true,
+                      "logIpErrors": true,
+                      "logTcpErrors": true,
+                      "logTcpEvents": true
+                    }
+                  },
+                  {{> ts_partial_afm_vs}}
+                {{/enable_ts_afm}}
               {{/enable_telemetry}}
             }
           }
         }
+  template: |
+    {{> ts_partial_afm_template}}
 
 # default TS subtemplate
 <<: *ts_base
 anyOf:
-  - {}
-  - <<: *ts_asm
-    template: |
-      {{> ts_partial_asm_template}}
-  - <<: *ts_afm
-    template: |
-      {{> ts_partial_afm_template}}
-template: |
-    {{> ts_partial_template}}
+  - <<: *ts_base_anyof
+  - *telemetry
+  - *ts_asm
+  - *ts_afm
 
 # subtemplate with VS names unique to DNS template
 dns: 
   <<: *ts_base
-  definitions: 
-    <<: *ts_base_def
-    ts_partial_vs:
-      template: |
-        "{{app_name}}_tcp": {
-          "profileTrafficLog": {
-            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
-          }
-        },
-        "{{app_name}}_udp": {
-          "profileTrafficLog": {
-            "use": "/Common/Shared/fast_telemetry_traffic_log_profile"
-          }
-        }
   anyOf:
-    - {}
+    - <<: *ts_base_anyof
+    - <<: *telemetry
+      definitions:
+        <<: *telemetry_def
+        ts_partial_vs:
+          template: |
+            "{{app_name}}_tcp": {
+              "profileTrafficLog": {
+                "bigip": "/Common/Shared/fast_telemetry_traffic_log_profile"
+              }
+            },
+            "{{app_name}}_udp": {
+              "profileTrafficLog": {
+                "bigip": "/Common/Shared/fast_telemetry_traffic_log_profile"
+              }
+            }
     - <<: *ts_asm
       definitions: 
         <<: *ts_asm_def
@@ -123,16 +225,14 @@ dns:
           template: |
             "{{app_name}}_tcp": {
               "securityLogProfiles": [
-                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
+                { "use": "{{app_name}}_ts_log_asm" }
               ]
             },
             "{{app_name}}_udp": {
               "securityLogProfiles": [
-                { "use": "/Common/Shared/fast_telemetry_asm_security_log_profile" }
+                { "use": "{{app_name}}_ts_log_asm" }
               ]
             }
-      template: |
-        {{> ts_partial_asm_template}}
     - <<: *ts_afm
       definitions: 
         <<: *ts_afm_def
@@ -140,15 +240,11 @@ dns:
           template: |
             "{{app_name}}_tcp": {
               "securityLogProfiles": [
-                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
+                { "use": "{{app_name}}_ts_log_afm" }
               ]
             },
             "{{app_name}}_udp": {
               "securityLogProfiles": [
-                { "use": "/Common/Shared/fast_telemetry_afm_security_log_profile" }
+                { "use": "{{app_name}}_ts_log_afm" }
               ]
             }
-      template: |
-        {{> ts_partial_afm_template}}
-  template: |
-      {{> ts_partial_template}}
