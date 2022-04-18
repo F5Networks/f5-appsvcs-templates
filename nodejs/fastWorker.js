@@ -171,6 +171,35 @@ class FASTWorker {
         // Hook completeRestOperation() so we can add additional logging
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
+            if (!Array.isArray(restOperation.body) && restOperation.body) {
+                restOperation.body._links = {
+                    self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
+                };
+                if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
+                    if (restOperation.method === 'Delete') {
+                        restOperation.body._links.tasks = [`/mgmt/shared/fast/tasks/${restOperation.body.id}`];
+                    } else {
+                        restOperation.body._links.tasks = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`);
+                    }
+                }
+            } else if (Array.isArray(restOperation.body)) {
+                restOperation.body = restOperation.body.map((x) => {
+                    if (typeof x === 'object') {
+                        let selfLink = '';
+                        if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications')) {
+                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.tenant}/${x.name}` : `/mgmt/${restOperation.uri}`;
+                        } else if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/tasks')) {
+                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.id}` : `/mgmt/${restOperation.uri}`;
+                        } else {
+                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.name}` : `/mgmt/${restOperation.uri}`;
+                        }
+                        x._links = {
+                            self: selfLink
+                        };
+                    }
+                    return x;
+                });
+            }
             this.recordRestResponse(restOperation);
             return this._prevCompleteRestOp(restOperation);
         };

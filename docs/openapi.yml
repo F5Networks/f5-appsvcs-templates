@@ -760,6 +760,8 @@ components:
         - code
         - message
       properties:
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
         code:
           type: integer
           format: int32
@@ -820,6 +822,8 @@ components:
       type: object
       description: The response message when performing Application operations.
       properties:
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
         code:
           type: integer
           minimum: 202
@@ -846,6 +850,8 @@ components:
       type: object
       description: The response message when deleting a specific Application.
       properties:
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
         results:
           type: array
           items:
@@ -871,6 +877,8 @@ components:
         $ref: "#/components/schemas/ApplicationDeleteResponse"
       example:
           results: []
+          _links:
+            self: '/mgmt/shared/fast/applications'
           declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%%%7"}
           id: 62c587f1-374e-49a8-b418-0db766a219ee
           selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
@@ -886,6 +894,8 @@ components:
         - tenant
         - application
       properties:
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
         id:
           description: The Task ID of this Task
           type: string
@@ -927,6 +937,8 @@ components:
         tenant: "tenant"
         application: "app"
         timestamp: "2019-08-24T14:15:22Z"
+        _links:
+          self: "/mgmt/shared/fast/tasks"
     TaskList:
       description: Task List.
       type: array
@@ -941,6 +953,8 @@ components:
           tenant: "tenant"
           application: "app"
           timestamp: "2019-08-24T14:15:22Z"
+          _links:
+            self: "/mgmt/shared/fast/tasks"
         - id: 301ee9ed-e73e-4108-a9a2-3104509d7880
           name: "examples/simple_udp_defaults"
           parameters: {}
@@ -949,6 +963,8 @@ components:
           tenant: "tenant"
           application: "app"
           timestamp: "2019-08-24T14:15:22Z"
+          _links:
+            self: "/mgmt/shared/fast/tasks"
         - id: "7908d0b0-c4cc-41ed-a7e0-9d2d376a3c7b"
           name: "examples/simple_udp_defaults"
           parameters: {}
@@ -957,6 +973,8 @@ components:
           tenant: "tenant"
           application: "app"
           timestamp: "2019-08-24T14:15:22Z"
+          _links:
+            self: "/mgmt/shared/fast/tasks"
         - id: 21697cbe-56b9-4d50-bd54-fd84f8c056de
           name: "examples/simple_udp_defaults"
           parameters: {}
@@ -965,6 +983,8 @@ components:
           tenant: "tenant"
           application: "app"
           timestamp: "2019-08-24T14:15:22Z"
+          _links:
+            self: "/mgmt/shared/fast/tasks"
     Template:
       type: object
       description: An JSON-serialized, f5-fast-core Template object. All fields prefixed with an underscore should be treated as internal/private and only intended for Template.fromJson(). As such, they are not documented here.
@@ -1190,6 +1210,8 @@ components:
         message:
           type: string
           example: success
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     Response400:
       type: object
       description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
@@ -1206,6 +1228,8 @@ components:
         message:
           type: string
           example: the request was not successful
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     Response404:
       type: object
       description: Not Found.
@@ -1222,6 +1246,8 @@ components:
         message:
           type: string
           example: resource not found
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     Response500:
       type: object
       description: Internal error. A bug report should be filed.
@@ -1238,6 +1264,8 @@ components:
         message:
           type: string
           example: internal server error
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     Response422:
       type: object
       description: supplied configuration was invalid
@@ -1254,6 +1282,8 @@ components:
         message:
           type: string
           example: supplied configuration was invalid
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     IpamInfoblox:
       type: object
       title: IPAM - Infoblox
@@ -1388,3 +1418,15 @@ components:
         authHeaderValue:
           title: Authorization Header Value
           type: string
+    LinksDefinition:
+      type: object
+      properties:
+        self:
+          type: string
+          description: Self-link to endpoint
+          example: /mgmt/shared/fast/applications
+        tasks:
+          type: array
+          description: Collection of tasks links for asyn operation
+          example:
+            - /mgmt/shared/fast/tasks/12345
