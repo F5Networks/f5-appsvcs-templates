@@ -18,7 +18,7 @@
   "dependencies": {
     "@akanass/rx-http-request": "^3.3.0",
     "express": "^4.17.1",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "rimraf": "^3.0.2"
   }
 }
