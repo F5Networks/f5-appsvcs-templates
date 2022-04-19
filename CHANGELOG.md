@@ -1,3 +1,13 @@
+# 1.18.0
+## Added
+* bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
+
+## Fixed
+* bigip-fast-templates: Enabling Telemetry Streaming does not result in an error, preventing application deployment
+
+## Changed
+* FAST Global Settings no longer show Telemetry Streaming as a GUI option because it is readonly (true if installed), and log_asm/log_afm are also readonly
+
 # 1.17.0
 ## Added
 * bigip-fast-templates: Existing AFM Firewal Policies can be selected instead of generating a new one (issue [#94](https://github.com/F5Networks/f5-appsvcs-templates/issues/94))
@@ -6,7 +16,6 @@
 
 ## Fixed
 * worker: Forward AS3 4xx error codes when POSTing an application
-* FAST Settings no longer set log_asm and log_afm to whatever value enable_telemetry has, and you can enable afm without having asm also.
 * bigip-fast-templates: Fixed HTTP template health monitors to display correctly - even when enabling TLS_Client or FastL4
 
 ## Changed
