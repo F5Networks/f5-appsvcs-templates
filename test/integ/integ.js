@@ -53,12 +53,15 @@ function promiseDelay(timems) {
 function handleHTTPError(err, description) {
     if (err.response) {
         const cfg = err.response.config;
-        console.error(`${cfg.method} to ${cfg.url}:`);
-        console.error(err.response.data);
+        console.log(`${cfg.method} to ${cfg.url}:`);
+        console.log(err.response.data);
     }
-    return Promise.reject(new Error(
+    const newErr = new Error(
         `Failed to ${description}: ${err.message}`
-    ));
+    );
+    newErr.response = err.response;
+
+    return Promise.reject(newErr);
 }
 
 function waitForCompletedTask(taskid) {
@@ -253,6 +256,30 @@ describe('Applications', function () {
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
+    function patchApplication(appName, parameters) {
+        return Promise.resolve()
+            .then(() => endpoint.patch(`/mgmt/shared/fast/applications/${appName}`, {
+                parameters
+            }))
+            .then((response) => {
+                const taskid = response.data.message[0].id;
+                if (!taskid) {
+                    console.log(response.data);
+                    assert(false, 'failed to get a taskid');
+                }
+                return waitForCompletedTask(taskid);
+            })
+            .then((task) => {
+                if (task.code !== 200) {
+                    console.log(task);
+                }
+                assert.strictEqual(task.code, 200);
+                assert.strictEqual(task.message, 'success');
+                return task;
+            })
+            .catch(e => handleHTTPError(e, `patch ${appName}`));
+    }
+
     before('Setup', () => Promise.resolve()
         .then(() => getAuthToken())
         .then(() => deleteAllApplications()));
@@ -338,6 +365,42 @@ describe('Applications', function () {
         tenant_name: 'tenant',
         app_name: 'bluegreen'
     }));
+    it('PATCH existing application', () => Promise.resolve()
+        .then(() => deployApplication('examples/simple_udp_defaults', {
+            application_name: 'patch',
+            virtual_address: '10.0.0.10',
+            server_addresses: [
+                '10.0.0.10'
+            ]
+        }))
+        .then(() => patchApplication('foo/patch', {
+            virtual_port: 3333
+        })));
+    it('PATCH existing application should not create a new application', () => Promise.resolve()
+        .then(() => deployApplication('examples/simple_udp_defaults', {
+            application_name: 'patchBad',
+            virtual_address: '10.0.0.11',
+            server_addresses: [
+                '10.0.0.11'
+            ]
+        }))
+        .then(() => patchApplication('foo/patchBad', {
+            application_name: 'patchBad2',
+            virtual_address: '10.0.0.12'
+        }))
+        .then(() => {
+            assert(false, 'rename-causing PATCH should not succeed');
+        })
+        .catch((e) => {
+            if (!e.response) {
+                return Promise.reject(e);
+            }
+
+            const respData = e.response.data;
+            assert.strictEqual(respData.code, 422);
+            assert.match(respData.message, /change application name/);
+            return Promise.resolve();
+        }));
 });
 
 describe('Settings', function () {

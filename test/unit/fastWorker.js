@@ -47,7 +47,11 @@ const templatesPath = path.join(process.cwd(), 'templates');
 
 class RestOp {
     constructor(uri) {
-        this.uri = uri;
+        this.uri = {
+            pathname: uri,
+            path: uri,
+            href: uri
+        };
         this.body = '';
         this.status = 200;
         this.headers = { 'content-type': 'application/json' };
@@ -84,7 +88,7 @@ class RestOp {
     }
 
     getUri() {
-        const uri = url.parse(`/a/b/${this.uri}`);
+        const uri = url.parse(`${this.uri.path}`);
         if (uri.query) {
             uri.query = uri.query
                 .split('&')
@@ -406,7 +410,7 @@ describe('fastWorker tests', function () {
                     ''
                 ));
         });
-        it('hydrateSchema', function () {
+        it('hydrateSchema - enumFromBigip is a string', function () {
             const worker = createWorker();
             worker.configStorage.data.config = {
                 ipamProviders: [
@@ -494,6 +498,68 @@ describe('fastWorker tests', function () {
                     assert.deepEqual(schema.properties.fooIpamItems.items.enum, [
                         'bar'
                     ]);
+                });
+        });
+        it('hydrateSchema - enumFromBigip is an object', function () {
+            this.timeout(5000);
+            const worker = createWorker();
+            worker.configStorage.data.config = {
+                ipamProviders: [
+                    { name: 'bar' }
+                ]
+            };
+            worker.bigip.getSharedObjects = sinon.stub().resolves(['test_cert01.pem', 'test_cert02.pem']);
+            const inputSchema = {
+                properties: {
+                    fileWithPathOnly: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: 'files'
+                        }
+                    },
+                    fileWithPathAndFilter: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: 'files',
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    },
+                    fileWithMultiplePaths: {
+                        type: 'string',
+                        enumFromBigip: {
+                            path: [
+                                'files',
+                                'waf-policy'
+                            ],
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    },
+                    endpointWithoutPath: {
+                        type: 'string',
+                        enumFromBigip: {
+                            filter: {
+                                type: '^CERT.*'
+                            }
+                        }
+                    }
+                }
+            };
+
+            const tmpl = {
+                _parametersSchema: inputSchema
+            };
+            return worker.hydrateSchema(tmpl, 0)
+                .then((schema) => {
+                    console.log(schema);
+                    console.log(worker.bigip.getSharedObjects);
+                    assert.deepEqual(worker.bigip.getSharedObjects.firstCall.args, ['files', undefined]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.secondCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.thirdCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.lastCall.args, ['waf-policy', { type: '^CERT.*' }]);
                 });
         });
         it('bigipDependencies', function () {
@@ -715,14 +781,20 @@ describe('fastWorker tests', function () {
     describe('settings', function () {
         it('post_settings', function () {
             const worker = createWorker();
-            const op = new RestOp('settings');
+            const op = new RestOp('/shared/fast/settings');
             op.setBody({
                 deletedTemplateSets: [
                     'foo'
                 ],
                 enableIpam: true,
                 ipamProviders: [
-                    { name: 'test', password: 'foobar', serviceType: 'Generic' }
+                    {
+                        name: 'test',
+                        password: 'foobar',
+                        serviceType: 'Infoblox',
+                        apiVersion: 'v2.4',
+                        network: 'foo.bar'
+                    }
                 ]
             });
             return worker.onPost(op)
@@ -735,22 +807,24 @@ describe('fastWorker tests', function () {
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamInfoblox');
                 });
         });
         it('post_settings_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('settings');
+            const op = new RestOp('/shared/fast/settings');
             op.setBody({
             });
             return worker.onPost(op)
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('patch_settings', function () {
             const worker = createWorker();
-            const op = new RestOp('settings');
+            const op = new RestOp('/shared/fast/settings');
             op.setBody({
                 deletedTemplateSets: [
                     'foo'
@@ -769,11 +843,12 @@ describe('fastWorker tests', function () {
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamGeneric');
                 });
         });
         it('patch_settings_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('settings');
+            const op = new RestOp('/shared/fast/settings');
             op.setBody({
                 deletedTemplateSets: 5
             });
@@ -781,11 +856,12 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('get_settings_schema', function () {
             const worker = createWorker();
-            const op = new RestOp('settings-schema');
+            const op = new RestOp('/shared/fast/settings-schema');
 
             return worker.onGet(op)
                 .then(() => {
@@ -811,7 +887,7 @@ describe('fastWorker tests', function () {
         });
         it('get_settings', function () {
             const worker = createWorker();
-            const op = new RestOp('settings');
+            const op = new RestOp('/shared/fast/settings');
 
             return worker.onGet(op)
                 .then(() => {
@@ -825,8 +901,8 @@ describe('fastWorker tests', function () {
         });
         it('delete_settings', function () {
             const worker = createWorker();
-            const getOp = new RestOp('settings');
-            const deleteOp = new RestOp('settings');
+            const getOp = new RestOp('/shared/fast/settings');
+            const deleteOp = new RestOp('/shared/fast/settings');
 
             return worker.getConfig(0)
                 .then((config) => {
@@ -850,7 +926,7 @@ describe('fastWorker tests', function () {
     describe('info', function () {
         it('get_info', function () {
             const worker = createWorker();
-            const op = new RestOp('info');
+            const op = new RestOp('/shared/fast/info');
             nock(host)
                 .get('/mgmt/shared/appsvcs/info')
                 .reply(200, {});
@@ -888,7 +964,7 @@ describe('fastWorker tests', function () {
         });
         it('get_info_without_as3', function () {
             const worker = createWorker();
-            const op = new RestOp('info');
+            const op = new RestOp('/shared/fast/info');
             nock(host)
                 .get('/mgmt/shared/appsvcs/info')
                 .reply(404);
@@ -911,7 +987,7 @@ describe('fastWorker tests', function () {
     describe('tasks', function () {
         it('get_tasks', function () {
             const worker = createWorker();
-            const op = new RestOp('tasks');
+            const op = new RestOp('/shared/fast/tasks');
             worker.driver._task_ids.foo1 = `${AS3DriverConstantsKey}-update-tenant-app-0-0-0-0-0`;
             nock(host)
                 .get(as3TaskEp)
@@ -932,6 +1008,9 @@ describe('fastWorker tests', function () {
                     assert.notEqual(op.status, 404);
                     assert.notEqual(op.status, 500);
                     assert.deepEqual(op.body, [{
+                        _links: {
+                            self: '/mgmt/shared/fast/tasks/foo1'
+                        },
                         application: 'app',
                         id: 'foo1',
                         code: 200,
@@ -948,7 +1027,7 @@ describe('fastWorker tests', function () {
         });
         it('get_tasks_item', function () {
             const worker = createWorker();
-            const op = new RestOp('tasks/foo1');
+            const op = new RestOp('/shared/fast/tasks/foo1');
             worker.driver._task_ids.foo1 = `${AS3DriverConstantsKey}-update-tenant-app-0-0-0-0-0`;
             nock(host)
                 .get(as3TaskEp)
@@ -978,14 +1057,17 @@ describe('fastWorker tests', function () {
                         tenant: 'tenant',
                         operation: 'update',
                         timestamp: new Date().toISOString(),
-                        host: 'localhost'
+                        host: 'localhost',
+                        _links: {
+                            self: '/mgmt/shared/fast/tasks/foo1'
+                        }
                     });
                     expect(op.body).to.satisfySchemaInApiSpec('Task');
                 });
         });
         it('get_tasks_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('tasks/foo1');
+            const op = new RestOp('/shared/fast/tasks/foo1');
             nock(host)
                 .get(as3TaskEp)
                 .reply(200, {
@@ -1002,7 +1084,7 @@ describe('fastWorker tests', function () {
     describe('render', function () {
         it('post_render', function () {
             const worker = createWorker();
-            const op = new RestOp('render');
+            const op = new RestOp('/shared/fast/render');
             op.setBody({
                 name: 'examples/simple_udp_defaults',
                 parameters: {}
@@ -1012,11 +1094,12 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 3));
                     assert.equal(op.status, 200);
                     assert(Array.isArray(op.body.message));
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationRenderedResponse');
                 });
         });
         it('post_render_bad_tmplid', function () {
             const worker = createWorker();
-            const op = new RestOp('render');
+            const op = new RestOp('/shared/fast/render');
             op.setBody({
                 name: 'foobar/does_not_exist',
                 parameters: {}
@@ -1029,7 +1112,7 @@ describe('fastWorker tests', function () {
         });
         it('post_render_bad_params', function () {
             const worker = createWorker();
-            const op = new RestOp('render');
+            const op = new RestOp('/shared/fast/render');
             op.setBody({
                 name: 'examples/simple_udp_defaults',
                 parameters: {
@@ -1045,9 +1128,9 @@ describe('fastWorker tests', function () {
         });
         it('post_render_bad_properties', function () {
             const worker = createWorker();
-            const emptyOp = new RestOp('render');
+            const emptyOp = new RestOp('/shared/fast/render');
             emptyOp.setBody({});
-            const nameOnlyOp = new RestOp('render');
+            const nameOnlyOp = new RestOp('/shared/fast/render');
             nameOnlyOp.setBody({
                 name: 'examples/simple_udp_defaults'
             });
@@ -1070,18 +1153,18 @@ describe('fastWorker tests', function () {
     describe('templates', function () {
         it('get_templates', function () {
             const worker = createWorker();
-            const op = new RestOp('templates');
+            const op = new RestOp('/shared/fast/templates');
             return worker.onGet(op)
                 .then(() => {
                     const templates = op.body;
                     assert.notEqual(op.status, 404);
                     assert.notEqual(templates.length, 0);
-                    expect(templates).to.satisfySchemaInApiSpec('TemplateList');
+                    expect(templates).to.satisfySchemaInApiSpec('TemplateNameList');
                 });
         });
         it('get_template_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('templates/foobar');
+            const op = new RestOp('/shared/fast/templates/foobar');
             return worker.onGet(op)
                 .then(() => {
                     assert.equal(op.status, 404);
@@ -1089,7 +1172,7 @@ describe('fastWorker tests', function () {
         });
         it('get_template_item', function () {
             const worker = createWorker();
-            const op = new RestOp('templates/examples/simple_udp');
+            const op = new RestOp('/shared/fast/templates/examples/simple_udp');
             return worker.onGet(op)
                 .then(() => {
                     const tmpl = op.body;
@@ -1101,8 +1184,8 @@ describe('fastWorker tests', function () {
         });
         it('get_template_ipam', function () {
             const worker = createWorker();
-            const getOp1 = new RestOp('templates/bigip-fast-templates/dns');
-            const getOp2 = new RestOp('templates/bigip-fast-templates/dns');
+            const getOp1 = new RestOp('/shared/fast/templates/bigip-fast-templates/dns');
+            const getOp2 = new RestOp('/shared/fast/templates/bigip-fast-templates/dns');
 
             worker.configStorage.data.config = {
                 enableIpam: false
@@ -1161,7 +1244,7 @@ describe('fastWorker tests', function () {
         });
         it('get_template_item_with_schema', function () {
             const worker = createWorker();
-            const op = new RestOp('templates/bigip-fast-templates/http');
+            const op = new RestOp('/shared/fast/templates/bigip-fast-templates/http');
             nock(host)
                 .persist()
                 .get(/mgmt\/tm\/.*/)
@@ -1186,21 +1269,22 @@ describe('fastWorker tests', function () {
     describe('templatesets', function () {
         it('get_templatesets', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets');
+            const op = new RestOp('/shared/fast/templatesets');
             return worker.onGet(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
                     assert.notEqual(op.status, 500);
-
                     const foundSets = op.body.map(x => x.name);
                     assert(foundSets.includes('bigip-fast-templates'));
                     assert(foundSets.includes('examples'));
+                    assert.strictEqual(op.body[0]._links.self, '/mgmt/shared/fast/templatesets/examples');
+                    assert.strictEqual(op.body[1]._links.self, '/mgmt/shared/fast/templatesets/bigip-fast-templates');
                     expect(op.body).to.satisfySchemaInApiSpec('TemplateSetList');
                 });
         });
         it('get_templatesets_item', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets/bigip-fast-templates');
+            const op = new RestOp('/shared/fast/templatesets/bigip-fast-templates');
             return worker.onGet(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
@@ -1209,13 +1293,14 @@ describe('fastWorker tests', function () {
                     const ts = op.body;
                     assert.notDeepEqual(ts, {});
                     assert.strictEqual(ts.name, 'bigip-fast-templates');
+                    assert.strictEqual(op.body._links.self, '/mgmt/shared/fast/templatesets/bigip-fast-templates');
                     assert.notDeepEqual(ts.templates, []);
                     expect(ts).to.satisfySchemaInApiSpec('TemplateSet');
                 });
         });
         it('get_templatesets_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets/foo1');
+            const op = new RestOp('/shared/fast/templatesets/foo1');
             return worker.onGet(op)
                 .then(() => {
                     assert.strictEqual(op.status, 404);
@@ -1224,11 +1309,11 @@ describe('fastWorker tests', function () {
         // run settings and templatesets last as they can interfere with the other tests
         it('post_templateset_missing', function () {
             const worker = createWorker();
-            const noMatchOp = new RestOp('templatesets');
+            const noMatchOp = new RestOp('/shared/fast/templatesets');
             noMatchOp.setBody({
                 name: 'badname'
             });
-            const emptyOp = new RestOp('templatesets');
+            const emptyOp = new RestOp('/shared/fast/templatesets');
             emptyOp.setBody({});
 
             return worker.onPost(noMatchOp)
@@ -1238,8 +1323,8 @@ describe('fastWorker tests', function () {
         });
         it('post_templateset', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets');
-            const infoOp = new RestOp('info');
+            const op = new RestOp('/shared/fast/templatesets');
+            const infoOp = new RestOp('/shared/fast/info');
 
             this.clock.restore();
             op.setBody({
@@ -1254,6 +1339,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
                 })
                 .then(() => worker.templateProvider.listSets())
                 .then((tmplSets) => {
@@ -1269,13 +1355,13 @@ describe('fastWorker tests', function () {
         });
         it('post_templateset_deleted', function () {
             const worker = createWorker();
-            const postOp = new RestOp('templatesets');
+            const postOp = new RestOp('/shared/fast/templatesets');
             postOp.setBody({
                 name: 'examples'
             });
-            const getTsOpAll1 = new RestOp('templatesets?showDisabled=true');
-            const getTsOpAll2 = new RestOp('templatesets?showDisabled=true');
-            const getTsOpEnabled = new RestOp('templatesets');
+            const getTsOpAll1 = new RestOp('/shared/fast/templatesets?showDisabled=true');
+            const getTsOpAll2 = new RestOp('/shared/fast/templatesets?showDisabled=true');
+            const getTsOpEnabled = new RestOp('/shared/fast/templatesets');
 
             worker.storage.deleteItem('examples');
             worker.configStorage.data = {
@@ -1326,7 +1412,7 @@ describe('fastWorker tests', function () {
         it('delete_templateset', function () {
             const worker = createWorker();
             const templateSet = 'bigip-fast-templates';
-            const op = new RestOp(`templatesets/${templateSet}`);
+            const op = new RestOp(`/shared/fast/templatesets/${templateSet}`);
 
             return worker.templateProvider.hasSet(templateSet)
                 .then(result => assert(result))
@@ -1337,17 +1423,18 @@ describe('fastWorker tests', function () {
         });
         it('delete_templateset_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets/does_not_exist');
+            const op = new RestOp('/shared/fast/templatesets/does_not_exist');
 
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response404');
                 });
         });
         it('delete_templateset_inuse', function () {
             const worker = createWorker();
             const templateSet = 'examples';
-            const op = new RestOp(`templatesets/${templateSet}`);
+            const op = new RestOp(`/shared/fast/templatesets/${templateSet}`);
             resetScope(as3Scope)
                 .get(as3ep)
                 .query(true)
@@ -1376,11 +1463,12 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert.strictEqual(op.status, 400);
                     assert.match(op.body.message, /it is being used by:\n\["tenant\/app"\]/);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response400');
                 });
         });
         it('delete_all_templatesets', function () {
             const worker = createWorker();
-            const op = new RestOp('templatesets');
+            const op = new RestOp('/shared/fast/templatesets');
 
             return worker.onDelete(op)
                 .then(() => assert.equal(op.status, 200))
@@ -1392,21 +1480,24 @@ describe('fastWorker tests', function () {
     describe('applications', function () {
         it('get_apps', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             return worker.onGet(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
                     assert.deepEqual(op.body, [{
                         name: 'app',
                         tenant: 'tenant',
-                        template: 'foo/bar'
+                        template: 'foo/bar',
+                        _links: {
+                            self: '/mgmt/shared/fast/applications/tenant/app'
+                        }
                     }]);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationList');
                 });
         });
         it('get_apps_empty', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             as3Scope = resetScope(as3Scope)
                 .get(as3ep)
                 .query(true)
@@ -1419,7 +1510,7 @@ describe('fastWorker tests', function () {
         });
         it('get_apps_item_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('applications/foobar');
+            const op = new RestOp('/shared/fast/applications/foobar');
             return worker.onGet(op)
                 .then(() => {
                     assert.equal(op.status, 404);
@@ -1427,16 +1518,18 @@ describe('fastWorker tests', function () {
         });
         it('get_apps_item', function () {
             const worker = createWorker();
-            const op = new RestOp('applications/tenant/app');
+            const op = new RestOp('/shared/fast/applications/tenant/app');
             return worker.onGet(op)
                 .then(() => {
+                    assert.strictEqual(op.body._links.self, '/mgmt/shared/fast/applications/tenant/app');
+                    delete op.body._links;
                     assert.deepEqual(op.body, as3App);
                     expect(op.body).to.satisfySchemaInApiSpec('AS3App');
                 });
         });
         it('post_apps_bad_tmplid', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             op.setBody({
                 name: 'foobar/does_not_exist',
                 parameters: {}
@@ -1449,7 +1542,7 @@ describe('fastWorker tests', function () {
         });
         it('post_apps_bad_tmplid_leading_slash', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             op.setBody({
                 name: '/examples/simple_udp_defaults',
                 parameters: {}
@@ -1462,9 +1555,9 @@ describe('fastWorker tests', function () {
         });
         it('post_apps_bad_properties', function () {
             const worker = createWorker();
-            const emptyOp = new RestOp('applications');
+            const emptyOp = new RestOp('/shared/fast/applications');
             emptyOp.setBody({});
-            const nameOnlyOp = new RestOp('applications');
+            const nameOnlyOp = new RestOp('/shared/fast/applications');
             nameOnlyOp.setBody({ name: 'examples/simple_udp_defaults' });
             return worker.onPost(emptyOp)
                 .then(() => {
@@ -1481,7 +1574,7 @@ describe('fastWorker tests', function () {
         });
         it('delete_app_bad', function () {
             const worker = createWorker();
-            const op = new RestOp('applications/foobar');
+            const op = new RestOp('/shared/fast/applications/foobar');
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
@@ -1489,7 +1582,7 @@ describe('fastWorker tests', function () {
         });
         it('delete_app', function () {
             const worker = createWorker();
-            const op = new RestOp('applications/tenant/app');
+            const op = new RestOp('/shared/fast/applications/tenant/app');
             nock(host)
                 .persist()
                 .post(`${as3ep}/tenant?async=true`)
@@ -1497,11 +1590,12 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
         it('delete_all_apps', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             nock(host)
                 .persist()
                 .post(`${as3ep}/tenant?async=true`)
@@ -1509,11 +1603,12 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.strictEqual(op.status, 202);
+                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
         it('patch_all_apps', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             return worker.onPatch(op)
                 .then(() => {
                     assert.strictEqual(op.status, 400);
@@ -1521,7 +1616,7 @@ describe('fastWorker tests', function () {
         });
         it('record_user_agent', function () {
             const worker = createWorker();
-            const op = new RestOp('applications?userAgent=test/v1.1');
+            const op = new RestOp('/shared/fast/applications?userAgent=test/v1.1');
             return worker.onGet(op)
                 .then(() => {
                     assert.strictEqual(
@@ -1536,7 +1631,7 @@ describe('fastWorker tests', function () {
         });
         it('post_apps_bad_params', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             op.setBody({
                 name: 'examples/simple_udp_defaults',
                 parameters: {
@@ -1552,7 +1647,7 @@ describe('fastWorker tests', function () {
         });
         it('post_apps_no_overwrite', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             op.setBody({
                 name: 'examples/simple_udp_defaults',
                 parameters: {},
@@ -1626,9 +1721,9 @@ describe('fastWorker tests', function () {
                 })
                 .reply(202, {});
 
-            const createOp = new RestOp('applications');
+            const createOp = new RestOp('/shared/fast/applications');
             createOp.setBody(initialBody);
-            const updateOp = new RestOp('applications');
+            const updateOp = new RestOp('/shared/fast/applications');
             return worker.onPost(createOp)
                 .then(() => {
                     console.log(JSON.stringify(createOp.body, null, 2));
@@ -1658,7 +1753,7 @@ describe('fastWorker tests', function () {
         });
         it('post_apps', function () {
             const worker = createWorker();
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             op.setBody({
                 name: 'examples/simple_udp_defaults',
                 parameters: {}
@@ -1676,7 +1771,7 @@ describe('fastWorker tests', function () {
         });
         it('patch_app', function () {
             const worker = createWorker();
-            const op = new RestOp('applications/tenant/app');
+            const op = new RestOp('/shared/fast/applications/tenant/app');
             op.setBody({
                 parameters: {
                     virtual_port: 5556
@@ -1707,7 +1802,14 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(`${as3ep}/tenant?async=true`, (body) => {
+                    console.log(body);
+                    assert.strictEqual(
+                        body.tenant.app.serviceMain.virtualPort,
+                        5556
+                    );
+                    return true;
+                })
                 .reply(202, {});
 
             return worker.onPatch(op)
@@ -1715,6 +1817,90 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
+                });
+        });
+        it('patch_app_bad_tenant_rename', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications/tenant/app');
+            op.setBody({
+                parameters: {
+                    tenant_name: 'tenant2',
+                    virtual_port: 5556
+                }
+            });
+            resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        app: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'examples/simple_udp_defaults',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        application_name: 'app',
+                                        virtual_address: '192.0.2.1',
+                                        virtual_port: 5555,
+                                        server_addresses: ['192.0.2.2'],
+                                        service_port: 5555
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist();
+
+            return worker.onPatch(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
+                });
+        });
+        it('patch_app_bad_app_rename', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications/tenant/app');
+            op.setBody({
+                parameters: {
+                    application_name: 'app2',
+                    virtual_port: 5556
+                }
+            });
+            resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        app: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'examples/simple_udp_defaults',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        application_name: 'app',
+                                        virtual_address: '192.0.2.1',
+                                        virtual_port: 5555,
+                                        server_addresses: ['192.0.2.2'],
+                                        service_port: 5555
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist();
+
+            return worker.onPatch(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 422);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
                 });
         });
         it('convert_pool_members', function () {
@@ -1803,7 +1989,7 @@ describe('fastWorker tests', function () {
                         { fullPath: '/Common/wan-optimized-compression' }
                     ]
                 });
-            const op = new RestOp('applications');
+            const op = new RestOp('/shared/fast/applications');
             return worker.onGet(op)
                 .then(() => {
                     console.log(op.body);
@@ -1815,7 +2001,7 @@ describe('fastWorker tests', function () {
     describe('bad endpoints', function () {
         it('get_bad_end_point', function () {
             const worker = createWorker();
-            const op = new RestOp('bad');
+            const op = new RestOp('/shared/fast/bad');
             return worker.onGet(op)
                 .then(() => {
                     assert.equal(op.status, 404);
@@ -1823,7 +2009,7 @@ describe('fastWorker tests', function () {
         });
         it('post_bad_end_point', function () {
             const worker = createWorker();
-            const op = new RestOp('bad');
+            const op = new RestOp('/shared/fast/bad');
             return worker.onPost(op)
                 .then(() => {
                     assert.equal(op.status, 404);
@@ -1831,7 +2017,7 @@ describe('fastWorker tests', function () {
         });
         it('delete_bad_end_point', function () {
             const worker = createWorker();
-            const op = new RestOp('bad');
+            const op = new RestOp('/shared/fast/bad');
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
@@ -1839,7 +2025,7 @@ describe('fastWorker tests', function () {
         });
         it('patch_bad_end_point', function () {
             const worker = createWorker();
-            const op = new RestOp('bad');
+            const op = new RestOp('/shared/fast/bad');
             return worker.onPatch(op)
                 .then(() => {
                     assert.equal(op.status, 404);

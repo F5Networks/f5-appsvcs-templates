@@ -1,10 +1,13 @@
 # 1.17.0
 ## Added
 * bigip-fast-templates: Existing AFM Firewal Policies can be selected instead of generating a new one (issue [#94](https://github.com/F5Networks/f5-appsvcs-templates/issues/94))
+* bigip-fast-templates: Shape's Integrated Bot Defense profiles can be created and then added in some FAST templates on BIG-IP v17.0+
+* Update enumFromBigip feature to support filtering condition to allow selection based on provided regex value
 
 ## Fixed
 * worker: Forward AS3 4xx error codes when POSTing an application
 * FAST Settings no longer set log_asm and log_afm to whatever value enable_telemetry has, and you can enable afm without having asm also.
+* bigip-fast-templates: Fixed HTTP template health monitors to display correctly - even when enabling TLS_Client or FastL4
 
 ## Changed
 

@@ -71,7 +71,8 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '9bc921130049bee969cdc8eed2bfbf14b70a86a30cc3d6b7f64e7ef614081525', // v1.17
+        '9bc921130049bee969cdc8eed2bfbf14b70a86a30cc3d6b7f64e7ef614081525', // v1.18
+        '0164bc45aa3597ab0c93406ad206f7dce42597899b8d533296dfa335d051181f', // v1.17
         '0acc8d8b76793c30e847257b85e30df708341c7fb347be25bb745a63ad411cc4', // v1.16
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.15
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.14
@@ -171,6 +172,35 @@ class FASTWorker {
         // Hook completeRestOperation() so we can add additional logging
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
+            if (!Array.isArray(restOperation.body) && restOperation.body) {
+                restOperation.body._links = {
+                    self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
+                };
+                if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
+                    if (restOperation.method === 'Delete') {
+                        restOperation.body._links.tasks = [`/mgmt/shared/fast/tasks/${restOperation.body.id}`];
+                    } else {
+                        restOperation.body._links.tasks = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`);
+                    }
+                }
+            } else if (Array.isArray(restOperation.body)) {
+                restOperation.body = restOperation.body.map((x) => {
+                    if (typeof x === 'object') {
+                        let selfLink = '';
+                        if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications')) {
+                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.tenant}/${x.name}` : `/mgmt/${restOperation.uri}`;
+                        } else if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/tasks')) {
+                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.id}` : `/mgmt/${restOperation.uri}`;
+                        } else {
+                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.name}` : `/mgmt/${restOperation.uri}`;
+                        }
+                        x._links = {
+                            self: selfLink
+                        };
+                    }
+                    return x;
+                });
+            }
             this.recordRestResponse(restOperation);
             return this._prevCompleteRestOp(restOperation);
         };
@@ -1042,7 +1072,15 @@ class FASTWorker {
                 });
             })
             .then(() => Promise.all(Object.values(enumFromBigipProps).map((prop) => {
-                const endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
+                let endPoints;
+                if (typeof prop.enumFromBigip === 'object' && prop.enumFromBigip.path) {
+                    endPoints = Array.isArray(prop.enumFromBigip.path)
+                        ? prop.enumFromBigip.path : [prop.enumFromBigip.path];
+                } else if (Array.isArray(prop.enumFromBigip) || typeof prop.enumFromBigip === 'string') {
+                    endPoints = Array.isArray(prop.enumFromBigip) ? prop.enumFromBigip : [prop.enumFromBigip];
+                } else {
+                    endPoints = [];
+                }
                 return Promise.resolve()
                     .then(() => Promise.all(endPoints.map(endPoint => Promise.resolve()
                         .then(() => {
@@ -1053,18 +1091,12 @@ class FASTWorker {
                             return this.recordTransaction(
                                 requestId,
                                 `fetching data from ${endPoint}`,
-                                this.bigip.getSharedObjects(endPoint)
+                                this.bigip.getSharedObjects(endPoint, prop.enumFromBigip.filter)
                             )
                                 .then((items) => {
                                     this._hydrateCache[endPoint] = items;
                                     return items;
                                 });
-                        })
-                        .then((items) => {
-                            if (items) {
-                                return Promise.resolve(items.map(x => x.fullPath));
-                            }
-                            return Promise.resolve([]);
                         })
                         .catch(e => this.handleResponseError(e, `GET to ${endPoint}`))
                         .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`))))))
@@ -2129,9 +2161,47 @@ class FASTWorker {
                 this.driver.getApplication(tenant, app)
             ))
             .then((appData) => {
+                Object.assign(appData.view, newParameters);
+                return appData;
+            })
+            .then(appData => Promise.all([
+                appData,
+                this.renderTemplates(reqid, [{
+                    name: appData.template,
+                    parameters: appData.view
+                }])
+            ]))
+            .then(([appData, rendered]) => Promise.all([
+                appData,
+                this.driver.getTenantAndAppFromDecl(rendered[0].appDef)
+            ]))
+            .then(([appData, tenantAndApp]) => {
+                const [tenantName, appName] = tenantAndApp;
+                if (tenantName !== tenant) {
+                    return Promise.reject(
+                        this.genRestResponse(
+                            restOperation,
+                            422,
+                            `PATCH would change tenant name from ${tenant} to ${tenantName}`
+                        )
+                    );
+                }
+                if (appName !== app) {
+                    return Promise.reject(
+                        this.genRestResponse(
+                            restOperation,
+                            422,
+                            `PATCH would change application name from ${app} to ${appName}`
+                        )
+                    );
+                }
+
+                return appData;
+            })
+            .then((appData) => {
                 postOp.setBody({
                     name: appData.template,
-                    parameters: Object.assign({}, appData.view, newParameters)
+                    parameters: appData.view
                 });
                 return this.onPost(postOp);
             })
@@ -2140,7 +2210,11 @@ class FASTWorker {
                 respBody = respBody.message || respBody;
                 this.genRestResponse(restOperation, postOp.getStatusCode(), respBody);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack));
+            .catch((e) => {
+                if (restOperation.getStatusCode() < 400) {
+                    this.genRestResponse(restOperation, 500, e.stack);
+                }
+            });
     }
 
     patchSettings(restOperation, config) {
