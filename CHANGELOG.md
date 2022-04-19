@@ -1,3 +1,10 @@
+# 1.18.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.17.0
 ## Added
 * bigip-fast-templates: Existing AFM Firewal Policies can be selected instead of generating a new one (issue [#94](https://github.com/F5Networks/f5-appsvcs-templates/issues/94))
