@@ -208,11 +208,13 @@ class FASTWorker {
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
+                    const tsOptions = this.provisionData ? this.driver.calculateTsSettings(this.provisionData) : {};
                     return Promise.resolve(Object.assign(
                         {},
                         defaultConfig,
                         driverSettings,
-                        config
+                        config,
+                        tsOptions
                     ));
                 }
                 return Promise.resolve()
@@ -799,16 +801,6 @@ class FASTWorker {
                 this.provisionData = response;
             })
             .then(() => {
-                if (this._provisionConfigCache !== null) {
-                    return Promise.resolve(this._provisionConfigCache);
-                }
-
-                return this.getConfig(requestId);
-            })
-            .then((config) => {
-                this._provisionConfigCache = config;
-            })
-            .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
                 if (tsInfo) {
                     return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
@@ -821,11 +813,20 @@ class FASTWorker {
                 );
             })
             .then((response) => {
-                const config = this._provisionConfigCache;
                 this.provisionData.items.push({
                     name: 'ts',
-                    level: (response.status === 200 && config.enable_telemetry) ? 'nominal' : 'none'
+                    level: (response.status === 200) ? 'nominal' : 'none'
                 });
+            })
+            .then(() => {
+                if (this._provisionConfigCache !== null) {
+                    return Promise.resolve(this._provisionConfigCache);
+                }
+
+                return this.getConfig(requestId);
+            })
+            .then((config) => {
+                this._provisionConfigCache = config;
             })
             .then(() => {
                 if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
@@ -1589,7 +1590,15 @@ class FASTWorker {
     getSettings(restOperation) {
         const reqid = restOperation.requestId;
         return Promise.resolve()
-            .then(() => this.getConfig(reqid))
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then((provisionData) => {
+                const tsOptions = provisionData ? this.driver.calculateTsSettings(provisionData[0]) : {};
+                return Promise.resolve(Object.assign(
+                    {},
+                    this._provisionConfigCache,
+                    tsOptions
+                ));
+            })
             .then((config) => {
                 restOperation.setBody(config);
                 this.completeRestOperation(restOperation);
