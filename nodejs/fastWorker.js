@@ -1378,8 +1378,10 @@ class FASTWorker {
 
                     const oldAppData = tmplData.previousDef || {};
                     if (oldAppData.ipamAddrs) {
-                        this.ipamProviders.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
+                        return this.ipamProviders.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
                     }
+
+                    return Promise.resolve();
                 });
         });
 
