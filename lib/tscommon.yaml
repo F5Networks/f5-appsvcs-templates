@@ -10,7 +10,7 @@ definitions:
             hidden: true
     log_afm:
         title: Forward AFM logs to Telemetry Streaming
-        description: Requires AFM and ASM to be provisioned
+        description: Requires AFM to be provisioned
         type: boolean
         options:
             hidden: true
