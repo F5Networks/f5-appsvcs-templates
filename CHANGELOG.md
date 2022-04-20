@@ -1,5 +1,6 @@
 # 1.18.0
 ## Added
+* Support serializing a burst of requests to avoid 503 errors from AS3
 
 ## Fixed
 

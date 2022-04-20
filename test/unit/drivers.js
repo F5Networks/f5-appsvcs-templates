@@ -466,4 +466,56 @@ describe('AS3 Driver tests', function () {
         return driver.getRawDeclaration()
             .then(() => assert(scope.isDone(), 'no request was sent to AS3'));
     });
+    it('burst_handling', function () {
+        this.clock.restore();
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+        mockAS3(as3stub);
+        nock(host)
+            .persist()
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(202, {
+                id: 'task1'
+            });
+
+        return Promise.resolve()
+            .then(() => Promise.all([
+                driver.createApplication(appDef, appMetadata),
+                driver.createApplication(appDef, appMetadata)
+            ]))
+            .then((results) => {
+                results.forEach((result) => {
+                    assert.strictEqual(result.status, 202);
+                });
+                assert.strictEqual(results[0].data.id, 'task1');
+                assert.notStrictEqual(results[1].data.id, '');
+            })
+            .then(() => nock(host)
+                .persist()
+                .get(as3TaskEp)
+                .reply(200, [
+                    {
+                        id: 'task1',
+                        results: [{
+                            code: 200,
+                            message: 'success'
+                        }],
+                        declaration: {}
+                    }
+                ]))
+            .then(() => driver.getTasks())
+            .then((tasks) => {
+                console.log(tasks);
+                assert.strictEqual(tasks.length, 2);
+
+                const firstTask = tasks[1];
+                assert.strictEqual(firstTask.message, 'success');
+
+                const secondTask = tasks[0];
+                assert.strictEqual(secondTask.message, 'pending');
+                assert.strictEqual(secondTask.tenant, 'tenantName');
+                assert.strictEqual(secondTask.application, 'appName');
+            });
+    });
 });
