@@ -180,7 +180,7 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
-            assert.deepStrictEqual(actual.data, { code: 200, message: 'success' });
+            assert.deepStrictEqual(actual.data, { code: 200, message: 'success', _links: { self: '/mgmt/shared/fast/templatesets/examples' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST re-install template set and GET by ID', () => Promise.resolve()
@@ -188,7 +188,7 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
-            assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+            assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST package, upload and install custom template set', () => {
@@ -221,7 +221,7 @@ describe('Template Sets', function () {
             .catch(e => handleHTTPError(e, `install ${testSetName} template set`))
             .then((actual) => {
                 assert.strictEqual(actual.status, 200);
-                assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+                assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
                 return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
             .finally(() => fs.unlinkSync(zipFileName));
@@ -434,6 +434,9 @@ describe('Settings', function () {
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
+                _links: {
+                    self: url
+                },
                 deletedTemplateSets: [],
                 ipamProviders: [],
                 enableIpam: false,
@@ -452,7 +455,7 @@ describe('Settings', function () {
             enableIpam: false
         };
         const expected = {
-            data: { code: 200, message: '' },
+            data: { code: 200, message: '', _links: { self: url } },
             status: 200
         };
         return endpoint.post(url, postBody)
@@ -467,7 +470,8 @@ describe('Settings', function () {
                     // driver defaults
                     enable_telemetry: false,
                     log_asm: false,
-                    log_afm: false
+                    log_afm: false,
+                    _links: { self: url }
                 };
                 return assertResponse(actual, expected);
             });
@@ -493,10 +497,11 @@ describe('Settings', function () {
             enableIpam: false,
             log_afm: false,
             log_asm: false,
-            disableDeclarationCache: false
+            disableDeclarationCache: false,
+            _links: { self: url }
         };
         const expected = {
-            data: { code: 200, message: '' },
+            data: { code: 200, _links: { self: url }, message: '' },
             status: 200
         };
         return endpoint.post(url, postBody)
@@ -517,7 +522,7 @@ describe('Settings', function () {
             ipamProviders: []
         };
         const expected = {
-            data: { code: 200, message: '' },
+            data: { code: 200, _links: { self: url }, message: '' },
             status: 200
         };
         return endpoint.patch(url, patchBody)
@@ -530,7 +535,8 @@ describe('Settings', function () {
                     enableIpam: false,
                     log_afm: false,
                     log_asm: false,
-                    disableDeclarationCache: false
+                    disableDeclarationCache: false,
+                    _links: { self: url }
                 };
                 return endpoint.get(url)
                     .then(res => assertResponse(res, expected));
