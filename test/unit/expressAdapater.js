@@ -20,25 +20,13 @@
 'use strict';
 
 const assert = require('assert');
-const nock = require('nock');
 const sinon = require('sinon');
+const mock = require('mock-fs');
+const fs = require('fs');
+const axios = require('axios');
+const http = require('http');
+const https = require('https');
 const expressAdapter = require('../../stand-alone/expressAdapter');
-
-function assertFastWorker(fastWorker) {
-    // validate logger
-    assert.deepEqual(fastWorker.logger, {
-        severe: console.error,
-        error: console.error,
-        info: console.log,
-        fine: console.log,
-        finest: console.log,
-        log: console.log
-    });
-    // validate restHelper
-    assert.ok(fastWorker.restHelper.makeRestjavadUri);
-    // validate dependencies
-    assert.strictEqual(fastWorker.dependencies.length, 0);
-}
 
 describe('Express Adapter', function () {
     let mockFastWorker01;
@@ -46,6 +34,22 @@ describe('Express Adapter', function () {
     let mockFastWorkerConfig01;
     let mockFastWorkerConfig02;
     this.timeout(6000);
+
+    function assertFastWorker(fastWorker) {
+        // validate logger
+        assert.deepEqual(fastWorker.logger, {
+            severe: console.error,
+            error: console.error,
+            info: console.log,
+            fine: console.log,
+            finest: console.log,
+            log: console.log
+        });
+        // validate restHelper
+        assert.ok(fastWorker.restHelper.makeRestjavadUri);
+        // validate dependencies
+        assert.strictEqual(fastWorker.dependencies.length, 0);
+    }
 
     beforeEach(() => {
         mockFastWorkerConfig01 = {
@@ -73,7 +77,6 @@ describe('Express Adapter', function () {
     });
 
     afterEach(() => {
-        nock.cleanAll();
         mockFastWorker01 = undefined;
         mockFastWorker02 = undefined;
     });
@@ -83,7 +86,6 @@ describe('Express Adapter', function () {
         });
 
         afterEach(() => {
-            nock.cleanAll();
         });
 
         it('generateApp with single worker and default settings',
@@ -108,26 +110,99 @@ describe('Express Adapter', function () {
             const middleware = (req, res, next) => {
                 next();
             };
+            http.Agent = sinon.spy();
+            https.Agent = sinon.spy();
+            axios.create = sinon.spy();
             return expressAdapter.generateApp([mockFastWorker01], {
                 middleware: [middleware],
-                staticFiles: 'test-static-file'
+                staticFiles: 'test-static-file',
+                bigip: {
+                    username: 'test-user',
+                    password: 'test-password',
+                    strictCerts: false,
+                    host: 'test-host.com'
+                }
             })
                 .then((app) => {
                     assert.ok(app && app.listen);
                     assert.strictEqual(app.name, 'app');
                     assert.ok(app._router.stack.filter(stack => stack.name === 'middleware').length);
                     assertFastWorker(mockFastWorker01);
+                    assert.ok(http.Agent.called && https.Agent.called);
+                    assert.ok(axios.create.called);
+                    assert.deepEqual(axios.create.args[0][0], {
+                        baseURL: 'test-host.com',
+                        auth: {
+                            username: 'test-user',
+                            password: 'test-password'
+                        },
+                        maxBodyLength: 'Infinity',
+                        httpAgent: {},
+                        httpsAgent: {}
+                    });
                 });
         });
     });
 
     describe('startHttpsServer', () => {
-        beforeEach(() => {
+        let testApp;
+        let appArg;
+        const testPort = 6443;
+        let testCertKeyChain;
+        let spyListenFunc;
 
+        function assertHttpServer() {
+            assert.deepEqual(testCertKeyChain, {
+                cert: '-----CERTIFICATE-----',
+                key: '-----PRIVATE KEY-----'
+            });
+            assert.ok(fs.watch.called);
+            assert.ok(spyListenFunc.called);
+            assert.deepEqual(testApp, appArg);
+        }
+
+        beforeEach(() => {
+            mock({
+                'certs': mock.directory({
+                    items: {
+                        'certificate.pem': '-----CERTIFICATE-----',
+                        'key.pem': '-----PRIVATE KEY-----'
+                    }
+                })
+            });
+            fs.watch = sinon.spy();
+            spyListenFunc = sinon.spy();
+            sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
+                testCertKeyChain = certKeyChain;
+                appArg = app;
+                return {
+                    listen: spyListenFunc
+                };
+            });
+            return expressAdapter.generateApp([mockFastWorker01], {})
+                .then((app) => {
+                    testApp = app;
+                });
         });
 
-        it('should pass', () => {
-            assert.ok(true);
+        afterEach(() => {
+            mock.restore();
+            testCertKeyChain = undefined;
+            testApp = undefined;
+            spyListenFunc = undefined;
+        });
+
+        it('startHttpsServer with defaul settings', () => {
+            assert.ok(testApp);
+            return expressAdapter.startHttpsServer(testApp, {
+                tlsKeyEnvName: 'F5_APPSVCS_SERVICE_KEY',
+                tlsCertEnvName: 'F5_APPSVCS_SERVICE_CERT',
+                tlsCaEnvName: 'F5_APPSVCS_SERVICE_CA',
+                allowLocalCert: true,
+                port: testPort
+            }).then(() => {
+                assertHttpServer({});
+            });
         });
     });
 });
