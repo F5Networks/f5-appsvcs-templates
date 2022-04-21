@@ -813,7 +813,6 @@ class FASTWorker {
     gatherProvisionData(requestId, clearCache, skipAS3) {
         if (clearCache) {
             this.provisionData = null;
-            this._provisionConfigCache = null;
         }
         return Promise.resolve()
             .then(() => {
@@ -847,16 +846,6 @@ class FASTWorker {
                     name: 'ts',
                     level: (response.status === 200) ? 'nominal' : 'none'
                 });
-            })
-            .then(() => {
-                if (this._provisionConfigCache !== null) {
-                    return Promise.resolve(this._provisionConfigCache);
-                }
-
-                return this.getConfig(requestId);
-            })
-            .then((config) => {
-                this._provisionConfigCache = config;
             })
             .then(() => {
                 if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
@@ -1622,15 +1611,15 @@ class FASTWorker {
     getSettings(restOperation) {
         const reqid = restOperation.requestId;
         return Promise.resolve()
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then((provisionData) => {
-                const tsOptions = provisionData ? this.driver.calculateTsSettings(provisionData[0]) : {};
-                return Promise.resolve(Object.assign(
-                    {},
-                    this._provisionConfigCache,
-                    tsOptions
-                ));
-            })
+        .then(() => this.gatherProvisionData(reqid, true))
+        .then((provisionData) => {
+            const tsOptions = provisionData ? this.driver.calculateTsSettings(provisionData[0]) : {};
+            return Promise.resolve(Object.assign(
+                {},
+                this._provisionConfigCache,
+                tsOptions
+            ));
+        })
             .then((config) => {
                 restOperation.setBody(config);
                 this.completeRestOperation(restOperation);
