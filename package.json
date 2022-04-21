@@ -87,8 +87,9 @@
   "nyc": {
     "all": true,
     "include": [
-      "nodejs/**/*.js",
-      "lib/**/*.js"
+        "stand-alone/expressAdapter.js",
+        "nodejs/**/*.js",
+        "lib/**/*.js"
     ]
   },
   "watch": {
