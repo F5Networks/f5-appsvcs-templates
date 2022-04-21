@@ -153,6 +153,7 @@ describe('Express Adapter', function () {
         const testPort = 6443;
         let testCertKeyChain;
         let spyListenFunc;
+        let spySetSecureContext;
 
         function assertHttpServer() {
             assert.deepEqual(testCertKeyChain, {
@@ -176,11 +177,13 @@ describe('Express Adapter', function () {
             });
             fs.watch = sinon.spy();
             spyListenFunc = sinon.spy();
+            spySetSecureContext = sinon.spy();
             sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
                 testCertKeyChain = certKeyChain;
                 appArg = app;
                 return {
-                    listen: spyListenFunc
+                    listen: spyListenFunc,
+                    setSecureContext: spySetSecureContext
                 };
             });
             return expressAdapter.generateApp([mockFastWorker01], {})
@@ -206,7 +209,7 @@ describe('Express Adapter', function () {
                 allowLocalCert: true,
                 port: testPort
             }).then(() => {
-                assertHttpServer({});
+                assertHttpServer();
             });
         });
     });
