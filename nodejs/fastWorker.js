@@ -229,24 +229,24 @@ class FASTWorker {
             ipamProviders: [],
             disableDeclarationCache: false
         };
-        const mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+        let mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => Promise.all([
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => Promise.all([
                 this.configStorage.getItem(configKey),
-                this.driver.getSettings()
+                this.driver.getSettings(provisionData[0])
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
-                    const tsOptions = this.provisionData ? this.driver.calculateTsSettings(this.provisionData) : {};
                     return Promise.resolve(Object.assign(
                         {},
-                        defaultConfig,
-                        driverSettings,
+                        mergedDefaults,
                         config,
-                        tsOptions
+                        driverSettings
                     ));
                 }
+                mergedDefaults = (driverSettings) ? Object.assign({}, mergedDefaults, driverSettings) : mergedDefaults;
                 return Promise.resolve()
                     .then(() => {
                         this.logger.info('FAST Worker: no config found, loading defaults');
@@ -1611,15 +1611,7 @@ class FASTWorker {
     getSettings(restOperation) {
         const reqid = restOperation.requestId;
         return Promise.resolve()
-        .then(() => this.gatherProvisionData(reqid, true))
-        .then((provisionData) => {
-            const tsOptions = provisionData ? this.driver.calculateTsSettings(provisionData[0]) : {};
-            return Promise.resolve(Object.assign(
-                {},
-                this._provisionConfigCache,
-                tsOptions
-            ));
-        })
+            .then(() => this.getConfig(reqid))
             .then((config) => {
                 restOperation.setBody(config);
                 this.completeRestOperation(restOperation);
