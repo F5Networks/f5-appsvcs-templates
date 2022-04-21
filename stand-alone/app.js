@@ -61,4 +61,13 @@ expressAdapter.generateApp(worker, {
     bigip: bigipInfo,
     staticFiles: path.join(__dirname, '../presentation')
 })
-    .then(app => app.listen(port));
+    .then((app) => {
+        if (process.env.FAST_USE_HTTPS) {
+            return expressAdapter.startHttpsServer(app, {
+                allowLocalCert: !strictCerts,
+                port
+            });
+        }
+
+        return app.listen(port);
+    });
