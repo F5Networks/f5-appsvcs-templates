@@ -163,7 +163,7 @@ describe('Express Adapter', function () {
 
         beforeEach(() => {
             mock({
-                'certs': mock.directory({
+                certs: mock.directory({
                     items: {
                         'certificate.pem': '-----CERTIFICATE-----',
                         'key.pem': '-----PRIVATE KEY-----'
