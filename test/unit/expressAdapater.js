@@ -35,22 +35,6 @@ describe('Express Adapter', function () {
     let mockFastWorkerConfig02;
     this.timeout(6000);
 
-    function assertFastWorker(fastWorker) {
-        // validate logger
-        assert.deepEqual(fastWorker.logger, {
-            severe: console.error,
-            error: console.error,
-            info: console.log,
-            fine: console.log,
-            finest: console.log,
-            log: console.log
-        });
-        // validate restHelper
-        assert.ok(fastWorker.restHelper.makeRestjavadUri);
-        // validate dependencies
-        assert.strictEqual(fastWorker.dependencies.length, 0);
-    }
-
     beforeEach(() => {
         mockFastWorkerConfig01 = {
             onStart: (success, error) => Promise.resolve(success, error),
@@ -82,6 +66,22 @@ describe('Express Adapter', function () {
     });
 
     describe('generateApp', () => {
+        function assertFastWorker(fastWorker) {
+            // validate logger
+            assert.deepEqual(fastWorker.logger, {
+                severe: console.error,
+                error: console.error,
+                info: console.log,
+                fine: console.log,
+                finest: console.log,
+                log: console.log
+            });
+            // validate restHelper
+            assert.ok(fastWorker.restHelper.makeRestjavadUri);
+            // validate dependencies
+            assert.strictEqual(fastWorker.dependencies.length, 0);
+        }
+
         beforeEach(() => {
         });
 
@@ -157,6 +157,7 @@ describe('Express Adapter', function () {
                 key: '-----PRIVATE KEY-----'
             });
             assert.ok(fs.watch.called);
+            assert.strictEqual(fs.watch.args[0][0], 'certs');
             assert.ok(spyListenFunc.called);
             assert.deepEqual(testApp, appArg);
         }
