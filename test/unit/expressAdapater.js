@@ -23,6 +23,8 @@ const assert = require('assert');
 const sinon = require('sinon');
 const mock = require('mock-fs');
 const fs = require('fs');
+const axios = require('axios');
+const http = require('http');
 const https = require('https');
 const expressAdapter = require('../../stand-alone/expressAdapter');
 
@@ -64,6 +66,7 @@ describe('Express Adapter', function () {
     });
 
     describe('generateApp', () => {
+        let axiosCreateSpy;
         function assertFastWorker(fastWorker) {
             // validate logger
             assert.deepEqual(fastWorker.logger, {
@@ -81,9 +84,12 @@ describe('Express Adapter', function () {
         }
 
         beforeEach(() => {
+            axiosCreateSpy = sinon.spy(axios, 'create');
         });
 
         afterEach(() => {
+            axiosCreateSpy.restore();
+            sinon.restore();
         });
 
         it('generateApp with single worker and default settings',
@@ -108,6 +114,8 @@ describe('Express Adapter', function () {
             const middleware = (req, res, next) => {
                 next();
             };
+            http.Agent = sinon.spy();
+            https.Agent = sinon.spy();
             return expressAdapter.generateApp([mockFastWorker01], {
                 middleware: [middleware],
                 staticFiles: 'test-static-file',
@@ -123,6 +131,18 @@ describe('Express Adapter', function () {
                     assert.strictEqual(app.name, 'app');
                     assert.ok(app._router.stack.filter(stack => stack.name === 'middleware').length);
                     assertFastWorker(mockFastWorker01);
+                    assert.ok(http.Agent.called && https.Agent.called);
+                    assert.ok(axiosCreateSpy.called);
+                    assert.deepEqual(axiosCreateSpy.args[0][0], {
+                        baseURL: 'test-host.com',
+                        auth: {
+                            username: 'test-user',
+                            password: 'test-password'
+                        },
+                        maxBodyLength: 'Infinity',
+                        httpAgent: {},
+                        httpsAgent: {}
+                    });
                 });
         });
     });
@@ -170,6 +190,7 @@ describe('Express Adapter', function () {
         });
 
         afterEach(() => {
+            sinon.restore();
             mock.restore();
             testCertKeyChain = undefined;
             testApp = undefined;
