@@ -92,8 +92,8 @@ describe('Express Adapter', function () {
             sinon.restore();
         });
 
-        it('generateApp with single worker and default settings',
-            () => expressAdapter.generateApp([mockFastWorker01], {})
+        it('single_worker_default_settings',
+            () => expressAdapter.generateApp(mockFastWorker01, {})
                 .then((app) => {
                     assert.ok(app && app.listen);
                     assert.strictEqual(app.name, 'app');
@@ -101,7 +101,7 @@ describe('Express Adapter', function () {
                     assertFastWorker(mockFastWorker01);
                 }));
 
-        it('generateApp with multiple worker and default settings',
+        it('multiple_worker_default_settings',
             () => expressAdapter.generateApp([mockFastWorker01, mockFastWorker02], {})
                 .then((app) => {
                     assert.ok(app && app.listen);
@@ -110,13 +110,13 @@ describe('Express Adapter', function () {
                     assertFastWorker(mockFastWorker02);
                 }));
 
-        it('generateApp with single worker and custom settings', () => {
+        it('single_worker_custom_settings', () => {
             const middleware = (req, res, next) => {
                 next();
             };
             http.Agent = sinon.spy();
             https.Agent = sinon.spy();
-            return expressAdapter.generateApp([mockFastWorker01], {
+            return expressAdapter.generateApp(mockFastWorker01, {
                 middleware: [middleware],
                 staticFiles: 'test-static-file',
                 bigip: {
@@ -150,16 +150,20 @@ describe('Express Adapter', function () {
     describe('startHttpsServer', () => {
         let testApp;
         let appArg;
-        const testPort = 6443;
+        let testPort;
         let testCertKeyChain;
         let spyListenFunc;
-        let spySetSecureContext;
+        let spySetSecureContextFunc;
 
-        function assertHttpServer() {
-            assert.deepEqual(testCertKeyChain, {
+        function assertHttpServer(options) {
+            const certs = {
                 cert: '-----CERTIFICATE-----',
                 key: '-----PRIVATE KEY-----'
-            });
+            };
+            if (options && options.ca) {
+                certs.ca = '-----CA_CERTIFICATE-----';
+            }
+            assert.deepEqual(testCertKeyChain, certs);
             assert.ok(fs.watch.called);
             assert.strictEqual(fs.watch.args[0][0], 'certs');
             assert.ok(spyListenFunc.called);
@@ -167,26 +171,28 @@ describe('Express Adapter', function () {
         }
 
         beforeEach(() => {
+            testPort = 6443;
             mock({
                 certs: mock.directory({
                     items: {
                         'certificate.pem': '-----CERTIFICATE-----',
-                        'key.pem': '-----PRIVATE KEY-----'
+                        'key.pem': '-----PRIVATE KEY-----',
+                        'ca_certificate.pem': '-----CA_CERTIFICATE-----'
                     }
                 })
             });
             fs.watch = sinon.spy();
             spyListenFunc = sinon.spy();
-            spySetSecureContext = sinon.spy();
+            spySetSecureContextFunc = sinon.spy();
             sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
                 testCertKeyChain = certKeyChain;
                 appArg = app;
                 return {
                     listen: spyListenFunc,
-                    setSecureContext: spySetSecureContext
+                    setSecureContext: spySetSecureContextFunc
                 };
             });
-            return expressAdapter.generateApp([mockFastWorker01], {})
+            return expressAdapter.generateApp(mockFastWorker01, {})
                 .then((app) => {
                     testApp = app;
                 });
@@ -198,9 +204,14 @@ describe('Express Adapter', function () {
             testCertKeyChain = undefined;
             testApp = undefined;
             spyListenFunc = undefined;
+            spySetSecureContextFunc = undefined;
+            testPort = undefined;
+            delete process.env.F5_SERVICE_KEY;
+            delete process.env.F5_SERVICE_CERT;
+            delete process.env.F5_SERVICE_CA;
         });
 
-        it('startHttpsServer with defaul settings', () => {
+        it('default_settings', () => {
             assert.ok(testApp);
             return expressAdapter.startHttpsServer(testApp, {
                 tlsKeyEnvName: 'F5_APPSVCS_SERVICE_KEY',
@@ -210,6 +221,105 @@ describe('Express Adapter', function () {
                 port: testPort
             }).then(() => {
                 assertHttpServer();
+            });
+        });
+
+        it('custom_key_ca_cert', () => {
+            assert.ok(testApp);
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+            return expressAdapter.startHttpsServer(testApp, {
+                tlsKeyEnvName: 'F5_SERVICE_KEY',
+                tlsCertEnvName: 'F5_SERVICE_CERT',
+                tlsCaEnvName: 'F5_SERVICE_CA',
+                allowLocalCert: true,
+                port: testPort
+            }).then(() => {
+                assertHttpServer({ ca: true });
+            });
+        });
+
+        it('custom_key_ca_cert_from_env_variables', () => {
+            assert.ok(testApp);
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+            testPort = undefined;
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort
+            }).then(() => {
+                assertHttpServer({ ca: true });
+            });
+        });
+
+        it('failure_read_service_key', () => {
+            assert.ok(testApp);
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+            sinon.stub(fs, 'readFileSync').callsFake((path) => {
+                if (path === process.env.F5_SERVICE_KEY) {
+                    throw new Error('Failed to read service key.');
+                }
+            });
+            return expressAdapter.startHttpsServer(testApp, {
+                tlsKeyEnvName: 'F5_SERVICE_KEY',
+                tlsCertEnvName: 'F5_SERVICE_CERT',
+                tlsCaEnvName: 'F5_SERVICE_CA',
+                allowLocalCert: true,
+                port: testPort
+            }).then(() => {
+                assert.fail();
+            }).catch((err) => {
+                assert.strictEqual(err.message, 'Failed to load TLS key and certificate: Failed to read service key.\nFailed to read service key.');
+            });
+        });
+
+        it('failure_read_service_certificate', () => {
+            assert.ok(testApp);
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+            sinon.stub(fs, 'readFileSync').callsFake((path) => {
+                if (path === process.env.F5_SERVICE_CERT) {
+                    throw new Error('Failed to read certificate.');
+                }
+            });
+            return expressAdapter.startHttpsServer(testApp, {
+                tlsKeyEnvName: 'F5_SERVICE_KEY',
+                tlsCertEnvName: 'F5_SERVICE_CERT',
+                tlsCaEnvName: 'F5_SERVICE_CA',
+                allowLocalCert: true,
+                port: testPort
+            }).then(() => {
+                assert.fail();
+            }).catch((err) => {
+                assert.strictEqual(err.message, 'Failed to load TLS key and certificate: Failed to read certificate.\nFailed to read certificate.');
+            });
+        });
+
+        it('failure_read_service_ca_certificate', () => {
+            assert.ok(testApp);
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+            sinon.stub(fs, 'readFileSync').callsFake((path) => {
+                if (path === process.env.F5_SERVICE_CA) {
+                    throw new Error('Failed to read ca certificate.');
+                }
+            });
+            return expressAdapter.startHttpsServer(testApp, {
+                tlsKeyEnvName: 'F5_SERVICE_KEY',
+                tlsCertEnvName: 'F5_SERVICE_CERT',
+                tlsCaEnvName: 'F5_SERVICE_CA',
+                allowLocalCert: true,
+                port: testPort
+            }).then(() => {
+                assert.fail();
+            }).catch((err) => {
+                assert.strictEqual(err.message, 'Failed to load TLS key and certificate: Failed to read ca certificate.');
             });
         });
     });
