@@ -152,7 +152,7 @@ describe('Express Adapter', function () {
         let spyListenFunc;
         let spySetSecureContextFunc;
 
-        function assertHttpServer(options) {
+        function assertHttpsServer(options) {
             const certs = {
                 cert: '-----CERTIFICATE-----',
                 key: '-----PRIVATE KEY-----'
@@ -217,7 +217,7 @@ describe('Express Adapter', function () {
                 allowLocalCert: true,
                 port: testPort
             }).then(() => {
-                assertHttpServer();
+                assertHttpsServer();
             });
         });
 
@@ -233,7 +233,7 @@ describe('Express Adapter', function () {
                 allowLocalCert: true,
                 port: testPort
             }).then(() => {
-                assertHttpServer({ ca: true });
+                assertHttpsServer({ ca: true });
             });
         });
 
@@ -247,7 +247,7 @@ describe('Express Adapter', function () {
                 allowLocalCert: true,
                 port: testPort
             }).then(() => {
-                assertHttpServer({ ca: true });
+                assertHttpsServer({ ca: true });
             });
         });
 
