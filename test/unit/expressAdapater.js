@@ -323,4 +323,72 @@ describe('Express Adapter', function () {
             });
         });
     });
+
+    describe('restOpFromRequest', () => {
+        beforeEach(() => {
+
+        });
+
+        afterEach(() => {
+
+        });
+
+        it('req_with_all_availabe_properties', () => {
+            const result = expressAdapter.restOpFromRequest({
+                url: 'http://test-fast.com:8080/mgmt/shared/fast/',
+                body: {
+                    foo: 1,
+                    bar: 2
+                },
+                headers: {
+                    'Test-Header': 'This is test header value'
+                }
+            });
+            assert.deepEqual(result.uri, {
+                protocol: 'http:',
+                slashes: true,
+                auth: null,
+                host: 'test-fast.com:8080',
+                port: '8080',
+                hostname: 'test-fast.com',
+                hash: null,
+                search: null,
+                query: {},
+                pathname: '/shared/fast/',
+                path: '/shared/fast/',
+                href: 'http://test-fast.com:8080/shared/fast/'
+            });
+            assert.deepEqual(result.body, {
+                foo: 1,
+                bar: 2
+            });
+            assert.strictEqual(result.headers['Test-Header'], 'This is test header value');
+        });
+
+        it('req_without_body', () => {
+            const result = expressAdapter.restOpFromRequest({
+                url: 'http://test-fast.com:8080/mgmt/shared/fast/',
+                body: {},
+                headers: {
+                    'Test-Header': 'This is test header value'
+                }
+            });
+            assert.deepEqual(result.uri, {
+                protocol: 'http:',
+                slashes: true,
+                auth: null,
+                host: 'test-fast.com:8080',
+                port: '8080',
+                hostname: 'test-fast.com',
+                hash: null,
+                search: null,
+                query: {},
+                pathname: '/shared/fast/',
+                path: '/shared/fast/',
+                href: 'http://test-fast.com:8080/shared/fast/'
+            });
+            assert.strictEqual(result.body, undefined);
+            assert.strictEqual(result.headers['Test-Header'], 'This is test header value');
+        });
+    });
 });
