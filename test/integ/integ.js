@@ -414,16 +414,16 @@ describe('Applications', function () {
             resp => waitForCompletedTask(resp.data.message[0].id)
         )))
         .then((tasks) => {
-            console.log(JSON.stringify(
-                tasks.map(task => ({
-                    id: task.id,
-                    code: task.code,
-                    message: task.message,
-                    application: task.application
-                })),
-                null,
-                2
-            ));
+            // console.log(JSON.stringify(
+            //     tasks.map(task => ({
+            //         id: task.id,
+            //         code: task.code,
+            //         message: task.message,
+            //         application: task.application
+            //     })),
+            //     null,
+            //     2
+            // ));
             tasks.forEach((task) => {
                 assert.strictEqual(task.code, 200);
             });
