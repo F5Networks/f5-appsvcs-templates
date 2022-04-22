@@ -78,7 +78,7 @@ describe('Express Adapter', function () {
                 log: console.log
             });
             // validate restHelper
-            assert.ok(fastWorker.restHelper.makeRestjavadUri);
+            assert.ok(typeof fastWorker.restHelper.makeRestjavadUri === 'function');
             // validate dependencies
             assert.strictEqual(fastWorker.dependencies.length, 0);
         }
@@ -95,7 +95,6 @@ describe('Express Adapter', function () {
         it('single_worker_default_settings',
             () => expressAdapter.generateApp(mockFastWorker01, {})
                 .then((app) => {
-                    assert.ok(app && app.listen);
                     assert.strictEqual(app.name, 'app');
                     assert.strictEqual(app._router.stack.filter(stack => stack.name === 'bound dispatch')[0].route.path, '/mgmt/shared/fast/*');
                     assertFastWorker(mockFastWorker01);
@@ -104,7 +103,6 @@ describe('Express Adapter', function () {
         it('multiple_worker_default_settings',
             () => expressAdapter.generateApp([mockFastWorker01, mockFastWorker02], {})
                 .then((app) => {
-                    assert.ok(app && app.listen);
                     assert.strictEqual(app.name, 'app');
                     assertFastWorker(mockFastWorker01);
                     assertFastWorker(mockFastWorker02);
@@ -127,7 +125,6 @@ describe('Express Adapter', function () {
                 }
             })
                 .then((app) => {
-                    assert.ok(app && app.listen);
                     assert.strictEqual(app.name, 'app');
                     assert.ok(app._router.stack.filter(stack => stack.name === 'middleware').length);
                     assertFastWorker(mockFastWorker01);
