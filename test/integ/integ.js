@@ -231,6 +231,18 @@ describe('Template Sets', function () {
 describe('Applications', function () {
     this.timeout(120000);
 
+    function assertResponse(actual, expected) {
+        return Promise.resolve()
+            .then(() => {
+                const exp = expected || { code: 200, message: 'success' };
+                if (exp.code === 200 && actual.code !== 200) {
+                    console.log(actual);
+                }
+                assert.strictEqual(actual.code, exp.code);
+                assert.match(actual.message, new RegExp(`${exp.message}`));
+            });
+    }
+
     function deployApplication(templateName, parameters) {
         parameters = parameters || {};
         return Promise.resolve()
@@ -246,17 +258,11 @@ describe('Applications', function () {
                 }
                 return waitForCompletedTask(taskid);
             })
-            .then((task) => {
-                if (task.code !== 200) {
-                    console.log(task);
-                }
-                assert.strictEqual(task.code, 200);
-                assert.strictEqual(task.message, 'success');
-            })
+            .then(task => assertResponse(task))
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
-    function patchApplication(appName, parameters) {
+    function patchApplication(appName, parameters, expected) {
         return Promise.resolve()
             .then(() => endpoint.patch(`/mgmt/shared/fast/applications/${appName}`, {
                 parameters
@@ -269,15 +275,13 @@ describe('Applications', function () {
                 }
                 return waitForCompletedTask(taskid);
             })
-            .then((task) => {
-                if (task.code !== 200) {
-                    console.log(task);
+            .then(task => assertResponse(task, expected))
+            .catch((e) => {
+                if (expected && expected.code !== 200) {
+                    return assertResponse(e.response.data, expected);
                 }
-                assert.strictEqual(task.code, 200);
-                assert.strictEqual(task.message, 'success');
-                return task;
-            })
-            .catch(e => handleHTTPError(e, `patch ${appName}`));
+                return handleHTTPError(e, `patch ${appName}`);
+            });
     }
 
     before('Setup', () => Promise.resolve()
@@ -387,20 +391,10 @@ describe('Applications', function () {
         .then(() => patchApplication('foo/patchBad', {
             application_name: 'patchBad2',
             virtual_address: '10.0.0.12'
-        }))
-        .then(() => {
-            assert(false, 'rename-causing PATCH should not succeed');
-        })
-        .catch((e) => {
-            if (!e.response) {
-                return Promise.reject(e);
-            }
-
-            const respData = e.response.data;
-            assert.strictEqual(respData.code, 422);
-            assert.match(respData.message, /change application name/);
-            return Promise.resolve();
-        }));
+        }, {
+            code: 422,
+            message: 'change application name'
+        })));
 });
 
 describe('Settings', function () {
@@ -518,7 +512,7 @@ describe('Settings', function () {
     });
     it('PATCH settings', () => {
         const patchBody = {
-            deletedTemplateSets: ['examples'],
+            disableDeclarationCache: true,
             ipamProviders: []
         };
         const expected = {
@@ -530,12 +524,12 @@ describe('Settings', function () {
             .then(() => {
                 expected.data = {
                     enable_telemetry: false,
-                    deletedTemplateSets: ['examples'],
+                    deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
                     log_afm: false,
                     log_asm: false,
-                    disableDeclarationCache: false,
+                    disableDeclarationCache: true,
                     _links: { self: url }
                 };
                 return endpoint.get(url)
