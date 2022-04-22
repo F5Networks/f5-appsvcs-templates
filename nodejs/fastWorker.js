@@ -246,7 +246,7 @@ class FASTWorker {
                         driverSettings
                     ));
                 }
-                mergedDefaults = (driverSettings) ? Object.assign({}, mergedDefaults, driverSettings) : mergedDefaults;
+                mergedDefaults = Object.assign({}, mergedDefaults, driverSettings);
                 return Promise.resolve()
                     .then(() => {
                         this.logger.info('FAST Worker: no config found, loading defaults');
