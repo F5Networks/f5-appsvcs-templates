@@ -120,7 +120,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationsDeleteResponse"
+                $ref: "#/components/schemas/ApplicationDeleteResponse"
         '404':
           description: Tenant or Application not found.
           content:
@@ -821,6 +821,9 @@ components:
     ApplicationResponse:
       type: object
       description: The response message when performing Application operations.
+      required:
+        - code
+        - message
       properties:
         _links:
           $ref: "#/components/schemas/LinksDefinition"
@@ -848,40 +851,29 @@ components:
                 example: { "tenant_name": "tenant", "application_name": "app" }
     ApplicationDeleteResponse:
       type: object
-      description: The response message when deleting a specific Application.
+      description: The response message when deleting Applications
+      required:
+        - code
+        - message
+      additionalProperties: true
       properties:
         _links:
           $ref: "#/components/schemas/LinksDefinition"
-        results:
+        code:
+          type: integer
+          minimum: 202
+          maximum: 599
+          example: 202
+        message:
           type: array
+          minItems: 1
           items:
-            $ref: "#/components/schemas/ObjectDefinition"
-        declaration:
-          description: the AS3 declaration that was used to create the deleted Application.
-          type: object
-        id:
-          type: string
-          description: The Task ID which can be used to query Task state.
-        selfLink:
-          description: The URL which can be used to query Task state.
-          type: string
-      example:
-          results: []
-          declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%examples%simple_udp%2","tenant":{"class":"Tenant","app":{"class":"Application","template":"udp","serviceMain":{"class":"Service_UDP","virtualAddresses":["192.0.2.11"],"virtualPort":5555,"pool":"app_Pool1","enable":true,"persistenceMethods":["source-address"]},"app_Pool1":{"class":"Pool","monitors":["icmp"],"members":[{"serverAddresses":["192.0.2.22"],"servicePort":5555}],"loadBalancingMode":"round-robin"},"constants":{"class":"Constants","fast":{"template":"examples/simple_udp_defaults","setHash":"b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715","view":{"tenant_name":"tenant","application_name":"app"},"lastModified":"2022-03-26T00:16:52.666Z","ipamAddrs":{}}}}}}
-          id: 62c587f1-374e-49a8-b418-0db766a219ee
-          selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
-    ApplicationsDeleteResponse:
-      type: array
-      description: The response message when deleting multiple Applications.
-      items:
-        $ref: "#/components/schemas/ApplicationDeleteResponse"
-      example:
-          results: []
-          _links:
-            self: '/mgmt/shared/fast/applications'
-          declaration: {"class":"ADC","schemaVersion":"3.0.0","id":"fast%delete%%%7"}
-          id: 62c587f1-374e-49a8-b418-0db766a219ee
-          selfLink: "https://10.0.0.1/mgmt/shared/appsvcs/task/62c587f1-374e-49a8-b418-0db766a219ee"
+            type: object
+            properties:
+              id:
+                type: string
+                description: The Task ID which can be used to query Task state.
+                example: ff70c2c0-af21-44c8-8fec-18e2d82eabf0
     Task:
       type: object
       description: Task.

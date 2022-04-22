@@ -1971,9 +1971,24 @@ class FASTWorker {
                 this.driver.deleteApplications(appNames)
             ))
             .then((result) => {
-                restOperation.setHeaders('Content-Type', 'text/json');
-                restOperation.setBody(result.body);
+                const body = Object.assign(
+                    {},
+                    result.data, // for backwards compatibility
+                    {
+                        code: result.status,
+                        message: appNames.map(() => ({
+                            id: result.data.id
+                        }))
+                    }
+                );
+                if (body.message.length === 0) {
+                    // Handle delete all
+                    body.message.push({ id: result.data.id });
+                }
+
+                // Cannot use genRestResponse() since we have extra items in the body for backwards compatibility
                 restOperation.setStatusCode(result.status);
+                restOperation.setBody(body);
                 this.completeRestOperation(restOperation);
             })
             .then(() => {
