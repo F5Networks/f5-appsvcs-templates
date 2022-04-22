@@ -130,6 +130,7 @@ describe('Express Adapter', function () {
                     assertFastWorker(mockFastWorker01);
                     assert.ok(http.Agent.called && https.Agent.called);
                     assert.ok(axiosCreateSpy.called);
+                    console.log(axiosCreateSpy.calledOnceWith('baseURL'));
                     assert.deepEqual(axiosCreateSpy.args[0][0], {
                         baseURL: 'test-host.com',
                         auth: {
@@ -322,14 +323,6 @@ describe('Express Adapter', function () {
     });
 
     describe('restOpFromRequest', () => {
-        beforeEach(() => {
-
-        });
-
-        afterEach(() => {
-
-        });
-
         it('req_with_all_availabe_properties', () => {
             const result = expressAdapter.restOpFromRequest({
                 url: 'http://test-fast.com:8080/mgmt/shared/fast/',
