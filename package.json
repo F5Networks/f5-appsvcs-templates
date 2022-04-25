@@ -7,7 +7,7 @@
   "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
   "scripts": {
-    "lint": "eslint --fix --ext .js,.vue nodejs lib presentation/app.js presentation/pages presentation/components test scripts stand-alone",
+    "lint": "eslint --ext .js,.vue nodejs lib presentation/app.js presentation/pages presentation/components test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
     "testinteg": "mocha --recursive \"./test/integ/*.js\"",
