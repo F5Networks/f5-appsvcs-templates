@@ -1,5 +1,12 @@
 # 1.18.0
 ## Added
+* bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
+
+## Fixed
+* bigip-fast-templates: Enabling Telemetry Streaming does not result in an error, preventing application deployment
+
+## Changed
+* FAST Global Settings no longer show Telemetry Streaming as a GUI option because it is readonly (true if installed), and log_asm/log_afm are also readonly
 
 ## Fixed
 
