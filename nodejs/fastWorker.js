@@ -71,6 +71,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '8bf4673002253ab45099586272a6f58d8f9cf1ca81098eded5081ef6a7a1bda1', // v1.18
         '0164bc45aa3597ab0c93406ad206f7dce42597899b8d533296dfa335d051181f', // v1.17
         '0acc8d8b76793c30e847257b85e30df708341c7fb347be25bb745a63ad411cc4', // v1.16
         '5d7e87d1dafc52d230538885e96db4babe43824f06a0e808a9c401105b912aaf', // v1.15
@@ -228,22 +229,24 @@ class FASTWorker {
             ipamProviders: [],
             disableDeclarationCache: false
         };
-        const mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+        let mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => Promise.all([
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => Promise.all([
                 this.configStorage.getItem(configKey),
-                this.driver.getSettings()
+                this.driver.getSettings(provisionData[0])
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
                     return Promise.resolve(Object.assign(
                         {},
-                        defaultConfig,
-                        driverSettings,
-                        config
+                        mergedDefaults,
+                        config,
+                        driverSettings
                     ));
                 }
+                mergedDefaults = Object.assign({}, mergedDefaults, driverSettings);
                 return Promise.resolve()
                     .then(() => {
                         this.logger.info('FAST Worker: no config found, loading defaults');
@@ -810,7 +813,6 @@ class FASTWorker {
     gatherProvisionData(requestId, clearCache, skipAS3) {
         if (clearCache) {
             this.provisionData = null;
-            this._provisionConfigCache = null;
         }
         return Promise.resolve()
             .then(() => {
@@ -828,16 +830,6 @@ class FASTWorker {
                 this.provisionData = response;
             })
             .then(() => {
-                if (this._provisionConfigCache !== null) {
-                    return Promise.resolve(this._provisionConfigCache);
-                }
-
-                return this.getConfig(requestId);
-            })
-            .then((config) => {
-                this._provisionConfigCache = config;
-            })
-            .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
                 if (tsInfo) {
                     return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
@@ -850,10 +842,9 @@ class FASTWorker {
                 );
             })
             .then((response) => {
-                const config = this._provisionConfigCache;
                 this.provisionData.items.push({
                     name: 'ts',
-                    level: (response.status === 200 && config.enable_telemetry) ? 'nominal' : 'none'
+                    level: (response.status === 200) ? 'nominal' : 'none'
                 });
             })
             .then(() => {

@@ -436,9 +436,9 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                enable_telemetry: false,
-                log_asm: false,
-                log_afm: false
+                enable_telemetry: true,
+                log_asm: true,
+                log_afm: true
             },
             status: 200
         })));
@@ -462,9 +462,9 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     // driver defaults
-                    enable_telemetry: false,
-                    log_asm: false,
-                    log_afm: false,
+                    enable_telemetry: true,
+                    log_asm: true,
+                    log_afm: true,
                     _links: { self: url }
                 };
                 return assertResponse(actual, expected);
@@ -472,7 +472,7 @@ describe('Settings', function () {
     });
     it('POST then GET settings with IPAM', () => {
         const postBody = {
-            enable_telemetry: false,
+            enable_telemetry: true,
             deletedTemplateSets: [],
             ipamProviders: [{
                 serviceType: 'Generic',
@@ -489,8 +489,8 @@ describe('Settings', function () {
                 network: 'testnetwork'
             }],
             enableIpam: false,
-            log_afm: false,
-            log_asm: false,
+            log_afm: true,
+            log_asm: true,
             disableDeclarationCache: false,
             _links: { self: url }
         };
@@ -523,12 +523,12 @@ describe('Settings', function () {
             .then(actual => assertResponse(actual, expected))
             .then(() => {
                 expected.data = {
-                    enable_telemetry: false,
+                    enable_telemetry: true,
                     deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
-                    log_afm: false,
-                    log_asm: false,
+                    log_afm: true,
+                    log_asm: true,
                     disableDeclarationCache: true,
                     _links: { self: url }
                 };
