@@ -130,8 +130,7 @@ describe('Express Adapter', function () {
                     assertFastWorker(mockFastWorker01);
                     assert.ok(http.Agent.called && https.Agent.called);
                     assert.ok(axiosCreateSpy.called);
-                    console.log(axiosCreateSpy.calledOnceWith('baseURL'));
-                    assert.deepEqual(axiosCreateSpy.args[0][0], {
+                    assert.ok(axiosCreateSpy.calledOnceWith({
                         baseURL: 'test-host.com',
                         auth: {
                             username: 'test-user',
@@ -140,7 +139,7 @@ describe('Express Adapter', function () {
                         maxBodyLength: 'Infinity',
                         httpAgent: {},
                         httpsAgent: {}
-                    });
+                    }));
                 });
         });
     });
@@ -163,7 +162,7 @@ describe('Express Adapter', function () {
             }
             assert.deepEqual(testCertKeyChain, certs);
             assert.ok(fs.watch.called);
-            assert.strictEqual(fs.watch.args[0][0], 'certs');
+            assert.ok(fs.watch.calledWith('certs'));
             assert.ok(spyListenFunc.called);
             assert.deepEqual(testApp, appArg);
         }
