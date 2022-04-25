@@ -180,7 +180,7 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
-            assert.deepStrictEqual(actual.data, { code: 200, message: 'success' });
+            assert.deepStrictEqual(actual.data, { code: 200, message: 'success', _links: { self: '/mgmt/shared/fast/templatesets/examples' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST re-install template set and GET by ID', () => Promise.resolve()
@@ -188,7 +188,7 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
-            assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+            assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
     it('POST package, upload and install custom template set', () => {
@@ -221,7 +221,7 @@ describe('Template Sets', function () {
             .catch(e => handleHTTPError(e, `install ${testSetName} template set`))
             .then((actual) => {
                 assert.strictEqual(actual.status, 200);
-                assert.deepStrictEqual(actual.data, { code: 200, message: '' });
+                assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
                 return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
             .finally(() => fs.unlinkSync(zipFileName));
@@ -230,6 +230,18 @@ describe('Template Sets', function () {
 
 describe('Applications', function () {
     this.timeout(120000);
+
+    function assertResponse(actual, expected) {
+        return Promise.resolve()
+            .then(() => {
+                const exp = expected || { code: 200, message: 'success' };
+                if (exp.code === 200 && actual.code !== 200) {
+                    console.log(actual);
+                }
+                assert.strictEqual(actual.code, exp.code);
+                assert.match(actual.message, new RegExp(`${exp.message}`));
+            });
+    }
 
     function deployApplication(templateName, parameters) {
         parameters = parameters || {};
@@ -246,17 +258,11 @@ describe('Applications', function () {
                 }
                 return waitForCompletedTask(taskid);
             })
-            .then((task) => {
-                if (task.code !== 200) {
-                    console.log(task);
-                }
-                assert.strictEqual(task.code, 200);
-                assert.strictEqual(task.message, 'success');
-            })
+            .then(task => assertResponse(task))
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
-    function patchApplication(appName, parameters) {
+    function patchApplication(appName, parameters, expected) {
         return Promise.resolve()
             .then(() => endpoint.patch(`/mgmt/shared/fast/applications/${appName}`, {
                 parameters
@@ -269,15 +275,13 @@ describe('Applications', function () {
                 }
                 return waitForCompletedTask(taskid);
             })
-            .then((task) => {
-                if (task.code !== 200) {
-                    console.log(task);
+            .then(task => assertResponse(task, expected))
+            .catch((e) => {
+                if (expected && expected.code !== 200) {
+                    return assertResponse(e.response.data, expected);
                 }
-                assert.strictEqual(task.code, 200);
-                assert.strictEqual(task.message, 'success');
-                return task;
-            })
-            .catch(e => handleHTTPError(e, `patch ${appName}`));
+                return handleHTTPError(e, `patch ${appName}`);
+            });
     }
 
     before('Setup', () => Promise.resolve()
@@ -387,20 +391,10 @@ describe('Applications', function () {
         .then(() => patchApplication('foo/patchBad', {
             application_name: 'patchBad2',
             virtual_address: '10.0.0.12'
-        }))
-        .then(() => {
-            assert(false, 'rename-causing PATCH should not succeed');
-        })
-        .catch((e) => {
-            if (!e.response) {
-                return Promise.reject(e);
-            }
-
-            const respData = e.response.data;
-            assert.strictEqual(respData.code, 422);
-            assert.match(respData.message, /change application name/);
-            return Promise.resolve();
-        }));
+        }, {
+            code: 422,
+            message: 'change application name'
+        })));
 });
 
 describe('Settings', function () {
@@ -434,6 +428,9 @@ describe('Settings', function () {
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
+                _links: {
+                    self: url
+                },
                 deletedTemplateSets: [],
                 ipamProviders: [],
                 enableIpam: false,
@@ -452,7 +449,7 @@ describe('Settings', function () {
             enableIpam: false
         };
         const expected = {
-            data: { code: 200, message: '' },
+            data: { code: 200, message: '', _links: { self: url } },
             status: 200
         };
         return endpoint.post(url, postBody)
@@ -467,7 +464,8 @@ describe('Settings', function () {
                     // driver defaults
                     enable_telemetry: true,
                     log_asm: true,
-                    log_afm: true
+                    log_afm: true,
+                    _links: { self: url }
                 };
                 return assertResponse(actual, expected);
             });
@@ -493,10 +491,11 @@ describe('Settings', function () {
             enableIpam: false,
             log_afm: true,
             log_asm: true,
-            disableDeclarationCache: false
+            disableDeclarationCache: false,
+            _links: { self: url }
         };
         const expected = {
-            data: { code: 200, message: '' },
+            data: { code: 200, _links: { self: url }, message: '' },
             status: 200
         };
         return endpoint.post(url, postBody)
@@ -513,11 +512,11 @@ describe('Settings', function () {
     });
     it('PATCH settings', () => {
         const patchBody = {
-            deletedTemplateSets: ['examples'],
+            disableDeclarationCache: true,
             ipamProviders: []
         };
         const expected = {
-            data: { code: 200, message: '' },
+            data: { code: 200, _links: { self: url }, message: '' },
             status: 200
         };
         return endpoint.patch(url, patchBody)
@@ -525,12 +524,13 @@ describe('Settings', function () {
             .then(() => {
                 expected.data = {
                     enable_telemetry: true,
-                    deletedTemplateSets: ['examples'],
+                    deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
                     log_afm: true,
                     log_asm: true,
-                    disableDeclarationCache: false
+                    disableDeclarationCache: true,
+                    _links: { self: url }
                 };
                 return endpoint.get(url)
                     .then(res => assertResponse(res, expected));

@@ -8,6 +8,10 @@
 ## Changed
 * FAST Global Settings no longer show Telemetry Streaming as a GUI option because it is readonly (true if installed), and log_asm/log_afm are also readonly
 
+## Fixed
+
+## Changed
+
 # 1.17.0
 ## Added
 * bigip-fast-templates: Existing AFM Firewal Policies can be selected instead of generating a new one (issue [#94](https://github.com/F5Networks/f5-appsvcs-templates/issues/94))
