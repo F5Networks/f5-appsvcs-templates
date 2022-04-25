@@ -261,16 +261,15 @@ describe('Express Adapter', function () {
                     throw new Error('Failed to read service key.');
                 }
             });
-            return expressAdapter.startHttpsServer(testApp, {
+            return assert.rejects(expressAdapter.startHttpsServer(testApp, {
                 tlsKeyEnvName: 'F5_SERVICE_KEY',
                 tlsCertEnvName: 'F5_SERVICE_CERT',
                 tlsCaEnvName: 'F5_SERVICE_CA',
                 allowLocalCert: true,
                 port: testPort
-            }).then(() => {
-                assert.fail();
-            }).catch((err) => {
-                assert.strictEqual(err.message, 'Failed to load TLS key and certificate: Failed to read service key.\nFailed to read service key.');
+            }), {
+                name: 'Error',
+                message: 'Failed to load TLS key and certificate: Failed to read service key.\nFailed to read service key.'
             });
         });
 
@@ -284,16 +283,15 @@ describe('Express Adapter', function () {
                     throw new Error('Failed to read certificate.');
                 }
             });
-            return expressAdapter.startHttpsServer(testApp, {
+            return assert.rejects(expressAdapter.startHttpsServer(testApp, {
                 tlsKeyEnvName: 'F5_SERVICE_KEY',
                 tlsCertEnvName: 'F5_SERVICE_CERT',
                 tlsCaEnvName: 'F5_SERVICE_CA',
                 allowLocalCert: true,
                 port: testPort
-            }).then(() => {
-                assert.fail();
-            }).catch((err) => {
-                assert.strictEqual(err.message, 'Failed to load TLS key and certificate: Failed to read certificate.\nFailed to read certificate.');
+            }), {
+                name: 'Error',
+                message: 'Failed to load TLS key and certificate: Failed to read certificate.\nFailed to read certificate.'
             });
         });
 
@@ -307,16 +305,15 @@ describe('Express Adapter', function () {
                     throw new Error('Failed to read ca certificate.');
                 }
             });
-            return expressAdapter.startHttpsServer(testApp, {
+            return assert.rejects(expressAdapter.startHttpsServer(testApp, {
                 tlsKeyEnvName: 'F5_SERVICE_KEY',
                 tlsCertEnvName: 'F5_SERVICE_CERT',
                 tlsCaEnvName: 'F5_SERVICE_CA',
                 allowLocalCert: true,
                 port: testPort
-            }).then(() => {
-                assert.fail();
-            }).catch((err) => {
-                assert.strictEqual(err.message, 'Failed to load TLS key and certificate: Failed to read ca certificate.');
+            }), {
+                name: 'Error',
+                message: 'Failed to load TLS key and certificate: Failed to read ca certificate.'
             });
         });
     });
