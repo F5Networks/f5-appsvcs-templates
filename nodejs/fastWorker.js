@@ -1446,6 +1446,7 @@ class FASTWorker {
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
+            requestId: restOperation.requestId,
             message
         });
         this.completeRestOperation(restOperation);
