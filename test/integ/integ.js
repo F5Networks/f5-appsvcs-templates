@@ -180,6 +180,8 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
+            assert.ok(typeof actual.data.requestId === 'number');
+            delete actual.data.requestId;
             assert.deepStrictEqual(actual.data, { code: 200, message: 'success', _links: { self: '/mgmt/shared/fast/templatesets/examples' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
@@ -188,6 +190,8 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
+            assert.ok(typeof actual.data.requestId === 'number');
+            delete actual.data.requestId;
             assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
@@ -221,6 +225,8 @@ describe('Template Sets', function () {
             .catch(e => handleHTTPError(e, `install ${testSetName} template set`))
             .then((actual) => {
                 assert.strictEqual(actual.status, 200);
+                assert.ok(typeof actual.data.requestId === 'number');
+                delete actual.data.requestId;
                 assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
                 return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
@@ -405,6 +411,7 @@ describe('Settings', function () {
         return Promise.resolve()
             .then(() => {
                 assert.strictEqual(actual.status, expected.status);
+                delete actual.data.requestId;
                 assert.deepStrictEqual(actual.data, expected.data);
             })
             .catch((e) => {
