@@ -79,6 +79,13 @@ definitions:
     minimum: 0
     maximum: 65535
     default: 300
+    
+  http2:
+    title: Use HTTP/2.0 for Health Monitors
+    type: boolean
+    default: false
+    dependencies: []
+
   eav:
     title: SNMP-Based External Monitoring
     description: By default, FAST creates Microsoft-recommended Managed Availability monitors. You can choose to have FAST create External monitors, which use SNMP queries to check the status of five services critical to proper Exchange functionality. SNMP must be enabled on each Exchange server in the pool. More information about these services is available in the Exchange deployment guide.
@@ -531,7 +538,12 @@ definitions:
           {{#eav}}
             "monitors": [
               {
-                "use": "exchangeVS_owa_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_owa_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_owa_https_monitor"
+                {{/http2}}
               },
               {
                 "use": "exchangeVS_owa_snmp_monitor"
@@ -542,7 +554,12 @@ definitions:
           {{^eav}}
             "monitors": [
               {
-                "use": "exchangeVS_owa_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_owa_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_owa_https_monitor"
+                {{/http2}}
               }
             ],
             "minimumMonitors": 1
@@ -552,24 +569,41 @@ definitions:
   app_owa_monitor_def:
     template: |
       {{#owa}}
-        "exchangeVS_owa_https_monitor": {
-          "class": "Monitor",
-          "interval": 10,
-          "timeout": 31,
-          {{#enable_tls_client}}
-            "monitorType": "https",
-          {{/enable_tls_client}}
-          {{^enable_tls_client}}
-            "monitorType": "http",
-          {{/enable_tls_client}}
-          {{#single_vip}}
-          "send": "GET /owa/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          {{^single_vip}}
-          "send": "GET /owa/healthcheck.htm HTTP/1.1\r\nHost: {{owa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          "receive": "200 OK"
-        },
+        {{#http2}}
+          "exchangeVS_owa_http2_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            "monitorType": "http2",
+            {{#single_vip}}
+              "send": "GET /owa/healthcheck.htm HTTP/2.0\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+              "send": "GET /owa/healthcheck.htm HTTP/2.0\r\nHost: {{owa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
+        {{^http2}}
+          "exchangeVS_owa_https_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            {{#enable_tls_client}}
+              "monitorType": "https",
+            {{/enable_tls_client}}
+            {{^enable_tls_client}}
+              "monitorType": "http",
+            {{/enable_tls_client}}
+            {{#single_vip}}
+            "send": "GET /owa/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /owa/healthcheck.htm HTTP/1.1\r\nHost: {{owa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
         {{#eav}}
           "exchangeVS_owa_snmp_monitor": {
             "class": "Monitor",
@@ -600,7 +634,12 @@ definitions:
           {{#eav}}
             "monitors": [
               {
-                "use": "exchangeVS_ews_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_ews_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_ews_https_monitor"
+                {{/http2}}
               },
               {
                 "use": "exchangeVS_ews_snmp_monitor"
@@ -611,7 +650,12 @@ definitions:
           {{^eav}}
             "monitors": [
               {
-                "use": "exchangeVS_ews_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_ews_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_ews_https_monitor"
+                {{/http2}}
               }
             ],
             "minimumMonitors": 1
@@ -621,24 +665,41 @@ definitions:
   app_ews_monitor_def:
     template: |
       {{#ews}}
-        "exchangeVS_ews_https_monitor": {
-          "class": "Monitor",
-          "interval": 10,
-          "timeout": 31,
-          {{#enable_tls_client}}
-            "monitorType": "https",
-          {{/enable_tls_client}}
-          {{^enable_tls_client}}
-            "monitorType": "http",
-          {{/enable_tls_client}}
-          {{#single_vip}}
-          "send": "GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          {{^single_vip}}
-          "send": "GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: {{ews_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          "receive": "200 OK"
-        },
+        {{#http2}}
+          "exchangeVS_ews_http2_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            "monitorType": "http2",
+            {{#single_vip}}
+            "send": "GET /EWS/healthcheck.htm HTTP/2.0\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /EWS/healthcheck.htm HTTP/2.0\r\nHost: {{ews_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
+        {{^http2}}
+          "exchangeVS_ews_https_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            {{#enable_tls_client}}
+              "monitorType": "https",
+            {{/enable_tls_client}}
+            {{^enable_tls_client}}
+              "monitorType": "http",
+            {{/enable_tls_client}}
+            {{#single_vip}}
+            "send": "GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: {{ews_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
         {{#eav}}
           "exchangeVS_ews_snmp_monitor": {
             "class": "Monitor",
@@ -670,7 +731,12 @@ definitions:
           {{#eav}}
             "monitors": [
               {
-                "use": "exchangeVS_mapi_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_mapi_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_mapi_https_monitor"
+                {{/http2}}
               },
               {
                 "use": "exchangeVS_mapi_snmp_monitor"
@@ -681,7 +747,12 @@ definitions:
           {{^eav}}
             "monitors": [
               {
-                "use": "exchangeVS_mapi_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_mapi_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_mapi_https_monitor"
+                {{/http2}}
               }
             ],
             "minimumMonitors": 1
@@ -693,24 +764,41 @@ definitions:
     template: |
       {{#outlook}}
       {{#outlookMAPI}}
-        "exchangeVS_mapi_https_monitor": {
-          "class": "Monitor",
-          "interval": 10,
-          "timeout": 31,
-          {{#enable_tls_client}}
-            "monitorType": "https",
-          {{/enable_tls_client}}
-          {{^enable_tls_client}}
-            "monitorType": "http",
-          {{/enable_tls_client}}
-          {{#single_vip}}
-          "send": "GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          {{^single_vip}}
-          "send": "GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: {{mapi_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          "receive": "200 OK"
-        },
+        {{#http2}}
+          "exchangeVS_mapi_http2_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            "monitorType": "http2",
+            {{#single_vip}}
+            "send": "GET /MAPI/healthcheck.htm HTTP/2.0\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /MAPI/healthcheck.htm HTTP/2.0\r\nHost: {{mapi_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
+        {{^http2}}
+          "exchangeVS_mapi_https_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            {{#enable_tls_client}}
+              "monitorType": "https",
+            {{/enable_tls_client}}
+            {{^enable_tls_client}}
+              "monitorType": "http",
+            {{/enable_tls_client}}
+            {{#single_vip}}
+            "send": "GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: {{mapi_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}        
         {{#eav}}
           "exchangeVS_mapi_snmp_monitor": {
             "class": "Monitor",
@@ -743,7 +831,12 @@ definitions:
           {{#eav}}
             "monitors": [
               {
-                "use": "exchangeVS_oa_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_oa_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_oa_https_monitor"
+                {{/http2}}
               },
               {
                 "use": "exchangeVS_oa_snmp_monitor"
@@ -754,7 +847,12 @@ definitions:
           {{^eav}}
             "monitors": [
               {
-                "use": "exchangeVS_oa_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_oa_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_oa_https_monitor"
+                {{/http2}}
               }
             ],
             "minimumMonitors": 1
@@ -766,24 +864,41 @@ definitions:
     template: |
       {{#outlook}}
       {{#outlookRPC}}
-        "exchangeVS_oa_https_monitor": {
-          "class": "Monitor",
-          "interval": 10,
-          "timeout": 31,
-          {{#enable_tls_client}}
-            "monitorType": "https",
-          {{/enable_tls_client}}
-          {{^enable_tls_client}}
-            "monitorType": "http",
-          {{/enable_tls_client}}
-          {{#single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          {{^single_vip}}
-          "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{oa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          "receive": "200 OK"
-        },
+        {{#http2}}
+          "exchangeVS_oa_http2_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            "monitorType": "http2",
+            {{#single_vip}}
+            "send": "GET /rpc/healthcheck.htm HTTP/2.0\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /rpc/healthcheck.htm HTTP/2.0\r\nHost: {{oa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
+        {{^http2}}
+          "exchangeVS_oa_https_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            {{#enable_tls_client}}
+              "monitorType": "https",
+            {{/enable_tls_client}}
+            {{^enable_tls_client}}
+              "monitorType": "http",
+            {{/enable_tls_client}}
+            {{#single_vip}}
+            "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: {{oa_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
         {{#eav}}
           "exchangeVS_oa_snmp_monitor": {
             "class": "Monitor",
@@ -815,7 +930,12 @@ definitions:
           {{#eav}}
             "monitors": [
               {
-                "use": "exchangeVS_as_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_as_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_as_https_monitor"
+                {{/http2}}
               },
               {
                 "use": "exchangeVS_as_snmp_monitor"
@@ -826,7 +946,12 @@ definitions:
           {{^eav}}
             "monitors": [
               {
-                "use": "exchangeVS_as_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_as_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_as_https_monitor"
+                {{/http2}}
               }
             ],
             "minimumMonitors": 1
@@ -836,24 +961,41 @@ definitions:
   app_activesync_monitor_def:
     template: |
       {{#activesync}}
-        "exchangeVS_as_https_monitor": {
-          "class": "Monitor",
-          "interval": 10,
-          "timeout": 31,
-          {{#enable_tls_client}}
-            "monitorType": "https",
-          {{/enable_tls_client}}
-          {{^enable_tls_client}}
-            "monitorType": "http",
-          {{/enable_tls_client}}
-          {{#single_vip}}
-          "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          {{^single_vip}}
-          "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: {{as_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          "receive": "200 OK"
-        },
+        {{#http2}}
+          "exchangeVS_as_http2_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            "monitorType": "http2",
+            {{#single_vip}}
+            "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/2.0\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/2.0\r\nHost: {{as_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
+        {{^http2}}
+          "exchangeVS_as_https_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            {{#enable_tls_client}}
+              "monitorType": "https",
+            {{/enable_tls_client}}
+            {{^enable_tls_client}}
+              "monitorType": "http",
+            {{/enable_tls_client}}
+            {{#single_vip}}
+            "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: {{as_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
         {{#eav}}
           "exchangeVS_as_snmp_monitor": {
             "class": "Monitor",
@@ -884,7 +1026,12 @@ definitions:
           {{#eav}}
             "monitors": [
               {
-                "use": "exchangeVS_ad_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_ad_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_ad_https_monitor"
+                {{/http2}}
               },
               {
                 "use": "exchangeVS_ad_snmp_monitor"
@@ -895,7 +1042,12 @@ definitions:
           {{^eav}}
             "monitors": [
               {
-                "use": "exchangeVS_ad_https_monitor"
+                {{#http2}}
+                  "use": "exchangeVS_ad_http2_monitor"
+                {{/http2}}
+                {{^http2}}
+                  "use": "exchangeVS_ad_https_monitor"
+                {{/http2}}
               }
             ],
             "minimumMonitors": 1
@@ -905,24 +1057,41 @@ definitions:
   app_autodiscover_monitor_def:
     template: |
       {{#autodiscover}}
-        "exchangeVS_ad_https_monitor": {
-          "class": "Monitor",
-          "interval": 10,
-          "timeout": 31,
-          {{#enable_tls_client}}
-            "monitorType": "https",
-          {{/enable_tls_client}}
-          {{^enable_tls_client}}
-            "monitorType": "http",
-          {{/enable_tls_client}}
-          {{#single_vip}}
-          "send": "GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          {{^single_vip}}
-          "send": "GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: {{ad_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
-          {{/single_vip}}
-          "receive": "200 OK"
-        },
+        {{#http2}}
+          "exchangeVS_ad_http2_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            "monitorType": "http2",
+            {{#single_vip}}
+            "send": "GET /autodiscover/healthcheck.htm HTTP/2.0\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /autodiscover/healthcheck.htm HTTP/2.0\r\nHost: {{ad_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
+        {{^http2}}
+          "exchangeVS_ad_https_monitor": {
+            "class": "Monitor",
+            "interval": 10,
+            "timeout": 31,
+            {{#enable_tls_client}}
+              "monitorType": "https",
+            {{/enable_tls_client}}
+            {{^enable_tls_client}}
+              "monitorType": "http",
+            {{/enable_tls_client}}
+            {{#single_vip}}
+            "send": "GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: {{app_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            {{^single_vip}}
+            "send": "GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: {{ad_fqdn:f5:bigip_name}}\r\nConnection: Close\r\n\r\n",
+            {{/single_vip}}
+            "receive": "200 OK"
+          },
+        {{/http2}}
         {{#eav}}
           "exchangeVS_ad_snmp_monitor": {
             "class": "Monitor",
