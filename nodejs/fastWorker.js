@@ -178,9 +178,9 @@ class FASTWorker {
                 };
                 if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
                     if (restOperation.method === 'Delete') {
-                        restOperation.body._links.tasks = [`/mgmt/shared/fast/tasks/${restOperation.body.id}`];
+                        restOperation.body._links.task = `/mgmt/shared/fast/tasks/${restOperation.body.id}`;
                     } else {
-                        restOperation.body._links.tasks = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`);
+                        restOperation.body._links.task = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`).pop();
                     }
                 }
             } else if (Array.isArray(restOperation.body)) {
@@ -1414,6 +1414,13 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
+        if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path === '/shared/fast/applications') {
+            if (minOp.method === 'Delete') {
+                minOp.task = restOp.getBody().id;
+            } else {
+                minOp.task = restOp.getBody().message.map(x => x.id).pop();
+            }
+        }
         const dt = Date.now() - this.requestTimes[restOp.requestId];
         const msg = `FAST Worker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];
