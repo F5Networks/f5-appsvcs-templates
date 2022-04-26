@@ -40,7 +40,7 @@ const view = {
 
     // monitor spec
     eav: false,
-    app_fqdn: 'example.f5net.com',
+    app_fqdn: 'example.com',
     monitor_interval: 5,
 
     // snat
@@ -205,7 +205,7 @@ const expected = {
             },
             exchangeVS_ad_https_monitor: {
                 interval: 10,
-                send: 'GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
                 timeout: 31,
                 class: 'Monitor',
@@ -213,7 +213,7 @@ const expected = {
             },
             exchangeVS_as_https_monitor: {
                 interval: 10,
-                send: 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
                 timeout: 31,
                 class: 'Monitor',
@@ -221,7 +221,7 @@ const expected = {
             },
             exchangeVS_ews_https_monitor: {
                 interval: 10,
-                send: 'GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
                 timeout: 31,
                 class: 'Monitor',
@@ -245,7 +245,7 @@ const expected = {
             },
             exchangeVS_owa_https_monitor: {
                 interval: 10,
-                send: 'GET /owa/healthcheck.htm HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /owa/healthcheck.htm HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK',
                 timeout: 31,
                 class: 'Monitor',
@@ -393,8 +393,8 @@ describe(template, function () {
             delete expected.t1.app1.app1_combined_pool_irule3;
 
             // owa
-            view.owa_fqdn = 'owa.f5net.com';
-            expected.t1.app1.exchangeVS_owa_https_monitor.send = 'GET /owa/healthcheck.htm HTTP/1.1\r\nHost: owa.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.owa_fqdn = 'owa.example.com';
+            expected.t1.app1.exchangeVS_owa_https_monitor.send = 'GET /owa/healthcheck.htm HTTP/1.1\r\nHost: owa.example.com\r\nConnection: Close\r\n\r\n';
             view.owa_virtual_address = '10.1.1.1';
             expected.t1.app1.app1_owa_vs = {
                 virtualAddresses: [
@@ -433,8 +433,8 @@ describe(template, function () {
             };
 
             // ews
-            view.ews_fqdn = 'ews.f5net.com';
-            expected.t1.app1.exchangeVS_ews_https_monitor.send = 'GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: ews.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.ews_fqdn = 'ews.example.com';
+            expected.t1.app1.exchangeVS_ews_https_monitor.send = 'GET /EWS/healthcheck.htm HTTP/1.1\r\nHost: ews.example.com\r\nConnection: Close\r\n\r\n';
             view.ews_virtual_address = '10.1.1.2';
             expected.t1.app1.app1_ews_vs = {
                 virtualAddresses: [
@@ -467,8 +467,8 @@ describe(template, function () {
             };
 
             // as
-            view.as_fqdn = 'as.f5net.com';
-            expected.t1.app1.exchangeVS_as_https_monitor.send = 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: as.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.as_fqdn = 'as.example.com';
+            expected.t1.app1.exchangeVS_as_https_monitor.send = 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/1.1\r\nHost: as.example.com\r\nConnection: Close\r\n\r\n';
             view.as_virtual_address = '10.1.1.5';
             expected.t1.app1.app1_as_vs = {
                 virtualAddresses: [
@@ -498,8 +498,8 @@ describe(template, function () {
             };
 
             // ad
-            view.ad_fqdn = 'ad.f5net.com';
-            expected.t1.app1.exchangeVS_ad_https_monitor.send = 'GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: ad.f5net.com\r\nConnection: Close\r\n\r\n';
+            view.ad_fqdn = 'ad.example.com';
+            expected.t1.app1.exchangeVS_ad_https_monitor.send = 'GET /autodiscover/healthcheck.htm HTTP/1.1\r\nHost: ad.example.com\r\nConnection: Close\r\n\r\n';
             view.ad_virtual_address = '10.1.1.6';
             expected.t1.app1.app1_ad_vs = {
                 virtualAddresses: [
@@ -536,7 +536,7 @@ describe(template, function () {
 
             // mapi
             view.outlookMAPI = true;
-            view.mapi_fqdn = 'mapi.f5net.com';
+            view.mapi_fqdn = 'mapi.example.com';
             view.mapi_virtual_address = '10.1.1.3';
             expected.t1.app1.app1_mapi_vs = {
                 virtualAddresses: [
@@ -593,13 +593,13 @@ describe(template, function () {
                 interval: 10,
                 timeout: 31,
                 monitorType: 'https',
-                send: 'GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: mapi.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /MAPI/healthcheck.htm HTTP/1.1\r\nHost: mapi.example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK'
             };
 
             // oa
             view.outlookRPC = true;
-            view.oa_fqdn = 'oa.f5net.com';
+            view.oa_fqdn = 'oa.example.com';
             view.oa_virtual_address = '10.1.1.4';
             expected.t1.app1.app1_oa_vs = {
                 virtualAddresses: [
@@ -656,7 +656,78 @@ describe(template, function () {
                 interval: 10,
                 timeout: 31,
                 monitorType: 'https',
-                send: 'GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: oa.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /rpc/healthcheck.htm HTTP/1.1\r\nHost: oa.example.com\r\nConnection: Close\r\n\r\n',
+                receive: '200 OK'
+            };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe.only('use HTTP/2.0 monitors', function () {
+        before(() => {
+            view.http2 = true;
+
+            // ad
+            delete expected.t1.app1.exchangeVS_ad_https_monitor;
+            expected.t1.app1.exchangeVS_ad_pool.monitors = [
+                {
+                    use: 'exchangeVS_ad_http2_monitor'
+                }
+            ];
+            expected.t1.app1.exchangeVS_ad_http2_monitor = {
+                class: 'Monitor',
+                interval: 10,
+                timeout: 31,
+                monitorType: 'http2',
+                send: 'GET /autodiscover/healthcheck.htm HTTP/2.0\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
+                receive: '200 OK'
+            };
+
+            // as
+            delete expected.t1.app1.exchangeVS_as_https_monitor;
+            expected.t1.app1.exchangeVS_as_pool.monitors = [
+                {
+                    use: 'exchangeVS_as_http2_monitor'
+                }
+            ];
+            expected.t1.app1.exchangeVS_as_http2_monitor = {
+                class: 'Monitor',
+                interval: 10,
+                timeout: 31,
+                monitorType: 'http2',
+                send: 'GET /Microsoft-Server-Activesync/healthcheck.htm HTTP/2.0\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
+                receive: '200 OK'
+            };
+
+            // ews
+            delete expected.t1.app1.exchangeVS_ews_https_monitor;
+            expected.t1.app1.exchangeVS_ews_pool.monitors = [
+                {
+                    use: 'exchangeVS_ews_http2_monitor'
+                }
+            ];
+            expected.t1.app1.exchangeVS_ews_http2_monitor = {
+                class: 'Monitor',
+                interval: 10,
+                timeout: 31,
+                monitorType: 'http2',
+                send: 'GET /EWS/healthcheck.htm HTTP/2.0\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
+                receive: '200 OK'
+            };
+
+            // owa
+            delete expected.t1.app1.exchangeVS_owa_https_monitor;
+            expected.t1.app1.exchangeVS_owa_pool.monitors = [
+                {
+                    use: 'exchangeVS_owa_http2_monitor'
+                }
+            ];
+            expected.t1.app1.exchangeVS_owa_http2_monitor = {
+                class: 'Monitor',
+                interval: 10,
+                timeout: 31,
+                monitorType: 'http2',
+                send: 'GET /owa/healthcheck.htm HTTP/2.0\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK'
             };
         });
