@@ -277,5 +277,8 @@ function startHttpsServer(app, options) {
 
 module.exports = {
     generateApp,
-    startHttpsServer
+    startHttpsServer,
+    restOpFromRequest,
+    setResponseFromRestOp,
+    getWorkerResponse
 };
