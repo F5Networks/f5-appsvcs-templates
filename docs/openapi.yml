@@ -1418,7 +1418,6 @@ components:
           description: Self-link to endpoint
           example: /mgmt/shared/fast/applications
         tasks:
-          type: array
+          type: string
           description: Collection of tasks links for asyn operation
-          example:
-            - /mgmt/shared/fast/tasks/12345
+          example: /mgmt/shared/fast/tasks/12345
