@@ -1750,6 +1750,10 @@ describe('fastWorker tests', function () {
                         },
                         previousDef: initialBody
                     });
+
+                    // manually clear the driver's pending tasks so we don't queue up the task
+                    // and so we do not have to wait on a timer to clear this
+                    worker.driver._pendingTasks.shift();
                     return worker.onPost(updateOp);
                 })
                 .then(() => {

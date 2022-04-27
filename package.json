@@ -132,6 +132,7 @@
     "fs-extra": "^8.1.0",
     "jsonpath-plus": "^4.0.0",
     "mustache": "^4.2.0",
-    "semver": "^7.3.7"
+    "semver": "^7.3.7",
+    "uuid": "^7.0.3"
   }
 }
