@@ -1422,11 +1422,10 @@ class FASTWorker {
             status: restOp.getStatusCode()
         };
         if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path === '/shared/fast/applications') {
-            if (minOp.method === 'Delete') {
-                minOp.task = restOp.getBody().id;
-            } else {
-                minOp.task = restOp.getBody().message.map(x => x.id).pop();
-            }
+            minOp.task = restOp.getBody().message.map(x => x.id).pop();
+        }
+        if (process.env.NODE_ENV === 'development') {
+            minOp.body = restOp.getBody();
         }
         const dt = Date.now() - this.requestTimes[restOp.requestId];
         const msg = `FAST Worker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
