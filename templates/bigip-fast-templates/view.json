@@ -10,7 +10,7 @@
   "pool_port": 80,
   "load_balancing_mode": "round-robin",
   "slow_ramp_time": 300,
-  "app_fqdn": "example.f5net.com",
+  "app_fqdn": "example.com",
   "monitor_interval": 10,
   "enable_snat": true,
   "snat_automap": true,

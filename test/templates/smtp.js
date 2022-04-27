@@ -51,7 +51,7 @@ const view = {
     monitor_interval: 33,
     monitor_username: 'user1',
     monitor_passphrase: 'cGFzcw==',
-    monitor_domain: 'example.f5net.com',
+    monitor_domain: 'example.com',
 
     // snat
     enable_snat: true,
@@ -148,7 +148,7 @@ const expected = {
                 monitorType: 'smtp',
                 interval: 33,
                 timeout: 100,
-                domain: 'example.f5net.com',
+                domain: 'example.com',
                 username: 'user1',
                 passphrase: {
                     ciphertext: 'cGFzcw==',
