@@ -859,6 +859,9 @@ components:
       properties:
         _links:
           $ref: "#/components/schemas/LinksDefinition"
+        requestId:
+          type: integer
+          example: 3
         code:
           type: integer
           minimum: 202
