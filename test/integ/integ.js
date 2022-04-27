@@ -95,7 +95,7 @@ function deleteAllApplications() {
     return Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
-            const taskid = response.data.id;
+            const taskid = response.data.message[0].id;
             if (!taskid) {
                 console.log(response.data);
                 assert(false, 'failed to get a taskid');

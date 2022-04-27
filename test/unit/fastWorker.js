@@ -1578,6 +1578,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response404');
                 });
         });
         it('delete_app', function () {
@@ -1603,6 +1604,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.strictEqual(op.status, 202);
+                    console.log(op.body);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
