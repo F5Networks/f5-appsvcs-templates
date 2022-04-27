@@ -177,11 +177,7 @@ class FASTWorker {
                     self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
                 };
                 if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
-                    if (restOperation.method === 'Delete') {
-                        restOperation.body._links.task = `/mgmt/shared/fast/tasks/${restOperation.body.id}`;
-                    } else {
-                        restOperation.body._links.task = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`).pop();
-                    }
+                    restOperation.body._links.task = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`).pop();
                 }
             } else if (Array.isArray(restOperation.body)) {
                 restOperation.body = restOperation.body.map((x) => {
@@ -1421,7 +1417,7 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
-        if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path === '/shared/fast/applications') {
+        if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path.includes('/shared/fast/applications')) {
             minOp.task = restOp.getBody().message.map(x => x.id).pop();
         }
         if (process.env.NODE_ENV === 'development') {
