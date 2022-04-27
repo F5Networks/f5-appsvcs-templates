@@ -1,6 +1,7 @@
 # 1.18.0
 ## Added
 * bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
+* Include _links property to FAST REST response to make them HAL JSON.
 
 ## Fixed
 * bigip-fast-templates: Enabling Telemetry Streaming does not result in an error, preventing application deployment
