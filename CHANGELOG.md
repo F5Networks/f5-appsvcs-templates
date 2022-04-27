@@ -1,6 +1,7 @@
 # 1.18.0
 ## Added
 * bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
+* bigip-fast-templates: Allow HTTP/2.0 health monitoring of Exchange (issue [#99](https://github.com/F5Networks/f5-appsvcs-templates/issues/99))
 
 ## Fixed
 * bigip-fast-templates: Enabling Telemetry Streaming does not result in an error, preventing application deployment
