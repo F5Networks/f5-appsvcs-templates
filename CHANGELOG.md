@@ -7,6 +7,7 @@
 
 ## Changed
 * FAST Global Settings no longer show Telemetry Streaming as a GUI option because it is readonly (true if installed), and log_asm/log_afm are also readonly
+* Support serializing a burst of requests to avoid 503 errors from AS3
 
 ## Fixed
 

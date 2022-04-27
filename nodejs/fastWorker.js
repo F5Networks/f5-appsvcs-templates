@@ -1369,8 +1369,10 @@ class FASTWorker {
 
                     const oldAppData = tmplData.previousDef || {};
                     if (oldAppData.ipamAddrs) {
-                        this.ipamProviders.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
+                        return this.ipamProviders.releaseIPAMAddress(reqid, config, oldAppData, ipamAddrs);
                     }
+
+                    return Promise.resolve();
                 });
         });
 
@@ -1392,11 +1394,16 @@ class FASTWorker {
         }
 
         // Update the driver's auth header if one was provided with the request
-        if (restOp.headers && restOp.headers.Authorization) {
-            this.driver.setAuthHeader(restOp.headers.Authorization);
-        }
-        if (restOp.headers && restOp.headers.authorization) {
-            this.driver.setAuthHeader(restOp.headers.authorization);
+        if (restOp.headers) {
+            const authString = (
+                restOp.headers.Authorization
+                || restOp.headers.authorization
+                || restOp.headers['X-F5-Auth-Token']
+                || restOp.headers['x-f5-auth-token']
+            );
+            if (authString) {
+                this.driver.setAuthHeader(authString);
+            }
         }
 
         // Record the time we received the request
@@ -1414,6 +1421,9 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
+        if (process.env.NODE_ENV === 'development') {
+            minOp.body = restOp.getBody();
+        }
         const dt = Date.now() - this.requestTimes[restOp.requestId];
         const msg = `FAST Worker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];
@@ -1962,9 +1972,24 @@ class FASTWorker {
                 this.driver.deleteApplications(appNames)
             ))
             .then((result) => {
-                restOperation.setHeaders('Content-Type', 'text/json');
-                restOperation.setBody(result.body);
+                const body = Object.assign(
+                    {},
+                    result.data, // for backwards compatibility
+                    {
+                        code: result.status,
+                        message: appNames.map(() => ({
+                            id: result.data.id
+                        }))
+                    }
+                );
+                if (body.message.length === 0) {
+                    // Handle delete all
+                    body.message.push({ id: result.data.id });
+                }
+
+                // Cannot use genRestResponse() since we have extra items in the body for backwards compatibility
                 restOperation.setStatusCode(result.status);
+                restOperation.setBody(body);
                 this.completeRestOperation(restOperation);
             })
             .then(() => {
