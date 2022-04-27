@@ -147,6 +147,7 @@ function generateApp(workers, options) {
                 method: req.method,
                 url: req.url,
                 data: req.body,
+                headers: req.headers,
                 validateStatus: () => true // pass on failures
             }))
             .then(epRsp => res

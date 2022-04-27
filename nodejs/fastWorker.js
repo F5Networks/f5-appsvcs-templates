@@ -1392,11 +1392,16 @@ class FASTWorker {
         }
 
         // Update the driver's auth header if one was provided with the request
-        if (restOp.headers && restOp.headers.Authorization) {
-            this.driver.setAuthHeader(restOp.headers.Authorization);
-        }
-        if (restOp.headers && restOp.headers.authorization) {
-            this.driver.setAuthHeader(restOp.headers.authorization);
+        if (restOp.headers) {
+            const authString = (
+                restOp.headers.Authorization
+                || restOp.headers.authorization
+                || restOp.headers['X-F5-Auth-Token']
+                || restOp.headers['x-f5-auth-token']
+            );
+            if (authString) {
+                this.driver.setAuthHeader(authString);
+            }
         }
 
         // Record the time we received the request
@@ -1414,6 +1419,9 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
+        if (process.env.NODE_ENV === 'development') {
+            minOp.body = restOp.getBody();
+        }
         const dt = Date.now() - this.requestTimes[restOp.requestId];
         const msg = `FAST Worker [${restOp.requestId}]: sending response after ${dt}ms\n${JSON.stringify(minOp, null, 2)}`;
         delete this.requestTimes[restOp.requestId];

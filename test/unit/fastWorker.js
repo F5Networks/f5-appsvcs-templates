@@ -55,6 +55,7 @@ class RestOp {
         this.body = '';
         this.status = 200;
         this.headers = { 'content-type': 'application/json' };
+        this.method = '';
     }
 
     setHeaders() {}
@@ -104,7 +105,7 @@ class RestOp {
     }
 
     getMethod() {
-        return '';
+        return this.method;
     }
 
     setMethod() {
@@ -147,7 +148,11 @@ const patchWorker = (worker) => {
         worker[`_${fn}`] = worker[fn];
         worker[fn] = function (op) {
             this.completedRestOp = false;
-            return this[`_${fn}`](op)
+            return Promise.resolve()
+                .then(() => {
+                    op.method = fn.substring(2);
+                })
+                .then(() => this[`_${fn}`](op))
                 .then(() => {
                     if (!this.completedRestOp) {
                         throw new Error(`failed to call completeRestOperation() in ${fn}()`);
