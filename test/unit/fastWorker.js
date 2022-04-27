@@ -55,6 +55,7 @@ class RestOp {
         this.body = '';
         this.status = 200;
         this.headers = { 'content-type': 'application/json' };
+        this.method = '';
     }
 
     setHeaders() {}
@@ -104,7 +105,7 @@ class RestOp {
     }
 
     getMethod() {
-        return '';
+        return this.method;
     }
 
     setMethod() {
@@ -147,7 +148,11 @@ const patchWorker = (worker) => {
         worker[`_${fn}`] = worker[fn];
         worker[fn] = function (op) {
             this.completedRestOp = false;
-            return this[`_${fn}`](op)
+            return Promise.resolve()
+                .then(() => {
+                    op.method = fn.substring(2);
+                })
+                .then(() => this[`_${fn}`](op))
                 .then(() => {
                     if (!this.completedRestOp) {
                         throw new Error(`failed to call completeRestOperation() in ${fn}()`);
@@ -1578,6 +1583,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response404');
                 });
         });
         it('delete_app', function () {
@@ -1603,6 +1609,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.strictEqual(op.status, 202);
+                    console.log(op.body);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
                 });
         });
@@ -1743,6 +1750,10 @@ describe('fastWorker tests', function () {
                         },
                         previousDef: initialBody
                     });
+
+                    // manually clear the driver's pending tasks so we don't queue up the task
+                    // and so we do not have to wait on a timer to clear this
+                    worker.driver._pendingTasks.shift();
                     return worker.onPost(updateOp);
                 })
                 .then(() => {
