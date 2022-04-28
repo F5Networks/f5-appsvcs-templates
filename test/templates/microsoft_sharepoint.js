@@ -49,7 +49,7 @@ const view = {
     slow_ramp_time: 300,
 
     // monitor spec
-    monitor_fqdn: 'example.f5net.com',
+    monitor_fqdn: 'example.com',
     monitor_interval: 5,
 
     // snat
@@ -177,7 +177,7 @@ const expected = {
                 monitorType: 'https',
                 interval: 5,
                 timeout: 16,
-                send: 'GET / HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET / HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: 'X-app1HealthScore: [0-5].',
                 adaptive: false,
                 dscp: 0,
