@@ -180,6 +180,8 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
+            assert.ok(typeof actual.data.requestId === 'number');
+            delete actual.data.requestId;
             assert.deepStrictEqual(actual.data, { code: 200, message: 'success', _links: { self: '/mgmt/shared/fast/templatesets/examples' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
@@ -188,6 +190,8 @@ describe('Template Sets', function () {
         .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
+            assert.ok(typeof actual.data.requestId === 'number');
+            delete actual.data.requestId;
             assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
@@ -221,6 +225,8 @@ describe('Template Sets', function () {
             .catch(e => handleHTTPError(e, `install ${testSetName} template set`))
             .then((actual) => {
                 assert.strictEqual(actual.status, 200);
+                assert.ok(typeof actual.data.requestId === 'number');
+                delete actual.data.requestId;
                 assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
                 return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
@@ -438,6 +444,7 @@ describe('Settings', function () {
         return Promise.resolve()
             .then(() => {
                 assert.strictEqual(actual.status, expected.status);
+                delete actual.data.requestId;
                 assert.deepStrictEqual(actual.data, expected.data);
             })
             .catch((e) => {
@@ -469,9 +476,9 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                enable_telemetry: true,
-                log_asm: true,
-                log_afm: true
+                enable_telemetry: false,
+                log_asm: false,
+                log_afm: false
             },
             status: 200
         })));
@@ -495,9 +502,9 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     // driver defaults
-                    enable_telemetry: true,
-                    log_asm: true,
-                    log_afm: true,
+                    enable_telemetry: false,
+                    log_asm: false,
+                    log_afm: false,
                     _links: { self: url }
                 };
                 return assertResponse(actual, expected);
@@ -505,7 +512,7 @@ describe('Settings', function () {
     });
     it('POST then GET settings with IPAM', () => {
         const postBody = {
-            enable_telemetry: true,
+            enable_telemetry: false,
             deletedTemplateSets: [],
             ipamProviders: [{
                 serviceType: 'Generic',
@@ -522,8 +529,8 @@ describe('Settings', function () {
                 network: 'testnetwork'
             }],
             enableIpam: false,
-            log_afm: true,
-            log_asm: true,
+            log_afm: false,
+            log_asm: false,
             disableDeclarationCache: false,
             _links: { self: url }
         };
@@ -556,12 +563,12 @@ describe('Settings', function () {
             .then(actual => assertResponse(actual, expected))
             .then(() => {
                 expected.data = {
-                    enable_telemetry: true,
+                    enable_telemetry: false,
                     deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
-                    log_afm: true,
-                    log_asm: true,
+                    log_afm: false,
+                    log_asm: false,
                     disableDeclarationCache: true,
                     _links: { self: url }
                 };
