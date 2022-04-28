@@ -1977,6 +1977,7 @@ class FASTWorker {
                     result.data, // for backwards compatibility
                     {
                         code: result.status,
+                        requestId: reqid,
                         message: appNames.map(() => ({
                             id: result.data.id
                         }))

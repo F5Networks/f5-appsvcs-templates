@@ -824,7 +824,6 @@ components:
       required:
         - code
         - message
-        - requestId
       properties:
         _links:
           $ref: "#/components/schemas/LinksDefinition"
@@ -859,7 +858,6 @@ components:
       required:
         - code
         - message
-        - requestId
       additionalProperties: true
       properties:
         _links:
@@ -1200,7 +1198,6 @@ components:
       required:
         - code
         - message
-        - requestId
       properties:
         code:
           type: integer
@@ -1222,7 +1219,6 @@ components:
       required:
         - code
         - message
-        - requestId
       properties:
         code:
           type: integer
@@ -1244,7 +1240,6 @@ components:
       required:
         - code
         - message
-        - requestId
       properties:
         code:
           type: integer
@@ -1266,7 +1261,6 @@ components:
       required:
         - code
         - message
-        - requestId
       properties:
         code:
           type: integer
@@ -1288,7 +1282,6 @@ components:
       required:
         - code
         - message
-        - requestId
       properties:
         code:
           type: integer
