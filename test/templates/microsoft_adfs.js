@@ -38,7 +38,7 @@ const view = {
     slow_ramp_time: 300,
 
     // monitor spec
-    app_fqdn: 'example.f5net.com',
+    app_fqdn: 'example.com',
     monitor_interval: 10,
 
     // snat
@@ -88,7 +88,7 @@ const expected = {
                 monitorType: 'https',
                 interval: 10,
                 timeout: 31,
-                send: 'GET /adfs/fs/federationserverservice.asmx HTTP/1.1\r\nHost: example.f5net.com\r\nConnection: Close\r\n\r\n',
+                send: 'GET /adfs/fs/federationserverservice.asmx HTTP/1.1\r\nHost: example.com\r\nConnection: Close\r\n\r\n',
                 receive: '200 OK'
             },
             app1_eav_monitor: {
@@ -100,7 +100,7 @@ const expected = {
                     base64: 'IyEvYmluL3NoCiMgVGhlc2UgYXJndW1lbnRzIHN1cHBsaWVkIGF1dG9tYXRpY2FsbHkgZm9yIGFsbCBleHRlcm5hbCBtb25pdG9yczoKIyAkMSA9IElQIChubm4ubm5uLm5ubi5ubm4gbm90YXRpb24pCiMgJDIgPSBwb3J0IChkZWNpbWFsLCBob3N0IGJ5dGUgb3JkZXIpCiMKIyBUaGlzIHNjcmlwdCBleHBlY3RzIHRoZSBmb2xsb3dpbmcgTmFtZS9WYWx1ZSBwYWlyczoKIyBIT1NUID0gdGhlIGhvc3QgbmFtZSBvZiB0aGUgU05JLWVuYWJsZWQgc2l0ZQojIFVSSSAgPSB0aGUgVVJJIHRvIHJlcXVlc3QKIyBSRUNWID0gdGhlIGV4cGVjdGVkIHJlc3BvbnNlCiMKIyBSZW1vdmUgSVB2Ni9JUHY0IGNvbXBhdGliaWxpdHkgcHJlZml4IChMVE0gcGFzc2VzIGFkZHJlc3NlcyBpbiBJUHY2IGZvcm1hdCkKTk9ERT1gZWNobyAkezF9IHwgc2VkICdzLzo6ZmZmZjovLydgCmlmIFtbICROT0RFID1+IF5bMC05XXsxLDN9LlswLTldezEsM30uWzAtOV17MSwzfS5bMC05XXsxLDN9JCBdXTsgdGhlbgpOT0RFPSR7Tk9ERX0KZWxzZQpOT0RFPVske05PREV9XQpmaQpQT1JUPSR7Mn0KUElERklMRT0iL3Zhci9ydW4vYGJhc2VuYW1lICR7MH1gLnNuaV9tb25pdG9yXyR7SE9TVH1fJHtQT1JUfV8ke05PREV9LnBpZCIKaWYgWyAtZiAkUElERklMRSBdCnRoZW4KZWNobyAiRUFWIGV4Y2VlZGVkIHJ1bnRpbWUgbmVlZGVkIHRvIGtpbGwgJHtIT1NUfToke1BPUlR9OiR7Tk9ERX0iIHwgbG9nZ2VyIC1wIGxvY2FsMC5lcnJvcgpraWxsIC05IGBjYXQgJFBJREZJTEVgID4gL2Rldi9udWxsIDI+JjEKZmkKZWNobyAiJCQiID4gJFBJREZJTEUKY3VybC1hcGQgLWsgLWkgLS1yZXNvbHZlICRIT1NUOiRQT1JUOiROT0RFIGh0dHBzOi8vJEhPU1QkVVJJIHwgZ3JlcCAtaSAiJHtSRUNWfSIgPiAvZGV2L251bGwgMj4mMQpTVEFUVVM9JD8Kcm0gLWYgJFBJREZJTEUKaWYgWyAkU1RBVFVTIC1lcSAwIF0KdGhlbgplY2hvICJVUCIKZmkKZXhpdAo='
                 },
                 environmentVariables: {
-                    HOST: 'example.f5net.com',
+                    HOST: 'example.com',
                     URI: '/adfs/fs/federationserverservice.asmx',
                     RECV: '"200 OK"'
                 }
