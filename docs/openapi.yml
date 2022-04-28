@@ -824,6 +824,7 @@ components:
       required:
         - code
         - message
+        - requestId
       properties:
         _links:
           $ref: "#/components/schemas/LinksDefinition"
@@ -832,6 +833,9 @@ components:
           minimum: 202
           maximum: 599
           example: 202
+        requestId:
+          type: integer
+          example: 3
         message:
           type: array
           items:
@@ -855,6 +859,7 @@ components:
       required:
         - code
         - message
+        - requestId
       additionalProperties: true
       properties:
         _links:
@@ -1195,6 +1200,7 @@ components:
       required:
         - code
         - message
+        - requestId
       properties:
         code:
           type: integer
@@ -1205,6 +1211,9 @@ components:
         message:
           type: string
           example: success
+        requestId:
+          type: integer
+          example: 3
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response400:
@@ -1213,6 +1222,7 @@ components:
       required:
         - code
         - message
+        - requestId
       properties:
         code:
           type: integer
@@ -1223,6 +1233,9 @@ components:
         message:
           type: string
           example: the request was not successful
+        requestId:
+          type: integer
+          example: 3
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response404:
@@ -1231,6 +1244,7 @@ components:
       required:
         - code
         - message
+        - requestId
       properties:
         code:
           type: integer
@@ -1241,6 +1255,9 @@ components:
         message:
           type: string
           example: resource not found
+        requestId:
+          type: integer
+          example: 3
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response500:
@@ -1249,6 +1266,7 @@ components:
       required:
         - code
         - message
+        - requestId
       properties:
         code:
           type: integer
@@ -1259,6 +1277,9 @@ components:
         message:
           type: string
           example: internal server error
+        requestId:
+          type: integer
+          example: 3
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response422:
@@ -1267,6 +1288,7 @@ components:
       required:
         - code
         - message
+        - requestId
       properties:
         code:
           type: integer
@@ -1277,6 +1299,9 @@ components:
         message:
           type: string
           example: supplied configuration was invalid
+        requestId:
+          type: integer
+          example: 3
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     IpamInfoblox:
