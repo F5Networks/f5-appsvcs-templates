@@ -177,11 +177,7 @@ class FASTWorker {
                     self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
                 };
                 if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
-                    if (restOperation.method === 'Delete') {
-                        restOperation.body._links.tasks = [`/mgmt/shared/fast/tasks/${restOperation.body.id}`];
-                    } else {
-                        restOperation.body._links.tasks = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`);
-                    }
+                    restOperation.body._links.task = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`).pop();
                 }
             } else if (Array.isArray(restOperation.body)) {
                 restOperation.body = restOperation.body.map((x) => {
@@ -1421,6 +1417,9 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
+        if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path.includes('/shared/fast/applications')) {
+            minOp.task = restOp.getBody().message.map(x => x.id).pop();
+        }
         if (process.env.NODE_ENV === 'development') {
             minOp.body = restOp.getBody();
         }
@@ -1449,6 +1448,7 @@ class FASTWorker {
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
+            requestId: restOperation.requestId,
             message
         });
         this.completeRestOperation(restOperation);
@@ -1977,6 +1977,7 @@ class FASTWorker {
                     result.data, // for backwards compatibility
                     {
                         code: result.status,
+                        requestId: reqid,
                         message: appNames.map(() => ({
                             id: result.data.id
                         }))

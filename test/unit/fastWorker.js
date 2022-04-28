@@ -1777,6 +1777,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
+                    assert.equal(op.requestId, 1);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
                 });
         });
@@ -1827,6 +1828,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
+                    assert.equal(op.requestId, 1);
                     expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
                 });
         });
