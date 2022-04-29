@@ -321,6 +321,8 @@ class FASTWorker {
             .then((data) => {
                 prevConfig = data;
             })
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
@@ -516,8 +518,6 @@ class FASTWorker {
                 reqid,
                 'sync AS3 driver settings',
                 Promise.resolve()
-                    .then(() => this.gatherProvisionData(reqid, false, true))
-                    .then(provisionData => this.driver.setSettings(config, provisionData, true))
                     .then(() => this.saveConfig(config, reqid))
             ));
     }
@@ -1865,8 +1865,6 @@ class FASTWorker {
             )))
             .then(() => this.getConfig(reqid))
             .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
@@ -2241,8 +2239,6 @@ class FASTWorker {
                 422,
                 `supplied settings were not valid:\n${e.message}`
             )))
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
