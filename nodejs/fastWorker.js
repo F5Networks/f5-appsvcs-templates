@@ -217,15 +217,19 @@ class FASTWorker {
             });
     }
 
-    getConfig(reqid) {
-        reqid = reqid || 0;
+    _getDefaultConfig() {
         const defaultConfig = {
             deletedTemplateSets: [],
             enableIpam: false,
             ipamProviders: [],
             disableDeclarationCache: false
         };
-        let mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+        return Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+    }
+
+    getConfig(reqid) {
+        reqid = reqid || 0;
+        let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
             .then(() => this.gatherProvisionData(reqid, true))
@@ -2101,8 +2105,13 @@ class FASTWorker {
     }
 
     deleteSettings(restOperation) {
+        const reqid = restOperation.requestId;
+        const defaultConfig = this._getDefaultConfig();
         return Promise.resolve()
+            // delete the datagroup;
             .then(() => this.configStorage.deleteItem(configKey))
+            // save the default config to create the config datagroup
+            .then(() => this.saveConfig(defaultConfig, reqid))
             .then(() => (this.configStorage instanceof StorageDataGroup
                 ? Promise.resolve() : this.configStorage.persist()))
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
