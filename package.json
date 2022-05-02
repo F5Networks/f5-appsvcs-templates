@@ -1,6 +1,6 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.18.0-rc.1",
+  "version": "1.18.0-rc.2",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
@@ -87,9 +87,9 @@
   "nyc": {
     "all": true,
     "include": [
-        "stand-alone/expressAdapter.js",
-        "nodejs/**/*.js",
-        "lib/**/*.js"
+      "stand-alone/expressAdapter.js",
+      "nodejs/**/*.js",
+      "lib/**/*.js"
     ]
   },
   "watch": {
