@@ -847,7 +847,7 @@ class FASTWorker {
                     return Promise.resolve();
                 }
 
-                this.provisionData.items.push({
+                return this.provisionData.items.push({
                     name: 'ts',
                     level: (response.status === 200) ? 'nominal' : 'none'
                 });
