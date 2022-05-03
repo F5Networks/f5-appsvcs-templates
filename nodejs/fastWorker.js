@@ -165,7 +165,7 @@ class FASTWorker {
         this.provisionData = null;
         this.as3Info = null;
         this._hydrateCache = null;
-        this._provisionConfigCache = null;
+        this._provisionConfigCacheTime = null;
     }
 
     hookCompleteRestOp() {
@@ -811,8 +811,9 @@ class FASTWorker {
     }
 
     gatherProvisionData(requestId, clearCache, skipAS3) {
-        if (clearCache) {
+        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
             this.provisionData = null;
+            this._provisionConfigCacheTime = Date.now();
         }
         return Promise.resolve()
             .then(() => {
@@ -832,7 +833,7 @@ class FASTWorker {
             .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
                 if (tsInfo) {
-                    return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
+                    return Promise.resolve({ status: 304 });
                 }
 
                 return this.recordTransaction(
@@ -842,6 +843,10 @@ class FASTWorker {
                 );
             })
             .then((response) => {
+                if (response.status === 304) {
+                    return Promise.resolve();
+                }
+
                 this.provisionData.items.push({
                     name: 'ts',
                     level: (response.status === 200) ? 'nominal' : 'none'
