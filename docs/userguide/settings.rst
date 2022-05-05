@@ -9,7 +9,7 @@ Telemetery Streaming
 --------------------
 
 | In order for FAST to utilize Telemetry Streaming, it must first be installed on the BIG-IP. See `Downloading and Installing Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/installation.html>`_ for instructions on installing Telemetry Streaming.
-| Once Telemetry Streaming is installed, ASM and/or AFM logging can be enabled per deployment, and turned off even if provisioned. 
+| Once Telemetry Streaming is installed, ASM and/or AFM logging can be enabled (default if provisioned) or disabled per deployment. 
 | For instructions on provisioning BIG-IP modules see `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_.
 |
 .. seealso:: `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for using Telemetry Streaming and configuring logging.
