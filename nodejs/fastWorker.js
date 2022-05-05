@@ -165,7 +165,7 @@ class FASTWorker {
         this.provisionData = null;
         this.as3Info = null;
         this._hydrateCache = null;
-        this._provisionConfigCache = null;
+        this._provisionConfigCacheTime = null;
     }
 
     hookCompleteRestOp() {
@@ -177,11 +177,7 @@ class FASTWorker {
                     self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
                 };
                 if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
-                    if (restOperation.method === 'Delete') {
-                        restOperation.body._links.tasks = [`/mgmt/shared/fast/tasks/${restOperation.body.id}`];
-                    } else {
-                        restOperation.body._links.tasks = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`);
-                    }
+                    restOperation.body._links.task = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`).pop();
                 }
             } else if (Array.isArray(restOperation.body)) {
                 restOperation.body = restOperation.body.map((x) => {
@@ -221,15 +217,19 @@ class FASTWorker {
             });
     }
 
-    getConfig(reqid) {
-        reqid = reqid || 0;
+    _getDefaultConfig() {
         const defaultConfig = {
             deletedTemplateSets: [],
             enableIpam: false,
             ipamProviders: [],
             disableDeclarationCache: false
         };
-        let mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+        return Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+    }
+
+    getConfig(reqid) {
+        reqid = reqid || 0;
+        let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
             .then(() => this.gatherProvisionData(reqid, true))
@@ -325,6 +325,8 @@ class FASTWorker {
             .then((data) => {
                 prevConfig = data;
             })
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
@@ -520,8 +522,6 @@ class FASTWorker {
                 reqid,
                 'sync AS3 driver settings',
                 Promise.resolve()
-                    .then(() => this.gatherProvisionData(reqid, false, true))
-                    .then(provisionData => this.driver.setSettings(config, provisionData, true))
                     .then(() => this.saveConfig(config, reqid))
             ));
     }
@@ -811,8 +811,9 @@ class FASTWorker {
     }
 
     gatherProvisionData(requestId, clearCache, skipAS3) {
-        if (clearCache) {
+        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
             this.provisionData = null;
+            this._provisionConfigCacheTime = Date.now();
         }
         return Promise.resolve()
             .then(() => {
@@ -832,7 +833,7 @@ class FASTWorker {
             .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
                 if (tsInfo) {
-                    return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
+                    return Promise.resolve({ status: 304 });
                 }
 
                 return this.recordTransaction(
@@ -842,7 +843,11 @@ class FASTWorker {
                 );
             })
             .then((response) => {
-                this.provisionData.items.push({
+                if (response.status === 304) {
+                    return Promise.resolve();
+                }
+
+                return this.provisionData.items.push({
                     name: 'ts',
                     level: (response.status === 200) ? 'nominal' : 'none'
                 });
@@ -1421,6 +1426,9 @@ class FASTWorker {
             path: restOp.getUri().pathname,
             status: restOp.getStatusCode()
         };
+        if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path.includes('/shared/fast/applications')) {
+            minOp.task = restOp.getBody().message.map(x => x.id).pop();
+        }
         if (process.env.NODE_ENV === 'development') {
             minOp.body = restOp.getBody();
         }
@@ -1449,6 +1457,7 @@ class FASTWorker {
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
+            requestId: restOperation.requestId,
             message
         });
         this.completeRestOperation(restOperation);
@@ -1865,8 +1874,6 @@ class FASTWorker {
             )))
             .then(() => this.getConfig(reqid))
             .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
@@ -1977,6 +1984,7 @@ class FASTWorker {
                     result.data, // for backwards compatibility
                     {
                         code: result.status,
+                        requestId: reqid,
                         message: appNames.map(() => ({
                             id: result.data.id
                         }))
@@ -2102,8 +2110,13 @@ class FASTWorker {
     }
 
     deleteSettings(restOperation) {
+        const reqid = restOperation.requestId;
+        const defaultConfig = this._getDefaultConfig();
         return Promise.resolve()
+            // delete the datagroup;
             .then(() => this.configStorage.deleteItem(configKey))
+            // save the default config to create the config datagroup
+            .then(() => this.saveConfig(defaultConfig, reqid))
             .then(() => (this.configStorage instanceof StorageDataGroup
                 ? Promise.resolve() : this.configStorage.persist()))
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
@@ -2240,8 +2253,6 @@ class FASTWorker {
                 422,
                 `supplied settings were not valid:\n${e.message}`
             )))
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
