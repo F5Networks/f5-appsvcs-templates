@@ -165,7 +165,7 @@ class FASTWorker {
         this.provisionData = null;
         this.as3Info = null;
         this._hydrateCache = null;
-        this._provisionConfigCache = null;
+        this._provisionConfigCacheTime = null;
     }
 
     hookCompleteRestOp() {
@@ -217,15 +217,19 @@ class FASTWorker {
             });
     }
 
-    getConfig(reqid) {
-        reqid = reqid || 0;
+    _getDefaultConfig() {
         const defaultConfig = {
             deletedTemplateSets: [],
             enableIpam: false,
             ipamProviders: [],
             disableDeclarationCache: false
         };
-        let mergedDefaults = Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+        return Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+    }
+
+    getConfig(reqid) {
+        reqid = reqid || 0;
+        let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
             .then(() => this.gatherProvisionData(reqid, true))
@@ -321,6 +325,8 @@ class FASTWorker {
             .then((data) => {
                 prevConfig = data;
             })
+            .then(() => this.gatherProvisionData(reqid, true))
+            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
@@ -516,8 +522,6 @@ class FASTWorker {
                 reqid,
                 'sync AS3 driver settings',
                 Promise.resolve()
-                    .then(() => this.gatherProvisionData(reqid, false, true))
-                    .then(provisionData => this.driver.setSettings(config, provisionData, true))
                     .then(() => this.saveConfig(config, reqid))
             ));
     }
@@ -807,8 +811,9 @@ class FASTWorker {
     }
 
     gatherProvisionData(requestId, clearCache, skipAS3) {
-        if (clearCache) {
+        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
             this.provisionData = null;
+            this._provisionConfigCacheTime = Date.now();
         }
         return Promise.resolve()
             .then(() => {
@@ -828,7 +833,7 @@ class FASTWorker {
             .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
                 if (tsInfo) {
-                    return Promise.resolve({ status: (tsInfo.level === 'nominal') ? 200 : 404 });
+                    return Promise.resolve({ status: 304 });
                 }
 
                 return this.recordTransaction(
@@ -838,7 +843,11 @@ class FASTWorker {
                 );
             })
             .then((response) => {
-                this.provisionData.items.push({
+                if (response.status === 304) {
+                    return Promise.resolve();
+                }
+
+                return this.provisionData.items.push({
                     name: 'ts',
                     level: (response.status === 200) ? 'nominal' : 'none'
                 });
@@ -1865,8 +1874,6 @@ class FASTWorker {
             )))
             .then(() => this.getConfig(reqid))
             .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(config, provisionData))
             .then(() => this.saveConfig(config, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
@@ -2103,8 +2110,13 @@ class FASTWorker {
     }
 
     deleteSettings(restOperation) {
+        const reqid = restOperation.requestId;
+        const defaultConfig = this._getDefaultConfig();
         return Promise.resolve()
+            // delete the datagroup;
             .then(() => this.configStorage.deleteItem(configKey))
+            // save the default config to create the config datagroup
+            .then(() => this.saveConfig(defaultConfig, reqid))
             .then(() => (this.configStorage instanceof StorageDataGroup
                 ? Promise.resolve() : this.configStorage.persist()))
             .then(() => this.genRestResponse(restOperation, 200, 'success'))
@@ -2241,8 +2253,6 @@ class FASTWorker {
                 422,
                 `supplied settings were not valid:\n${e.message}`
             )))
-            .then(() => this.gatherProvisionData(reqid, true))
-            .then(provisionData => this.driver.setSettings(combinedConfig, provisionData))
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => this.genRestResponse(restOperation, 200, ''))
             .catch((e) => {
