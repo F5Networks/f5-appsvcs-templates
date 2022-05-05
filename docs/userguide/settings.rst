@@ -8,9 +8,10 @@ Settings is where optional deployment parameters are set.
 Telemetery Streaming
 --------------------
 
-Set up log forwarding for Telemetry Streaming In FAST by checking the box **Enable Telemetry Streaming log forwarding**.
-
-See the `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for configuring logging.
+| In order for FAST to utilize Telemetry Streaming, it must first be provisioned on the BIG-IP. See `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_.
+| The same needs to be done for ASM and/or AFM logs, which can be enabled per deployment, and turned off even if provisioned.
+|
+| See the `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for configuring logging.
 
 
 IPAM
