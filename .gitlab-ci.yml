@@ -55,6 +55,8 @@ create_docs:
     -   rm -r _templates
     - fi
     - npm ci
+    - node -v
+    - echo "${CONTAINTHEDOCS_IMAGE}"
     - make html
     - make test
   tags:
