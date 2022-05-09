@@ -783,20 +783,20 @@ class FASTWorker {
 
         const getSpanPath = function (ctx) {
             switch (ctx.collection) {
-                case 'info':
-                case 'settings':
-                case 'settings-schema':
-                    return ctx.collectionPath;
-                case 'templates':
-                    return `${ctx.collectionPath}${ctx.itemId ? '/setName/{templateName}' : ''}`;
-                case 'applications':
-                    return `${ctx.collectionPath}${ctx.itemId ? '/tenantName/{appName}' : ''}`;
-                case 'tasks':
-                    return `${ctx.collectionPath}${ctx.itemId ? '/{taskId}' : ''}`;
-                case 'templatesets':
-                    return `${ctx.collectionPath}${ctx.itemId ? '/{setName}' : ''}`;
-                default:
-                    return pathName.substring(pathName.indexOf('/', 1));
+            case 'info':
+            case 'settings':
+            case 'settings-schema':
+                return ctx.collectionPath;
+            case 'templates':
+                return `${ctx.collectionPath}${ctx.itemId ? '/setName/{templateName}' : ''}`;
+            case 'applications':
+                return `${ctx.collectionPath}${ctx.itemId ? '/tenantName/{appName}' : ''}`;
+            case 'tasks':
+                return `${ctx.collectionPath}${ctx.itemId ? '/{taskId}' : ''}`;
+            case 'templatesets':
+                return `${ctx.collectionPath}${ctx.itemId ? '/{setName}' : ''}`;
+            default:
+                return pathName.substring(pathName.indexOf('/', 1));
             }
         };
 
@@ -1722,7 +1722,7 @@ class FASTWorker {
                 })
                 .catch((e) => {
                     if (e.message.match(/No templates found/) || e.message.match(/does not exist/)) {
-                        return this.genRestResponse(restOperation, 404, e.message,ctx);
+                        return this.genRestResponse(restOperation, 404, e.message, ctx);
                     }
                     return this.genRestResponse(restOperation, 500, e.stack, ctx);
                 });
@@ -1763,7 +1763,7 @@ class FASTWorker {
             .then(() => {
                 const schema = this.getConfigSchema();
                 restOperation.setBody(schema);
-                this.completeRestOperation(restOperation,ctx);
+                this.completeRestOperation(restOperation, ctx);
             })
             .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
     }
@@ -1797,7 +1797,7 @@ class FASTWorker {
                     case 'settings':
                         return this.getSettings(restOperation, ctx);
                     case 'settings-schema':
-                        return this.getSettingsSchema(restOperation,ctx);
+                        return this.getSettingsSchema(restOperation, ctx);
                     default:
                         return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);
                     }
@@ -2190,7 +2190,7 @@ class FASTWorker {
                         return this.genRestResponse(restOperation, 404, e.message, ctx);
                     }
                     if (e.message.match(/being used by/)) {
-                        return this.genRestResponse(restOperation, 400, e.message,ctx);
+                        return this.genRestResponse(restOperation, 400, e.message, ctx);
                     }
                     return this.genRestResponse(restOperation, 500, e.stack, ctx);
                 });
