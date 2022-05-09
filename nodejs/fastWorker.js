@@ -100,7 +100,9 @@ class FASTWorker {
         if (typeof options.uploadPath === 'undefined') {
             options.uploadPath = '/var/config/rest/downloads';
         }
-
+        this.setTracer();
+        this.hookOnShutDown();
+        const span = this.tracer.startSpan('creating_fast_worker');
         this.state = {};
 
         this.version = options.version || pkg.version;
@@ -131,8 +133,8 @@ class FASTWorker {
         this.bigip = options.bigipDevice || new BigipDeviceClassic(bigipInfo);
         this.driver = options.as3Driver || new AS3Driver({
             userAgent: this.baseUserAgent,
-            bigipInfo
-
+            bigipInfo,
+            span
         });
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
@@ -167,6 +169,8 @@ class FASTWorker {
         this.as3Info = null;
         this._hydrateCache = null;
         this._provisionConfigCacheTime = null;
+        span.log('created_fast_worker');
+        span.finish();
     }
 
     hookCompleteRestOp() {
@@ -1670,7 +1674,7 @@ class FASTWorker {
                 .then(() => this.recordTransaction(
                     reqid,
                     'gathering a list of tasks from the driver',
-                    this.driver.getTasks()
+                    this.driver.getTasks(ctx)
                 ))
                 .then(taskList => taskList.filter(x => x.id === taskid))
                 .then((taskList) => {
@@ -1688,7 +1692,7 @@ class FASTWorker {
             .then(() => this.recordTransaction(
                 reqid,
                 'gathering a list of tasks from the driver',
-                this.driver.getTasks()
+                this.driver.getTasks(ctx)
             ))
             .then((tasksList) => {
                 restOperation.setBody(tasksList);
