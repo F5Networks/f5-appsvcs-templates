@@ -592,4 +592,27 @@ describe('Settings', function () {
                     .then(res => assertResponse(res, expected));
             });
     });
+
+    it('TS objects added to Common tenant', function () {
+        if (!enableTelemetry) {
+            return Promise.resolve(this.skip());
+        }
+
+        return Promise.resolve()
+            .then(() => endpoint.get('/mgmt/shared/appsvcs/declare')
+                .then(resp => resp.data)
+                .catch(e => handleHTTPError(e, 'get AS3 declaration')))
+            .then((decl) => {
+                assert.ok(decl.Common);
+                assert.ok(decl.Common.Shared);
+                assert.ok(decl.Common.Shared.fast_telemetry);
+
+                if (logAFM) {
+                    assert.ok(decl.Common.Shared.fast_telemetry_afm_security_log_profile);
+                }
+                if (logASM) {
+                    assert.ok(decl.Common.Shared.fast_telemetry_asm_security_log_profile);
+                }
+            });
+    });
 });
