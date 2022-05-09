@@ -440,6 +440,10 @@ describe('Settings', function () {
     this.timeout(120000);
     const url = '/mgmt/shared/fast/settings';
 
+    let enableTelemetry = false;
+    let logASM = false;
+    let logAFM = false;
+
     function assertResponse(actual, expected) {
         return Promise.resolve()
             .then(() => {
@@ -457,12 +461,24 @@ describe('Settings', function () {
 
     before('Setup', () => Promise.resolve()
         .then(() => getAuthToken())
-        .then(() => deleteAllApplications())
         .then(() => endpoint.delete(url))
         .then(actual => assert(actual, {
             data: { code: 200, message: 'success' },
             status: 200
-        })));
+        }))
+        .then(() => endpoint.get('/mgmt/shared/telemetry/info')
+            .then(() => { enableTelemetry = true; })
+            .catch(e => (e.response && e.response.status === 404 ? Promise.resolve() : Promise.reject(e))))
+        .then(() => endpoint.get('/mgmt/tm/sys/provision')
+            .then(resp => resp.data)
+            .then(data => data.items
+                .filter(x => x.level !== 'none')
+                .map(x => x.name))
+            .then((provisionedModules) => {
+                logASM = enableTelemetry && provisionedModules.includes('asm');
+                logAFM = enableTelemetry && provisionedModules.includes('afm');
+            })
+            .catch(e => handleHTTPError(e, 'get provision data'))));
 
     it('GET default settings', () => Promise.resolve()
         .then(() => endpoint.get(url))
@@ -476,9 +492,9 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                enable_telemetry: false,
-                log_asm: false,
-                log_afm: false
+                enable_telemetry: enableTelemetry,
+                log_asm: logASM,
+                log_afm: logAFM
             },
             status: 200
         })));
@@ -502,9 +518,9 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     // driver defaults
-                    enable_telemetry: false,
-                    log_asm: false,
-                    log_afm: false,
+                    enable_telemetry: enableTelemetry,
+                    log_asm: logASM,
+                    log_afm: logAFM,
                     _links: { self: url }
                 };
                 return assertResponse(actual, expected);
@@ -512,7 +528,7 @@ describe('Settings', function () {
     });
     it('POST then GET settings with IPAM', () => {
         const postBody = {
-            enable_telemetry: false,
+            enable_telemetry: enableTelemetry,
             deletedTemplateSets: [],
             ipamProviders: [{
                 serviceType: 'Generic',
@@ -529,8 +545,8 @@ describe('Settings', function () {
                 network: 'testnetwork'
             }],
             enableIpam: false,
-            log_afm: false,
-            log_asm: false,
+            log_afm: logAFM,
+            log_asm: logASM,
             disableDeclarationCache: false,
             _links: { self: url }
         };
@@ -563,12 +579,12 @@ describe('Settings', function () {
             .then(actual => assertResponse(actual, expected))
             .then(() => {
                 expected.data = {
-                    enable_telemetry: false,
+                    enable_telemetry: enableTelemetry,
                     deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
-                    log_afm: false,
-                    log_asm: false,
+                    log_afm: logAFM,
+                    log_asm: logASM,
                     disableDeclarationCache: true,
                     _links: { self: url }
                 };
