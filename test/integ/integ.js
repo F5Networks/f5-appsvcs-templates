@@ -86,7 +86,11 @@ function getAuthToken() {
         }))
         .then((response) => {
             const token = response.data.token.token;
-            endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
+            if (response.data.useBearerToken) {
+                endpoint.defaults.headers.common.authorization = `Bearer ${token}`;
+            } else {
+                endpoint.defaults.headers.common['X-F5-Auth-Token'] = token;
+            }
         })
         .catch(e => handleHTTPError(e, 'generate auth token'));
 }
