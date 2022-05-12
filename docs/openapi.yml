@@ -835,6 +835,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         message:
           type: array
           items:
@@ -865,6 +867,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         code:
           type: integer
           minimum: 202
@@ -1211,6 +1215,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response400:
@@ -1232,6 +1238,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response404:
@@ -1253,6 +1261,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response500:
@@ -1274,6 +1284,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response422:
@@ -1295,6 +1307,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     IpamInfoblox:
@@ -1433,6 +1447,8 @@ components:
           type: string
     LinksDefinition:
       type: object
+      title: Links Definition
+      description: An object containing link references.
       properties:
         self:
           type: string
