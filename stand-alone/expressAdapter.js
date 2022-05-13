@@ -146,7 +146,7 @@ function generateApp(workers, options) {
             .then(() => endpoint.request({
                 method: req.method,
                 url: req.url,
-                data: req.body,
+                data: (Object.keys(req.body).length !== 0) ? req.body : undefined,
                 headers: req.headers,
                 validateStatus: () => true // pass on failures
             }))
