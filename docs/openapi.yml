@@ -856,7 +856,7 @@ components:
                 example: { "tenant_name": "tenant", "application_name": "app" }
     ApplicationDeleteResponse:
       type: object
-      description: The response message when deleting Applications
+      description: The response message when deleting Applications.
       required:
         - code
         - message
@@ -1000,9 +1000,7 @@ components:
           description: Template description
           example: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This Template is an example of how one might build a simple UDP Application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the Template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
         definitions:
-          type: object
-          description: Additional properties for parameters. Object keys must match a parameter found in the Template text.
-          example: {}
+          $ref: "#/components/schemas/ParametersDefinition"
         target:
           type: string
           default: 'as3'
@@ -1107,7 +1105,17 @@ components:
               hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
         dataFiles: 
           type: array
-          example: []
+          description: A list of data files associated with the Template Set.
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: data file name
+              hash:
+                type: string
+                description: A sha256 hash of the data file
+            example: [ { name: 'testSet/test', hash: '0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c'}]
         enabled:
           type: boolean
           description: Template Set is installed and ready to use
@@ -1198,7 +1206,7 @@ components:
             $ref: "#/components/schemas/Settings"
     Response200:
       type: object
-      description: OK
+      description: OK/Success
       required:
         - code
         - message
