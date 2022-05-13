@@ -100,6 +100,7 @@ class FASTWorker {
         if (typeof options.uploadPath === 'undefined') {
             options.uploadPath = '/var/config/rest/downloads';
         }
+        this.as3Info = null;
         this.setTracer();
         this.hookOnShutDown();
         const span = this.tracer.startSpan('creating_fast_worker');
@@ -166,7 +167,6 @@ class FASTWorker {
         this.requestTimes = {};
         this.requestCounter = 1;
         this.provisionData = null;
-        this.as3Info = null;
         this._hydrateCache = null;
         this._provisionConfigCacheTime = null;
         span.log('created_fast_worker');
@@ -233,7 +233,10 @@ class FASTWorker {
     _getDefaultConfig() {
         const defaultConfig = {
             deletedTemplateSets: [],
-            perfTracing: { enabled: false, debug: false },
+            perfTracing: {
+                enabled: (String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true') ? true : false,
+                debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true' ? true : false
+            },
             enableIpam: false,
             ipamProviders: [],
             disableDeclarationCache: false
