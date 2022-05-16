@@ -107,7 +107,6 @@ class FASTWorker {
             isRestOp: false,
             message: 'creating_fast_worker'
         });
-        //const span = this.tracer.startSpan('creating_fast_worker');
         this.state = {};
 
         this.version = options.version || pkg.version;
@@ -238,8 +237,8 @@ class FASTWorker {
         const defaultConfig = {
             deletedTemplateSets: [],
             perfTracing: {
-                enabled: (String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true') ? true : false,
-                debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true' ? true : false
+                enabled: process.env.F5_PERF_TRACING_ENABLED || false,
+                debug: process.env.F5_PERF_TRACING_DEBUG || false
             },
             enableIpam: false,
             ipamProviders: [],
