@@ -103,7 +103,11 @@ class FASTWorker {
         this.as3Info = null;
         this.setTracer();
         this.hookOnShutDown();
-        const span = this.tracer.startSpan('creating_fast_worker');
+        const ctx = this.generateContext({
+            isRestOp: false,
+            message: 'creating_fast_worker'
+        });
+        //const span = this.tracer.startSpan('creating_fast_worker');
         this.state = {};
 
         this.version = options.version || pkg.version;
@@ -135,7 +139,7 @@ class FASTWorker {
         this.driver = options.as3Driver || new AS3Driver({
             userAgent: this.baseUserAgent,
             bigipInfo,
-            span
+            ctx
         });
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
@@ -169,8 +173,8 @@ class FASTWorker {
         this.provisionData = null;
         this._hydrateCache = null;
         this._provisionConfigCacheTime = null;
-        span.log('created_fast_worker');
-        span.finish();
+        ctx.span.log('created_fast_worker');
+        ctx.span.finish();
     }
 
     hookCompleteRestOp() {
@@ -431,7 +435,10 @@ class FASTWorker {
         this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
 
-        const span = this.tracer.startSpan('app_start');
+        const ctx = this.generateContext({
+            isRestOp: false,
+            message: 'app_start'
+        });
 
         return Promise.resolve()
             // Automatically add a block
@@ -471,18 +478,18 @@ class FASTWorker {
             })
             .then(() => {
                 if (this.lazyInit) {
-                    span.log({ event: 'lazy_init_enabled' });
+                    ctx.span.log({ event: 'lazy_init_enabled' });
                     return Promise.resolve();
                 }
 
-                return this.initWorker(0, span);
+                return this.initWorker(0, ctx);
             })
             // Done
             .then((config) => {
                 const dt = Date.now() - startTime;
                 this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
-                span.log({ event: 'worked_initialized' });
-                span.finish();
+                ctx.span.log({ event: 'worked_initialized' });
+                ctx.span.finish();
                 this.setTracer(config.perfTracing);
             })
             .then(() => success())
@@ -493,7 +500,7 @@ class FASTWorker {
                     return success();
                 }
                 this.logger.severe(`FAST Worker: Failed to start: ${e.stack}`);
-                span.logError(e);
+                ctx.span.logError(e);
                 return error();
             });
     }
@@ -506,17 +513,16 @@ class FASTWorker {
         return success();
     }
 
-    initWorker(reqid, span) {
+    initWorker(reqid, ctx) {
         reqid = reqid || 0;
         let config;
-
         this._lazyInitComplete = true;
 
         return Promise.resolve()
             // Load config
             .then(() => this.getConfig(reqid))
             .then((cfg) => {
-                span.log({ event: 'config_loaded' });
+                ctx.span.log({ event: 'config_loaded' });
                 config = cfg;
             })
             .then(() => this.setDeviceInfo(reqid))
@@ -527,7 +533,7 @@ class FASTWorker {
             // watch for configSync logs, if device is in an HA Pair
             .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this)))
             .then(() => {
-                this.generateTeemReportOnStart();
+                this.generateTeemReportOnStart(reqid, ctx);
             })
             .then(() => Promise.resolve(config))
             .catch((e) => {
@@ -537,7 +543,7 @@ class FASTWorker {
                 // we will retry initWorker 3 times for 404 errors
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
                     this.initRetries += 1;
-                    this.initTimeout = setTimeout(() => { this.initWorker(reqid, span); }, 2000);
+                    this.initTimeout = setTimeout(() => { this.initWorker(reqid, ctx); }, 2000);
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
                     return Promise.resolve();
                 }
@@ -546,7 +552,7 @@ class FASTWorker {
             });
     }
 
-    handleLazyInit(reqid, span) {
+    handleLazyInit(reqid, ctx) {
         if (!this.lazyInit || this._lazyInitComplete) {
             return Promise.resolve();
         }
@@ -554,7 +560,7 @@ class FASTWorker {
         return this.recordTransaction(
             reqid,
             'run lazy initialization',
-            this.initWorker(reqid, span)
+            this.initWorker(reqid, ctx)
         );
     }
 
@@ -688,12 +694,12 @@ class FASTWorker {
         this.tracer = new Tracer(pkg.name, tracerOpts);
     }
 
-    generateTeemReportOnStart(reqid) {
+    generateTeemReportOnStart(reqid, ctx) {
         if (!this.teemDevice) {
             return Promise.resolve();
         }
 
-        return this.gatherInfo(reqid)
+        return this.gatherInfo(reqid, ctx)
             .then(info => this.sendTeemReport('onStart', 1, info))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
     }
@@ -769,18 +775,28 @@ class FASTWorker {
         return retval;
     }
 
-    generateContext(restOperation) {
+    generateContext(operation) {
         // returns /shared/fast/{collection}{/item...}{?queryParams}
-        const pathName = restOperation.getUri().pathname;
+        // no restOp indicates one of initial runs (i.e. onStart, fastWorker init)
+        if (operation.isRestOp !== undefined && !operation.isRestOp) {
+            const context = {
+                requestId: this.generateRequestId(),
+                tracer: this.tracer
+            };
+            context.span = this.tracer.startHttpSpan(operation.message, 'None', 'None');
+            return context;
+        }
+        // Processing restOp object
+        const pathName = operation.getUri().pathname;
         const pathElements = pathName.split('/');
-        restOperation.requestId = this.generateRequestId();
+        operation.requestId = this.generateRequestId();
         const context = {
-            body: restOperation.getBody(),
+            body: operation.getBody(),
             collectionPath: pathElements.slice(0, 4).join('/'),
             collection: pathElements[3],
             itemId: pathElements[4],
             pathName,
-            requestId: restOperation.requestId,
+            requestId: operation.requestId,
             tracer: this.tracer
         };
 
@@ -803,7 +819,7 @@ class FASTWorker {
             }
         };
 
-        context.span = this.tracer.startHttpSpan(getSpanPath(context), pathName, restOperation.getMethod());
+        context.span = this.tracer.startHttpSpan(getSpanPath(context), pathName, operation.getMethod());
 
         return context;
     }
@@ -890,12 +906,6 @@ class FASTWorker {
     }
 
     gatherInfo(requestId, ctx) {
-        if (!ctx) {
-            ctx = {
-                tracer: this.tracer,
-                span: this.tracer.startSpan('gatherInfo')
-            };
-        }
         requestId = requestId || 0;
         const info = {
             version: this.version,
