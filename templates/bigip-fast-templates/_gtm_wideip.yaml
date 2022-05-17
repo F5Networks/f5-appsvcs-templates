@@ -1,0 +1,63 @@
+bigipHideTemplate: true
+
+gtm_base: &gtm_base
+  title: DNS Wide-IP
+  contentType: application/json
+  anyOf: &gtm_base_anyof
+    - {}
+  definitions:
+    gtm:
+      type: boolean
+      default: false
+      bigipDependencies:
+        - gtm_fqdn
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+        }
+      }
+    }
+
+gtm_wideip: &gtm_wideip
+  title: GTM WideIP
+  contentType: application/json
+  bigipDependencies:
+    - gtm
+  definitions:
+    gtm_fqdn:
+      title: FQDN for DNS WideIP 
+      description: Providing an FQDN will create the WideIP from the Virtual Server address automatically
+      type: string
+      default: ''
+  parameters:
+    gtm: true
+  template: |
+    {
+      "{{tenant_name}}": {
+        "{{app_name}}": {
+          {{#gtm_fqdn}}
+            "{{app_name}}_gslb_pool": {
+              "class":"GSLB_Pool",
+              "resourceRecordType": "A",
+              "fallbackIP": "{{virtual_address}}"
+            },
+            "{{app_name}}_wideip": {
+              "class": "GSLB_Domain",
+              "domainName": {{ . }},
+              "resourceRecordType": "A",
+              "pools": [ 
+                { "use": "{{app_name}}_gslb_pool" }
+              ]
+            }
+          {{/gtm_fqdn}}
+        }
+      }
+    }
+
+# subtemplate with WideIP
+<<: *gtm_base
+anyOf: 
+  - <<: *gtm_base_anyof
+  - *gtm_wideip
+
