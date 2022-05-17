@@ -3,6 +3,7 @@
 * bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
 * Add _links property to FAST REST response to make them HAL JSON.
 * Add requestId to FAST REST response
+* bigip-fast-templates: Add new DNS WideIP from FQDN and Virtual Server destination IP, on devices that have LTM and GTM provisioned
 
 ## Fixed
 * bigip-fast-templates: Enabling Telemetry Streaming does not result in an error, preventing application deployment
