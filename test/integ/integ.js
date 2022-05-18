@@ -26,6 +26,16 @@ const assert = require('assert');
 const fs = require('fs');
 const fast = require('@f5devcentral/f5-fast-core');
 
+const perfTracing = {
+    enabled: (String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true'),
+    endpoint: process.env.F5_PERF_TRACING_ENDPOINT,
+    debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true'
+};
+
+if (perfTracing.enabled && !perfTracing.endpoint) {
+    throw new Error('F5_PERF_TRACING_ENDPOINT env var needs to be defined');
+}
+
 const bigipTarget = process.env.BIGIP_TARGET;
 const bigipCreds = process.env.BIGIP_CREDS;
 
@@ -164,10 +174,16 @@ describe('Template Sets', function () {
                 return Promise.resolve();
             });
     }
+    //
+    // before('Setup', () => Promise.resolve()
+    //     .then(() => getAuthToken())
+    //     .then(() => deleteAllApplications()));
 
-    before('Setup', () => Promise.resolve()
-        .then(() => getAuthToken())
-        .then(() => deleteAllApplications()));
+    before('Setup', () => {
+        return Promise.resolve()
+            .then(() => getAuthToken())
+            .then(() => deleteAllApplications())
+    })
 
     it('GET template sets include "bigip-fast-templates"', () => Promise.resolve()
         .then(() => assertGet({
@@ -498,7 +514,11 @@ describe('Settings', function () {
                 // driver defaults
                 enable_telemetry: enableTelemetry,
                 log_asm: logASM,
-                log_afm: logAFM
+                log_afm: logAFM,
+                perfTracing: {
+                    debug: `${perfTracing.debug}`,
+                    enabled: `${perfTracing.enabled}`
+                }
             },
             status: 200
         })));
@@ -525,6 +545,10 @@ describe('Settings', function () {
                     enable_telemetry: enableTelemetry,
                     log_asm: logASM,
                     log_afm: logAFM,
+                    perfTracing: {
+                        debug: `${perfTracing.debug}`,
+                        enabled: `${perfTracing.enabled}`
+                    },
                     _links: { self: url }
                 };
                 return assertResponse(actual, expected);
@@ -551,6 +575,10 @@ describe('Settings', function () {
             enableIpam: false,
             log_afm: logAFM,
             log_asm: logASM,
+            perfTracing: {
+                debug: perfTracing.debug,
+                enabled: perfTracing.enabled
+            },
             disableDeclarationCache: false,
             _links: { self: url }
         };
@@ -573,7 +601,8 @@ describe('Settings', function () {
     it('PATCH settings', () => {
         const patchBody = {
             disableDeclarationCache: true,
-            ipamProviders: []
+            ipamProviders: [],
+            _links: { self: url }
         };
         const expected = {
             data: { code: 200, _links: { self: url }, message: '' },
@@ -589,6 +618,10 @@ describe('Settings', function () {
                     enableIpam: false,
                     log_afm: logAFM,
                     log_asm: logASM,
+                    perfTracing: {
+                        debug: perfTracing.debug,
+                        enabled: perfTracing.enabled
+                    },
                     disableDeclarationCache: true,
                     _links: { self: url }
                 };

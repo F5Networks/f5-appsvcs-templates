@@ -478,9 +478,13 @@ class FASTWorker {
             .then(() => {
                 if (this.lazyInit) {
                     ctx.span.log({ event: 'lazy_init_enabled' });
-                    return Promise.resolve();
+                    return Promise.resolve({
+                        perfTracing: {
+                            enabled: process.env.F5_PERF_TRACING_ENABLED || false,
+                            debug: process.env.F5_PERF_TRACING_DEBUG || false
+                        }
+                    });
                 }
-
                 return this.initWorker(0, ctx);
             })
             // Done
@@ -1791,7 +1795,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleLazyInit(restOperation.requestId, ctx.span))
+            .then(() => this.handleLazyInit(restOperation.requestId, ctx))
             .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
@@ -2059,7 +2063,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleLazyInit(restOperation.requestId, ctx.span))
+            .then(() => this.handleLazyInit(restOperation.requestId, ctx))
             .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
@@ -2273,7 +2277,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleLazyInit(restOperation.requestId, ctx.span))
+            .then(() => this.handleLazyInit(restOperation.requestId, ctx))
             .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
@@ -2326,7 +2330,7 @@ class FASTWorker {
                 this.renderTemplates(reqid, [{
                     name: appData.template,
                     parameters: appData.view
-                }])
+                }], ctx)
             ]))
             .then(([appData, rendered]) => Promise.all([
                 appData,
@@ -2417,7 +2421,7 @@ class FASTWorker {
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
-            .then(() => this.handleLazyInit(restOperation.requestId, ctx.span))
+            .then(() => this.handleLazyInit(restOperation.requestId, ctx))
             .then(() => this.validateRequest(restOperation))
             .then(() => {
                 try {
