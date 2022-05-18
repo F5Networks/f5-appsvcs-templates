@@ -101,11 +101,13 @@ class FASTWorker {
             options.uploadPath = '/var/config/rest/downloads';
         }
         this.as3Info = null;
+        this.requestCounter = 1;
         this.setTracer();
         this.hookOnShutDown();
         const ctx = this.generateContext({
             isRestOp: false,
-            message: 'creating_fast_worker'
+            message: 'creating_fast_worker',
+            requestId: this.requestCounter
         });
         this.state = {};
 
@@ -168,7 +170,6 @@ class FASTWorker {
         this.minAs3Version = options.minAs3Version || '3.16';
 
         this.requestTimes = {};
-        this.requestCounter = 1;
         this.provisionData = null;
         this._hydrateCache = null;
         this._provisionConfigCacheTime = null;
@@ -436,7 +437,8 @@ class FASTWorker {
 
         const ctx = this.generateContext({
             isRestOp: false,
-            message: 'app_start'
+            message: 'app_start',
+            requestId: this.requestCounter
         });
 
         return Promise.resolve()
@@ -778,7 +780,7 @@ class FASTWorker {
         // no restOp indicates one of initial runs (i.e. onStart, fastWorker init)
         if (operation.isRestOp !== undefined && !operation.isRestOp) {
             const context = {
-                requestId: this.generateRequestId(),
+                requestId: operation.requestId,
                 tracer: this.tracer
             };
             context.span = this.tracer.startHttpSpan(operation.message, 'None', 'None');
@@ -787,7 +789,6 @@ class FASTWorker {
         // Processing restOp object
         const pathName = operation.getUri().pathname;
         const pathElements = pathName.split('/');
-        operation.requestId = this.generateRequestId();
         const context = {
             body: operation.getBody(),
             collectionPath: pathElements.slice(0, 4).join('/'),
@@ -1780,13 +1781,12 @@ class FASTWorker {
     }
 
     onGet(restOperation) {
-        const ctx = this.generateContext(restOperation);
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
         const collection = pathElements[3];
         const itemid = pathElements[4];
         restOperation.requestId = this.generateRequestId();
-
+        const ctx = this.generateContext(restOperation);
         this.recordRestRequest(restOperation);
 
         return Promise.resolve()
@@ -2047,13 +2047,13 @@ class FASTWorker {
     }
 
     onPost(restOperation) {
-        const ctx = this.generateContext(restOperation);
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
         const collection = pathElements[3];
 
         restOperation.requestId = this.generateRequestId();
+        const ctx = this.generateContext(restOperation);
 
         this.recordRestRequest(restOperation);
 
@@ -2260,7 +2260,6 @@ class FASTWorker {
     }
 
     onDelete(restOperation) {
-        const ctx = this.generateContext(restOperation);
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -2268,6 +2267,7 @@ class FASTWorker {
         const itemid = pathElements[4];
 
         restOperation.requestId = this.generateRequestId();
+        const ctx = this.generateContext(restOperation);
 
         this.recordRestRequest(restOperation);
 
@@ -2404,7 +2404,6 @@ class FASTWorker {
     }
 
     onPatch(restOperation) {
-        const ctx = this.generateContext(restOperation);
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -2412,6 +2411,7 @@ class FASTWorker {
         const itemid = pathElements[4];
 
         restOperation.requestId = this.generateRequestId();
+        const ctx = this.generateContext(restOperation);
 
         this.recordRestRequest(restOperation);
 
