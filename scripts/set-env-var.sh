@@ -18,7 +18,7 @@ cmd='echo \\\"$(awk -v var='"'""$setVars""'"" 'NR==3{print var}1'"' /etc/bigstar
 
 # TODO: add back
 # --write-out "%{http_code}" --output /dev/null \
-curl --insecure --silent --show-error -u "$CREDS" https://$TARGET/mgmt/tm/util/bash \
+curl --write-out "%{http_code}"  --insecure --silent --show-error -u "$CREDS" https://$TARGET/mgmt/tm/util/bash \
     -H "Content-Type: application/json" \
     -d '{
         "command": "run",
