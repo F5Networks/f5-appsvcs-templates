@@ -174,16 +174,10 @@ describe('Template Sets', function () {
                 return Promise.resolve();
             });
     }
-    //
-    // before('Setup', () => Promise.resolve()
-    //     .then(() => getAuthToken())
-    //     .then(() => deleteAllApplications()));
 
-    before('Setup', () => {
-        return Promise.resolve()
-            .then(() => getAuthToken())
-            .then(() => deleteAllApplications())
-    })
+    before('Setup', () => Promise.resolve()
+        .then(() => getAuthToken())
+        .then(() => deleteAllApplications()));
 
     it('GET template sets include "bigip-fast-templates"', () => Promise.resolve()
         .then(() => assertGet({
