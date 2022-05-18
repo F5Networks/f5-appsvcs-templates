@@ -456,6 +456,28 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
+    describe('enable gtm wideip', function () {
+        before(() => {
+            view.gtm_fqdn = 'example.com';
+            expected.t1.app1.app1_gslb_pool = {
+                class: 'GSLB_Pool',
+                resourceRecordType: 'A',
+                fallbackIP: '10.1.1.1'
+            };
+            expected.t1.app1.app1_wideip = {
+                class: 'GSLB_Domain',
+                domainName: 'example.com',
+                resourceRecordType: 'A',
+                pools: [
+                    {
+                        use: 'app1_gslb_pool'
+                    }
+                ]
+            };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
     describe('clean up', function () {
         util.cleanUp();
     });
