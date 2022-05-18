@@ -478,12 +478,7 @@ class FASTWorker {
             .then(() => {
                 if (this.lazyInit) {
                     ctx.span.log({ event: 'lazy_init_enabled' });
-                    return Promise.resolve({
-                        perfTracing: {
-                            enabled: process.env.F5_PERF_TRACING_ENABLED || false,
-                            debug: process.env.F5_PERF_TRACING_DEBUG || false
-                        }
-                    });
+                    return Promise.resolve(this._getDefaultConfig());
                 }
                 return this.initWorker(0, ctx);
             })
