@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  version: 1.18.0-rc.3
+  version: 1.18.0-rc.4
   title: F5 Application Services Templates API
   license:
     name: Apache 2.0
@@ -755,7 +755,7 @@ components:
           allowOverwrite: true
     ApplicationRenderedResponse:
       type: object
-      description: Application Definition Response.
+      description: Application Rendered Response.
       required:
         - code
         - message
@@ -835,6 +835,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         message:
           type: array
           items:
@@ -854,7 +856,7 @@ components:
                 example: { "tenant_name": "tenant", "application_name": "app" }
     ApplicationDeleteResponse:
       type: object
-      description: The response message when deleting Applications
+      description: The response message when deleting Applications.
       required:
         - code
         - message
@@ -865,6 +867,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         code:
           type: integer
           minimum: 202
@@ -996,9 +1000,7 @@ components:
           description: Template description
           example: "** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION ** This Template is an example of how one might build a simple UDP Application with load balancing. It allows the user to provide a virtual IP address and port along with a list of UDP server addresses. The user-supplied values are inserted when the Template is rendered, yielding an AS3 declaration suitable for submission to BIG-IP."
         definitions:
-          type: object
-          description: Additional properties for parameters. Object keys must match a parameter found in the Template text.
-          example: {}
+          $ref: "#/components/schemas/ParametersDefinition"
         target:
           type: string
           default: 'as3'
@@ -1103,7 +1105,17 @@ components:
               hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
         dataFiles: 
           type: array
-          example: []
+          description: A list of data files associated with the Template Set.
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: data file name
+              hash:
+                type: string
+                description: A sha256 hash of the data file
+            example: [ { name: 'testSet/test', hash: '0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c'}]
         enabled:
           type: boolean
           description: Template Set is installed and ready to use
@@ -1194,7 +1206,7 @@ components:
             $ref: "#/components/schemas/Settings"
     Response200:
       type: object
-      description: OK
+      description: OK - Request was successful.
       required:
         - code
         - message
@@ -1211,6 +1223,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response400:
@@ -1232,6 +1246,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response404:
@@ -1253,6 +1269,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response500:
@@ -1274,11 +1292,13 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     Response422:
       type: object
-      description: supplied configuration was invalid
+      description: Supplied configuration was invalid.
       required:
         - code
         - message
@@ -1295,6 +1315,8 @@ components:
         requestId:
           type: integer
           example: 3
+          minimum: 1
+          maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
     IpamInfoblox:
@@ -1433,6 +1455,8 @@ components:
           type: string
     LinksDefinition:
       type: object
+      title: Links Definition
+      description: An object containing link references.
       properties:
         self:
           type: string
