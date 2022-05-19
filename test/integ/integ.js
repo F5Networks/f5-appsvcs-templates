@@ -27,7 +27,7 @@ const fs = require('fs');
 const fast = require('@f5devcentral/f5-fast-core');
 
 const perfTracing = {
-    enabled: (String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true'),
+    enabled: String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true',
     endpoint: process.env.F5_PERF_TRACING_ENDPOINT,
     debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true'
 };
@@ -510,8 +510,8 @@ describe('Settings', function () {
                 log_asm: logASM,
                 log_afm: logAFM,
                 perfTracing: {
-                    debug: `${perfTracing.debug}`,
-                    enabled: `${perfTracing.enabled}`
+                    debug: perfTracing.debug,
+                    enabled: perfTracing.enabled
                 }
             },
             status: 200
@@ -540,8 +540,8 @@ describe('Settings', function () {
                     log_asm: logASM,
                     log_afm: logAFM,
                     perfTracing: {
-                        debug: `${perfTracing.debug}`,
-                        enabled: `${perfTracing.enabled}`
+                        debug: perfTracing.debug,
+                        enabled: perfTracing.enabled
                     },
                     _links: { self: url }
                 };
