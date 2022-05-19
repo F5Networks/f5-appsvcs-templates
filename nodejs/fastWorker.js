@@ -238,8 +238,8 @@ class FASTWorker {
         const defaultConfig = {
             deletedTemplateSets: [],
             perfTracing: {
-                enabled: process.env.F5_PERF_TRACING_ENABLED || false,
-                debug: process.env.F5_PERF_TRACING_DEBUG || false
+                enabled: String(process.env.F5_PERF_TRACING_ENABLED).toLowerCase() === 'true',
+                debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true'
             },
             enableIpam: false,
             ipamProviders: [],
@@ -1964,7 +1964,7 @@ class FASTWorker {
                 // if both template and config storage are data-group based, avoid calling persist() twice
                 // saveConfig() already calls persist() and triggers save sys config, which can cause latency
                 if (persisted && this.storage instanceof StorageDataGroup
-                        && this.configStorage instanceof StorageDataGroup) {
+                    && this.configStorage instanceof StorageDataGroup) {
                     return Promise.resolve();
                 }
                 return this.storage.persist();
