@@ -218,7 +218,6 @@ describe('Template Sets', function () {
                 file,
                 {
                     headers: {
-                        Authorization: `Basic ${bigipCreds.toString('base64')}`,
                         'Content-Type': 'application/octet-stream',
                         'Content-Range': `0-${uploadedFileSize - 1}/${uploadedFileSize}`
                     }
