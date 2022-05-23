@@ -1,6 +1,6 @@
 {
   "name": "f5-appsvcs-templates",
-  "version": "1.18.0-rc.4",
+  "version": "1.18.0-rc.5",
   "author": "F5 Networks",
   "license": "Apache-2.0",
   "description": "",
@@ -18,6 +18,7 @@
     "buildgui": "./scripts/build-presentation-layer.sh",
     "buildrpm": "./scripts/rpmbuild.sh",
     "build": "npm run buildgui && npm run buildrpm",
+    "buildperf": "F5_PERF_TRACING_ENABLED='true' npm run build",
     "version": "./scripts/fix-version.sh",
     "start": "node --unhandled-rejections=strict stand-alone/app.js",
     "watch": "NODE_ENV=development npm-watch"
@@ -128,6 +129,7 @@
     "ajv": "^6.12.6",
     "axios": "^0.27.2",
     "core-js": "^3.22.4",
+    "jaeger-client": "^3.19.0",
     "deepmerge": "^4.2.2",
     "extract-zip": "^1.7.0",
     "fs-extra": "^8.1.0",
@@ -135,5 +137,8 @@
     "mustache": "^4.2.0",
     "semver": "^7.3.7",
     "uuid": "^7.0.3"
+  },
+  "optionalDependencies": {
+    "error": "7.2.1"
   }
 }

@@ -71,6 +71,21 @@ The built RPM package and associated sha256 hash will be placed in the `dist` di
 The package can be installed on a BIG-IP using the usual mechanisms for installing iApp LX packages.
 There is also an `install-rpm` script provided in `scripts` that installs the latest RPM found in `dist` to a target BIG-IP via the REST API.
 
+### Perfomance Tracing
+
+FAST supports perfomance tracing using [Jaeger](https://www.jaegertracing.io/).
+
+To build RPM package with all required modules for Perfmonace tracing, run:
+```bash
+npm run buildperf
+```
+
+After installing RPM package on the BIGIP system, in order to enable perfomance tracing, the following environment variables are required to be set on the BIGIP system:
+
+ * F5_PERF_TRACING_ENABLED - boolean flag to enable FAST Perfomance tracing
+ * F5_PERF_TRACING_DEBUG - boolean flag to enable additional logging on Jaeger client
+ * F5_PERF_TRACING_ENDPOINT - Jaeger url for sending traces (i.e. http://<ip_address>:14268/api/traces)
+ 
 ### Logging
 
 All log messages should contain the worker name (FAST Worker) for easier filtering.

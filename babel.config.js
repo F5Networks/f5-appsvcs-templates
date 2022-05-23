@@ -17,6 +17,9 @@ module.exports = {
         '**/mustache/**',
         '**/mkdirp/**',
         '**/core-js/**',
-        '**/bin/**'
+        '**/bin/**',
+        // jaeger deps
+        '**/thriftrw/**',
+        '**/ansi-color/**'
     ]
 };

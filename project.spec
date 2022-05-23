@@ -21,7 +21,7 @@ npx babel %{main}/nodejs -d %{_builddir}/nodejs --copy-files --config-file %{mai
 mkdir -p %{_builddir}/lib
 npx babel %{main}/lib -d %{_builddir}/lib --copy-files --config-file %{main}/babel.config.js
 cp %{main}/package.json %{_builddir}
-%{main}/scripts/copy-node-modules.sh %{main} %{_builddir}/node_modules
+%{main}/scripts/copy-node-modules.sh %{main} %{_builddir}/node_modules %{PERF_TRACING_ENABLED}
 # Presentation layer
 mkdir -p %{_builddir}/presentation
 cp %{main}/presentation/*.html %{_builddir}/presentation
