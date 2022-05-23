@@ -3,6 +3,7 @@ set -eux
 
 src="$1"
 target="$2"
+include_optional="$3"
 tmpdir="_tmpnodemodules_"
 skip_babel=${SKIP_BABEL:-0}
 
@@ -21,7 +22,11 @@ for file_module in "${file_modules[@]}"; do
     module_pkg=${module_pkg_name}-${module_pkg_ver}.tgz
     sed -i'.bu' "s%file:${file_module}%file:${module_pkg}%" package.json
 done
-npm ci --only=production --no-optional --no-audit
+if [[ $include_optional == "true" || $include_optional == "TRUE" ]]; then
+    npm ci --only=production --no-audit
+else
+    npm ci --only=production --no-optional --no-audit
+fi
 popd
 
 if [[ $skip_babel == 1 ]]; then

@@ -38,6 +38,7 @@ function resetScope(scope) {
 describe('BigipDeviceClassic tests', function () {
     this.timeout(3000);
     const host = 'http://localhost:8100';
+    let testCtx;
     const deviceGroupItems = [
         { name: 'device_trust_group', partition: 'Common' },
         { name: 'gtm', partition: 'Common' },
@@ -128,6 +129,20 @@ describe('BigipDeviceClassic tests', function () {
             .reply(200, {
                 entries: dgStatEntries
             });
+        testCtx = {
+            tracer: {
+                startChildSpan: sinon.stub().returns({
+                    log: sinon.stub(),
+                    finish: sinon.stub(),
+                    error: sinon.stub()
+                })
+            },
+            span: {
+                log: sinon.stub(),
+                error: sinon.stub(),
+                finish: sinon.stub()
+            }
+        };
     });
 
     afterEach(function () {
@@ -139,28 +154,28 @@ describe('BigipDeviceClassic tests', function () {
         it('getSyncStatus', function () {
             const bigip = new BigipDeviceClassic();
 
-            return bigip.getSyncStatus()
+            return bigip.getSyncStatus(testCtx)
                 .then(syncStatus => assert.equal(syncStatus, 'Standalone'));
         });
 
         it('getDeviceInfo', function () {
             const bigip = new BigipDeviceClassic();
 
-            return bigip.getDeviceInfo()
+            return bigip.getDeviceInfo(testCtx)
                 .then(deviceInfo => assert.equal(deviceInfo.mcpDeviceName, '/Common/bigip.a'));
         });
 
         it('getDeviceGroups', function () {
             const bigip = new BigipDeviceClassic();
 
-            return bigip.getDeviceGroups()
+            return bigip.getDeviceGroups(testCtx)
                 .then(deviceGroups => assert.deepStrictEqual(deviceGroups, deviceGroupItems));
         });
 
         it('getDeviceGroupStats', function () {
             const bigip = new BigipDeviceClassic();
 
-            return bigip.getDeviceGroupStats('sync_failover_dg')
+            return bigip.getDeviceGroupStats('sync_failover_dg', testCtx)
                 .then(dgStats => assert.deepStrictEqual(dgStats, dgStatEntries));
         });
 
@@ -191,7 +206,7 @@ describe('BigipDeviceClassic tests', function () {
                 .persist()
                 .get('/mgmt/tm/ltm/pool?$select=fullPath')
                 .reply(200, mockLtmMetadata);
-            return bigip.getSharedObjects('ltm/pool', { name: 'test' })
+            return bigip.getSharedObjects('ltm/pool', { name: 'test' }, testCtx)
                 .then(result => assert.deepEqual(result, ['/Common/test-pool-01', '/Common/test-pool-02']));
         });
 
@@ -199,7 +214,7 @@ describe('BigipDeviceClassic tests', function () {
             const bigip = new BigipDeviceClassic();
             bigip.getDeviceInfo = sinon.fake();
 
-            return bigip.watchConfigSyncStatus(bigip.getDeviceInfo)
+            return bigip.watchConfigSyncStatus(bigip.getDeviceInfo, testCtx)
                 .then(() => assert.isFalse(bigip.getDeviceInfo.calledOnce));
         });
 
@@ -208,13 +223,13 @@ describe('BigipDeviceClassic tests', function () {
             bigip.onConfigSync = sinon.fake();
 
             resetSyncStatusScope('Changes Pending');
-            return bigip.watchConfigSyncStatus(bigip.onConfigSync)
+            return bigip.watchConfigSyncStatus(bigip.onConfigSync, testCtx)
                 .then(() => {
                     assert.isFalse(bigip.onConfigSync.calledOnce);
 
                     resetDeviceInfoScope('/Common/bigip.b');
 
-                    return bigip.watchConfigSyncStatus(bigip.onConfigSync);
+                    return bigip.watchConfigSyncStatus(bigip.onConfigSync, testCtx);
                 })
                 .then(() => {
                     assert(bigip.onConfigSync.calledOnce);
@@ -228,7 +243,7 @@ describe('BigipDeviceClassic tests', function () {
             resetSyncStatusScope('Changes Pending');
             resetDeviceGroupScope('strNotArray');
 
-            return bigip.watchConfigSyncStatus(bigip.onConfigSync)
+            return bigip.watchConfigSyncStatus(bigip.onConfigSync, testCtx)
                 .catch(e => assert.match(e.message, /FAST BigipDevice Error in Device Group: /))
                 .then(() => {
                     resetDeviceGroupScope(deviceGroupItems);
@@ -240,7 +255,7 @@ describe('BigipDeviceClassic tests', function () {
                             entries: 'strNotArray'
                         });
 
-                    return bigip.watchConfigSyncStatus(bigip.onConfigSync);
+                    return bigip.watchConfigSyncStatus(bigip.onConfigSync, testCtx);
                 })
                 .catch(e => assert.match(e.message, /FAST BigipDevice Error in Device Group Stats: /));
         });
