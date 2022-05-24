@@ -122,7 +122,7 @@ function deleteAllApplications() {
             if (task.code !== okCode) {
                 console.log(task);
             }
-            assert.strictEqual(task.code, okCode);
+            assert.ok(task.code === okCode || task.code === 0);
             return promiseDelay(10000);
         })
         .catch(e => handleHTTPError(e, 'delete applications'));
