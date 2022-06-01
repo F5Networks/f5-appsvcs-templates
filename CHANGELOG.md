@@ -1,10 +1,17 @@
+# 1.19.0
+## Added
+* worker: Add grep-able state transitions to the log ("Entering STARTED/READY/UNHEALTHY state")
+
+## Fixed
+
+## Changed
+
 # 1.18.0
 ## Added
 * bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
 * Add _links property to FAST REST response to make them HAL JSON.
 * Add requestId to FAST REST response
 * bigip-fast-templates: Add new DNS WideIP from FQDN and Virtual Server destination IP, on devices that have LTM and GTM provisioned
-* worker: Add grep-able state transitions to the log ("Entering STARTED/READY/UNHEALTHY state")
 
 ## Fixed
 * bigip-fast-templates: Enabling Telemetry Streaming does not result in an error, preventing application deployment
@@ -12,10 +19,6 @@
 ## Changed
 * FAST Global Settings no longer show Telemetry Streaming as a GUI option because it is readonly (true if installed), and log_asm/log_afm are also readonly
 * Support serializing a burst of requests to avoid 503 errors from AS3
-
-## Fixed
-
-## Changed
 
 # 1.17.0
 ## Added
