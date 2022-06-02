@@ -64,15 +64,15 @@ function getWorkerResponse(worker, req, res) {
     return Promise.resolve()
         .then(() => {
             switch (req.method) {
-                case 'GET': return Promise.resolve('onGet');
-                case 'POST': return Promise.resolve('onPost');
-                case 'PUT': return Promise.resolve('onPut');
-                case 'PATCH': return Promise.resolve('onPatch');
-                case 'DELETE': return Promise.resolve('onDelete');
-                default:
-                    return Promise.reject(new Error(
-                        `Could not determine a worker method for HTTP method: ${req.method}`
-                    ));
+            case 'GET': return Promise.resolve('onGet');
+            case 'POST': return Promise.resolve('onPost');
+            case 'PUT': return Promise.resolve('onPut');
+            case 'PATCH': return Promise.resolve('onPatch');
+            case 'DELETE': return Promise.resolve('onDelete');
+            default:
+                return Promise.reject(new Error(
+                    `Could not determine a worker method for HTTP method: ${req.method}`
+                ));
             }
         })
         .then(fnName => worker[fnName](restOp))
@@ -82,8 +82,7 @@ function getWorkerResponse(worker, req, res) {
         });
 }
 
-
-function generateStubApp(worker, options){
+function generateStubApp(worker, options) {
     options = options || {};
     // Create an express app
     const app = express();
