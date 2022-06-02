@@ -175,7 +175,16 @@ export default {
             this.$root.dispOutput(`Loading template: ${tmplid}`);
             this.$root.getJSON(`templates/${tmplid}`)
                 .catch(e => Promise.reject(new Error(`Error loading template "${tmplid}":\n${e.message}`)))
-                .then(data => Template.fromJson(data))
+                .then((data) => {
+                    // add search filter for all drop-downs that don't have a filter specified
+                    Object.entries(data._parametersSchema.properties).forEach((prop) => {
+                        const attrs = prop[1];
+                        if (attrs.enum && typeof attrs.format === 'undefined') {
+                            attrs.format = 'choices';
+                        }
+                    });
+                    return Template.fromJson(data);
+                })
                 .then((tmpl) => {
                     // Get schema and modify it work better with JSON Editor
                     const schema = guiUtils.modSchemaForJSONEditor(tmpl.getParametersSchema());

@@ -59,6 +59,7 @@ ajv.addFormat('password', /.*/);
 ajv.addFormat('text', /.*/);
 ajv.addFormat('grid-strict', /.*/);
 ajv.addFormat('textarea', /.*/);
+ajv.addFormat('choices', /.*/);
 
 // Disable HTML escaping
 Mustache.escape = function escape(text) {
