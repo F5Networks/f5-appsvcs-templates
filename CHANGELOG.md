@@ -1,3 +1,11 @@
+# 1.19.0
+## Added
+* worker: Add grep-able state transitions to the log ("Entering STARTED/READY/UNHEALTHY state")
+
+## Fixed
+
+## Changed
+
 # 1.18.0
 ## Added
 * bigip-fast-templates: Control whether AFM/ASM logs are sent to Telemetry Streaming per application deployment
@@ -11,10 +19,6 @@
 ## Changed
 * FAST Global Settings no longer show Telemetry Streaming as a GUI option because it is readonly (true if installed), and log_asm/log_afm are also readonly
 * Support serializing a burst of requests to avoid 503 errors from AS3
-
-## Fixed
-
-## Changed
 
 # 1.17.0
 ## Added

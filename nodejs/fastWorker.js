@@ -431,6 +431,7 @@ class FASTWorker {
         this.setTracer();
         this.hookOnShutDown();
 
+        this.logger.info('FAST Worker: Entering STARTED state');
         this.logger.fine(`FAST Worker: Starting ${pkg.name} v${this.version}`);
         this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
@@ -487,6 +488,7 @@ class FASTWorker {
             // Done
             .then((config) => {
                 const dt = Date.now() - startTime;
+                this.logger.info('FAST Worker: Entering READY state');
                 this.logger.fine(`FAST Worker: Startup completed in ${dt}ms`);
                 ctx.span.log({ event: 'worked_initialized' });
                 ctx.span.finish();
@@ -495,6 +497,7 @@ class FASTWorker {
             .then(() => success())
             // Errors
             .catch((e) => {
+                this.logger.info(`FAST Worker: Entering UNHEALTHY state: ${e.message}`);
                 if ((e.status && e.status === 404) || e.message.match(/ 404/)) {
                     this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
                     return success();
@@ -540,6 +543,7 @@ class FASTWorker {
                 if (this.initTimeout) {
                     clearTimeout(this.initTimeout);
                 }
+                this.logger.info(`FAST Worker: Entering UNHEALTHY state: ${e.message}`);
                 // we will retry initWorker 3 times for 404 errors
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
                     this.initRetries += 1;
