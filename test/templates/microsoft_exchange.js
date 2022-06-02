@@ -385,12 +385,48 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
+    describe('use existing snatpool', function () {
+        before(() => {
+            view.snat_automap = false;
+            view.make_snatpool = true;
+            view.snat_addresses = ['10.1.1.2'];
+
+            expected.t1.app1.app1_snatpool = {
+                class: 'SNAT_Pool',
+                snatAddresses: ['10.1.1.2']
+            };
+            expected.t1.app1.app1_pop3_vs.snat = { use: 'app1_snatpool' };
+            expected.t1.app1.app1_imap4_vs.snat = { use: 'app1_snatpool' };
+            expected.t1.app1.app1_vs.snat = { use: 'app1_snatpool' };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('use FAST-Generated snatpool', function () {
+        before(() => {
+            view.snat_automap = false;
+            view.make_snatpool = false;
+            view.snatpool_name = '/Common/Shared/existing_snatpool';
+
+            delete expected.t1.app1.app1_snatpool;
+            expected.t1.app1.app1_pop3_vs.snat = { bigip: '/Common/Shared/existing_snatpool' };
+            expected.t1.app1.app1_imap4_vs.snat = { bigip: '/Common/Shared/existing_snatpool' };
+            expected.t1.app1.app1_vs.snat = { bigip: '/Common/Shared/existing_snatpool' };
+        });
+        util.assertRendering(template, view, expected);
+    });
+
     describe('multiple service vips', function () {
         before(() => {
             // disable common vip
             view.single_vip = false;
             delete expected.t1.app1.app1_vs;
             delete expected.t1.app1.app1_combined_pool_irule3;
+
+            // default snat settings
+            view.snat_automap = true;
+            expected.t1.app1.app1_pop3_vs.snat = 'auto';
+            expected.t1.app1.app1_imap4_vs.snat = 'auto';
 
             // owa
             view.owa_fqdn = 'owa.f5net.com';
