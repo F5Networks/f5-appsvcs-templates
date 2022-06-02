@@ -3,6 +3,7 @@
 * worker: Add grep-able state transitions to the log ("Entering STARTED/READY/UNHEALTHY state")
 
 ## Fixed
+* bigip-fast-templates: Correctly reference existing snatpool in Exchange template (issue [#106](https://github.com/F5Networks/f5-appsvcs-templates/issues/106))
 
 ## Changed
 
