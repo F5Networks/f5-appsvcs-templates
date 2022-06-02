@@ -64,15 +64,15 @@ function getWorkerResponse(worker, req, res) {
     return Promise.resolve()
         .then(() => {
             switch (req.method) {
-            case 'GET': return Promise.resolve('onGet');
-            case 'POST': return Promise.resolve('onPost');
-            case 'PUT': return Promise.resolve('onPut');
-            case 'PATCH': return Promise.resolve('onPatch');
-            case 'DELETE': return Promise.resolve('onDelete');
-            default:
-                return Promise.reject(new Error(
-                    `Could not determine a worker method for HTTP method: ${req.method}`
-                ));
+                case 'GET': return Promise.resolve('onGet');
+                case 'POST': return Promise.resolve('onPost');
+                case 'PUT': return Promise.resolve('onPut');
+                case 'PATCH': return Promise.resolve('onPatch');
+                case 'DELETE': return Promise.resolve('onDelete');
+                default:
+                    return Promise.reject(new Error(
+                        `Could not determine a worker method for HTTP method: ${req.method}`
+                    ));
             }
         })
         .then(fnName => worker[fnName](restOp))
@@ -80,6 +80,28 @@ function getWorkerResponse(worker, req, res) {
         .catch((e) => {
             console.log(e.stack);
         });
+}
+
+
+function generateStubApp(worker, options){
+    options = options || {};
+    // Create an express app
+    const app = express();
+    if (options.staticFiles) {
+        app.use(express.static(options.staticFiles));
+    }
+    app.use(express.json());
+
+    // Load any middleware
+    if (options.middleware) {
+        options.middleware.forEach(x => app.use(x));
+    }
+
+    app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
+        .then(() => res.status(503).send({ message: 'FAST is in unhealthy state' }))
+        .catch(next));
+
+    return Promise.resolve(app);
 }
 
 function generateApp(workers, options) {
@@ -269,10 +291,15 @@ function startHttpsServer(app, options) {
         }
     });
 
+    // Close stubServer if exists
+    if (options.stubServer) {
+        options.stubServer.close();
+    }
+
     // Start listening
     server.listen(port);
 
-    return Promise.resolve();
+    return Promise.resolve(server);
 }
 
 module.exports = {
@@ -280,5 +307,6 @@ module.exports = {
     startHttpsServer,
     restOpFromRequest,
     setResponseFromRestOp,
-    getWorkerResponse
+    getWorkerResponse,
+    generateStubApp
 };
