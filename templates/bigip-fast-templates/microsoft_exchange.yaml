@@ -1218,7 +1218,7 @@ definitions:
           {{/make_snatpool}}
           {{^make_snatpool}}
             "snat": {
-              "bigip": { "bigip": "{{snatpool_name:f5:bigip_path}}" }
+              "bigip": "{{snatpool_name:f5:bigip_path}}"
             },
           {{/make_snatpool}}
         {{/snat_automap}}
