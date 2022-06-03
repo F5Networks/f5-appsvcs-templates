@@ -82,9 +82,8 @@ function getWorkerResponse(worker, req, res) {
         });
 }
 
-function generateStubApp(worker, options) {
+function _createExpressApp(worker, options) {
     options = options || {};
-    // Create an express app
     const app = express();
     if (options.staticFiles) {
         app.use(express.static(options.staticFiles));
@@ -95,11 +94,14 @@ function generateStubApp(worker, options) {
     if (options.middleware) {
         options.middleware.forEach(x => app.use(x));
     }
+    return app;
+}
 
+function generateStubApp(worker, options){
+    const app = _createExpressApp(options);
     app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
         .then(() => res.status(503).send({ message: 'FAST is in unhealthy state' }))
         .catch(next));
-
     return Promise.resolve(app);
 }
 
@@ -111,16 +113,7 @@ function generateApp(workers, options) {
     }
 
     // Create an express app
-    const app = express();
-    if (options.staticFiles) {
-        app.use(express.static(options.staticFiles));
-    }
-    app.use(express.json());
-
-    // Load any middleware
-    if (options.middleware) {
-        options.middleware.forEach(x => app.use(x));
-    }
+    const app = _createExpressApp(options);
 
     // Patch up the workers
     workers.forEach((worker) => {
