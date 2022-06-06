@@ -295,7 +295,8 @@ function startHttpsServer(app, options) {
 }
 
 function stopHttpsServer() {
-    return server.close();
+    server.close();
+    return Promise.resolve();
 }
 
 module.exports = {
