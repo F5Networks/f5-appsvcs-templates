@@ -156,3 +156,49 @@ hr {
   height: 3rem;
   width: 3rem;
 }
+
+
+/*********************************
+    Choices.js Overrides
+**********************************/
+.choices {
+	font-size: 12px
+}
+.choices[data-type*=select-one] .choices__inner {
+	padding-bottom: 0px
+}
+.choices[data-type*=select-one] .choices__input {
+	padding: 5px;
+}
+.choices[data-type*=select-one] .choices__button {
+	padding: 0px;
+}	
+.choices__inner {
+	padding: 0px;
+	font-size: 12px;
+}
+.choices__list {
+	padding: 0px;
+  padding-left: 4px;
+}
+.choices__list--single {
+	padding: 0px;
+}
+.choices__list--multiple .choices__item {
+	padding: 0px;
+}
+.choices__list--dropdown .choices__item,
+.choices__list[aria-expanded] .choices__item {
+	padding: 0px;
+	font-size: 12px
+}
+.choices__item--choice {
+	min-height: 20px;
+}
+.choices__heading {
+	padding: 0px;
+}
+.choices__input {
+	font-size: 12px;
+	padding: 0px;
+}
