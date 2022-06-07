@@ -672,8 +672,10 @@ class FASTWorker {
             userAgent: this.incomingUserAgent
         };
         Promise.resolve()
-            .then(() => { this.teemDevice.report(documentName, `${reportVersion}`, baseData, data); })
-            .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+            .then(() => {
+                this.teemDevice.report(documentName, `${reportVersion}`, baseData, data)
+                    .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+            });
 
         return Promise.resolve();
     }
