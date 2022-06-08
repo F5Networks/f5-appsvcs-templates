@@ -402,19 +402,9 @@ describe('Express Adapter', function () {
         afterEach(() => {
             sinon.restore();
             mock.restore();
-
             testApp = undefined;
             spyCloseFunc = undefined;
             testPort = undefined;
-            delete process.env.F5_SERVICE_KEY;
-            delete process.env.F5_SERVICE_CERT;
-            delete process.env.F5_SERVICE_CA;
-        });
-
-        afterEach(() => {
-            sinon.restore();
-            testApp = undefined;
-            spyCloseFunc = undefined;
             delete process.env.F5_SERVICE_KEY;
             delete process.env.F5_SERVICE_CERT;
             delete process.env.F5_SERVICE_CA;
