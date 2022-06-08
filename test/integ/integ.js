@@ -245,6 +245,16 @@ describe('Template Sets', function () {
             })
             .finally(() => fs.unlinkSync(zipFileName));
     });
+    it('POST install template set from GitHub', () => Promise.resolve()
+        .then(() => endpoint.post(url, {
+            gitHubRepo: 'mstokes-f5/f5-fast-test-templatesets',
+            gitSubDir: 'test'
+        }))
+        .catch(e => handleHTTPError(e, 'install test template set from GitHub'))
+        .then((actual) => {
+            assert.strictEqual(actual.status, 200);
+            return assertGet({ data: [{ name: 'test', supported: false }], status: 200 }, 'test');
+        }));
 });
 
 describe('Applications', function () {
