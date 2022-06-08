@@ -189,6 +189,13 @@ export default {
                         delete schema.description;
                     }
 
+                    // add search filter for all drop-downs that don't have a filter specified
+                    Object.values(schema.properties).forEach((prop) => {
+                        if (prop.enum && typeof prop.format === 'undefined') {
+                            prop.format = 'choices';
+                        }
+                    });
+
                     // Prep IPAM fields for existing applications
                     if (existingApp) {
                         Object.entries(schema.properties || {}).forEach(([propName, prop]) => {
