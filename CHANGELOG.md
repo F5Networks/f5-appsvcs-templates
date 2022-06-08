@@ -1,6 +1,7 @@
 # 1.19.0
 ## Added
 * worker: Add grep-able state transitions to the log ("Entering STARTED/READY/UNHEALTHY state")
+* bigip-fast-templates: Large drop-down lists can be filtered by searching with associated text field
 
 ## Fixed
 * bigip-fast-templates: Correctly reference existing snatpool in Exchange template (issue [#106](https://github.com/F5Networks/f5-appsvcs-templates/issues/106))
