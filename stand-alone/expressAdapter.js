@@ -197,106 +197,104 @@ function startHttpsServer(app, options) {
     const port = options.port || 8080;
     const allowLocalCert = options.allowLocalCert;
 
-    return stopHttpsServer()
-        .then(() => {
-            // Try getting TLS file locations from the env
-            const caPath = process.env[options.tlsCaEnvName || 'F5_SERVICE_CA'];
+    stopHttpsServer();
+
+    // Try getting TLS file locations from the env
+    const caPath = process.env[options.tlsCaEnvName || 'F5_SERVICE_CA'];
+    if (caPath) {
+        try {
+            ca = fs.readFileSync(caPath, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    keyPath = process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'];
+    if (keyPath) {
+        try {
+            key = fs.readFileSync(keyPath, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    certPath = process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'];
+    if (certPath) {
+        try {
+            cert = fs.readFileSync(certPath, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    // Grab from a dev location as a fallback
+    if (allowLocalCert && (!key || !cert)) {
+        keyPath = options.tlsKeyLocalName || 'certs/key.pem';
+        try {
+            key = fs.readFileSync(keyPath, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+
+        certPath = options.tlsKeyLocalName || 'certs/certificate.pem';
+        try {
+            cert = fs.readFileSync(certPath, 'utf8');
+        } catch (err) {
+            errors = `${errors}\n${err.message}`;
+        }
+    }
+
+    if (!key || !cert) {
+        return Promise.reject(new Error(
+            `Failed to load TLS key and certificate: ${errors.trim()}`
+        ));
+    }
+
+    let certKeyChain = { key, cert };
+
+    if (caPath && ca) {
+        certKeyChain.ca = ca;
+    }
+
+    // Create server
+    server = https.createServer(certKeyChain, app);
+
+    // Watch for cert changes
+    const watchPaths = [
+        path.basename(keyPath),
+        path.basename(certPath)
+    ];
+    fs.watch(path.dirname(keyPath), (event, fname) => {
+        if (!watchPaths.includes(fname)) {
+            return;
+        }
+
+        console.log(`Certificate change detected (${event}:${fname}); reloading`);
+        try {
+            key = fs.readFileSync(keyPath, 'utf8');
+            cert = fs.readFileSync(certPath, 'utf8');
+            certKeyChain = { key, cert };
             if (caPath) {
-                try {
-                    ca = fs.readFileSync(caPath, 'utf8');
-                } catch (err) {
-                    errors = `${errors}\n${err.message}`;
-                }
-            }
-
-            keyPath = process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'];
-            if (keyPath) {
-                try {
-                    key = fs.readFileSync(keyPath, 'utf8');
-                } catch (err) {
-                    errors = `${errors}\n${err.message}`;
-                }
-            }
-
-            certPath = process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'];
-            if (certPath) {
-                try {
-                    cert = fs.readFileSync(certPath, 'utf8');
-                } catch (err) {
-                    errors = `${errors}\n${err.message}`;
-                }
-            }
-
-            // Grab from a dev location as a fallback
-            if (allowLocalCert && (!key || !cert)) {
-                keyPath = options.tlsKeyLocalName || 'certs/key.pem';
-                try {
-                    key = fs.readFileSync(keyPath, 'utf8');
-                } catch (err) {
-                    errors = `${errors}\n${err.message}`;
-                }
-
-                certPath = options.tlsKeyLocalName || 'certs/certificate.pem';
-                try {
-                    cert = fs.readFileSync(certPath, 'utf8');
-                } catch (err) {
-                    errors = `${errors}\n${err.message}`;
-                }
-            }
-
-            if (!key || !cert) {
-                return Promise.reject(new Error(
-                    `Failed to load TLS key and certificate: ${errors.trim()}`
-                ));
-            }
-
-            let certKeyChain = { key, cert };
-
-            if (caPath && ca) {
+                ca = fs.readFileSync(caPath, 'utf8');
                 certKeyChain.ca = ca;
             }
 
-            // Create server
-            server = https.createServer(certKeyChain, app);
+            server.setSecureContext(certKeyChain);
+            console.log('Certificate reload complete');
+        } catch (e) {
+            console.log(e);
+            console.log('Certificate reload failed');
+        }
+    });
 
-            // Watch for cert changes
-            const watchPaths = [
-                path.basename(keyPath),
-                path.basename(certPath)
-            ];
-            fs.watch(path.dirname(keyPath), (event, fname) => {
-                if (!watchPaths.includes(fname)) {
-                    return;
-                }
-
-                console.log(`Certificate change detected (${event}:${fname}); reloading`);
-                try {
-                    key = fs.readFileSync(keyPath, 'utf8');
-                    cert = fs.readFileSync(certPath, 'utf8');
-                    certKeyChain = { key, cert };
-                    if (caPath) {
-                        ca = fs.readFileSync(caPath, 'utf8');
-                        certKeyChain.ca = ca;
-                    }
-
-                    server.setSecureContext(certKeyChain);
-                    console.log('Certificate reload complete');
-                } catch (e) {
-                    console.log(e);
-                    console.log('Certificate reload failed');
-                }
-            });
-
-            // Start listening
-            server.listen(port);
-
-            return Promise.resolve(server);
-        });
+    // Start listening
+    server.listen(port);
+    return Promise.resolve(server);
 }
 
 function stopHttpsServer() {
     if (server) {
-        return server.close();
+        server.close();
     }
     server = null;
     return Promise.resolve();
