@@ -379,7 +379,7 @@ describe('Express Adapter', function () {
             fs.watch = sinon.spy();
             spyListenFunc = sinon.spy();
             spySetSecureContextFunc = sinon.spy();
-            spyCloseFunc = sinon.spy();
+            spyCloseFunc = sinon.stub().resolves();
             sinon.stub(https, 'createServer').callsFake(() => ({
                 listen: spyListenFunc,
                 close: spyCloseFunc,
