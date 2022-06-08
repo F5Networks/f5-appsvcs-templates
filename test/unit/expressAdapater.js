@@ -201,7 +201,6 @@ describe('Express Adapter', function () {
             assert.ok(fs.watch.called);
             assert.ok(fs.watch.calledWith('certs'));
             assert.ok(spyListenFunc.called);
-            assert.ok(spyCloseFunc.called);
             assert.deepEqual(testApp, appArg);
         }
 
@@ -219,7 +218,7 @@ describe('Express Adapter', function () {
             fs.watch = sinon.spy();
             spyListenFunc = sinon.spy();
             spySetSecureContextFunc = sinon.spy();
-            spyCloseFunc = sinon.spy();
+            spyCloseFunc = sinon.stub().resolves();
             sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
                 testCertKeyChain = certKeyChain;
                 appArg = app;
