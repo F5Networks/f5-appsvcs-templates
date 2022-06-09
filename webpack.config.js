@@ -11,11 +11,24 @@ module.exports = {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'presentation')
     },
+    stats: {
+        colors: true,
+        modules: true,
+        reasons: true,
+        errorDetails: true
+    },
     module: {
         rules: [
             {
                 test: /\.vue$/,
-                loader: 'vue-loader'
+                loader: 'vue-loader',
+                options: {
+                    compilerOptions: {
+                        compatConfig: {
+                            MODE: 2
+                        }
+                    }
+                }
             },
             {
                 test: /\.css$/,
@@ -40,7 +53,9 @@ module.exports = {
             zlib: false
         },
         alias: {
-            'vue$': 'vue/dist/vue.esm.js'
+            // 'vue$': 'vue/dist/vue.esm.js',
+            'vue$': 'vue/dist/vue.esm-bundler.js',
+            'vue': '@vue/compat'
         }
     },
     plugins: [

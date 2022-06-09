@@ -20,6 +20,7 @@
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 const VueRouter = require('vue-router').default;
+// const { createRouter } = require('vue-router').default;
 // eslint-disable-next-line import/no-extraneous-dependencies
 const Vue = require('vue').default;
 
@@ -80,6 +81,7 @@ const safeFetch = (uri, opts, numAttempts) => {
                     console.log(`attempting retry ${numAttempts} to ${printUri}`);
                     return Promise.resolve()
                         .then(() => wait(1000))
+                        // .then(() => getAuthToken())
                         .then(() => safeFetch(uri, opts, numAttempts));
                 }
                 let msg = data;
@@ -179,6 +181,7 @@ requireComponent.keys().forEach((fileName) => {
 Vue.use(VueRouter);
 
 const router = new VueRouter({
+// const router = createRouter({
     routes: [
         { path: '/', redirect: '/templates' },
         { path: '/applications', component: pageComponents.applications },
