@@ -537,9 +537,7 @@ class FASTWorker {
             .then(() => this.loadOnDiskTemplateSets(reqid, config))
             // watch for configSync logs, if device is in an HA Pair
             .then(() => this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this), ctx))
-            .then(() => {
-                this.generateTeemReportOnStart(reqid, ctx);
-            })
+            .then(() => this.generateTeemReportOnStart(reqid, ctx))
             .then(() => Promise.resolve(config))
             .catch((e) => {
                 if (this.initTimeout) {
@@ -671,8 +669,10 @@ class FASTWorker {
         const baseData = {
             userAgent: this.incomingUserAgent
         };
-        return this.teemDevice.report(documentName, `${reportVersion}`, baseData, data)
+        this.teemDevice.report(documentName, `${reportVersion}`, baseData, data)
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+
+        return Promise.resolve();
     }
 
     setTracer(options) {
@@ -705,9 +705,11 @@ class FASTWorker {
             return Promise.resolve();
         }
 
-        return this.gatherInfo(reqid, ctx)
+        this.gatherInfo(reqid, ctx)
             .then(info => this.sendTeemReport('onStart', 1, info))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+
+        return Promise.resolve();
     }
 
     generateTeemReportApplication(action, templateName) {
@@ -719,9 +721,10 @@ class FASTWorker {
             action,
             templateName
         };
-        return Promise.resolve()
-            .then(() => this.sendTeemReport('Application Management', 1, report))
+        this.sendTeemReport('Application Management', 1, report)
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+
+        return Promise.resolve();
     }
 
     generateTeemReportTemplateSet(action, templateSetName) {
@@ -733,7 +736,7 @@ class FASTWorker {
             action,
             templateSetName
         };
-        return Promise.resolve()
+        Promise.resolve()
             .then(() => {
                 if (action === 'create') {
                     return Promise.all([
@@ -749,6 +752,8 @@ class FASTWorker {
             })
             .then(() => this.sendTeemReport('Template Set Management', 1, report))
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+
+        return Promise.resolve();
     }
 
     generateTeemReportError(restOp) {
@@ -767,9 +772,10 @@ class FASTWorker {
             endpoint,
             code: restOp.getStatusCode()
         };
-        return Promise.resolve()
-            .then(() => this.sendTeemReport('Error', 1, report))
+        this.sendTeemReport('Error', 1, report)
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
+
+        return Promise.resolve();
     }
 
     /**
@@ -1955,9 +1961,7 @@ class FASTWorker {
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, this.scratchPath, [tsid]))
-            .then(() => {
-                this.generateTeemReportTemplateSet('create', tsid);
-            })
+            .then(() => this.generateTeemReportTemplateSet('create', tsid))
             .then(() => this.getConfig(reqid, ctx))
             .then((config) => {
                 if (config.deletedTemplateSets.includes(tsid)) {
