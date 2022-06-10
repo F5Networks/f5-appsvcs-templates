@@ -186,6 +186,7 @@ describe('Express Adapter', function () {
         let testPort;
         let testCertKeyChain;
         let spyListenFunc;
+        let spyCloseFunc;
         let spySetSecureContextFunc;
 
         function assertHttpsServer(options) {
@@ -217,11 +218,13 @@ describe('Express Adapter', function () {
             fs.watch = sinon.spy();
             spyListenFunc = sinon.spy();
             spySetSecureContextFunc = sinon.spy();
+            spyCloseFunc = sinon.stub().resolves();
             sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
                 testCertKeyChain = certKeyChain;
                 appArg = app;
                 return {
                     listen: spyListenFunc,
+                    close: spyCloseFunc,
                     setSecureContext: spySetSecureContextFunc
                 };
             });
@@ -237,6 +240,7 @@ describe('Express Adapter', function () {
             testCertKeyChain = undefined;
             testApp = undefined;
             spyListenFunc = undefined;
+            spyCloseFunc = undefined;
             spySetSecureContextFunc = undefined;
             testPort = undefined;
             delete process.env.F5_SERVICE_KEY;
@@ -351,6 +355,63 @@ describe('Express Adapter', function () {
                 name: 'Error',
                 message: 'Failed to load TLS key and certificate: Failed to read ca certificate.'
             });
+        });
+    });
+
+    describe('stopHttpsServer', () => {
+        let testApp;
+        let testPort;
+        let spyListenFunc;
+        let spyCloseFunc;
+        let spySetSecureContextFunc;
+
+        beforeEach(() => {
+            testPort = 6443;
+            mock({
+                certs: mock.directory({
+                    items: {
+                        'certificate.pem': '-----CERTIFICATE-----',
+                        'key.pem': '-----PRIVATE KEY-----',
+                        'ca_certificate.pem': '-----CA_CERTIFICATE-----'
+                    }
+                })
+            });
+            fs.watch = sinon.spy();
+            spyListenFunc = sinon.spy();
+            spySetSecureContextFunc = sinon.spy();
+            spyCloseFunc = sinon.stub();
+            sinon.stub(https, 'createServer').callsFake(() => ({
+                listen: spyListenFunc,
+                close: spyCloseFunc,
+                setSecureContext: spySetSecureContextFunc
+            }));
+            return expressAdapter.generateApp(mockFastWorker01, {})
+                .then(() => expressAdapter.startHttpsServer(testApp, {
+                    tlsKeyEnvName: 'F5_APPSVCS_SERVICE_KEY',
+                    tlsCertEnvName: 'F5_APPSVCS_SERVICE_CERT',
+                    tlsCaEnvName: 'F5_APPSVCS_SERVICE_CA',
+                    allowLocalCert: true,
+                    port: testPort
+                }))
+                .then((app) => {
+                    testApp = app;
+                });
+        });
+
+        afterEach(() => {
+            sinon.restore();
+            mock.restore();
+            testApp = undefined;
+            spyCloseFunc = undefined;
+            testPort = undefined;
+            delete process.env.F5_SERVICE_KEY;
+            delete process.env.F5_SERVICE_CERT;
+            delete process.env.F5_SERVICE_CA;
+        });
+
+        it('default_settings', () => {
+            expressAdapter.stopHttpsServer();
+            assert.ok(spyCloseFunc.called);
         });
     });
 
