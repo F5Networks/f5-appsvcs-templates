@@ -19,9 +19,9 @@
 'use strict';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-const VueRouter = require('vue-router').default;
+import { createRouter, createMemoryHistory } from 'vue-router';
 // eslint-disable-next-line import/no-extraneous-dependencies
-const Vue = require('vue').default;
+import { createApp } from 'vue';
 
 const endPointUrl = '/mgmt/shared/fast';
 const userAgent = 'FASTGUI/NA';
@@ -131,6 +131,11 @@ const getAuthToken = () => Promise.resolve()
     .then(results => results.token.token)
     .catch((e) => {
         console.log(`Could not acquire BIG-IP auth token: ${e.message}`);
+        // if (retryAuth <= 2) {
+        //     retryAuth += 1;
+        //     console.log(`Retrying to get auth token: ${retryAuth}`);
+        //     setTimeout(() => { getAuthToken(); }, 1000);
+        // }
         return Promise.resolve(null);
     });
 
@@ -160,45 +165,6 @@ const dispOutput = (output) => {
     }
     appState.debugOutput = output;
 };
-
-// Auto-register all components in pages directory
-const requireComponent = require.context(
-    './pages',
-    false,
-    /.*\.vue$/
-);
-const pageComponents = {};
-requireComponent.keys().forEach((fileName) => {
-    const componentConfig = requireComponent(fileName);
-    const component = componentConfig.default || componentConfig;
-    Vue.component(component.name, component);
-    pageComponents[component.name.replace('Page', '').toLowerCase()] = component;
-});
-
-// Setup router
-Vue.use(VueRouter);
-
-const router = new VueRouter({
-    routes: [
-        { path: '/', redirect: '/templates' },
-        { path: '/applications', component: pageComponents.applications },
-        { path: '/create/:tmplid(.*)', component: pageComponents.create },
-        { path: '/modify/:appid(.*)', component: pageComponents.create },
-        { path: '/resubmit/:taskid', component: pageComponents.create },
-        { path: '/tasks', component: pageComponents.tasks },
-        { path: '/settings', component: pageComponents.settings },
-        { path: '/api', component: pageComponents.api },
-        { path: '/templates', component: pageComponents.templates },
-        // Fix for embedding in TMUI
-        { path: '/application/*/edit', redirect: '/' }
-    ]
-});
-
-router.beforeEach((to, from, next) => {
-    appState.busy = true;
-    dispOutput('');
-    next();
-});
 
 const multipartUpload = (file) => {
     const CHUNK_SIZE = 1000000;
@@ -232,9 +198,10 @@ const multipartUpload = (file) => {
 };
 
 // Create and mount Vue app
-const vueApp = new Vue({
-    data: appState,
-    router,
+const vueApp = createApp({
+    data() {
+        return appState;
+    },
     mounted() {
         // by default token is 1200s/20min
         if (auth.token && auth.timeout > 1200) {
@@ -293,6 +260,51 @@ const vueApp = new Vue({
     }
 });
 
+// Auto-register all components in pages directory
+const requireComponent = require.context(
+    './pages',
+    false,
+    /.*\.vue$/
+);
+const pageComponents = {};
+requireComponent.keys().forEach((fileName) => {
+    const componentConfig = requireComponent(fileName);
+    const component = componentConfig.default || componentConfig;
+    vueApp.component(component.name, component);
+    pageComponents[component.name.replace('Page', '').toLowerCase()] = component;
+});
+
+// const router = new VueRouter({
+const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+        { path: '/', redirect: '/templates' },
+        { path: '/applications', component: pageComponents.applications },
+        { path: '/create/:tmplid(.*)', component: pageComponents.create },
+        { path: '/modify/:appid(.*)', component: pageComponents.create },
+        { path: '/resubmit/:taskid', component: pageComponents.create },
+        { path: '/tasks', component: pageComponents.tasks },
+        { path: '/settings', component: pageComponents.settings },
+        { path: '/api', component: pageComponents.api },
+        { path: '/templates', component: pageComponents.templates },
+        // Fixes for embedding in TMUI
+        { path: '/application/*/edit', redirect: '/' },
+        { path: '/iapps/f5-appsvcs-templates/index.html', redirect: '/templates' },
+        { path: '/img/fastrobot.png', redirect: '/iapps/f5-appsvcs-templates/img/fastrobot.png' },
+        { path: '/*/undefined', redirect: '/#' }
+    ]
+});
+
+router.beforeEach((to, from, next) => {
+    appState.busy = true;
+    dispOutput('');
+    next();
+});
+
+vueApp.use(router);
+
+vueApp.config.devtools = false;
+
 Promise.resolve()
     .then(() => getAuthToken())
     .then((token) => {
@@ -314,4 +326,4 @@ Promise.resolve()
         return Promise.all([checkAS3, getIdleTimeout]);
     })
     // Always attempt to mount the Vue app
-    .finally(() => vueApp.$mount('#vue-app'));
+    .finally(() => vueApp.mount('#vue-app'));
