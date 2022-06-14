@@ -29,6 +29,8 @@ const path = require('path');
 
 const RestOperation = require('./restOperation');
 
+let server;
+
 function restOpFromRequest(req) {
     const restOp = new RestOperation();
     const uri = url.parse(req.url.replace('/mgmt/', '/'), true);
@@ -82,14 +84,8 @@ function getWorkerResponse(worker, req, res) {
         });
 }
 
-function generateApp(workers, options) {
+function _createExpressApp(options) {
     options = options || {};
-
-    if (!Array.isArray(workers)) {
-        workers = [workers];
-    }
-
-    // Create an express app
     const app = express();
     if (options.staticFiles) {
         app.use(express.static(options.staticFiles));
@@ -100,6 +96,26 @@ function generateApp(workers, options) {
     if (options.middleware) {
         options.middleware.forEach(x => app.use(x));
     }
+    return app;
+}
+
+function generateStubApp(worker, options) {
+    const app = _createExpressApp(options);
+    app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
+        .then(() => res.status(503).send({ message: 'FAST is in unhealthy state' }))
+        .catch(next));
+    return Promise.resolve(app);
+}
+
+function generateApp(workers, options) {
+    options = options || {};
+
+    if (!Array.isArray(workers)) {
+        workers = [workers];
+    }
+
+    // Create an express app
+    const app = _createExpressApp(options);
 
     // Patch up the workers
     workers.forEach((worker) => {
@@ -181,6 +197,8 @@ function startHttpsServer(app, options) {
     const port = options.port || 8080;
     const allowLocalCert = options.allowLocalCert;
 
+    stopHttpsServer();
+
     // Try getting TLS file locations from the env
     const caPath = process.env[options.tlsCaEnvName || 'F5_SERVICE_CA'];
     if (caPath) {
@@ -239,7 +257,7 @@ function startHttpsServer(app, options) {
     }
 
     // Create server
-    const server = https.createServer(certKeyChain, app);
+    server = https.createServer(certKeyChain, app);
 
     // Watch for cert changes
     const watchPaths = [
@@ -271,14 +289,22 @@ function startHttpsServer(app, options) {
 
     // Start listening
     server.listen(port);
+    return Promise.resolve(server);
+}
 
-    return Promise.resolve();
+function stopHttpsServer() {
+    if (server) {
+        server.close();
+    }
+    server = null;
 }
 
 module.exports = {
     generateApp,
     startHttpsServer,
+    stopHttpsServer,
     restOpFromRequest,
     setResponseFromRestOp,
-    getWorkerResponse
+    getWorkerResponse,
+    generateStubApp
 };
