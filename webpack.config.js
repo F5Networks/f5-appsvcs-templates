@@ -8,7 +8,6 @@ const { VueLoaderPlugin } = require('vue-loader');
 
 module.exports = {
     entry: './presentation/app.js',
-    // devtool: "eval-cheap-module-source-map",
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'presentation')
@@ -27,7 +26,7 @@ module.exports = {
                 options: {
                     compilerOptions: {
                         compatConfig: {
-                            MODE: 2
+                            MODE: 3
                         }
                     }
                 }
