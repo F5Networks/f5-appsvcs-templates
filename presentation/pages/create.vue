@@ -171,6 +171,9 @@ export default {
                 .catch(e => this.$root.dispOutput(e.message));
         },
         newEditor(tmplid, view, existingApp, component) {
+            if (typeof tmplid === 'undefined' || tmplid === null) {
+                return;
+            }
             const editorComponent = this.$refs.editor;
             this.$root.dispOutput(`Loading template: ${tmplid}`);
             this.$root.getJSON(`templates/${tmplid}`)
