@@ -1438,6 +1438,35 @@ describe('fastWorker tests', function () {
                     assert.strictEqual(tsData.gitHubRepo, 'org/testset-github');
                 });
         });
+        it('post_templateset_gitlab', function () {
+            const worker = createWorker();
+            this.clock.restore();
+
+            const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
+            nock('https://gitlab.com')
+                .get('/api/v4/projects/org%2Ftestset-gitlab/repository/archive.zip?sha=master')
+                .replyWithFile(200, archivePath);
+
+            return Promise.resolve()
+                // test implicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitLabRepo: 'org/testset-gitlab'
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
+                })
+                .then(() => worker.templateProvider.list())
+                .then((templates) => {
+                    console.log(templates);
+                    assert(templates.includes('testset-gitlab/f5_https'));
+                })
+        });
         it('post_templateset_deleted', function () {
             const worker = createWorker();
             const postOp = new RestOp('/shared/fast/templatesets');

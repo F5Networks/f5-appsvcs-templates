@@ -443,6 +443,43 @@ paths:
                      description: Template set name to use (defaults gitSubDir if available or the repo name)
                      type: string
                      example: newTemplateSet
+               - required:
+                   - gitLabRepo
+                 properties:
+                   gitHubRepo:
+                     title: GitLab Repository
+                     description: A GitLab repository to use as a template set
+                     type: string
+                     example: org/templateset
+                   gitLabUrl:
+                     title: GitLab URL
+                     description: URL to the GitLab instance
+                     type: string
+                     default: https://gitlab.com
+                   gitLabToken:
+                     title: GitLab API token
+                     description: An API token used to access private repositories
+                     type: string
+                     default: null
+                   gitSubDir:
+                     title: Git sub-directory
+                     description: The sub-directory in the git repo to install as a template set
+                     default: null
+                     example: org-templates
+                     oneOf:
+                       - type: string
+                       - type: 'null'
+                   gitRef:
+                     title: Git ref
+                     description: The Git ref to use when fetching the repository
+                     default: master
+                     type: string
+                     example: master
+                   name:
+                     title: Template set name
+                     description: Template set name to use (defaults gitSubDir if available or the repo name)
+                     type: string
+                     example: newTemplateSet
       responses:
         '200':
           description: The Template Set installed successfully.

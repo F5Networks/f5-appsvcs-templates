@@ -1938,19 +1938,30 @@ class FASTWorker {
     postTemplateSets(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
 
-        if (!data.name && !data.gitHubRepo) {
-            return this.genRestResponse(restOperation, 400, 'must supply either name or gitHubRepo parameter', ctx);
+        if (!data.name && !data.gitHubRepo && !data.gitLabRepo) {
+            return this.genRestResponse(restOperation, 400, 'must supply one of the following parameters: name, gitHubRepo, gitLabRepo', ctx);
         }
+
+        data.gitRef = data.gitRef || 'master';
 
         const tsid = data.name
             || data.gitSubDir
-            || (data.gitHubRepo ? data.gitHubRepo.split('/')[1] : null);
-        const tsUrl = data.gitHubRepo ? `https://github.com/${data.gitHubRepo}/archive/${data.gitRef || 'master'}.zip` : null;
+            || (data.gitHubRepo ? data.gitHubRepo.split('/')[1] : null)
+            || (data.gitLabRepo ? data.gitLabRepo.split('/')[1] : null);
         const setsrc = (this.uploadPath !== '') ? `${this.uploadPath}/${tsid}.zip` : `${tsid}.zip`;
         const scratch = `${this.scratchPath}/${tsid}`;
         const tsRootPath = data.gitSubDir ? scratch : this.scratchPath;
         const tsFilter = data.gitSubDir ? [data.gitSubDir] : [tsid];
         const onDiskPath = `${this.templatesPath}/${tsid}`;
+
+        let tsUrl = null;
+        if (data.gitHubRepo) {
+            tsUrl = `https://github.com/${data.gitHubRepo}/archive/${data.gitRef}.zip`;
+        } else if (data.gitLabRepo) {
+            data.gitLabUrl = data.gitLabUrl || 'https://gitlab.com';
+            const encodedRepo = data.gitLabRepo.replaceAll('/', '%2F');
+            tsUrl = `${data.gitLabUrl}/api/v4/projects/${encodedRepo}/repository/archive.zip?sha=${data.gitRef}`;
+        }
 
         // Setup a scratch location we can use while validating the template set
         this.enterTransaction(reqid, 'prepare scratch space');
@@ -1978,6 +1989,10 @@ class FASTWorker {
                             if (data.gitHubToken) {
                                 reqConf.headers = {
                                     authorization: `token ${data.gitHubToken}`
+                                };
+                            } else if (data.gitLabToken) {
+                                reqConf.headers = {
+                                    authorization: `Bearer ${data.gitLabToken}`
                                 };
                             }
 
@@ -2060,10 +2075,15 @@ class FASTWorker {
                 }
 
                 // If we are installing a template set from GitHub, record some extra information for later
-                if (data.gitHubRepo) {
+                if (data.gitHubRepo || data.gitLabRepo) {
                     config._gitTemplateSets[tsid] = {};
                     Object.keys(data).forEach((key) => {
-                        if (key.startsWith('git') && key !== 'gitHubToken') {
+                        const copyKey = (
+                            key.startsWith('git')
+                            && key !== 'gitHubToken'
+                            && key !== 'gitLabToken'
+                        );
+                        if (copyKey) {
                             config._gitTemplateSets[tsid][key] = data[key];
                         }
                     });
