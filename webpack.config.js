@@ -22,14 +22,7 @@ module.exports = {
         rules: [
             {
                 test: /\.vue$/,
-                loader: 'vue-loader',
-                options: {
-                    compilerOptions: {
-                        compatConfig: {
-                            MODE: 3
-                        }
-                    }
-                }
+                loader: 'vue-loader'
             },
             {
                 test: /\.css$/,
@@ -54,9 +47,7 @@ module.exports = {
             zlib: false
         },
         alias: {
-            // 'vue$': 'vue/dist/vue.esm.js',
-            'vue$': 'vue/dist/vue.esm-browser.prod.js',
-            'vue': '@vue/compat'
+            'vue$': 'vue/dist/vue.esm-browser.prod.js'
         }
     },
     plugins: [

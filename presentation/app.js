@@ -131,11 +131,6 @@ const getAuthToken = () => Promise.resolve()
     .then(results => results.token.token)
     .catch((e) => {
         console.log(`Could not acquire BIG-IP auth token: ${e.message}`);
-        // if (retryAuth <= 2) {
-        //     retryAuth += 1;
-        //     console.log(`Retrying to get auth token: ${retryAuth}`);
-        //     setTimeout(() => { getAuthToken(); }, 1000);
-        // }
         return Promise.resolve(null);
     });
 
@@ -274,7 +269,6 @@ requireComponent.keys().forEach((fileName) => {
     pageComponents[component.name.replace('Page', '').toLowerCase()] = component;
 });
 
-// const router = new VueRouter({
 const router = createRouter({
     history: createMemoryHistory(),
     routes: [
