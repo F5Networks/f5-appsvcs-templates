@@ -837,7 +837,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse422');
                 });
         });
         it('patch_settings', function () {
@@ -874,7 +874,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse422');
                 });
         });
         it('get_settings_schema', function () {
@@ -1112,7 +1112,7 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 3));
                     assert.equal(op.status, 200);
                     assert(Array.isArray(op.body.message));
-                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationRenderedResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationRenderedResponse');
                 });
         });
         it('post_render_bad_tmplid', function () {
@@ -1357,7 +1357,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
                     assert.equal(op.status, 200);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
                 })
                 .then(() => worker.templateProvider.listSets())
                 .then((tmplSets) => {
@@ -1446,7 +1446,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response404');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse404');
                 });
         });
         it('delete_templateset_inuse', function () {
@@ -1481,7 +1481,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert.strictEqual(op.status, 400);
                     assert.match(op.body.message, /it is being used by:\n\["tenant\/app"\]/);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response400');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse400');
                 });
         });
         it('delete_all_templatesets', function () {
@@ -1510,7 +1510,7 @@ describe('fastWorker tests', function () {
                             self: '/mgmt/shared/fast/applications/tenant/app'
                         }
                     }]);
-                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationList');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationList');
                 });
         });
         it('get_apps_empty', function () {
@@ -1542,7 +1542,7 @@ describe('fastWorker tests', function () {
                     assert.strictEqual(op.body._links.self, '/mgmt/shared/fast/applications/tenant/app');
                     delete op.body._links;
                     assert.deepEqual(op.body, as3App);
-                    expect(op.body).to.satisfySchemaInApiSpec('AS3App');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastAs3App');
                 });
         });
         it('post_apps_bad_tmplid', function () {
@@ -1596,7 +1596,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.equal(op.status, 404);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response404');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse404');
                 });
         });
         it('delete_app', function () {
@@ -1609,7 +1609,7 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
-                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationDeleteResponse');
                 });
         });
         it('delete_all_apps', function () {
@@ -1623,7 +1623,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     assert.strictEqual(op.status, 202);
                     console.log(op.body);
-                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationDeleteResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationDeleteResponse');
                 });
         });
         it('patch_all_apps', function () {
@@ -1791,7 +1791,7 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
                     assert.equal(op.requestId, 1);
-                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationResponse');
                 });
         });
         it('patch_app', function () {
@@ -1842,7 +1842,7 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
                     assert.equal(op.requestId, 1);
-                    expect(op.body).to.satisfySchemaInApiSpec('ApplicationResponse');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationResponse');
                 });
         });
         it('patch_app_bad_tenant_rename', function () {
@@ -1884,7 +1884,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse422');
                 });
         });
         it('patch_app_bad_app_rename', function () {
@@ -1926,7 +1926,7 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response422');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse422');
                 });
         });
         it('convert_pool_members', function () {
