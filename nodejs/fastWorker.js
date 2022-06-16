@@ -1950,9 +1950,10 @@ class FASTWorker {
             || (data.gitLabRepo ? data.gitLabRepo.split('/')[1] : null);
         const setsrc = (this.uploadPath !== '') ? `${this.uploadPath}/${tsid}.zip` : `${tsid}.zip`;
         const scratch = `${this.scratchPath}/${tsid}`;
-        const tsRootPath = data.gitSubDir ? scratch : this.scratchPath;
-        const tsFilter = data.gitSubDir ? [data.gitSubDir] : [tsid];
+        const tsRootPath = this.scratchPath;
+        const tsFilter = [tsid];
         const onDiskPath = `${this.templatesPath}/${tsid}`;
+        const extractSubDir = data.gitSubDir;
 
         let tsUrl = null;
         if (data.gitHubRepo) {
@@ -2054,6 +2055,14 @@ class FASTWorker {
                         fs.moveSync(`${lastDir}/${file}`, `${scratch}/${file}`);
                     });
                     fs.removeSync(lastDir);
+                }
+
+                if (extractSubDir) {
+                    const subDirTemp = `${this.scratchPath}/__fast_tmp__`;
+                    fs.removeSync(subDirTemp);
+                    fs.moveSync(`${scratch}/${extractSubDir}`, subDirTemp);
+                    fs.removeSync(scratch);
+                    fs.moveSync(subDirTemp, scratch);
                 }
             })
             .then(() => this.recordTransaction(
