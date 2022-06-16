@@ -1401,7 +1401,7 @@ describe('fastWorker tests', function () {
                 })
                 .then((op) => {
                     assert.equal(op.status, 200);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
                 })
                 .then(() => worker.templateProvider.list())
                 .then((templates) => {
@@ -1422,7 +1422,7 @@ describe('fastWorker tests', function () {
                 })
                 .then((op) => {
                     assert.equal(op.status, 200);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
                 })
                 .then(() => worker.templateProvider.list())
                 .then((templates) => {
@@ -1470,7 +1470,7 @@ describe('fastWorker tests', function () {
                 })
                 .then((op) => {
                     assert.equal(op.status, 200);
-                    expect(op.body).to.satisfySchemaInApiSpec('Response200');
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
                 })
                 .then(() => worker.templateProvider.list())
                 .then((templates) => {
