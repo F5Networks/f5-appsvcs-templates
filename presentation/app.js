@@ -310,14 +310,21 @@ Promise.resolve()
                 appState.foundAS3 = false;
                 console.log(`Error reaching AS3: ${e.message}`);
             });
-        const getIdleTimeout = safeFetch('/mgmt/tm/sys/httpd', { headers: { 'X-F5-Auth-Token': auth.token } })
-            .then((resp) => {
-                auth.timeout = resp.authPamIdleTimeout;
-            })
-            .catch((e) => {
-                console.log(`Error retrieving idle screen timeout ${e.message}`);
-            });
-        return Promise.all([checkAS3, getIdleTimeout]);
+
+        let getIdleTimeout = Promise.resolve();
+        if (auth.token) {
+            getIdleTimeout = safeFetch('/mgmt/tm/sys/httpd', { headers: { 'X-F5-Auth-Token': auth.token } })
+                .then((resp) => {
+                    auth.timeout = resp.authPamIdleTimeout;
+                })
+                .catch((e) => {
+                    console.log(`Error retrieving idle screen timeout ${e.message}`);
+                });
+        }
+        return Promise.all([
+            checkAS3,
+            getIdleTimeout
+        ]);
     })
     // Always attempt to mount the Vue app
     .finally(() => vueApp.mount('#vue-app'));
