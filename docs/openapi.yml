@@ -419,7 +419,7 @@ paths:
                      description: A GitHub repository to use as a template set
                      type: string
                      example: org/templateset
-                   gitHubToken:
+                   gitToken:
                      title: GitHub API token
                      description: An API token used to access private repositories
                      type: string
@@ -446,7 +446,7 @@ paths:
                - required:
                    - gitLabRepo
                  properties:
-                   gitHubRepo:
+                   gitLabRepo:
                      title: GitLab Repository
                      description: A GitLab repository to use as a template set
                      type: string
@@ -456,7 +456,7 @@ paths:
                      description: URL to the GitLab instance
                      type: string
                      default: https://gitlab.com
-                   gitLabToken:
+                   gitToken:
                      title: GitLab API token
                      description: An API token used to access private repositories
                      type: string

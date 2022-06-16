@@ -1378,7 +1378,11 @@ describe('fastWorker tests', function () {
             this.clock.restore();
 
             const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
-            nock('https://github.com')
+            nock('https://github.com', {
+                reqheaders: {
+                    authorization: 'token secret'
+                }
+            })
                 .get('/org/testset-github/archive/master.zip')
                 .replyWithFile(200, archivePath)
                 .get('/org/testset-github/archive/branch.zip')
@@ -1389,7 +1393,8 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     const op = new RestOp('/shared/fast/templatesets');
                     op.setBody({
-                        gitHubRepo: 'org/testset-github'
+                        gitHubRepo: 'org/testset-github',
+                        gitToken: 'secret'
                     });
                     return worker.onPost(op)
                         .then(() => op);
@@ -1409,6 +1414,7 @@ describe('fastWorker tests', function () {
                     op.setBody({
                         gitHubRepo: 'org/testset-github',
                         gitRef: 'branch',
+                        gitToken: 'secret',
                         name: 'testset-github2'
                     });
                     return worker.onPost(op)
@@ -1443,7 +1449,11 @@ describe('fastWorker tests', function () {
             this.clock.restore();
 
             const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
-            nock('https://gitlab.com')
+            nock('https://gitlab.com', {
+                reqheaders: {
+                    authorization: 'Bearer secret'
+                }
+            })
                 .get('/api/v4/projects/org%2Ftestset-gitlab/repository/archive.zip?sha=master')
                 .replyWithFile(200, archivePath);
 
@@ -1452,7 +1462,8 @@ describe('fastWorker tests', function () {
                 .then(() => {
                     const op = new RestOp('/shared/fast/templatesets');
                     op.setBody({
-                        gitLabRepo: 'org/testset-gitlab'
+                        gitLabRepo: 'org/testset-gitlab',
+                        gitToken: 'secret'
                     });
                     return worker.onPost(op)
                         .then(() => op);
@@ -1465,7 +1476,7 @@ describe('fastWorker tests', function () {
                 .then((templates) => {
                     console.log(templates);
                     assert(templates.includes('testset-gitlab/f5_https'));
-                })
+                });
         });
         it('post_templateset_deleted', function () {
             const worker = createWorker();

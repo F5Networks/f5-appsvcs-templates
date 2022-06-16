@@ -1986,14 +1986,16 @@ class FASTWorker {
                             const reqConf = {
                                 responseType: 'stream'
                             };
-                            if (data.gitHubToken) {
-                                reqConf.headers = {
-                                    authorization: `token ${data.gitHubToken}`
-                                };
-                            } else if (data.gitLabToken) {
-                                reqConf.headers = {
-                                    authorization: `Bearer ${data.gitLabToken}`
-                                };
+                            if (data.gitToken) {
+                                if (data.gitHubRepo) {
+                                    reqConf.headers = {
+                                        authorization: `token ${data.gitToken}`
+                                    };
+                                } else if (data.gitLabRepo) {
+                                    reqConf.headers = {
+                                        authorization: `Bearer ${data.gitToken}`
+                                    };
+                                }
                             }
 
                             return this.recordTransaction(
@@ -2080,8 +2082,7 @@ class FASTWorker {
                     Object.keys(data).forEach((key) => {
                         const copyKey = (
                             key.startsWith('git')
-                            && key !== 'gitHubToken'
-                            && key !== 'gitLabToken'
+                            && key !== 'gitToken'
                         );
                         if (copyKey) {
                             config._gitTemplateSets[tsid][key] = data[key];
