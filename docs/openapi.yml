@@ -38,12 +38,12 @@ info:
     These endpoints are related to management of the FAST Extension itself,
     for getting debug information or software version information.
 servers:
- - url: http://localhost:8100/mgmt/shared/fast
+  - url: http://localhost:8100/mgmt/shared/fast
 tags:
- - name: Application Management
- - name: Task Tracking
- - name: Template Management
- - name: FAST Extension
+  - name: Application Management
+  - name: Task Tracking
+  - name: Template Management
+  - name: FAST Extension
 paths:
   /applications:
     get:
@@ -58,13 +58,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationList"
+                $ref: "#/components/schemas/FastApplicationList"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     post:
       tags:
         - Application Management
@@ -77,26 +77,26 @@ paths:
         content:
           application/json:
             schema:
-                $ref: "#/components/schemas/ApplicationRequest"
+              $ref: "#/components/schemas/FastApplicationRequest"
       responses:
         '202':
           description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationResponse"
+                $ref: "#/components/schemas/FastApplicationResponse"
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - Application Management
@@ -120,19 +120,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationDeleteResponse"
+                $ref: "#/components/schemas/FastApplicationDeleteResponse"
         '404':
           description: Tenant or Application not found.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /applications/{tenantName}/{appName}:
     parameters:
       - name: appName
@@ -161,19 +161,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AS3App"
+                $ref: "#/components/schemas/FastAs3App"
         '404':
           description: Application or Tenant was not found.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     patch:
       summary: Update Application parameters
       description: Update an existing, deployed FAST Application with the supplied parameters. Existing parameter values from the deployed Application will be used as defaults for any missing parameter values.
@@ -198,19 +198,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationResponse"
+                $ref: "#/components/schemas/FastApplicationResponse"
         '400':
           description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - Application Management
@@ -223,19 +223,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationDeleteResponse"
+                $ref: "#/components/schemas/FastApplicationDeleteResponse"
         '404':
           description: Tenant or Application not found.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /templates:
     get:
       summary: List all Templates
@@ -255,7 +255,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /templates/{setName}/{templateName}:
     parameters:
       - name: templateName
@@ -290,13 +290,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /tasks:
     get:
       summary: Get Tasks
@@ -316,7 +316,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /tasks/{taskId}:
     parameters:
       - name: taskId
@@ -344,13 +344,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /templatesets:
     get:
       parameters:
@@ -377,19 +377,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '404':
           description: Template Set not found.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     post:
       summary: Install a new Template Set
       description: Installs a previously uploaded Template Set zip.
@@ -419,25 +419,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response200"
+                $ref: "#/components/schemas/FastResponse200"
         '400':
           description: The supplied Template Set name is invalid or missing.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '404':
           description: The supplied Template name was not found in /var/config/rest/downloads.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - Template Management
@@ -450,13 +450,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response200"
+                $ref: "#/components/schemas/FastResponse200"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /templatesets/{setName}:
     parameters:
       - name: setName
@@ -484,19 +484,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '404':
           description: Template Set not found.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - Template Management
@@ -509,25 +509,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response200"
+                $ref: "#/components/schemas/FastResponse200"
         '400':
           description: Cannot delete Template Set, it is being used
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '404':
           description: The Set name was not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /settings:
     get:
       tags:
@@ -547,7 +547,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - FAST Extension
@@ -560,13 +560,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response200"
+                $ref: "#/components/schemas/FastResponse200"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     post:
       tags:
         - FAST Extension
@@ -579,19 +579,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response200"
+                $ref: "#/components/schemas/FastResponse200"
         '422':
           description: supplied configuration was invalid
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response422"
+                $ref: "#/components/schemas/FastResponse422"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
     patch:
       tags:
         - FAST Extension
@@ -604,19 +604,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response200"
+                $ref: "#/components/schemas/FastResponse200"
         '422':
           description: supplied configuration was invalid
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response422"
+                $ref: "#/components/schemas/FastResponse422"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /settings-schema:
     get:
       tags:
@@ -636,11 +636,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /info:
     get:
       tags:
-       - FAST Extension
+        - FAST Extension
       summary: Information about the FAST Extension
       description: This endpoint returns data pertaining to the version of FAST currently in use, as well as loaded Template Sets and other information useful for debug. This endpoint is recommended for use when verifying that FAST is installed and ready to use.
       operationId: getFASTInfo
@@ -656,7 +656,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
   /render:
     post:
       tags:
@@ -670,32 +670,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ApplicationRequest"
+              $ref: "#/components/schemas/FastApplicationRequest"
       responses:
         '200':
           description: The rendered Templates as an array of JSON objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ApplicationRenderedResponse"
+                $ref: "#/components/schemas/FastApplicationRenderedResponse"
         '400':
           description: An improper Application definition was submitted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response400"
+                $ref: "#/components/schemas/FastResponse400"
         '404':
           description: The specified Template could not be found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response404"
+                $ref: "#/components/schemas/FastResponse404"
         '500':
           description: Internal error. A bug report should be filed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Response500"
+                $ref: "#/components/schemas/FastResponse500"
 
 components:
   schemas:
@@ -714,15 +714,17 @@ components:
       title: Object Definition
       type: object
       description: A generic definition for an object.
-    AS3App:
+    FastAs3App:
       type: object
+      title: AS3 Application
       description: The resulting AS3 Application.
       properties:
         class:
           type: string
           pattern: '.*'
-    ApplicationDefinition:
+    FastApplicationDefinition:
       type: object
+      title: Application Definition
       description: Application Definition.
       required:
         - name
@@ -741,11 +743,12 @@ components:
         name: examples/simple_udp_defaults
         parameters: {}
         allowOverwrite: true
-    ApplicationDefinitionList:
+    FastApplicationDefinitionList:
       type: array
+      title: Application Definition List
       description: Application Definition List.
       items:
-        $ref: "#/components/schemas/ApplicationDefinition"
+        $ref: "#/components/schemas/FastApplicationDefinition"
       example:
         - name: examples/simple_udp_defaults
           parameters: {}
@@ -753,7 +756,8 @@ components:
         - name: tenant/app
           parameters: {}
           allowOverwrite: true
-    ApplicationRenderedResponse:
+    FastApplicationRenderedResponse:
+      title: Application Rendered Response
       type: object
       description: Application Rendered Response.
       required:
@@ -773,9 +777,10 @@ components:
           items:
             $ref: "#/components/schemas/ObjectDefinition"
           example: [{'appDef': {'class': 'ADC', 'schemaVersion': '3.0.0', 'tenant': {'class': 'Tenant', 'bar': {'class': 'Application', 'template': 'udp', 'serviceMain': {'class': 'Service_UDP', 'virtualAddresses': ['192.0.2.11'], 'virtualPort': 5555, 'pool': 'bar_Pool1'}, 'bar_Pool1': {'class': 'Pool', 'monitors': ['icmp'], 'members': [{'serverAddresses': ['192.0.2.22'], 'servicePort': 5555}]}}}}, 'metaData': {'template': 'examples/simple_udp_defaults', 'setHash': 'b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715', 'view': {'tenant_name': 'tenant', 'app_name': 'app'}, 'lastModified': '2022-03-26T23:34:23.873Z', 'ipamAddrs': {}}}]
-    Application:
+    FastApplication:
       type: object
-      description: Application.
+      title: Application
+      description: FAST Application.
       required:
         - template
         - tenant
@@ -805,21 +810,23 @@ components:
           type: string
           description: the name of the Application
           example: app
-    ApplicationList:
+    FastApplicationList:
+      title: Application List
       type: array
-      description: Application List.
+      description: FAST Application List.
       items:
-        $ref: "#/components/schemas/Application"
-    ApplicationRequest:
+        $ref: "#/components/schemas/FastApplication"
+    FastApplicationRequest:
       title: Application Request
       description: An application request.
       type: array
       items:
         oneOf:
-          - $ref: "#/components/schemas/ApplicationDefinition"
-          - $ref: "#/components/schemas/ApplicationDefinitionList"
-    ApplicationResponse:
+          - $ref: "#/components/schemas/FastApplicationDefinition"
+          - $ref: "#/components/schemas/FastApplicationDefinitionList"
+    FastApplicationResponse:
       type: object
+      title: Application Response
       description: The response message when performing Application operations.
       required:
         - code
@@ -854,8 +861,9 @@ components:
                 description: The parameters used to create/update the Application.
                 type: object
                 example: { "tenant_name": "tenant", "application_name": "app" }
-    ApplicationDeleteResponse:
+    FastApplicationDeleteResponse:
       type: object
+      title: Application Delete Response
       description: The response message when deleting Applications.
       required:
         - code
@@ -1069,7 +1077,7 @@ components:
             type: array
             description: A list of applications using the template.
             items:
-              $ref: "#/components/schemas/ApplicationDefinition"
+              $ref: "#/components/schemas/FastApplicationDefinition"
     TemplateSet:
       type: object
       description: Template Set.
@@ -1103,7 +1111,7 @@ components:
           example:
             - name: examples/types
               hash: 0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c
-        dataFiles: 
+        dataFiles:
           type: array
           description: A list of data files associated with the Template Set.
           items:
@@ -1186,7 +1194,7 @@ components:
         definitions:
           type: object
         $schema:
-          type: string 
+          type: string
       example: {type: "object",properties: {enable_telemetry: {type: "boolean",title: "Enable Telemetry Streaming log forwarding",description: "Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.\nMore information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)\n",propertyOrder: 0,format: "checkbox"},log_afm: {type: "boolean",title: "Forward AFM logs to Telemetry Streaming",description: "Requires AFM and ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 1,format: "checkbox"},log_asm: {type: "boolean",title: "Forward ASM logs to Telemetry Streaming",description: "Requires ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 2,format: "checkbox"},deletedTemplateSets: {type: "array",items: {type: "string"},\uniqueItems: true,options: {hidden: true},propertyOrder: 0,format: "table"},disableDeclarationCache: {title: "Disable AS3 Declaration Cache",type: "boolean",description: "Do not cache AS3 declarations. This ensures FAST is always using up-to-date declarations from AS3, which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config. Disabling declaration caching will negatively impact FAST performance.",propertyOrder: 1,format: "checkbox"},enableIpam: {title: "Enable IPAM for Official F5 FAST Templates (Experimental/Beta)",description: "**NOTE: An IPAM provider must be configured to deploy a valid application using IPAM.**",type: "boolean",propertyOrder: 2,format: "checkbox"},ipamProviders: {title: "IPAM Providers (Experimental/Beta)",description: "Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses",type: "array",items: {oneOf: [{type: "object",title: "Infoblox",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Infoblox"],default: "Infoblox",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/fixedaddress?_return_as_object=1&_return_fields=ipv4addr"},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{'ipv4addr': 'func: nextavailableip: network/{{network}}','mac': '00: 00: 00: 00: 00: 00','comment': 'Created by F5 Application Services Templates'}",options: {grid_columns: 4,grid_break: true,hidden: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$.result.ipv4addr",options: {grid_columns: 4,hidden: true}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "$.result._ref",options: {grid_columns: 4,grid_break: true,hidden: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/{{addressRef}}"},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,hidden: true}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "delete",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "",options: {hidden: true}},authHeaderValue: {title: "Authorization Header Value",type: "string",default: "",options: {hidden: true}},apiVersion: {title: "API Version",type: "string",default: "v2.4",options: {grid_columns: 2}},network: {title: "Network Name",type: "string",options: {grid_columns: 3,grid_break: true}}}},{type: "object",title: "Generic",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Generic"],default: "Generic",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4}},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,grid_break: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$",options: {grid_columns: 4}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "",options: {grid_columns: 4,grid_break: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4}},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "post",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "Authorization"},authHeaderValue: {title: "Authorization Header Value",type: "string"}}}]},propertyOrder: 3,format: "table"}},required: ["enable_telemetry","deletedTemplateSets"],dependencies: {log_afm: ["enable_telemetry"],log_asm: ["enable_telemetry"]},title: "FAST Settings",description: "",definitions: {},$schema: "http://json-schema.org/schema#"}
     Info:
       type: object
@@ -1201,10 +1209,11 @@ components:
           type: object
           description: data from AS3's /info endpoint
         installedTemplates:
-            $ref: "#/components/schemas/TemplateSetList"
+          $ref: "#/components/schemas/TemplateSetList"
         config:
-            $ref: "#/components/schemas/Settings"
-    Response200:
+          $ref: "#/components/schemas/Settings"
+    FastResponse200:
+      title: Response 200
       type: object
       description: OK - Request was successful.
       required:
@@ -1227,7 +1236,8 @@ components:
           maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
-    Response400:
+    FastResponse400:
+      title: Response 400
       type: object
       description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
       required:
@@ -1250,7 +1260,8 @@ components:
           maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
-    Response404:
+    FastResponse404:
+      title: Response 404
       type: object
       description: Not Found.
       required:
@@ -1273,7 +1284,8 @@ components:
           maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
-    Response500:
+    FastResponse500:
+      title: Response 500
       type: object
       description: Internal error. A bug report should be filed.
       required:
@@ -1296,7 +1308,8 @@ components:
           maximum: 4294967295
         _links:
           $ref: "#/components/schemas/LinksDefinition"
-    Response422:
+    FastResponse422:
+      title: Response 422
       type: object
       description: Supplied configuration was invalid.
       required:
