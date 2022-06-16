@@ -19,7 +19,7 @@
 'use strict';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { createRouter, createMemoryHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { createApp } from 'vue';
 
@@ -270,7 +270,7 @@ requireComponent.keys().forEach((fileName) => {
 });
 
 const router = createRouter({
-    history: createMemoryHistory(),
+    history: createWebHashHistory(),
     routes: [
         { path: '/', redirect: '/templates' },
         { path: '/applications', component: pageComponents.applications },
@@ -290,7 +290,6 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    appState.busy = true;
     dispOutput('');
     next();
 });
