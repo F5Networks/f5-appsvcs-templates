@@ -113,6 +113,7 @@ export default {
         }
     },
     async created() {
+        this.$root.busy = true;
         await this.update(this.$route.params)
             .then(() => {
                 this.$root.busy = false;

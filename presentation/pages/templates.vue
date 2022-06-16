@@ -80,10 +80,7 @@ export default {
         };
     },
     async created() {
-        await this.reloadTemplates()
-            .then(() => {
-                this.$root.busy = false;
-            });
+        await this.reloadTemplates();
     },
     methods: {
         reloadTemplates() {

@@ -44,6 +44,8 @@ export default {
         };
     },
     async created() {
+        this.$root.busy = true;
+
         const submissionData = this.$root.getSubmissionData();
         const updateTaskList = () => this.$root.getJSON('tasks')
             .then((tasks) => {

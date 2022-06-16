@@ -19,7 +19,7 @@
 'use strict';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { createRouter, createMemoryHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { createApp } from 'vue';
 
@@ -270,7 +270,7 @@ requireComponent.keys().forEach((fileName) => {
 });
 
 const router = createRouter({
-    history: createMemoryHistory(),
+    history: createWebHashHistory(),
     routes: [
         { path: '/', redirect: '/templates' },
         { path: '/applications', component: pageComponents.applications },
@@ -290,7 +290,6 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    appState.busy = true;
     dispOutput('');
     next();
 });
@@ -310,14 +309,21 @@ Promise.resolve()
                 appState.foundAS3 = false;
                 console.log(`Error reaching AS3: ${e.message}`);
             });
-        const getIdleTimeout = safeFetch('/mgmt/tm/sys/httpd', { headers: { 'X-F5-Auth-Token': auth.token } })
-            .then((resp) => {
-                auth.timeout = resp.authPamIdleTimeout;
-            })
-            .catch((e) => {
-                console.log(`Error retrieving idle screen timeout ${e.message}`);
-            });
-        return Promise.all([checkAS3, getIdleTimeout]);
+
+        let getIdleTimeout = Promise.resolve();
+        if (auth.token) {
+            getIdleTimeout = safeFetch('/mgmt/tm/sys/httpd', { headers: { 'X-F5-Auth-Token': auth.token } })
+                .then((resp) => {
+                    auth.timeout = resp.authPamIdleTimeout;
+                })
+                .catch((e) => {
+                    console.log(`Error retrieving idle screen timeout ${e.message}`);
+                });
+        }
+        return Promise.all([
+            checkAS3,
+            getIdleTimeout
+        ]);
     })
     // Always attempt to mount the Vue app
     .finally(() => vueApp.mount('#vue-app'));
