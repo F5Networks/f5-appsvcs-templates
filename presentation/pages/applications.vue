@@ -44,6 +44,7 @@ export default {
         };
     },
     async created() {
+        this.$root.busy = true;
         await this.$root.getJSON('applications')
             .then((appsList) => {
                 appsList.forEach((app) => {

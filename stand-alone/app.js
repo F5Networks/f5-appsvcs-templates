@@ -43,7 +43,7 @@ const bigipInfo = {
 };
 
 const worker = new FastWorker({
-    configPath: '.',
+    configPath: path.resolve('.'),
     templatesPath: path.join(__dirname, '..', 'templates'),
     disableTeem: true,
     templateStorage: new atgStorage.StorageMemory(),

@@ -24,6 +24,11 @@ body {
   padding: 10px;
   max-width: 1400px;
 }
+
+[v-cloak] {
+    display: none !important;
+}
+
 #content-wrapper {
   padding: 5px 7.5px;
 }
@@ -87,10 +92,6 @@ hr {
   height: 16px;
 }
 
-[v-cloak] {
-    display: none;
-}
-
 /*********************************
     HEADER
 **********************************/
@@ -101,6 +102,7 @@ hr {
 }
 
 #header img {
+  height: 48px;
   vertical-align: middle;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.25)) drop-shadow(-1px -1px 0 rgba(255, 255, 255, 0.25));
 }

@@ -16,8 +16,8 @@
     <body>
         <!-- Static Content -->
         <div id="vue-app">
-            <div id="header">
-                <img src="img/fastrobot.png" height="48px"/>
+            <div id="header" v-cloak>
+                <img src="img/fastrobot.png"/>
                 F5 Application Services Templates
             </div>
             <div id="nav-bar" ref="nav" v-cloak :class="{ 'nav-disabled': busy }">
@@ -27,7 +27,7 @@
                 <router-link to="/settings">Settings</router-link>
                 <router-link to="/api">API</router-link>
             </div>
-            <hr />
+            <hr v-cloak/>
             <div id="content-wrapper">
                 <div v-if="busy" class='p-centered loading loading-lg'></div>
                 <div id="app" v-cloak>
