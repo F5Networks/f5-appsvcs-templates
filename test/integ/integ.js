@@ -184,12 +184,12 @@ describe('Template Sets', function () {
             data: [{ name: 'bigip-fast-templates', supported: true }],
             status: 200
         })));
-    it('GET template sets include "examples"', () => Promise.resolve()
+    it('C72081266 GET template sets include "examples"', () => Promise.resolve()
         .then(() => assertGet({
             data: [{ name: 'examples', supported: false }],
             status: 200
         })));
-    it('DELETE template set by ID', () => Promise.resolve()
+    it('C72081267 DELETE template set by ID', () => Promise.resolve()
         .then(() => endpoint.delete(`${url}/examples`))
         .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
@@ -199,7 +199,7 @@ describe('Template Sets', function () {
             assert.deepStrictEqual(actual.data, { code: 200, message: 'success', _links: { self: '/mgmt/shared/fast/templatesets/examples' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
-    it('POST re-install template set and GET by ID', () => Promise.resolve()
+    it('C72081268 POST re-install template set and GET by ID', () => Promise.resolve()
         .then(() => endpoint.post(url, { name: 'examples' }))
         .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
@@ -308,7 +308,7 @@ describe('Applications', function () {
         .then(() => getAuthToken())
         .then(() => deleteAllApplications()));
 
-    it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
+    it('C72081269 Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
 
     it('Deploy bigip-fast-templates/http', () => deployApplication('bigip-fast-templates/http', {
         tenant_name: 'tenant',
@@ -389,7 +389,7 @@ describe('Applications', function () {
         tenant_name: 'tenant',
         app_name: 'bluegreen'
     }));
-    it('PATCH existing application', () => Promise.resolve()
+    it('C72081270 PATCH existing application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
             application_name: 'patch',
             virtual_address: '10.0.0.10',
@@ -400,7 +400,7 @@ describe('Applications', function () {
         .then(() => patchApplication('foo/patch', {
             virtual_port: 3333
         })));
-    it('PATCH existing application should not create a new application', () => Promise.resolve()
+    it('C72081271 PATCH existing application should not create a new application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
             application_name: 'patchBad',
             virtual_address: '10.0.0.11',
@@ -415,7 +415,7 @@ describe('Applications', function () {
             code: 422,
             message: 'change application name'
         })));
-    it('Deploy burst of applications', () => Promise.resolve()
+    it('C72081272 Deploy burst of applications', () => Promise.resolve()
         .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
             .then(() => endpoint.post('/mgmt/shared/fast/applications', {
                 name: 'examples/simple_udp_defaults',
@@ -493,7 +493,7 @@ describe('Settings', function () {
             })
             .catch(e => handleHTTPError(e, 'get provision data'))));
 
-    it('GET default settings', () => Promise.resolve()
+    it('C72081273 GET default settings', () => Promise.resolve()
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
@@ -515,7 +515,7 @@ describe('Settings', function () {
             },
             status: 200
         })));
-    it('POST then GET settings', () => {
+    it('C72081274 POST then GET settings', () => {
         const postBody = {
             enable_telemetry: false,
             deletedTemplateSets: [],
@@ -591,7 +591,7 @@ describe('Settings', function () {
                 return assertResponse(actual, expected);
             });
     });
-    it('PATCH settings', () => {
+    it('C72081275 PATCH settings', () => {
         const patchBody = {
             disableDeclarationCache: true,
             ipamProviders: [],
