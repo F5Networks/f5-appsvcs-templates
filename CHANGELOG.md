@@ -1,3 +1,10 @@
+# 1.20.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.19.0
 ## Added
 * worker: Add grep-able state transitions to the log ("Entering STARTED/READY/UNHEALTHY state")
