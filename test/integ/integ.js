@@ -105,6 +105,7 @@ function getAuthToken() {
         .catch(e => handleHTTPError(e, 'generate auth token'));
 }
 
+let retryDeleteCtr = 0;
 function deleteAllApplications() {
     return Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
@@ -122,6 +123,13 @@ function deleteAllApplications() {
             if (task.code !== okCode) {
                 console.log(task);
             }
+            if (retryDeleteCtr <= 5 && task.code === 503 && task.message.match(/Configuration operation in progress on device/)) {
+                retryDeleteCtr += 1;
+                console.log(`Configuration operation  in progress; retry #${retryDeleteCtr} DELETE applications in 10 seconds.`);
+                return promiseDelay(10000)
+                    .then(() => deleteAllApplications());
+            }
+
             assert.ok(task.code === okCode || task.code === 0);
             return promiseDelay(10000);
         })
@@ -184,12 +192,12 @@ describe('Template Sets', function () {
             data: [{ name: 'bigip-fast-templates', supported: true }],
             status: 200
         })));
-    it('C72081266 GET template sets include "examples"', () => Promise.resolve()
+    it('GET template sets include "examples"', () => Promise.resolve()
         .then(() => assertGet({
             data: [{ name: 'examples', supported: false }],
             status: 200
         })));
-    it('C72081267 DELETE template set by ID', () => Promise.resolve()
+    it('DELETE template set by ID', () => Promise.resolve()
         .then(() => endpoint.delete(`${url}/examples`))
         .catch(e => handleHTTPError(e, 'delete examples template set'))
         .then((actual) => {
@@ -199,7 +207,7 @@ describe('Template Sets', function () {
             assert.deepStrictEqual(actual.data, { code: 200, message: 'success', _links: { self: '/mgmt/shared/fast/templatesets/examples' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
-    it('C72081268 POST re-install template set and GET by ID', () => Promise.resolve()
+    it('POST re-install template set and GET by ID', () => Promise.resolve()
         .then(() => endpoint.post(url, { name: 'examples' }))
         .catch(e => handleHTTPError(e, 'install examples template set'))
         .then((actual) => {
@@ -308,7 +316,7 @@ describe('Applications', function () {
         .then(() => getAuthToken())
         .then(() => deleteAllApplications()));
 
-    it('C72081269 Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
+    it('Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
 
     it('Deploy bigip-fast-templates/http', () => deployApplication('bigip-fast-templates/http', {
         tenant_name: 'tenant',
@@ -389,7 +397,7 @@ describe('Applications', function () {
         tenant_name: 'tenant',
         app_name: 'bluegreen'
     }));
-    it('C72081270 PATCH existing application', () => Promise.resolve()
+    it('PATCH existing application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
             application_name: 'patch',
             virtual_address: '10.0.0.10',
@@ -400,7 +408,7 @@ describe('Applications', function () {
         .then(() => patchApplication('foo/patch', {
             virtual_port: 3333
         })));
-    it('C72081271 PATCH existing application should not create a new application', () => Promise.resolve()
+    it('PATCH existing application should not create a new application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
             application_name: 'patchBad',
             virtual_address: '10.0.0.11',
@@ -415,10 +423,9 @@ describe('Applications', function () {
             code: 422,
             message: 'change application name'
         })));
-    it('C72081272 Deploy burst of applications', () => {
+    it('Deploy burst of applications', () => {
         this.timeout(180000);
-
-        return Promise.resolve()
+        Promise.resolve()
             .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
                 .then(() => endpoint.post('/mgmt/shared/fast/applications', {
                     name: 'examples/simple_udp_defaults',
@@ -497,7 +504,7 @@ describe('Settings', function () {
             })
             .catch(e => handleHTTPError(e, 'get provision data'))));
 
-    it('C72081273 GET default settings', () => Promise.resolve()
+    it('GET default settings', () => Promise.resolve()
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
@@ -519,7 +526,7 @@ describe('Settings', function () {
             },
             status: 200
         })));
-    it('C72081274 POST then GET settings', () => {
+    it('POST then GET settings', () => {
         const postBody = {
             enable_telemetry: false,
             deletedTemplateSets: [],
@@ -595,7 +602,7 @@ describe('Settings', function () {
                 return assertResponse(actual, expected);
             });
     });
-    it('C72081275 PATCH settings', () => {
+    it('PATCH settings', () => {
         const patchBody = {
             disableDeclarationCache: true,
             ipamProviders: [],
