@@ -215,6 +215,7 @@ const vueApp = createApp({
             extendToken();
             auth.tokenExtension = setInterval(extendToken, ((authTimeout - 120) * 1000));
         }
+        window.location.href = '/iapps/f5-appsvcs-templates/index.html#/templates';
     },
     beforeUnmount() {
         if (auth.tokenExtension) {
