@@ -181,7 +181,9 @@ const patchWorker = (worker) => {
 
     mockfs({
         [worker.uploadPath]: mockfs.load(worker.uploadPath, { recursive: true }),
-        [worker.scratchPath]: {},
+        [worker.scratchPath]: {
+            'testset-github.zip': mockfs.load(path.join(worker.uploadPath, 'testset.zip'))
+        },
         [worker.templatesPath]: mockfs.load(path.join(process.cwd(), 'templates'), { recursive: true }),
         [(path.join(process.cwd(), 'lib'))]: mockfs.load(path.join(process.cwd(), 'lib'), { lazy: false, recursive: true })
     });
@@ -1369,6 +1371,111 @@ describe('fastWorker tests', function () {
 
                     const tsNames = infoOp.body.installedTemplates.map(x => x.name);
                     assert(tsNames.includes('testset'));
+                });
+        });
+        it('post_templateset_github', function () {
+            const worker = createWorker();
+            this.clock.restore();
+
+            const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
+            nock('https://github.com', {
+                reqheaders: {
+                    authorization: 'token secret'
+                }
+            })
+                .get('/org/testset-github/archive/master.zip')
+                .replyWithFile(200, archivePath)
+                .get('/org/testset-github/archive/branch.zip')
+                .replyWithFile(200, archivePath);
+
+            return Promise.resolve()
+                // test implicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitHubRepo: 'org/testset-github',
+                        gitToken: 'secret'
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
+                })
+                .then(() => worker.templateProvider.list())
+                .then((templates) => {
+                    console.log(templates);
+                    assert(templates.includes('testset-github/f5_https'));
+                })
+                // test explicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitHubRepo: 'org/testset-github',
+                        gitRef: 'branch',
+                        gitToken: 'secret',
+                        name: 'testset-github2'
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
+                })
+                .then(() => worker.templateProvider.list())
+                .then((templates) => {
+                    console.log(templates);
+                    assert(templates.includes('testset-github2/f5_https'));
+                })
+                // test git data in template sets
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets/testset-github');
+                    return worker.onGet(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('TemplateSet');
+
+                    const tsData = op.body;
+                    console.log(tsData);
+                    assert.strictEqual(tsData.gitHubRepo, 'org/testset-github');
+                });
+        });
+        it('post_templateset_gitlab', function () {
+            const worker = createWorker();
+            this.clock.restore();
+
+            const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
+            nock('https://gitlab.com', {
+                reqheaders: {
+                    authorization: 'Bearer secret'
+                }
+            })
+                .get('/api/v4/projects/org%2Ftestset-gitlab/repository/archive.zip?sha=master')
+                .replyWithFile(200, archivePath);
+
+            return Promise.resolve()
+                // test implicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitLabRepo: 'org/testset-gitlab',
+                        gitToken: 'secret'
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
+                })
+                .then(() => worker.templateProvider.list())
+                .then((templates) => {
+                    console.log(templates);
+                    assert(templates.includes('testset-gitlab/f5_https'));
                 });
         });
         it('post_templateset_deleted', function () {

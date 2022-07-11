@@ -27,6 +27,7 @@ const Ajv = require('ajv');
 const merge = require('deepmerge');
 const Mustache = require('mustache');
 const semver = require('semver');
+const axios = require('axios');
 
 const fast = require('@f5devcentral/f5-fast-core');
 const atgStorage = require('@f5devcentral/atg-storage');
@@ -245,7 +246,8 @@ class FASTWorker {
             },
             enableIpam: false,
             ipamProviders: [],
-            disableDeclarationCache: false
+            disableDeclarationCache: false,
+            _gitTemplateSets: {}
         };
         return Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
     }
@@ -410,9 +412,14 @@ class FASTWorker {
     handleResponseError(e, description) {
         description = description || 'request';
         if (e.response) {
+            let body = e.response.data;
+            if (body.pipe) {
+                body.setEncoding('utf8');
+                body = body.read();
+            }
             const errData = JSON.stringify({
                 status: e.response.status,
-                body: e.response.data
+                body
             }, null, 2);
             return Promise.reject(new Error(`failed ${description}: ${errData}`));
         }
@@ -865,7 +872,7 @@ class FASTWorker {
             .then(tmpls => tmpls.map(x => x[0]));
     }
 
-    gatherTemplateSet(tsid, ctx) {
+    gatherTemplateSet(tsid, config, ctx) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
@@ -900,6 +907,9 @@ class FASTWorker {
                         .map(x => `${x.tenant}/${x.name}`);
                 });
 
+                const gitData = config._gitTemplateSets[tsid];
+                Object.assign(tsData, gitData);
+
                 return tsData;
             })
             .then(tsData => this.filterTemplates(tsData.templates)
@@ -924,6 +934,8 @@ class FASTWorker {
             installedTemplates: []
         };
 
+        let config;
+
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 requestId,
@@ -934,15 +946,17 @@ class FASTWorker {
                 info.as3Info = as3response.data;
                 this.as3Info = info.as3Info;
             })
+            .then(() => this.getConfig(requestId, ctx)
+                .then((data) => { config = data; }))
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
             .then(() => this.templateProvider.listSets())
-            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName, ctx))))
+            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(setName, config, ctx))))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
             .then(() => this.exitTransaction(requestId, 'gathering template set data'))
             .then(() => this.getConfig(requestId, ctx))
-            .then((config) => {
+            .then(() => {
                 info.config = config;
                 ctx.span.finish();
             })
@@ -1731,10 +1745,11 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         if (tsid) {
             return Promise.resolve()
-                .then(() => this.recordTransaction(
+                .then(() => this.getConfig(reqid, ctx))
+                .then(config => this.recordTransaction(
                     reqid,
                     'gathering a template set',
-                    this.gatherTemplateSet(tsid, ctx)
+                    this.gatherTemplateSet(tsid, config, ctx)
                 ))
                 .then((tmplSet) => {
                     restOperation.setBody(tmplSet);
@@ -1758,10 +1773,14 @@ class FASTWorker {
                 'gathering a list of template sets',
                 (showDisabled) ? this.fsTemplateProvider.listSets() : this.templateProvider.listSets()
             ))
-            .then(setList => this.recordTransaction(
+            .then(setList => Promise.all([
+                Promise.resolve(setList),
+                this.getConfig(reqid, ctx)
+            ]))
+            .then(([setList, config]) => this.recordTransaction(
                 reqid,
                 'gathering data for each template set',
-                Promise.all(setList.map(x => this.gatherTemplateSet(x, ctx)))
+                Promise.all(setList.map(x => this.gatherTemplateSet(x, config, ctx)))
             ))
             .then(setList => ((showDisabled) ? setList.filter(x => !x.enabled) : setList))
             .then((setList) => {
@@ -1776,7 +1795,16 @@ class FASTWorker {
         return Promise.resolve()
             .then(() => this.getConfig(reqid, ctx))
             .then((config) => {
-                restOperation.setBody(config);
+                const retVal = Object.assign({}, config);
+
+                Object.keys(retVal).forEach((key) => {
+                    // Remove any "private" keys
+                    if (key.startsWith('_')) {
+                        delete retVal[key];
+                    }
+                });
+
+                restOperation.setBody(retVal);
                 this.completeRestOperation(restOperation, ctx);
             })
             .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
@@ -1895,8 +1923,8 @@ class FASTWorker {
             });
     }
 
-    _validateTemplateSet(tspath) {
-        const tmplProvider = new FsTemplateProvider(tspath);
+    _validateTemplateSet(tsRoot, tsFilter) {
+        const tmplProvider = new FsTemplateProvider(tsRoot, tsFilter);
         return tmplProvider.list()
             .then((templateList) => {
                 if (templateList.length === 0) {
@@ -1908,14 +1936,32 @@ class FASTWorker {
     }
 
     postTemplateSets(restOperation, data, ctx) {
-        const tsid = data.name;
         const reqid = restOperation.requestId;
+
+        if (!data.name && !data.gitHubRepo && !data.gitLabRepo) {
+            return this.genRestResponse(restOperation, 400, 'must supply one of the following parameters: name, gitHubRepo, gitLabRepo', ctx);
+        }
+
+        data.gitRef = data.gitRef || 'master';
+
+        const tsid = data.name
+            || data.gitSubDir
+            || (data.gitHubRepo ? data.gitHubRepo.split('/')[1] : null)
+            || (data.gitLabRepo ? data.gitLabRepo.split('/')[1] : null);
         const setsrc = (this.uploadPath !== '') ? `${this.uploadPath}/${tsid}.zip` : `${tsid}.zip`;
         const scratch = `${this.scratchPath}/${tsid}`;
+        const tsRootPath = this.scratchPath;
+        const tsFilter = [tsid];
         const onDiskPath = `${this.templatesPath}/${tsid}`;
+        const extractSubDir = data.gitSubDir;
 
-        if (!data.name) {
-            return this.genRestResponse(restOperation, 400, `invalid template set name supplied: ${tsid}`, ctx);
+        let tsUrl = null;
+        if (data.gitHubRepo) {
+            tsUrl = `https://github.com/${data.gitHubRepo}/archive/${data.gitRef}.zip`;
+        } else if (data.gitLabRepo) {
+            data.gitLabUrl = data.gitLabUrl || 'https://gitlab.com';
+            const encodedRepo = data.gitLabRepo.replaceAll('/', '%2F');
+            tsUrl = `${data.gitLabUrl}/api/v4/projects/${encodedRepo}/repository/archive.zip?sha=${data.gitRef}`;
         }
 
         // Setup a scratch location we can use while validating the template set
@@ -1936,11 +1982,43 @@ class FASTWorker {
 
                 const setpath = `${scratch}.zip`;
                 return Promise.resolve()
-                    .then(() => this.recordTransaction(
-                        reqid,
-                        'fetch uploaded template set',
-                        this.bigip.copyUploadedFile(setsrc, setpath, ctx)
-                    ))
+                    .then(() => {
+                        if (tsUrl) {
+                            const reqConf = {
+                                responseType: 'stream'
+                            };
+                            if (data.gitToken) {
+                                if (data.gitHubRepo) {
+                                    reqConf.headers = {
+                                        authorization: `token ${data.gitToken}`
+                                    };
+                                } else if (data.gitLabRepo) {
+                                    reqConf.headers = {
+                                        authorization: `Bearer ${data.gitToken}`
+                                    };
+                                }
+                            }
+
+                            return this.recordTransaction(
+                                reqid,
+                                `fetch template set from url (${tsUrl})`,
+                                axios.get(tsUrl, reqConf)
+                                    .catch(e => this.handleResponseError(e, `fetching ${tsUrl}`))
+                                    .then(resp => new Promise((resolve, reject) => {
+                                        const stream = fs.createWriteStream(setpath);
+                                        resp.data.pipe(stream);
+                                        stream.on('finish', resolve);
+                                        stream.on('error', reject);
+                                    }))
+                            );
+                        }
+
+                        return this.recordTransaction(
+                            reqid,
+                            'fetch uploaded template set',
+                            this.bigip.copyUploadedFile(setsrc, setpath, ctx)
+                        );
+                    })
                     .then(() => this.recordTransaction(
                         reqid,
                         'extract template set',
@@ -1952,21 +2030,73 @@ class FASTWorker {
                         })
                     ));
             })
+            .then(() => {
+                const files = fs.readdirSync(scratch);
+                let numFiles = 0;
+                let numDirs = 0;
+                let lastDir = null;
+
+                files.forEach((file) => {
+                    const path = `${scratch}/${file}`;
+                    const stats = fs.statSync(path);
+                    if (stats.isFile()) {
+                        numFiles += 1;
+                    }
+                    if (stats.isDirectory()) {
+                        numDirs += 1;
+                        lastDir = path;
+                    }
+                });
+
+                if (numDirs === 1 && numFiles === 0) {
+                    // Directory was zipped instead of its contents
+                    const subFiles = fs.readdirSync(lastDir);
+                    subFiles.forEach((file) => {
+                        fs.moveSync(`${lastDir}/${file}`, `${scratch}/${file}`);
+                    });
+                    fs.removeSync(lastDir);
+                }
+
+                if (extractSubDir) {
+                    const subDirTemp = `${this.scratchPath}/__fast_tmp__`;
+                    fs.removeSync(subDirTemp);
+                    fs.moveSync(`${scratch}/${extractSubDir}`, subDirTemp);
+                    fs.removeSync(scratch);
+                    fs.moveSync(subDirTemp, scratch);
+                }
+            })
             .then(() => this.recordTransaction(
                 reqid,
                 'validate template set',
-                this._validateTemplateSet(this.scratchPath)
+                this._validateTemplateSet(tsRootPath, tsFilter)
+                    .catch(e => Promise.reject(
+                        new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)
+                    ))
             ))
-            .catch(e => Promise.reject(new Error(`Template set (${tsid}) failed validation: ${e.message}. ${e.stack}`)))
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
-            .then(() => DataStoreTemplateProvider.fromFs(this.storage, this.scratchPath, [tsid]))
+            .then(() => DataStoreTemplateProvider.fromFs(this.storage, tsRootPath, tsFilter))
             .then(() => this.generateTeemReportTemplateSet('create', tsid))
             .then(() => this.getConfig(reqid, ctx))
             .then((config) => {
+                // If we are installing a delete template set, remove it from the deleted list
                 if (config.deletedTemplateSets.includes(tsid)) {
                     config.deletedTemplateSets = config.deletedTemplateSets.filter(x => x !== tsid);
                     return this.saveConfig(config, reqid, ctx);
+                }
+
+                // If we are installing a template set from GitHub, record some extra information for later
+                if (data.gitHubRepo || data.gitLabRepo) {
+                    config._gitTemplateSets[tsid] = {};
+                    Object.keys(data).forEach((key) => {
+                        const copyKey = (
+                            key.startsWith('git')
+                            && key !== 'gitToken'
+                        );
+                        if (copyKey) {
+                            config._gitTemplateSets[tsid][key] = data[key];
+                        }
+                    });
                 }
                 return Promise.resolve();
             })
@@ -1997,6 +2127,9 @@ class FASTWorker {
                 if (e.message.match(/no such file/)) {
                     return this.genRestResponse(restOperation, 404, `${setsrc} does not exist`, ctx);
                 }
+                if (e.message.match(/failed fetching/)) {
+                    return this.genRestResponse(restOperation, 404, e.message, ctx);
+                }
                 if (e.message.match(/failed validation/)) {
                     return this.genRestResponse(restOperation, 400, e.message, ctx);
                 }
@@ -2017,6 +2150,15 @@ class FASTWorker {
                 ctx
             )))
             .then(() => this.getConfig(reqid, ctx))
+            .then((prevConfig) => {
+                // Copy over any "private" values
+                Object.keys(prevConfig).forEach((key) => {
+                    if (key.startsWith('_')) {
+                        config[key] = prevConfig[key];
+                    }
+                });
+                return Promise.resolve(prevConfig);
+            })
             .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
             .then(() => this.saveConfig(config, reqid, ctx))
             .then(() => Promise.resolve(this.setTracer(config.perfTracing)))
@@ -2165,11 +2307,14 @@ class FASTWorker {
     deleteTemplateSets(restOperation, tsid, ctx) {
         const reqid = restOperation.requestId;
         if (tsid) {
+            let config;
             return Promise.resolve()
+                .then(() => this.getConfig(reqid, ctx)
+                    .then((data) => { config = data; }))
                 .then(() => this.recordTransaction(
                     reqid,
                     `gathering template set data for ${tsid}`,
-                    this.gatherTemplateSet(tsid, ctx)
+                    this.gatherTemplateSet(tsid, config, ctx)
                 ))
                 .then((setData) => {
                     const usedBy = setData.templates.reduce((acc, curr) => {
@@ -2188,8 +2333,7 @@ class FASTWorker {
                     'deleting a template set from the data store',
                     this.templateProvider.removeSet(tsid)
                 ))
-                .then(() => this.getConfig(reqid, ctx))
-                .then((config) => {
+                .then(() => {
                     config.deletedTemplateSets.push(tsid);
                     return this.saveConfig(config, reqid, ctx);
                 })

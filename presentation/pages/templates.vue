@@ -19,14 +19,18 @@
             type="file"
             style="display:none"
             accept=".zip"
-            @change="installSet"
+            @change="installSetFile"
         >
-        <button
-            class="float-right"
-            @click="$refs.fileInput.click()"
-        >
-            Add Template Set
-        </button>
+        <div class="float-right">
+            <button @click="installSet">
+                Add Template Set From
+            </button>
+            <select v-model="installType">
+                <option>File</option>
+                <option>GitHub</option>
+                <option>GitLab</option>
+            </select>
+        </div>
         <p>To deploy an application, start by selecting a template below</p>
         <div
             v-for="setData in setsList"
@@ -48,10 +52,98 @@
             />
         </div>
         <modal-dialog
-            ref="modal"
+            ref="removeModal"
             title="Remove"
             confirm-text="Remove"
         />
+        <modal-dialog
+            ref="gitModal"
+            :title="'Install from ' + installType"
+            confirm-text="Install"
+            :allow-confirm="gitInstallInfo.repo !== null && gitInstallInfo.repo.includes('/')"
+        >
+            <template #body>
+                <div class="form-group">
+                    <label
+                        v-if="installType==='GitLab'"
+                        class="form-label"
+                        for="gitUrl"
+                    >
+                        URL:
+                    </label>
+                    <input
+                        v-if="installType==='GitLab'"
+                        id="gitUrl"
+                        v-model="gitInstallInfo.url"
+                        class="form-input"
+                        placeholder="https://gitlab.com"
+                    >
+
+                    <label
+                        class="form-label"
+                        for="gitRepo"
+                    >
+                        Repository:
+                    </label>
+                    <input
+                        id="gitRepo"
+                        v-model="gitInstallInfo.repo"
+                        class="form-input"
+                        placeholder="org/project"
+                    >
+
+                    <label
+                        class="form-label"
+                        for="gitToken"
+                    >
+                        Auth Token:
+                    </label>
+                    <input
+                        id="gitToken"
+                        v-model="gitInstallInfo.token"
+                        class="form-input"
+                    >
+
+                    <label
+                        class="form-label"
+                        for="gitSubDir"
+                    >
+                        Repository Sub-directory:
+                    </label>
+                    <input
+                        id="gitSubDir"
+                        v-model="gitInstallInfo.subDir"
+                        class="form-input"
+                    >
+
+                    <label
+                        class="form-label"
+                        for="gitRef"
+                    >
+                        Git Ref:
+                    </label>
+                    <input
+                        id="gitRef"
+                        v-model="gitInstallInfo.ref"
+                        class="form-input"
+                        placeholder="master"
+                    >
+
+                    <label
+                        class="form-label"
+                        for="gitName"
+                    >
+                        Installed Set Name:
+                    </label>
+                    <input
+                        id="gitName"
+                        v-model="gitInstallInfo.name"
+                        class="form-input"
+                        :placeholder="gitInstallSetName"
+                    >
+                </div>
+            </template>
+        </modal-dialog>
     </div>
 </template>
 
@@ -76,8 +168,26 @@ export default {
                 },
                 'Apps using template': 'numApps',
                 Description: 'description'
+            },
+            installType: 'File',
+            gitInstallInfo: {
+                name: null,
+                repo: null,
+                url: null,
+                token: null,
+                subDir: null,
+                ref: null
             }
         };
+    },
+    computed: {
+        gitInstallSetName() {
+            return (
+                this.gitInstallInfo.name
+                || this.gitInstallInfo.subDir
+                || ((this.gitInstallInfo.repo) ? this.gitInstallInfo.repo.split('/')[1] : '')
+            );
+        }
     },
     async created() {
         await this.reloadTemplates();
@@ -87,6 +197,8 @@ export default {
             this.$root.busy = true;
             return Promise.resolve()
                 .then(() => Promise.all([
+                    // Promise.resolve([]),
+                    // Promise.resolve([])
                     this.$root.getJSON('templatesets'),
                     this.$root.getJSON('templatesets?showDisabled=true')
                 ]))
@@ -112,7 +224,7 @@ export default {
                     this.$root.busy = false;
                 });
         },
-        installSet() {
+        installSetFile() {
             const file = this.$refs.fileInput.files[0];
             const tsName = file.name.slice(0, -4);
             this.$root.busy = true;
@@ -121,12 +233,9 @@ export default {
                 .then(() => this.$root.dispOutput(`Installing template set ${tsName}`))
                 .then(() => this.$root.safeFetch('/mgmt/shared/fast/templatesets', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
+                    body: {
                         name: file.name.slice(0, -4)
-                    })
+                    }
                 }))
                 .then(() => {
                     this.$root.dispOutput(`${tsName} installed successfully`);
@@ -139,8 +248,89 @@ export default {
                     this.$root.busy = false;
                 });
         },
+        clearGitInstallInfo() {
+            Object.keys(this.gitInstallInfo).forEach((key) => {
+                this.gitInstallInfo[key] = null;
+            });
+        },
+        gitInfoToBody(info, opts) {
+            return Object.assign(
+                {},
+                {
+                    gitToken: info.token || undefined,
+                    gitSubDir: info.subDir || undefined,
+                    gitRef: info.ref || undefined,
+                    name: info.name || undefined
+                },
+                opts
+            );
+        },
+        installSetGitHub() {
+            this.$refs.gitModal.show(
+                '',
+                () => {
+                    const info = this.gitInstallInfo;
+                    this.$root.busy = true;
+                    this.$root.dispOutput(`Installing template set from ${info.repo} on GitHub`);
+                    this.$root.safeFetch('/mgmt/shared/fast/templatesets', {
+                        method: 'POST',
+                        body: this.gitInfoToBody(info, { gitHubRepo: info.repo })
+                    })
+                        .then(() => {
+                            this.$root.dispOutput(`${this.gitInstallSetName} installed successfully`);
+                        })
+                        .then(() => this.reloadTemplates())
+                        .catch((e) => {
+                            this.$root.dispOutput(`Failed to install ${this.gitInstallSetName}:\n${e.message}`);
+                        })
+                        .finally(() => {
+                            this.$root.busy = false;
+                        });
+                }
+            );
+        },
+        installSetGitLab() {
+            this.$refs.gitModal.show(
+                '',
+                () => {
+                    const info = this.gitInstallInfo;
+                    this.$root.busy = true;
+                    this.$root.dispOutput(`Installing template set from ${info.repo} on GitLab instance at ${info.url}`);
+                    this.$root.safeFetch('/mgmt/shared/fast/templatesets', {
+                        method: 'POST',
+                        body: this.gitInfoToBody(
+                            info,
+                            {
+                                gitLabRepo: info.repo,
+                                gitLabUrl: info.url || undefined
+                            }
+                        )
+                    })
+                        .then(() => {
+                            this.$root.dispOutput(`${this.gitInstallSetName} installed successfully`);
+                        })
+                        .then(() => this.reloadTemplates())
+                        .catch((e) => {
+                            this.$root.dispOutput(`Failed to install ${this.gitInstallSetName}:\n${e.message}`);
+                        })
+                        .finally(() => {
+                            this.$root.busy = false;
+                        });
+                }
+            );
+        },
+        installSet() {
+            this.clearGitInstallInfo();
+            if (this.installType === 'File') {
+                this.$refs.fileInput.click();
+            } else if (this.installType === 'GitHub') {
+                this.installSetGitHub();
+            } else if (this.installType === 'GitLab') {
+                this.installSetGitLab();
+            }
+        },
         removeSet(setName) {
-            this.$refs.modal.show(
+            this.$refs.removeModal.show(
                 `Are you sure you want to remove application template set "${setName}"?`,
                 () => {
                     this.$root.busy = true;

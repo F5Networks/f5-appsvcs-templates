@@ -391,28 +391,100 @@ paths:
               schema:
                 $ref: "#/components/schemas/FastResponse500"
     post:
-      summary: Install a new Template Set
-      description: Installs a previously uploaded Template Set zip.
+      summary: Install Template Set
+      description: Installs a new template set from a variety of sources
       operationId: postFASTTemplateSets
       tags:
         - Template Management
       requestBody:
-        description: The name of a zip file (excluding the .zip extension).
         required: true
         content:
           application/json:
             schema:
-              required:
-                - name
-              properties:
-                name:
-                  title: Template Set name.
-                  description: The name of the Template Set to install (excluding the .zip extension).
-                  type: string
-                  example: new_template_set
-          multipart/form-data:
-            schema:
-              description: a zip file containing Template schema or mustache files.
+              oneOf:
+                - title: File Upload
+                  description: Install a previously uploaded zip archive as a template set
+                  required:
+                    - name
+                  properties:
+                    name:
+                      title: Template Set name
+                      description: The name of the Template Set to install (excluding the .zip extension).
+                      type: string
+                      example: new_template_set
+                - title: GitHub Repository
+                  description: Install a GitHub repository (or sub-directory in a repository) as a template set
+                  required:
+                    - gitHubRepo
+                  properties:
+                    gitHubRepo:
+                      title: GitHub Repository
+                      description: A GitHub repository to use as a template set
+                      type: string
+                      example: org/templateset
+                    gitToken:
+                      title: GitHub API token
+                      description: An API token used to access private repositories
+                      type: string
+                      default: null
+                    gitSubDir:
+                      title: Git sub-directory
+                      description: The sub-directory in the git repo to install as a template set
+                      default: null
+                      example: org-templates
+                      oneOf:
+                        - type: string
+                        - type: 'null'
+                    gitRef:
+                      title: Git ref
+                      description: The Git ref to use when fetching the repository
+                      default: master
+                      type: string
+                      example: master
+                    name:
+                      title: Template set name
+                      description: Template set name to use (defaults gitSubDir if available or the repo name)
+                      type: string
+                      example: newTemplateSet
+                - title: GitLab Repository
+                  description: Install a GitLab repository (or sub-directory in a repository) as a template set
+                  required:
+                   - gitLabRepo
+                  properties:
+                    gitLabRepo:
+                      title: GitLab Repository
+                      description: A GitLab repository to use as a template set
+                      type: string
+                      example: org/templateset
+                    gitLabUrl:
+                      title: GitLab URL
+                      description: URL to the GitLab instance
+                      type: string
+                      default: https://gitlab.com
+                    gitToken:
+                      title: GitLab API token
+                      description: An API token used to access private repositories
+                      type: string
+                      default: null
+                    gitSubDir:
+                      title: Git sub-directory
+                      description: The sub-directory in the git repo to install as a template set
+                      default: null
+                      example: org-templates
+                      oneOf:
+                        - type: string
+                        - type: 'null'
+                    gitRef:
+                      title: Git ref
+                      description: The Git ref to use when fetching the repository
+                      default: master
+                      type: string
+                      example: master
+                    name:
+                      title: Template set name
+                      description: Template set name to use (defaults gitSubDir if available or the repo name)
+                      type: string
+                      example: newTemplateSet
       responses:
         '200':
           description: The Template Set installed successfully.
@@ -1081,6 +1153,14 @@ components:
     TemplateSet:
       type: object
       description: Template Set.
+      required:
+        - name
+        - hash
+        - supported
+        - templates
+        - schemas
+        - dataFiles
+        - enabled
       properties:
         name:
           type: string
@@ -1124,6 +1204,23 @@ components:
                 type: string
                 description: A sha256 hash of the data file
             example: [ { name: 'testSet/test', hash: '0105f0af93b9c27e737cb8337d3af5f67d9379668d4bf84a1b091306fbf9055c'}]
+        gitHubRepo:
+          title: GitHub Repository
+          description: The GitHub repository used to install the template set
+          type: string
+          example: org/templateset
+        gitSubDir:
+          title: Git sub-directory
+          description: The sub-directory in the git repo from which the template set was installed
+          type: string
+          default: ''
+          example: org-templates
+        gitRef:
+          title: Git ref
+          description: The Git ref used to fetch the repository
+          default: master
+          type: string
+          example: master
         enabled:
           type: boolean
           description: Template Set is installed and ready to use
