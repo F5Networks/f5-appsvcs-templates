@@ -10,12 +10,15 @@
                 </div>
             </div>
             <div class="modal-body">
-                <div class="fas fa-info-circle modal-icon" />
-                <span class="modal-message">{{ message }}</span>
+                <slot name="body">
+                    <div class="fas fa-info-circle modal-icon" />
+                    <span class="modal-message">{{ message }}</span>
+                </slot>
             </div>
             <div class="modal-footer">
                 <button
                     class="btn"
+                    :disabled="!allowConfirm"
                     @click="confirm"
                 >
                     {{ confirmText }}
@@ -46,6 +49,10 @@ export default {
         cancelText: {
             type: String,
             default: 'Cancel'
+        },
+        allowConfirm: {
+            type: Boolean,
+            default: true
         }
     },
     data() {
