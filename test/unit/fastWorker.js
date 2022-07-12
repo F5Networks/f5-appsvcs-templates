@@ -1101,6 +1101,28 @@ describe('fastWorker tests', function () {
         });
     });
 
+    describe('offbox templates', function () {
+        it('post_check_status', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/offbox-templates');
+            op.setBody({
+                methods: [
+                    {
+                        name: 'status'
+                    }
+                ]
+            });
+            return worker.onPost(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 3));
+                    assert.equal(op.status, 200);
+                    assert(op.body.code === 201);
+                    assert(Array.isArray(op.body.methods));
+                    expect(op.body).to.satisfySchemaInApiSpec('FastOffboxTemplatesetsResponse');
+                });
+        });
+    });
+
     describe('render', function () {
         it('post_render', function () {
             const worker = createWorker();

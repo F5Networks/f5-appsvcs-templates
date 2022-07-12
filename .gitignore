@@ -14,6 +14,6 @@ presentation/openapi.json
 presentation/apidoc.html
 venv/
 docs/userguide/proposed-doc-rev.rst
-
+scratch/
 # stryker temp files
 .stryker-tmp

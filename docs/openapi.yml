@@ -768,7 +768,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FastResponse500"
-
+  /offbox-templatesets:
+    post:
+      tags:
+        - Offbox Templatesets Management
+      summary: Provides a set of methods intended for managing Offbox Templatesets
+      description: Intended for managing Offbox Templatesets.
+      operationId: postFASTOffboxTemplates
+      requestBody:
+        description: An object which defines methods to execute for Offbox Templates management
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FastOffboxTemplatesets"
+      responses:
+        '200':
+          description: The rendered Templates as an array of JSON objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastOffboxTemplatesetsResponse"
+        '400':
+          description: An improper payload was submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse400"
+        '500':
+          description: Internal error. A bug report should be filed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse500"
 components:
   schemas:
     ParametersDefinition:
@@ -828,6 +860,33 @@ components:
         - name: tenant/app
           parameters: {}
           allowOverwrite: true
+    FastOffboxTemplatesetsResponse:
+      title: Offbox Templates Response
+      type: object
+      description: Offbox Templates response
+      required:
+        - code
+        - requestId
+        - methods
+      properties:
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
+        code:
+          type: integer
+          format: int32
+          minimum: 200
+          maximum: 599
+          example: 200
+        methods:
+          type: array
+          description: a list of methods executed for Offbox Templates management
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: method name
+                example: status
     FastApplicationRenderedResponse:
       title: Application Rendered Response
       type: object
@@ -896,6 +955,23 @@ components:
         oneOf:
           - $ref: "#/components/schemas/FastApplicationDefinition"
           - $ref: "#/components/schemas/FastApplicationDefinitionList"
+    FastOffboxTemplatesets:
+      title: Offbox Templates
+      description: Offbox Templates management
+      type: object
+      required:
+        - methods
+      properties:
+        methods:
+          type: array
+          description: a list of methods for Offbox Templates management
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: method name
+                example: status
     FastApplicationResponse:
       type: object
       title: Application Response
