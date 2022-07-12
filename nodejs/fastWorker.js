@@ -20,6 +20,7 @@
 require('core-js');
 
 const fs = require('fs-extra');
+const crypto = require('crypto');
 const url = require('url');
 
 const extract = require('extract-zip');
@@ -906,10 +907,8 @@ class FASTWorker {
                         .filter(x => x.template === tmpl.name)
                         .map(x => `${x.tenant}/${x.name}`);
                 });
-
                 const gitData = config._gitTemplateSets[tsid];
                 Object.assign(tsData, gitData);
-
                 return tsData;
             })
             .then(tsData => this.filterTemplates(tsData.templates)
@@ -1796,14 +1795,12 @@ class FASTWorker {
             .then(() => this.getConfig(reqid, ctx))
             .then((config) => {
                 const retVal = Object.assign({}, config);
-
                 Object.keys(retVal).forEach((key) => {
                     // Remove any "private" keys
                     if (key.startsWith('_')) {
                         delete retVal[key];
                     }
                 });
-
                 restOperation.setBody(retVal);
                 this.completeRestOperation(restOperation, ctx);
             })
@@ -1935,6 +1932,56 @@ class FASTWorker {
             .then(templateList => Promise.all(templateList.map(tmpl => tmplProvider.fetch(tmpl))));
     }
 
+    _getTsUrl(data) {
+        if (data.gitHubRepo) {
+            return `https://github.com/${data.gitHubRepo}/archive/${data.gitRef}.zip`;
+        }
+        if (data.gitLabRepo) {
+            data.gitLabUrl = data.gitLabUrl || 'https://gitlab.com';
+            const encodedRepo = data.gitLabRepo.replaceAll('/', '%2F');
+            return `${data.gitLabUrl}/api/v4/projects/${encodedRepo}/repository/archive.zip?sha=${data.gitRef}`;
+        }
+        return undefined;
+    }
+
+    _fetchTsFromGit(tsUrl, setpath, data, reqid) {
+        const reqConf = {
+            responseType: 'stream'
+        };
+        if (data.gitToken) {
+            if (data.gitHubRepo) {
+                reqConf.headers = {
+                    authorization: `token ${data.gitToken}`
+                };
+            } else if (data.gitLabRepo) {
+                reqConf.headers = {
+                    authorization: `Bearer ${data.gitToken}`
+                };
+            }
+        }
+
+        return this.recordTransaction(
+            reqid,
+            `fetch template set from url (${tsUrl})`,
+            axios.get(tsUrl, reqConf)
+                .catch(e => this.handleResponseError(e, `fetching ${tsUrl}`))
+                .then(resp => new Promise((resolve, reject) => {
+                    const stream = fs.createWriteStream(setpath);
+                    resp.data.pipe(stream);
+                    stream.on('finish', resolve);
+                    stream.on('error', reject);
+                }))
+        );
+    }
+
+    _scratchDirectoryForValidation(reqId, scratch) {
+        // Setup a scratch location we can use while validating the template set
+        this.enterTransaction(reqId, 'prepare scratch space');
+        fs.removeSync(scratch);
+        fs.mkdirsSync(scratch);
+        this.exitTransaction(reqId, 'prepare scratch space');
+    }
+
     postTemplateSets(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
 
@@ -1943,6 +1990,7 @@ class FASTWorker {
         }
 
         data.gitRef = data.gitRef || 'master';
+        data.gitUpdateAvailable = false;
 
         const tsid = data.name
             || data.gitSubDir
@@ -1954,22 +2002,9 @@ class FASTWorker {
         const tsFilter = [tsid];
         const onDiskPath = `${this.templatesPath}/${tsid}`;
         const extractSubDir = data.gitSubDir;
+        let zipFileDigestHash;
 
-        let tsUrl = null;
-        if (data.gitHubRepo) {
-            tsUrl = `https://github.com/${data.gitHubRepo}/archive/${data.gitRef}.zip`;
-        } else if (data.gitLabRepo) {
-            data.gitLabUrl = data.gitLabUrl || 'https://gitlab.com';
-            const encodedRepo = data.gitLabRepo.replaceAll('/', '%2F');
-            tsUrl = `${data.gitLabUrl}/api/v4/projects/${encodedRepo}/repository/archive.zip?sha=${data.gitRef}`;
-        }
-
-        // Setup a scratch location we can use while validating the template set
-        this.enterTransaction(reqid, 'prepare scratch space');
-        fs.removeSync(scratch);
-        fs.mkdirsSync(scratch);
-        this.exitTransaction(reqid, 'prepare scratch space');
-
+        this._scratchDirectoryForValidation(reqid, scratch);
         return Promise.resolve()
             .then(() => {
                 if (fs.existsSync(onDiskPath)) {
@@ -1983,36 +2018,10 @@ class FASTWorker {
                 const setpath = `${scratch}.zip`;
                 return Promise.resolve()
                     .then(() => {
+                        const tsUrl = this._getTsUrl(data);
                         if (tsUrl) {
-                            const reqConf = {
-                                responseType: 'stream'
-                            };
-                            if (data.gitToken) {
-                                if (data.gitHubRepo) {
-                                    reqConf.headers = {
-                                        authorization: `token ${data.gitToken}`
-                                    };
-                                } else if (data.gitLabRepo) {
-                                    reqConf.headers = {
-                                        authorization: `Bearer ${data.gitToken}`
-                                    };
-                                }
-                            }
-
-                            return this.recordTransaction(
-                                reqid,
-                                `fetch template set from url (${tsUrl})`,
-                                axios.get(tsUrl, reqConf)
-                                    .catch(e => this.handleResponseError(e, `fetching ${tsUrl}`))
-                                    .then(resp => new Promise((resolve, reject) => {
-                                        const stream = fs.createWriteStream(setpath);
-                                        resp.data.pipe(stream);
-                                        stream.on('finish', resolve);
-                                        stream.on('error', reject);
-                                    }))
-                            );
+                            return this._fetchTsFromGit(tsUrl, setpath, data, reqid);
                         }
-
                         return this.recordTransaction(
                             reqid,
                             'fetch uploaded template set',
@@ -2030,6 +2039,22 @@ class FASTWorker {
                         })
                     ));
             })
+            .then(() => new Promise((resolve, reject) => {
+                if (data.gitHubRepo || data.gitLabRepo) {
+                    const zipFileHash = crypto.createHash('sha256');
+                    const input = fs.createReadStream(`${scratch}.zip`);
+                    input.on('error', reject);
+                    input.on('data', (chunk) => {
+                        zipFileHash.update(chunk);
+                    });
+                    input.on('close', () => {
+                        zipFileDigestHash = zipFileHash.digest('hex');
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
+            }))
             .then(() => {
                 const files = fs.readdirSync(scratch);
                 let numFiles = 0;
@@ -2079,12 +2104,6 @@ class FASTWorker {
             .then(() => this.generateTeemReportTemplateSet('create', tsid))
             .then(() => this.getConfig(reqid, ctx))
             .then((config) => {
-                // If we are installing a delete template set, remove it from the deleted list
-                if (config.deletedTemplateSets.includes(tsid)) {
-                    config.deletedTemplateSets = config.deletedTemplateSets.filter(x => x !== tsid);
-                    return this.saveConfig(config, reqid, ctx);
-                }
-
                 // If we are installing a template set from GitHub, record some extra information for later
                 if (data.gitHubRepo || data.gitLabRepo) {
                     config._gitTemplateSets[tsid] = {};
@@ -2097,8 +2116,17 @@ class FASTWorker {
                             config._gitTemplateSets[tsid][key] = data[key];
                         }
                     });
+                    config._gitTemplateSets[tsid].gitZipFileInfo = {
+                        hash: zipFileDigestHash,
+                        date: new Date()
+                    };
                 }
-                return Promise.resolve();
+                // If we are installing a delete template set, remove it from the deleted list
+                if (config.deletedTemplateSets.includes(tsid)) {
+                    config.deletedTemplateSets = config.deletedTemplateSets.filter(x => x !== tsid);
+                    return this.saveConfig(config, reqid, ctx);
+                }
+                return this.saveConfig(config, reqid, ctx);
             })
             .then((persisted) => {
                 // if both template and config storage are data-group based, avoid calling persist() twice
@@ -2198,6 +2226,98 @@ class FASTWorker {
             });
     }
 
+    postOffBoxTemplates(restOperation, data, ctx) {
+        const reqid = restOperation.requestId;
+        return Promise.resolve()
+            .then(() => this.getConfig(reqid, ctx))
+            .then((config) => {
+                const promises = [];
+                data.methods.forEach((method) => {
+                    if (method.name === 'status') {
+                        promises.push(this._checkOffboxTemplatesStatus(reqid, config, ctx));
+                    }
+                });
+                return Promise.all(promises);
+            })
+            .then(() => {
+                restOperation.setBody({
+                    code: 201,
+                    requestId: reqid,
+                    methods: data.methods
+                });
+                this.completeRestOperation(restOperation, ctx);
+            })
+            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+    }
+
+    _checkOffboxTemplatesStatus(reqid, config, ctx) {
+        const foundGitRepos = [];
+        const scratchGit = `${this.scratchPath}/git/`;
+        this._scratchDirectoryForValidation(reqid, scratchGit);
+        return this.recordTransaction(
+            reqid,
+            'gathering a list of template sets',
+            this.templateProvider.listSets()
+        )
+            .then((setList) => {
+                const promises = [];
+                if (config._gitTemplateSets) {
+                    setList.forEach((templateSetName) => {
+                        if (config._gitTemplateSets[templateSetName]) {
+                            foundGitRepos.push({
+                                name: templateSetName,
+                                info: config._gitTemplateSets[templateSetName]
+                            });
+                            const tsUrl = this._getTsUrl(config._gitTemplateSets[templateSetName]);
+                            if (tsUrl) {
+                                const setpath = `${scratchGit}${templateSetName}.zip`;
+                                promises.push(this._fetchTsFromGit(
+                                    tsUrl,
+                                    setpath,
+                                    config._gitTemplateSets[templateSetName],
+                                    reqid
+                                ));
+                            }
+                        }
+                    });
+                }
+                return Promise.all(promises);
+            })
+            .then(() => {
+                const promises = [];
+                if (foundGitRepos.length) {
+                    foundGitRepos.forEach((gitRepo) => {
+                        promises.push(this._generateGitRepoHashValue(`${scratchGit}${gitRepo.name}.zip`));
+                    });
+                }
+                return Promise.all(promises);
+            })
+            .then((results) => {
+                foundGitRepos.forEach((gitRepo, index) => {
+                    if (gitRepo.info.gitZipFileInfo.hash !== results[index]) {
+                        config._gitTemplateSets[gitRepo.name].gitUpdateAvailable = true;
+                    } else {
+                        config._gitTemplateSets[gitRepo.name].gitUpdateAvailable = false;
+                    }
+                });
+                return this.saveConfig(config, reqid, ctx);
+            });
+    }
+
+    _generateGitRepoHashValue(zipFileName) {
+        return new Promise((resolve, reject) => {
+            const zipFileHash = crypto.createHash('sha256');
+            const input = fs.createReadStream(zipFileName);
+            input.on('error', reject);
+            input.on('data', (chunk) => {
+                zipFileHash.update(chunk);
+            });
+            input.on('close', () => {
+                resolve(zipFileHash.digest('hex'));
+            });
+        });
+    }
+
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -2223,6 +2343,8 @@ class FASTWorker {
                         return this.postSettings(restOperation, body, ctx);
                     case 'render':
                         return this.postRender(restOperation, body, ctx);
+                    case 'offbox-templates':
+                        return this.postOffBoxTemplates(restOperation, body, ctx);
                     default:
                         return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);
                     }
@@ -2335,7 +2457,7 @@ class FASTWorker {
                 ))
                 .then(() => {
                     config.deletedTemplateSets.push(tsid);
-                    return this.saveConfig(config, reqid, ctx);
+                    delete config._gitTemplateSets[tsid];
                 })
                 .then((persisted) => {
                     this.generateTeemReportTemplateSet('delete', tsid);

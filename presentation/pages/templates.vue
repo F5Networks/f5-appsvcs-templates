@@ -46,6 +46,16 @@
                 </button>
                 <span class="text-bold">{{ setData.name }}</span>
             </div>
+            <div
+                v-if="setData.gitUpdateAvailable"
+                class="clearfix"
+            >
+                <a
+                    class="float-left"
+                >
+                    Updates Available
+                </a>
+            </div>
             <sorted-table
                 :table-data="setData.templates"
                 :columns="templateColumns"
@@ -197,8 +207,6 @@ export default {
             this.$root.busy = true;
             return Promise.resolve()
                 .then(() => Promise.all([
-                    // Promise.resolve([]),
-                    // Promise.resolve([])
                     this.$root.getJSON('templatesets'),
                     this.$root.getJSON('templatesets?showDisabled=true')
                 ]))
