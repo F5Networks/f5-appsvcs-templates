@@ -105,6 +105,8 @@ function getAuthToken() {
         .catch(e => handleHTTPError(e, 'generate auth token'));
 }
 
+// set retryDeleteCtr to 0 before each call to deleteAll Application
+let retryDeleteCtr = 0;
 function deleteAllApplications() {
     return Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
@@ -121,6 +123,12 @@ function deleteAllApplications() {
             const okCode = task.code === '' ? '' : 200;
             if (task.code !== okCode) {
                 console.log(task);
+            }
+            if (retryDeleteCtr <= 11 && task.code === 503 && task.message.match(/Configuration operation in progress on device/)) {
+                retryDeleteCtr += 1;
+                console.log(`Retry Delete All Applications # ${retryDeleteCtr}`);
+                return promiseDelay(10000)
+                    .then(() => deleteAllApplications());
             }
             assert.ok(task.code === okCode || task.code === 0);
             return promiseDelay(10000);
