@@ -830,6 +830,37 @@ describe('fastWorker tests', function () {
                     expect(config).to.satisfySchemaInApiSpec('IpamInfoblox');
                 });
         });
+        it('post_settings_ipam_auth_header', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/settings');
+            op.setBody({
+                deletedTemplateSets: [
+                    'foo'
+                ],
+                enableIpam: true,
+                ipamProviders: [
+                    {
+                        name: 'test',
+                        serviceType: 'Generic',
+                        authHeaderName: 'Authorization',
+                        authHeaderValue: 'Token super-secret'
+                    }
+                ]
+            });
+            return worker.onPost(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('Settings');
+                })
+                .then(() => worker.getConfig(0, testCtx))
+                .then((config) => {
+                    assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                    assert(config.ipamProviders[0].authHeaderValue !== 'Token super-secret',
+                        'IPAM auth header value was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamGeneric');
+                });
+        });
         it('post_settings_bad', function () {
             const worker = createWorker();
             const op = new RestOp('/shared/fast/settings');

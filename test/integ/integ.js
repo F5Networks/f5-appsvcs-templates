@@ -582,7 +582,8 @@ describe('Settings', function () {
                 releaseUrl: '/releaseips',
                 releaseBody: '{ ip: $testIp }',
                 apiVersion: '1.2.3',
-                network: 'testnetwork'
+                network: 'testnetwork',
+                authHeaderValue: 'Bearer SecretValue'
             }],
             enableIpam: false,
             log_afm: logAFM,
@@ -606,6 +607,10 @@ describe('Settings', function () {
                 assert.strictEqual(actualIpam.password.indexOf('$M$'), 0, 'password must be encrypted');
                 delete actualIpam.password;
                 delete postBody.ipamProviders[0].password;
+                expected.data = postBody;
+                assert.strictEqual(actualIpam.authHeaderValue.indexOf('$M$'), 0, 'auth header value must be encrypted');
+                delete actualIpam.authHeaderValue;
+                delete postBody.ipamProviders[0].authHeaderValue;
                 expected.data = postBody;
                 return assertResponse(actual, expected);
             });

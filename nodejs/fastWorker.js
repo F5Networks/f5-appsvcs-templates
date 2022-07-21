@@ -392,21 +392,20 @@ class FASTWorker {
             });
     }
 
-    encryptConfigSecrets(newConfig, prevConfig) {
+    encryptConfigSecrets(newConfig) {
         return Promise.all((newConfig.ipamProviders || []).map(provider => Promise.resolve()
             .then(() => {
-                const prevProvider = prevConfig.ipamProviders.filter(
-                    x => x.name === provider.name
-                )[0];
-
-                if (prevProvider && prevProvider.password === provider.password) {
-                    return Promise.resolve(provider.password);
+                const promises = [];
+                if (typeof provider.password !== 'undefined') {
+                    promises.push(this.secretsManager.encrypt(provider.password || ''));
                 }
-
-                return this.secretsManager.encrypt(provider.password || '');
-            })
-            .then((password) => {
-                provider.password = password;
+                if (typeof provider.authHeaderValue !== 'undefined') {
+                    promises.push(this.secretsManager.encrypt(provider.authHeaderValue || ''));
+                }
+                Promise.all(promises).then((encryptedValues) => {
+                    provider.password = encryptedValues[0];
+                    provider.authHeaderValue = encryptedValues[1];
+                });
             })));
     }
 
@@ -2208,17 +2207,7 @@ class FASTWorker {
                 `supplied settings were not valid:\n${e.message}`,
                 ctx
             )))
-            .then(() => this.getConfig(reqid, ctx))
-            .then((prevConfig) => {
-                // Copy over any "private" values
-                Object.keys(prevConfig).forEach((key) => {
-                    if (key.startsWith('_')) {
-                        config[key] = prevConfig[key];
-                    }
-                });
-                return Promise.resolve(prevConfig);
-            })
-            .then(prevConfig => this.encryptConfigSecrets(config, prevConfig))
+            .then(() => this.encryptConfigSecrets(config))
             .then(() => this.saveConfig(config, reqid, ctx))
             .then(() => Promise.resolve(this.setTracer(config.perfTracing)))
             .then(() => this.genRestResponse(restOperation, 200, '', ctx))
@@ -2688,7 +2677,7 @@ class FASTWorker {
 
         return Promise.resolve()
             .then(() => this.getConfig(reqid, ctx))
-            .then(prevConfig => this.encryptConfigSecrets(config, prevConfig)
+            .then(prevConfig => this.encryptConfigSecrets(config)
                 .then(() => prevConfig))
             .then((prevConfig) => {
                 combinedConfig = Object.assign({}, prevConfig, config);
