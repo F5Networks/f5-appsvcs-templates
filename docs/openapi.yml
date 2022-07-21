@@ -1285,6 +1285,11 @@ components:
           description: The GitHub repository used to install the template set
           type: string
           example: org/templateset
+        gitLabRepo:
+          title: GitLab Repository
+          description: The GitLab repository used to install the template set
+          type: string
+          example: org/templateset
         gitSubDir:
           title: Git sub-directory
           description: The sub-directory in the git repo from which the template set was installed
@@ -1297,6 +1302,11 @@ components:
           default: master
           type: string
           example: master
+        unprotected:
+          description: Template Set is installed from publicly availabe GitHub/GitLab repo.
+          type: boolean
+          default: false
+          example: true
         enabled:
           type: boolean
           description: Template Set is installed and ready to use

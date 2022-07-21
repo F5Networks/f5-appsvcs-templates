@@ -256,12 +256,13 @@ describe('Template Sets', function () {
     it('POST install template set from GitHub', () => Promise.resolve()
         .then(() => endpoint.post(url, {
             gitHubRepo: 'mstokes-f5/f5-fast-test-templatesets',
-            gitSubDir: 'test'
+            gitSubDir: 'test',
+            unprotected: true
         }))
         .catch(e => handleHTTPError(e, 'install test template set from GitHub'))
         .then((actual) => {
             assert.strictEqual(actual.status, 200);
-            return assertGet({ data: [{ name: 'test', supported: false }], status: 200 }, 'test');
+            return assertGet({ data: [{ name: 'test', supported: false, unprotected: true }], status: 200 }, 'test');
         }));
 });
 
