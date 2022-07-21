@@ -956,7 +956,14 @@ class FASTWorker {
             .then(() => this.exitTransaction(requestId, 'gathering template set data'))
             .then(() => this.getConfig(requestId, ctx))
             .then(() => {
-                info.config = config;
+                const retVal = Object.assign({}, config);
+                Object.keys(retVal).forEach((key) => {
+                    // Remove any "private" keys
+                    if (key.startsWith('_')) {
+                        delete retVal[key];
+                    }
+                });
+                info.config = retVal;
                 ctx.span.finish();
             })
             .then(() => info);
@@ -1945,33 +1952,36 @@ class FASTWorker {
     }
 
     _fetchTsFromGit(tsUrl, setpath, data, reqid) {
-        const reqConf = {
-            responseType: 'stream'
-        };
-        if (data.gitToken) {
-            if (data.gitHubRepo) {
-                reqConf.headers = {
-                    authorization: `token ${data.gitToken}`
+        return Promise.resolve()
+            .then(() => (data.gitToken ? this.secretsManager.decrypt(data.gitToken) : Promise.resolve()))
+            .then((gitToken) => {
+                const reqConf = {
+                    responseType: 'stream'
                 };
-            } else if (data.gitLabRepo) {
-                reqConf.headers = {
-                    authorization: `Bearer ${data.gitToken}`
-                };
-            }
-        }
-
-        return this.recordTransaction(
-            reqid,
-            `fetch template set from url (${tsUrl})`,
-            axios.get(tsUrl, reqConf)
-                .catch(e => this.handleResponseError(e, `fetching ${tsUrl}`))
-                .then(resp => new Promise((resolve, reject) => {
-                    const stream = fs.createWriteStream(setpath);
-                    resp.data.pipe(stream);
-                    stream.on('finish', resolve);
-                    stream.on('error', reject);
-                }))
-        );
+                if (data.gitToken) {
+                    if (data.gitHubRepo) {
+                        reqConf.headers = {
+                            authorization: `token ${gitToken}`
+                        };
+                    } else if (data.gitLabRepo) {
+                        reqConf.headers = {
+                            authorization: `Bearer ${gitToken}`
+                        };
+                    }
+                }
+                return this.recordTransaction(
+                    reqid,
+                    `fetch template set from url (${tsUrl})`,
+                    axios.get(tsUrl, reqConf)
+                        .catch(e => this.handleResponseError(e, `fetching ${tsUrl}`))
+                        .then(resp => new Promise((resolve, reject) => {
+                            const stream = fs.createWriteStream(setpath);
+                            resp.data.pipe(stream);
+                            stream.on('finish', resolve);
+                            stream.on('error', reject);
+                        }))
+                );
+            });
     }
 
     _scratchDirectoryForValidation(reqId, scratch) {
@@ -2007,6 +2017,24 @@ class FASTWorker {
         this._scratchDirectoryForValidation(reqid, scratch);
         return Promise.resolve()
             .then(() => {
+                if (data.gitHubRepo || data.gitLabRepo) {
+                    if (data.gitToken) {
+                        data.unprotected = false;
+                        return this.secretsManager.encrypt(data.gitToken);
+                    }
+                    if (!data.gitToken && !data.unprotected) {
+                        return Promise.reject(
+                            new Error('Must set "unprotected" boolean property to true to install publicly available templatesets')
+                        );
+                    }
+                }
+
+                return Promise.resolve();
+            })
+            .then((protectedGitToken) => {
+                if (data.gitToken) {
+                    data.gitToken = protectedGitToken;
+                }
                 if (fs.existsSync(onDiskPath)) {
                     return this.recordTransaction(
                         reqid,
@@ -2110,11 +2138,11 @@ class FASTWorker {
                     Object.keys(data).forEach((key) => {
                         const copyKey = (
                             key.startsWith('git')
-                            && key !== 'gitToken'
                         );
                         if (copyKey) {
                             config._gitTemplateSets[tsid][key] = data[key];
                         }
+                        config._gitTemplateSets[tsid].unprotected = data.unprotected;
                     });
                     config._gitTemplateSets[tsid].gitZipFileInfo = {
                         hash: zipFileDigestHash,
@@ -2160,6 +2188,9 @@ class FASTWorker {
                 }
                 if (e.message.match(/failed validation/)) {
                     return this.genRestResponse(restOperation, 400, e.message, ctx);
+                }
+                if (e.message.match(/Must set "unprotected" boolean property/)) {
+                    return this.genRestResponse(restOperation, 422, e.message, ctx);
                 }
                 return this.genRestResponse(restOperation, 500, e.stack, ctx);
             })
@@ -2343,7 +2374,7 @@ class FASTWorker {
                         return this.postSettings(restOperation, body, ctx);
                     case 'render':
                         return this.postRender(restOperation, body, ctx);
-                    case 'offbox-templates':
+                    case 'offbox-templatesets':
                         return this.postOffBoxTemplates(restOperation, body, ctx);
                     default:
                         return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);

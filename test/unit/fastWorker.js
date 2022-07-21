@@ -1104,7 +1104,7 @@ describe('fastWorker tests', function () {
     describe('offbox templates', function () {
         it('post_check_status', function () {
             const worker = createWorker();
-            const op = new RestOp('/shared/fast/offbox-templates');
+            const op = new RestOp('/shared/fast/offbox-templatesets');
             op.setBody({
                 methods: [
                     {
@@ -1395,7 +1395,76 @@ describe('fastWorker tests', function () {
                     assert(tsNames.includes('testset'));
                 });
         });
-        it('post_templateset_github', function () {
+        it('post_templateset_github_public', function () {
+            const worker = createWorker();
+            this.clock.restore();
+
+            const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
+            nock('https://github.com', {
+                reqheaders: {
+                }
+            })
+                .get('/org/testset-github/archive/master.zip')
+                .replyWithFile(200, archivePath)
+                .get('/org/testset-github/archive/branch.zip')
+                .replyWithFile(200, archivePath);
+
+            return Promise.resolve()
+                // test implicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitHubRepo: 'org/testset-github',
+                        unprotected: true
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
+                })
+                .then(() => worker.templateProvider.list())
+                .then((templates) => {
+                    assert(templates.includes('testset-github/f5_https'));
+                })
+                // test explicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitHubRepo: 'org/testset-github',
+                        gitRef: 'branch',
+                        unprotected: true,
+                        name: 'testset-github2'
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
+                })
+                .then(() => worker.templateProvider.list())
+                .then((templates) => {
+                    assert(templates.includes('testset-github2/f5_https'));
+                })
+                // test git data in template sets
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets/testset-github');
+                    return worker.onGet(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('TemplateSet');
+
+                    const tsData = op.body;
+                    assert.ok(tsData.unprotected);
+                    assert.ok(!tsData.gitToken);
+                    assert.strictEqual(tsData.gitHubRepo, 'org/testset-github');
+                });
+        });
+        it('post_templateset_github_private', function () {
             const worker = createWorker();
             this.clock.restore();
 
@@ -1462,8 +1531,52 @@ describe('fastWorker tests', function () {
                     expect(op.body).to.satisfySchemaInApiSpec('TemplateSet');
 
                     const tsData = op.body;
-                    console.log(tsData);
+                    assert.ok(!tsData.unprotected);
+                    assert.ok(tsData.gitToken);
+                    assert.notEqual(tsData.gitToken, 'secret');
                     assert.strictEqual(tsData.gitHubRepo, 'org/testset-github');
+                });
+        });
+        it('post_templateset_github_public_without_unprotected', function () {
+            const worker = createWorker();
+            this.clock.restore();
+
+            const archivePath = path.join(__dirname, 'mockDir', 'testset.zip');
+            nock('https://github.com', {
+                reqheaders: {
+                }
+            })
+                .get('/org/testset-github/archive/master.zip')
+                .replyWithFile(200, archivePath)
+                .get('/org/testset-github/archive/branch.zip')
+                .replyWithFile(200, archivePath);
+
+            return Promise.resolve()
+                // test implicit name and branch
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitHubRepo: 'org/testset-github'
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 422);
+                    assert.ok(op.body.message.match(/Must set "unprotected" boolean property/));
+                })
+                .then(() => {
+                    const op = new RestOp('/shared/fast/templatesets');
+                    op.setBody({
+                        gitHubRepo: 'org/testset-github',
+                        unprotected: false
+                    });
+                    return worker.onPost(op)
+                        .then(() => op);
+                })
+                .then((op) => {
+                    assert.equal(op.status, 422);
+                    assert.ok(op.body.message.match(/Must set "unprotected" boolean property/));
                 });
         });
         it('post_templateset_gitlab', function () {
