@@ -61,6 +61,8 @@ API Offbox Templates
 
 Once the declaration is posted, the template set will appear on the BIG-IP GUI page in the list of available templates with the GitHub/GitLab logo indicating the installation type.
 
+.. NOTE:: A gitToken requires read-only permissions and, for security reasons, should be scoped appropriately.
+
 .. seealso:: `Git References <https://git-scm.com/book/en/v2/Git-Internals-Git-References>`_ and `Creating a personal access token <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`_
 
 
