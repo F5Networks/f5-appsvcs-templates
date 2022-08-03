@@ -26,7 +26,11 @@ For authoring these custom template sets, see :ref:`Creating New Templates<autho
 | The added template set will display in the template set list.
 |
 | FAST also allows for the storing of template sets on GitLab and/or GitHub then upload using the GUI> FAST Templates tab, or with API calls.
-| The endpoint used is **offbox-templatesets**.
+| 
+| The endpoint is **offbox-templatesets** which is used for updating/modifying templatesets.
+| Checking status: comparing with the remote version to check for available updates (STATUS:COMPLETED).
+| Syncing the latest: fetches the latest from remote.
+ 
 
 GUI Offbox Templates
 ^^^^^^^^^^^^^^^^^^^^
