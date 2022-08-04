@@ -2391,8 +2391,25 @@ class FASTWorker {
             data = [];
         }
 
-        const appNames = data.map(x => x.split('/'));
+        let appNames = null;
+        try {
+            appNames = data.map(x => x.split('/'));
+        } catch (e) {
+            return Promise.reject(new Error(`Incorrect app info provided: ${JSON.stringify(data)}`));
+        }
+
+        const badAppNames = appNames
+            .filter(appName => appName.length !== 2)
+            .map(appName => appName.join('/'));
+
+        if (badAppNames.length !== 0) {
+            return Promise.reject(new Error(
+                `Invalid application name(s) supplied: ${badAppNames.join(',')}`
+            ));
+        }
+
         let appsData;
+
         return Promise.resolve()
             .then(() => this.recordTransaction(
                 reqid,
@@ -2441,6 +2458,12 @@ class FASTWorker {
                 }
                 if (e.message.match('could not find application')) {
                     return this.genRestResponse(restOperation, 404, e.message, ctx);
+                }
+                if (e.message.match('Invalid application name')) {
+                    return this.genRestResponse(restOperation, 400, e.message, ctx);
+                }
+                if (e.message.match('Incorrect app info provided')) {
+                    return this.genRestResponse(restOperation, 400, e.message, ctx);
                 }
                 return this.genRestResponse(restOperation, 500, e.stack, ctx);
             });
