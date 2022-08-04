@@ -351,7 +351,10 @@ describe('fastWorker tests', function () {
             .reply(200, Object.assign({}, as3stub, {
                 tenant: {
                     class: 'Tenant',
-                    app: as3App
+                    app: as3App,
+                    foo: as3App,
+                    bar: as3App,
+                    foobar: as3App
                 }
             }));
     });
@@ -1782,6 +1785,27 @@ describe('fastWorker tests', function () {
                         _links: {
                             self: '/mgmt/shared/fast/applications/tenant/app'
                         }
+                    }, {
+                        name: 'foo',
+                        tenant: 'tenant',
+                        template: 'foo/bar',
+                        _links: {
+                            self: '/mgmt/shared/fast/applications/tenant/foo'
+                        }
+                    }, {
+                        name: 'bar',
+                        tenant: 'tenant',
+                        template: 'foo/bar',
+                        _links: {
+                            self: '/mgmt/shared/fast/applications/tenant/bar'
+                        }
+                    }, {
+                        name: 'foobar',
+                        tenant: 'tenant',
+                        template: 'foo/bar',
+                        _links: {
+                            self: '/mgmt/shared/fast/applications/tenant/foobar'
+                        }
                     }]);
                     expect(op.body).to.satisfySchemaInApiSpec('FastApplicationList');
                 });
@@ -1882,6 +1906,51 @@ describe('fastWorker tests', function () {
             return worker.onDelete(op)
                 .then(() => {
                     assert.notEqual(op.status, 404);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationDeleteResponse');
+                });
+        });
+        it('delete_all_apps_bad_tenantfoo', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications');
+            op.setBody(['tenantfoo']);
+            nock(host)
+                .persist()
+                .post(`${as3ep}/tenant?async=true`)
+                .reply(400, {});
+            return worker.onDelete(op)
+                .then(() => {
+                    assert.strictEqual(op.status, 400);
+                    console.log(op.body);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse400');
+                });
+        });
+        it('delete_all_apps_bad_fuzz_false', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications');
+            op.setBody({ fuzz: false });
+            nock(host)
+                .persist()
+                .post(`${as3ep}/tenant?async=true`)
+                .reply(400, {});
+            return worker.onDelete(op)
+                .then(() => {
+                    assert.strictEqual(op.status, 400);
+                    console.log(op.body);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse400');
+                });
+        });
+        it('delete_all_apps_good_tenant/foo', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications');
+            op.setBody(['tenant/foo']);
+            nock(host)
+                .persist()
+                .post(`${as3ep}/tenant?async=true`)
+                .reply(202, {});
+            return worker.onDelete(op)
+                .then(() => {
+                    assert.strictEqual(op.status, 202);
+                    console.log(op.body);
                     expect(op.body).to.satisfySchemaInApiSpec('FastApplicationDeleteResponse');
                 });
         });
