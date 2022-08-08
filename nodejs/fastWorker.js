@@ -1998,7 +1998,7 @@ class FASTWorker {
             return this.genRestResponse(restOperation, 400, 'must supply one of the following parameters: name, gitHubRepo, gitLabRepo', ctx);
         }
 
-        data.gitRef = data.gitRef || 'master';
+        data.gitRef = data.gitRef || 'main';
         data.gitUpdateAvailable = false;
 
         const tsid = data.name

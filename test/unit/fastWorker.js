@@ -1438,7 +1438,7 @@ describe('fastWorker tests', function () {
                 reqheaders: {
                 }
             })
-                .get('/org/testset-github/archive/master.zip')
+                .get('/org/testset-github/archive/main.zip')
                 .replyWithFile(200, archivePath)
                 .get('/org/testset-github/archive/branch.zip')
                 .replyWithFile(200, archivePath);
@@ -1508,7 +1508,7 @@ describe('fastWorker tests', function () {
                     authorization: 'token secret'
                 }
             })
-                .get('/org/testset-github/archive/master.zip')
+                .get('/org/testset-github/archive/main.zip')
                 .replyWithFile(200, archivePath)
                 .get('/org/testset-github/archive/branch.zip')
                 .replyWithFile(200, archivePath);
@@ -1580,7 +1580,7 @@ describe('fastWorker tests', function () {
                 reqheaders: {
                 }
             })
-                .get('/org/testset-github/archive/master.zip')
+                .get('/org/testset-github/archive/main.zip')
                 .replyWithFile(200, archivePath)
                 .get('/org/testset-github/archive/branch.zip')
                 .replyWithFile(200, archivePath);
@@ -1623,7 +1623,7 @@ describe('fastWorker tests', function () {
                     authorization: 'Bearer secret'
                 }
             })
-                .get('/api/v4/projects/org%2Ftestset-gitlab/repository/archive.zip?sha=master')
+                .get('/api/v4/projects/org%2Ftestset-gitlab/repository/archive.zip?sha=main')
                 .replyWithFile(200, archivePath);
 
             return Promise.resolve()
