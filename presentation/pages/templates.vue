@@ -44,6 +44,22 @@
                 >
                     Remove
                 </button>
+                <img
+                    v-if="setData.gitHubRepo"
+                    class="templatesets-icon"
+                    src="../img/github_icon.png"
+                >
+                <img
+                    v-else-if="setData.gitLabRepo"
+                    class="templatesets-icon"
+                    src="../img/gitlab_icon.png"
+                >
+                <img
+                    v-else
+                    class="templatesets-icon"
+                    src="../img/file_icon.png"
+                >
+
                 <span class="text-bold">{{ setData.name }}</span>
             </div>
             <div
@@ -116,6 +132,18 @@
 
                     <label
                         class="form-label"
+                        for="unprotected"
+                    >
+                        Unprotected:
+                    </label>
+                    <input
+                        id="unprotected"
+                        v-model="gitInstallInfo.unprotected"
+                        type="checkbox"
+                    >
+
+                    <label
+                        class="form-label"
                         for="gitSubDir"
                     >
                         Repository Sub-directory:
@@ -136,7 +164,7 @@
                         id="gitRef"
                         v-model="gitInstallInfo.ref"
                         class="form-input"
-                        placeholder="master"
+                        placeholder="main"
                     >
 
                     <label
@@ -186,7 +214,8 @@ export default {
                 url: null,
                 token: null,
                 subDir: null,
-                ref: null
+                ref: null,
+                unprotected: null
             }
         };
     },
@@ -268,7 +297,8 @@ export default {
                     gitToken: info.token || undefined,
                     gitSubDir: info.subDir || undefined,
                     gitRef: info.ref || undefined,
-                    name: info.name || undefined
+                    name: info.name || undefined,
+                    unprotected: info.unprotected || undefined
                 },
                 opts
             );
@@ -370,5 +400,11 @@ export default {
 }
 .sorted-table {
     margin: 1em 0;
+}
+.templatesets-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    vertical-align: middle
 }
 </style>
