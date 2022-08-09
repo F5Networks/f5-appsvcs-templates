@@ -324,7 +324,7 @@ paths:
         required: true
         description: The ID of the Task to retrieve.
         schema:
-          $ref: '../../global-types/ietf-types.yaml#/uuid'
+          $ref: '#/components/schemas/uuid'
         example: 86657e15-439d-4cef-97bc-58a6c119976b
     get:
       summary: Get information about a specific Task
@@ -431,10 +431,10 @@ paths:
                       title: Git sub-directory
                       description: The sub-directory in the git repo to install as a template set
                       default: null
+                      nullable: true
                       example: org-templates
                       oneOf:
                         - type: string
-                        - type: 'null'
                     gitRef:
                       title: Git ref
                       description: The Git ref to use when fetching the repository
@@ -470,10 +470,10 @@ paths:
                       title: Git sub-directory
                       description: The sub-directory in the git repo to install as a template set
                       default: null
+                      nullable: true
                       example: org-templates
                       oneOf:
                         - type: string
-                        - type: 'null'
                     gitRef:
                       title: Git ref
                       description: The Git ref to use when fetching the repository
@@ -1367,6 +1367,8 @@ components:
         required:
           type: array
           description: List of required Settings.
+          items:
+            type: string
         dependencies:
           type: object
           description: Description of dependencies.
@@ -1662,3 +1664,8 @@ components:
           type: string
           description: Self-link to task endpoint
           example: /mgmt/shared/fast/tasks/12345
+    uuid:
+      type: string
+      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      minLength: 36
+      maxLength: 36
