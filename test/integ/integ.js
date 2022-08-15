@@ -23,6 +23,7 @@ const https = require('https');
 const axios = require('axios');
 const assert = require('assert');
 
+const path = require('path');
 const fs = require('fs');
 const fast = require('@f5devcentral/f5-fast-core');
 
@@ -220,16 +221,17 @@ describe('Template Sets', function () {
     it('POST package, upload and install custom template set', () => {
         const testSetName = 'test_integ';
         const zipFileName = `${testSetName}.zip`;
+        const zipFilePath = path.join(__dirname, zipFileName);
         let uploadedFileSize = 0;
 
         return Promise.resolve()
             .then(() => {
-                const tmplProvider = new fast.FsTemplateProvider('test/integ');
-                return tmplProvider.buildPackage('testTemplateSet', zipFileName);
+                const tmplProvider = new fast.FsTemplateProvider(__dirname);
+                return tmplProvider.buildPackage('testTemplateSet', zipFilePath);
             })
             .then(() => {
-                uploadedFileSize = fs.statSync(zipFileName).size;
-                return fs.readFileSync(zipFileName);
+                uploadedFileSize = fs.statSync(zipFilePath).size;
+                return fs.readFileSync(zipFilePath);
             })
             .then(file => endpoint.post(
                 `/mgmt/shared/file-transfer/uploads/${zipFileName}`,
@@ -251,11 +253,7 @@ describe('Template Sets', function () {
                 assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
                 return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
-            .finally(() => {
-                if (fs.existsSync(zipFileName)) {
-                    fs.unlinkSync(zipFileName);
-                }
-            });
+            .finally(() => fs.unlinkSync(zipFilePath));
     });
     it('POST install template set from GitHub', () => Promise.resolve()
         .then(() => endpoint.post(url, {
