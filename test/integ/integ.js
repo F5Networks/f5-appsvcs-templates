@@ -251,7 +251,11 @@ describe('Template Sets', function () {
                 assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
                 return assertGet({ data: [{ name: testSetName, supported: false }], status: 200 }, testSetName);
             })
-            .finally(() => fs.unlinkSync(zipFileName));
+            .finally(() => {
+                if (fs.existsSync(zipFileName)) {
+                    fs.unlinkSync(zipFileName);
+                }
+            });
     });
     it('POST install template set from GitHub', () => Promise.resolve()
         .then(() => endpoint.post(url, {
