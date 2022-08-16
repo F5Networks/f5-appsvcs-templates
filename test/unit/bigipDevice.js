@@ -210,6 +210,37 @@ describe('BigipDeviceClassic tests', function () {
                 .then(result => assert.deepEqual(result, ['/Common/test-pool-01', '/Common/test-pool-02']));
         });
 
+        it('getSharedObjectsName', function () {
+            const bigip = new BigipDeviceClassic();
+            const mockLtmMetadata = {
+                kind: 'tm:ltm:pool:poolcollectionstate',
+                selfLink: 'https://localhost/mgmt/tm/ltm/pool?ver=16.0.1.1',
+                items: [
+                    {
+                        name: 'test-pool-01',
+                        partition: 'Common',
+                        fullPath: '/Common/test-pool-01'
+                    },
+                    {
+                        name: 'test-pool-02',
+                        partition: 'Common',
+                        fullPath: '/Common/test-pool-02'
+                    },
+                    {
+                        name: 'not-valid-name',
+                        partition: 'Common',
+                        fullPath: '/Common/not-valid-name'
+                    }
+                ]
+            };
+            nock(host)
+                .persist()
+                .get('/mgmt/tm/ltm/pool')
+                .reply(200, mockLtmMetadata);
+            return bigip.getSharedObjectsName('ltm/pool', { name: 'test' }, testCtx)
+                .then(result => assert.deepEqual(result, ['test-pool-01', 'test-pool-02']));
+        });
+
         it('watchConfigSyncStatus Standalone', function () {
             const bigip = new BigipDeviceClassic();
             bigip.getDeviceInfo = sinon.fake();

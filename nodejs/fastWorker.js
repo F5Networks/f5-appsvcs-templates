@@ -580,7 +580,7 @@ class FASTWorker {
             .then(() => this.recordTransaction(
                 reqid,
                 'ready AS3 driver',
-                this.driver.loadMixins()
+                this.driver.loadMixins(ctx)
             ))
             .then(() => this.recordTransaction(
                 reqid,
