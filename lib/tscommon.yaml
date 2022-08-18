@@ -30,10 +30,6 @@ template: |
         "Shared": {
             "class": "Application",
             "template": "shared",
-            "fast_svc_vip": {
-                "class": "Service_Address",
-                "virtualAddress": "255.255.255.254"
-            },
             "fast_telemetry_local_rule": {
                 "class": "iRule",
                 "iRule": "when CLIENT_ACCEPTED {\n  node 127.0.0.1 6514\n}"
@@ -41,7 +37,7 @@ template: |
             "fast_telemetry_local": {
                 "class": "Service_TCP",
                 "virtualAddresses": [
-                    {"use": "fast_svc_vip"}
+                    "255.255.255.254"
                 ],
                 "virtualPort": 6514,
                 "iRules": [
@@ -53,14 +49,10 @@ template: |
                 "members": [
                     {
                         "enable": true,
-                        "servicePort": 6514,
-                        "shareNodes": true,
-                        "servers": [
-                            {
-                                "name": "fast_telemetry_node",
-                                "address": "255.255.255.254"
-                            }
-                        ]
+                        "serverAddresses": [
+                            "255.255.255.254"
+                        ],
+                        "servicePort": 6514
                     }
                 ],
                 "monitors": [

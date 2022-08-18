@@ -377,14 +377,6 @@ describe('fastWorker tests', function () {
                 .post(`${as3ep}/Common?async=true`)
                 .reply(202, {});
 
-            nock(host)
-                .get('/mgmt/tm/ltm/node')
-                .reply(200, {});
-
-            nock(host)
-                .get('/mgmt/tm/ltm/virtual-address')
-                .reply(200, {});
-
             const scope = nock(host)
                 .get('/mgmt/shared/iapp/blocks')
                 .reply(200, { items: [] })
