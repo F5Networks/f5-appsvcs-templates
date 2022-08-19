@@ -283,6 +283,10 @@ describe(template, function () {
             console.log(JSON.stringify(view.pool_members));
             view.pool_members[0].servicePort = 80;
             expected.t1.app1.app1_pool.members[0].servicePort = 80;
+            delete view.monitor_interval;
+            delete view.monitor_queryName;
+            delete view.monitor_queryType;
+            delete view.monitor_receive;
             view.make_monitor = false;
             view.monitor_name = '/Common/monitor1';
             delete expected.t1.app1.app1_monitor;
@@ -297,6 +301,15 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
+    describe('no monitor', function () {
+        before(() => {
+            delete view.monitor_name;
+            view.enable_monitor = false;
+            delete expected.t1.app1.app1_pool.monitors;
+        });
+        util.assertRendering(template, view, expected);
+    });
+
     describe('existing pool, snat automap and default profiles', function () {
         before(() => {
             // default https virtual port
@@ -306,6 +319,8 @@ describe(template, function () {
 
             // existing pool
             delete view.pool_members;
+            delete view.load_balancing_mode;
+            delete view.slow_ramp_time;
             view.make_pool = false;
             view.pool_name = '/Common/pool1';
             delete expected.t1.app1.app1_pool;
@@ -317,6 +332,40 @@ describe(template, function () {
             delete expected.t1.app1.app1_snatpool;
             expected.t1.app1.app1_tcp.snat = 'auto';
             expected.t1.app1.app1_udp.snat = 'auto';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('existing pool, snat automap and default profiles', function () {
+        before(() => {
+            // default https virtual port
+            delete view.virtual_port;
+            expected.t1.app1.app1_tcp.virtualPort = 53;
+            expected.t1.app1.app1_udp.virtualPort = 53;
+
+            // existing pool
+            view.make_pool = false;
+            view.pool_name = '/Common/pool1';
+            delete expected.t1.app1.app1_pool;
+            expected.t1.app1.app1_tcp.pool = { bigip: '/Common/pool1' };
+            expected.t1.app1.app1_udp.pool = { bigip: '/Common/pool1' };
+
+            // snat automap
+            view.snat_automap = true;
+            delete expected.t1.app1.app1_snatpool;
+            expected.t1.app1.app1_tcp.snat = 'auto';
+            expected.t1.app1.app1_udp.snat = 'auto';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('no pool', function () {
+        before(() => {
+            // existing pool
+            delete view.pool_name;
+            view.enable_pool = false;
+            delete expected.t1.app1.app1_tcp.pool;
+            delete expected.t1.app1.app1_udp.pool;
         });
         util.assertRendering(template, view, expected);
     });

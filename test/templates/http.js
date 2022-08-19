@@ -20,6 +20,7 @@
 'use strict';
 
 const util = require('./util');
+const { monitorTests, poolTests } = require('./common/tests');
 
 const template = 'templates/bigip-fast-templates/http.yaml';
 
@@ -415,15 +416,8 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('tls pass-thru with existing pool, specified irule and endpoint policy', function () {
+    describe('specified irule and endpoint policy', function () {
         before(() => {
-            // existing pool
-            delete view.pool_members;
-            view.make_pool = false;
-            view.pool_name = '/Common/pool1';
-            delete expected.t1.app1.app1_pool;
-            expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
-            delete expected.t1.app1.app1_monitor;
             view.irule_names = ['/Common/my_irule'];
             view.endpoint_policy_names = ['/Common/my_policy'];
             expected.t1.app1.app1.iRules = [{
@@ -477,6 +471,10 @@ describe(template, function () {
         });
         util.assertRendering(template, view, expected);
     });
+
+    const monitorAttrs = ['monitor_interval', 'monitor_send_string', 'monitor_expected_response'];
+    monitorTests.run(util, template, view, expected, monitorAttrs, '/Common/http');
+    poolTests.run(util, template, view, expected);
 
     describe('clean up', function () {
         util.cleanUp();

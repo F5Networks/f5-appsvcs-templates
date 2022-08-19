@@ -20,6 +20,7 @@
 'use strict';
 
 const util = require('./util');
+const { monitorTests, poolTests } = require('./common/tests');
 
 const template = 'templates/bigip-fast-templates/tcp.yaml';
 
@@ -275,19 +276,11 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('existing pool, snat automap, default profiles', function () {
+    describe('snat automap, default profiles', function () {
         before(() => {
             // default https virtual port
             delete view.virtual_port;
             expected.t1.app1.app1.virtualPort = 443;
-
-            // existing pool
-            delete view.pool_members;
-            view.make_pool = false;
-            view.pool_name = '/Common/pool1';
-            delete expected.t1.app1.app1_pool;
-            delete expected.t1.app1.app1_monitor;
-            expected.t1.app1.app1.pool = { bigip: '/Common/pool1' };
 
             // snat automap
             view.snat_automap = true;
@@ -307,6 +300,10 @@ describe(template, function () {
         });
         util.assertRendering(template, view, expected);
     });
+
+    const monitorAttrs = ['monitor_interval'];
+    monitorTests.run(util, template, view, expected, monitorAttrs, '/Common/tcp');
+    poolTests.run(util, template, view, expected);
 
     describe('clean up', function () {
         util.cleanUp();

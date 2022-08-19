@@ -89,6 +89,8 @@ tcp:
 # subtemplate for smtp monitor
 smtp:
   <<: *monitor_base
+  parameters:
+    monitor_domain: 'hostname.local'
   definitions: 
     <<: *monitor_base_def
     monitor_name:
@@ -106,7 +108,6 @@ smtp:
       description: Specify the domain name for the SMTP server to accept mail.
       type: string
       format: hostname
-      default: ''
     monitor_username:
       title: Username
       type: string
@@ -135,6 +136,8 @@ smtp:
 # subtemplate for ldap monitor
 ldap:
   <<: *monitor_base
+  parameters:
+    monitor_passphrase: 'passphrase'
   definitions: 
     <<: *monitor_base_def
     monitor_name:
@@ -153,11 +156,11 @@ ldap:
       default: ''
     monitor_passphrase:
       title: Password
+      description: Enter the passphrase for the LDAP request.
       type: string
       format: password
       contentEncoding: base64
       minLength: 2
-      default: ''
     monitor_base:
       title: Directory Level
       description: Enter the directory level to be searched in the health check.
@@ -332,6 +335,8 @@ http:
 # subtemplate for dns monitor
 dns:
   <<: *monitor_base
+  parameters:
+    monitor_queryName: 'hostname.local'
   definitions: 
     <<: *monitor_base_def
     monitor_name:
@@ -348,7 +353,6 @@ dns:
       description: Enter the host name for the DNS request (queryName).
       type: string
       minLength: 1
-      default: ''
     monitor_queryType:
       title: Record Type
       description: Select the DNS record type (queryType).

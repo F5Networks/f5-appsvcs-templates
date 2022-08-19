@@ -20,6 +20,7 @@
 'use strict';
 
 const util = require('./util');
+const { monitorTests, poolTests } = require('./common/tests');
 
 const template = 'templates/bigip-fast-templates/smtp.yaml';
 
@@ -201,7 +202,12 @@ describe(template, function () {
             expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
             delete expected.t1.app1.app1_tcp_analytics;
         });
+        util.assertRendering(template, view, expected);
     });
+
+    const monitorAttrs = ['monitor_interval', 'monitor_username', 'monitor_passphrase', 'monitor_domain'];
+    monitorTests.run(util, template, view, expected, monitorAttrs, '/Common/smtp');
+    poolTests.run(util, template, view, expected);
 
     describe('clean up', function () {
         util.cleanUp();
