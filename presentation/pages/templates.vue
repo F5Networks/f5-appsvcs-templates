@@ -47,17 +47,17 @@
                 <img
                     v-if="setData.gitHubRepo"
                     class="templatesets-icon"
-                    src="../img/github_icon.png"
+                    src="img/github_icon.png"
                 >
                 <img
                     v-else-if="setData.gitLabRepo"
                     class="templatesets-icon"
-                    src="../img/gitlab_icon.png"
+                    src="img/gitlab_icon.png"
                 >
                 <img
                     v-else
                     class="templatesets-icon"
-                    src="../img/file_icon.png"
+                    src="img/file_icon.png"
                 >
 
                 <span class="text-bold">{{ setData.name }}</span>
