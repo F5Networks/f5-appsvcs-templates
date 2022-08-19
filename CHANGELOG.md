@@ -23,6 +23,7 @@
 ## Fixed
 * bigip-fast-templates: Added suggestions with valid formatting for fields that have client-side validation but aren't always submitted with every deployment, e.g., an existing pool monitor on the SMTP, LDAP and DNS templates
 * worker: Fix server error when missing tenant names on DELETE to /mgmt/shared/fast/applications
+* gui: Fix displaying template parameters that are not required and have no default value
 
 ## Changed
 * Encrypt Authorization Header Values for Generic IPAM providers
