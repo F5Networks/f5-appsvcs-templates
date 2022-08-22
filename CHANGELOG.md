@@ -1,3 +1,10 @@
+# 1.21.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.20.0
 ## Added
 * worker: Allow installing template sets from GitHub
