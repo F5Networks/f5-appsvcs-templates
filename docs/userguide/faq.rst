@@ -32,11 +32,6 @@ Does FAST collect any usage data?
 FAST gathers non-identifiable usage data for the purposes of improving the product as outlined in the end user license agreement for BIG-IP.
 To opt out of data collection, disable the BIG-IP systems phone home feature as described in the "Disabling the Automatic Phone Home" section of `K15000: Overview of the Automatic Update check and Automatic Phone Home features <https://support.f5.com/csp/article/K15000/>`_.
 
-What F5 platforms does FAST support?
-------------------------------------
-
-FAST is initially targeted to the BIG-IP.
-
 Is FAST officially supported by F5?
 -----------------------------------
 
