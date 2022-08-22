@@ -14,6 +14,10 @@ Beginning with FAST version 1.15.0 the Revision History document will redirect t
         - Description
         - Date
 
+      * - 24.0
+        - FAST **v1.20** can be found here <https://github.com/F5Networks/f5-appsvcs-templates/releases/tag/v1.20.0>
+        - 08-23-22
+
       * - 23.0
         - FAST **v1.19** can be found `here <https://github.com/F5Networks/f5-appsvcs-templates/releases/tag/v1.19.0>`_
         - 07-15-22
