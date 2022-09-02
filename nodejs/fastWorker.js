@@ -1681,8 +1681,8 @@ class FASTWorker {
         if (appid) {
             const uri = restOperation.getUri();
             const pathElements = uri.pathname.split('/');
-            const tenant = pathElements[4];
-            const app = pathElements[5];
+            const tenant = decodeURI(pathElements[4]);
+            const app = decodeURI(pathElements[5]);
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid,
@@ -2382,7 +2382,7 @@ class FASTWorker {
         const pathElements = uri.pathname.split('/');
 
         if (appid) {
-            data = [`${pathElements[4]}/${pathElements[5]}`];
+            data = [`${decodeURI(pathElements[4])}/${decodeURI(pathElements[5])}`];
         } else if (!data) {
             data = [];
         }
@@ -2622,8 +2622,8 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
-        const tenant = pathElements[4];
-        const app = pathElements[5];
+        const tenant = decodeURI(pathElements[4]);
+        const app = decodeURI(pathElements[5]);
         const newParameters = data.parameters;
         // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);

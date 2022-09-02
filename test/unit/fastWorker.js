@@ -354,7 +354,8 @@ describe('fastWorker tests', function () {
                     app: as3App,
                     foo: as3App,
                     bar: as3App,
-                    foobar: as3App
+                    foobar: as3App,
+                    'foo bar !@$^&*()-+_': as3App
                 }
             }));
     });
@@ -1806,6 +1807,13 @@ describe('fastWorker tests', function () {
                         _links: {
                             self: '/mgmt/shared/fast/applications/tenant/foobar'
                         }
+                    }, {
+                        name: 'foo bar !@$^&*()-+_',
+                        tenant: 'tenant',
+                        template: 'foo/bar',
+                        _links: {
+                            self: '/mgmt/shared/fast/applications/tenant/foo bar !@$^&*()-+_'
+                        }
                     }]);
                     expect(op.body).to.satisfySchemaInApiSpec('FastApplicationList');
                 });
@@ -2127,6 +2135,29 @@ describe('fastWorker tests', function () {
             nock(host)
                 .persist()
                 .post(`${as3ep}/foo?async=true`)
+                .reply(202, {});
+            return worker.onPost(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 202);
+                    assert.equal(op.requestId, 1);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationResponse');
+                });
+        });
+        it('post_apps_when_name_includes_spaces_special_chars', function () { // this case is for BIGIP Next only
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications');
+            op.setBody({
+                name: 'examples/simple_udp_defaults',
+                parameters: {
+                    tenant_name: 'tenant 01',
+                    app_name: 'foo bar !@$^&*()-+_',
+                    application_name: 'foo bar !@$^&*()-+_'
+                }
+            });
+            nock(host)
+                .persist()
+                .post(`${as3ep}/tenant 01?async=true`)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
