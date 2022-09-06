@@ -842,6 +842,7 @@ describe('fastWorker tests', function () {
                     'foo'
                 ],
                 enableIpam: true,
+                tsIpAddress: '255.255.255.254',
                 ipamProviders: [
                     {
                         name: 'test',
@@ -859,6 +860,7 @@ describe('fastWorker tests', function () {
                 })
                 .then(() => worker.getConfig(0, testCtx))
                 .then((config) => {
+                    assert.strictEqual(config.tsIpAddress, '255.255.255.254');
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].authHeaderValue !== 'Token super-secret',
                         'IPAM auth header value was not encrypted');

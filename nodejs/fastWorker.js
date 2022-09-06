@@ -248,6 +248,7 @@ class FASTWorker {
             },
             enableIpam: false,
             ipamProviders: [],
+            tsIpAddress: '',
             disableDeclarationCache: false,
             _gitTemplateSets: {}
         };

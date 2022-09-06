@@ -1346,6 +1346,10 @@ components:
           type: boolean
           description: Enable Telemetry Streaming related options in templates.
           example: false
+        tsIpAddress:
+          type: string
+          description: Telemetry Service ip address.
+          example: '255.255.255.254'
         log_asm:
           type: boolean
           description: Enable ASM related options in templates.
