@@ -6,10 +6,10 @@ This guide contains information about how to install and use F5 Application Serv
 
 .. _about:
 
-About F5 Application Services Templates
----------------------------------------
+About BIG-IP F5 Application Services Templates
+----------------------------------------------
 
-The F5 Application Services Templates extension, or FAST, provides a way to streamline deployment of applications on BIG-IP using templatized AS3 declarations.
+The F5 BIG-IP Application Services Templates extension, or FAST, provides a way to streamline deployment of applications on BIG-IP using templatized AS3 declarations.
 
 AS3 applications deployed through FAST can be managed using FAST.
 FAST auto-generates web forms custom to your templates for creating and modifying applications, and provides visibility into what FAST applications are configured on your BIG-IP.

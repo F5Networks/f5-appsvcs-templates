@@ -72,7 +72,7 @@ source_encoding = 'utf-8-sig'
 master_doc = 'index'
 
 # General information about the project.
-project = u'F5 Application Services Templates'
+project = u'FAST'
 copyright = u'2020, F5 Networks'
 author = u'F5 Networks'
 

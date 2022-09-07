@@ -1,7 +1,7 @@
-F5 Application Services Templates (FAST)
-========================================
+F5 BIG-IP Application Services Templates (FAST)
+===============================================
 
-F5 Application Services Templates (FAST) are an easy and effective way to deploy applications on the BIG-IP system using |as3|.  
+F5 BIG-IP Application Services Templates (FAST) are an easy and effective way to deploy applications on the BIG-IP system using |as3|.  
 
 The FAST Extension provides a toolset for templating and managing AS3 Applications
 on BIG-IP.

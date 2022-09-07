@@ -3,10 +3,10 @@
 Frequently Asked Questions (FAQ)
 ================================
 
-What is FAST (F5 Application Services Templates)?
--------------------------------------------------
+What is FAST (F5 BIG-IP Application Services Templates)?
+--------------------------------------------------------
 
-The F5 Application Services Templates extension, or FAST, provides a way to streamline deployment of applications on BIG-IP using templatized AS3 declarations.
+The F5 BIG-IP Application Services Templates extension, or FAST, provides a way to streamline deployment of applications on BIG-IP using templatized AS3 declarations.
 
 FAST is:
 
@@ -23,7 +23,7 @@ Do FAST templates utilize AS3?
 
 FAST uses AS3 declarations to deploy applications and tenants.
 The declarative API represents the configuration which AS3 is responsible for creating on a BIG-IP system.
-Therefore, if you manually edit a FAST template outside of FAST using a method such as TMSH, the changes will be overwritten the next time FAST modifies the tenant.
+Therefore, if you manually edit a FAST application outside of FAST using a method such as TMSH, the changes will be overwritten the next time FAST modifies the tenant.
 Once a FAST template is used to deploy an application and tenant on a BIG-IP, FAST should continue to be used for that application and tenant.
 
 Does FAST collect any usage data?
