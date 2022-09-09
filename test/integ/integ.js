@@ -75,13 +75,16 @@ function handleHTTPError(err, description) {
     return Promise.reject(newErr);
 }
 
-function waitForCompletedTask(taskid) {
+function waitForCompletedTask(taskid, useAs3) {
+    const url = `/mgmt/shared/${useAs3 ? 'appsvcs/task' : 'fast/tasks'}/${taskid}`;
     return Promise.resolve()
-        .then(() => endpoint.get(`/mgmt/shared/fast/tasks/${taskid}`))
+        .then(() => endpoint.get(url))
         .then((response) => {
-            if (response.data.message === 'in progress' || response.data.message === 'pending') {
+            const data = response.data;
+            const msg = useAs3 ? data.results[0].message : data.message;
+            if (msg === 'in progress' || msg === 'pending') {
                 return promiseDelay(1000)
-                    .then(() => waitForCompletedTask(taskid));
+                    .then(() => waitForCompletedTask(taskid, useAs3));
             }
             return response.data;
         })
@@ -515,6 +518,7 @@ describe('Settings', function () {
             .catch(e => handleHTTPError(e, 'get provision data'))));
 
     it('C72081273 GET default settings', () => Promise.resolve()
+        .then(() => endpoint.delete(url))
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
@@ -526,13 +530,14 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                enable_telemetry: enableTelemetry,
-                log_asm: logASM,
-                log_afm: logAFM,
+                enable_telemetry: true,
+                log_asm: true,
+                log_afm: true,
                 perfTracing: {
                     debug: perfTracing.debug,
                     enabled: perfTracing.enabled
-                }
+                },
+                tsIpAddress: '255.255.255.254'
             },
             status: 200
         })));
@@ -546,7 +551,8 @@ describe('Settings', function () {
             data: { code: 200, message: '', _links: { self: url } },
             status: 200
         };
-        return endpoint.post(url, postBody)
+        return Promise.resolve()
+            .then(() => endpoint.post(url, postBody))
             .then(actual => assertResponse(actual, expected))
             .then(() => endpoint.get(url))
             .then((actual) => {
@@ -556,13 +562,14 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     // driver defaults
-                    enable_telemetry: enableTelemetry,
-                    log_asm: logASM,
-                    log_afm: logAFM,
+                    enable_telemetry: true,
+                    log_asm: true,
+                    log_afm: true,
                     perfTracing: {
                         debug: perfTracing.debug,
                         enabled: perfTracing.enabled
                     },
+                    tsIpAddress: '255.255.255.254',
                     _links: { self: url }
                 };
                 return assertResponse(actual, expected);
@@ -570,7 +577,7 @@ describe('Settings', function () {
     });
     it('POST then GET settings with IPAM', () => {
         const postBody = {
-            enable_telemetry: enableTelemetry,
+            enable_telemetry: true,
             deletedTemplateSets: [],
             ipamProviders: [{
                 serviceType: 'Generic',
@@ -588,12 +595,13 @@ describe('Settings', function () {
                 authHeaderValue: 'Bearer SecretValue'
             }],
             enableIpam: false,
-            log_afm: logAFM,
-            log_asm: logASM,
+            log_afm: true,
+            log_asm: true,
             perfTracing: {
                 debug: perfTracing.debug,
                 enabled: perfTracing.enabled
             },
+            tsIpAddress: '255.255.255.254',
             disableDeclarationCache: false,
             _links: { self: url }
         };
@@ -627,20 +635,23 @@ describe('Settings', function () {
             data: { code: 200, _links: { self: url }, message: '' },
             status: 200
         };
-        return endpoint.patch(url, patchBody)
+        return Promise.resolve()
+            .then(() => endpoint.delete(url))
+            .then(() => endpoint.patch(url, patchBody))
             .then(actual => assertResponse(actual, expected))
             .then(() => {
                 expected.data = {
-                    enable_telemetry: enableTelemetry,
+                    enable_telemetry: true,
                     deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
-                    log_afm: logAFM,
-                    log_asm: logASM,
+                    log_afm: true,
+                    log_asm: true,
                     perfTracing: {
                         debug: perfTracing.debug,
                         enabled: perfTracing.enabled
                     },
+                    tsIpAddress: '255.255.255.254',
                     disableDeclarationCache: true,
                     _links: { self: url }
                 };

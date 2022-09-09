@@ -1349,6 +1349,7 @@ components:
         tsIpAddress:
           type: string
           description: Telemetry Service ip address.
+          default: '255.255.255.254'
           example: '255.255.255.254'
         log_asm:
           type: boolean

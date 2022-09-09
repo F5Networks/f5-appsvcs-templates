@@ -6,24 +6,28 @@ definitions:
             Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.
             More information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)
         type: boolean
+        default: true
         options:
             hidden: true
     log_afm:
         title: Forward AFM logs to Telemetry Streaming
         description: Requires AFM to be provisioned
         type: boolean
+        default: true
         options:
             hidden: true
     log_asm:
         title: Forward ASM logs to Telemetry Streaming
         description: Requires ASM to be provisioned
         type: boolean
+        default: true
         options:
             hidden: true
     tsIpAddress:
         title: TS IP Address
         description: IP address for Telemetry Streaming
         type: string
+        default: 255.255.255.254
         options:
             hidden: true
 template: |
@@ -36,10 +40,6 @@ template: |
         "Shared": {
             "class": "Application",
             "template": "shared",
-            "fast_svc_addr": {
-                "class": "Service_Address",
-                "virtualAddress": "{{tsIpAddress}}"
-            },
             "fast_telemetry_local_rule": {
                 "class": "iRule",
                 "iRule": "when CLIENT_ACCEPTED {\n  node 127.0.0.1 6514\n}"
@@ -47,7 +47,7 @@ template: |
             "fast_telemetry_local": {
                 "class": "Service_TCP",
                 "virtualAddresses": [
-                    {"use": "fast_svc_addr"}
+                    "{{tsIpAddress}}"
                 ],
                 "virtualPort": 6514,
                 "iRules": [
@@ -59,14 +59,10 @@ template: |
                 "members": [
                     {
                         "enable": true,
-                        "servicePort": 6514,
-                        "shareNodes": true,
-                        "servers": [
-                            {
-                                "name": "fast_telemetry_node",
-                                "address": "{{tsIpAddress}}"
-                            }
-                        ]
+                        "serverAddresses": [
+                            "{{tsIpAddress}}"
+                        ],
+                        "servicePort": 6514
                     }
                 ],
                 "monitors": [
@@ -118,7 +114,7 @@ template: |
                         "protocol": "tcp",
                         "servers": [
                             {
-                                "address": "255.255.255.254",
+                                "address": "{{tsIpAddress}}",
                                 "port": "6514"
                             }
                         ],
@@ -147,7 +143,7 @@ template: |
                         "remoteStorage": "splunk",
                         "servers": [
                             {
-                                "address": "255.255.255.254",
+                                "address": "{{tsIpAddress}}",
                                 "port": "6514"
                             }
                         ],

@@ -248,25 +248,32 @@ class FASTWorker {
             },
             enableIpam: false,
             ipamProviders: [],
-            tsIpAddress: '',
             disableDeclarationCache: false,
             _gitTemplateSets: {}
         };
-        return Object.assign({}, defaultConfig, this.driver.getDefaultSettings());
+        return Object.assign({}, defaultConfig);
     }
 
-    getConfig(reqid, ctx) {
+    getConfig(reqid) {
         reqid = reqid || 0;
         let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => this.gatherProvisionData(reqid, true, false, ctx))
-            .then(provisionData => Promise.all([
+            .then(() => Promise.all([
                 this.configStorage.getItem(configKey),
-                this.driver.getSettings(provisionData[0])
+                this.driver.getSettings()
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
+                    if (Array.isArray(config.ipamProviders)) {
+                        // for compatibility with v1.9
+                        config.ipamProviders = config.ipamProviders.map((provider) => {
+                            if (typeof provider.serviceType === 'undefined') {
+                                provider.serviceType = 'Generic';
+                            }
+                            return provider;
+                        });
+                    }
                     return Promise.resolve(Object.assign(
                         {},
                         mergedDefaults,
@@ -587,8 +594,7 @@ class FASTWorker {
             .then(() => this.recordTransaction(
                 reqid,
                 'sync AS3 driver settings',
-                Promise.resolve()
-                    .then(() => this.saveConfig(config, reqid, ctx))
+                this.saveConfig(config, reqid, ctx)
             ));
     }
 
