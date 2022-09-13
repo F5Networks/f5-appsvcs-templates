@@ -727,14 +727,17 @@ class FASTWorker {
         return Promise.resolve();
     }
 
-    generateTeemReportApplication(action, templateName) {
+    generateTeemReportApplication(action, templateName, templateType) {
         if (!this.teemDevice) {
             return Promise.resolve();
         }
 
+        templateType = templateType || 'local';
+
         const report = {
             action,
-            templateName
+            templateName,
+            templateType
         };
         this.sendTeemReport('Application Management', 1, report)
             .catch(e => this.logger.error(`FAST Worker failed to send telemetry data: ${e.stack}`));
@@ -742,14 +745,17 @@ class FASTWorker {
         return Promise.resolve();
     }
 
-    generateTeemReportTemplateSet(action, templateSetName) {
+    generateTeemReportTemplateSet(action, templateSetName, templateType) {
         if (!this.teemDevice) {
             return Promise.resolve();
         }
 
+        templateType = templateType || 'local';
+
         const report = {
             action,
-            templateSetName
+            templateSetName,
+            templateType
         };
         Promise.resolve()
             .then(() => {
@@ -1526,12 +1532,14 @@ class FASTWorker {
                     // Now re-reject
                     .then(() => Promise.reject(new Error(`failed to render template: ${tmplData.name}\n${e.stack}`))))
                 .then((decl) => {
+                    const templateType = this._returnTemplateType(tsData);
                     const appData = {
                         appDef: decl,
                         metaData: {
                             template: tmplData.name,
                             setHash: tsData.hash,
                             view: tmplData.parameters,
+                            templateType,
                             lastModified,
                             ipamAddrs
                         }
@@ -1894,7 +1902,7 @@ class FASTWorker {
             })
             .then(() => {
                 appsData.forEach((appData) => {
-                    this.generateTeemReportApplication('modify', appData.metaData.template);
+                    this.generateTeemReportApplication('modify', appData.metaData.template, appData.metaData.templateType);
                 });
             })
             .then(() => this.recordTransaction(
@@ -1999,6 +2007,16 @@ class FASTWorker {
         this.exitTransaction(reqId, 'prepare scratch space');
     }
 
+    _returnTemplateType(data) {
+        let templateType = 'local';
+        if (data.gitHubRepo) {
+            templateType = 'GitHub';
+        } else if (data.gitLabRepo) {
+            templateType = 'GitLab';
+        }
+        return templateType;
+    }
+
     postTemplateSets(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
 
@@ -2013,6 +2031,7 @@ class FASTWorker {
             || data.gitSubDir
             || (data.gitHubRepo ? data.gitHubRepo.split('/')[1] : null)
             || (data.gitLabRepo ? data.gitLabRepo.split('/')[1] : null);
+        const templateType = this._returnTemplateType(data);
         const setsrc = (this.uploadPath !== '') ? `${this.uploadPath}/${tsid}.zip` : `${tsid}.zip`;
         const scratch = `${this.scratchPath}/${tsid}`;
         const tsRootPath = this.scratchPath;
@@ -2136,7 +2155,7 @@ class FASTWorker {
             .then(() => this.enterTransaction(reqid, 'write new template set to data store'))
             .then(() => this.templateProvider.invalidateCache())
             .then(() => DataStoreTemplateProvider.fromFs(this.storage, tsRootPath, tsFilter))
-            .then(() => this.generateTeemReportTemplateSet('create', tsid))
+            .then(() => this.generateTeemReportTemplateSet('create', tsid, templateType))
             .then(() => this.getConfig(reqid, ctx))
             .then((config) => {
                 // If we are installing a template set from GitHub, record some extra information for later
