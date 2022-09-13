@@ -120,3 +120,20 @@ tcp:
       default: source-address
   template: |
     {{> persist_partial_template}}
+
+# UDP persist subTemplate
+udp:
+  <<: *persist_base
+  definitions:
+    <<: *persist_base_def    
+    persistence_profile: 
+      <<: *persistence_profile
+      enumFromBigip:
+        - ltm/persistence/source-addr
+      default: /Common/source_addr
+    persistence_type: 
+      <<: *persistence_type
+      enum: [destination-address, source-address]
+      default: source-address
+  template: |
+    {{> persist_partial_template}}

@@ -336,3 +336,11 @@ tcp:
         }
     - *asm_logging
     - *afm_logging
+
+# udp subTemplate
+udp:
+  <<: *asm_base
+  anyOf: 
+    - <<: *asm_base_anyof
+    - *asm_logging
+    - *afm_logging

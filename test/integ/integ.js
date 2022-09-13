@@ -409,6 +409,14 @@ describe('Applications', function () {
             '10.0.0.9'
         ]
     }));
+    it('Deploy bigip-fast-templates/udp', () => deployApplication('bigip-fast-templates/udp', {
+        tenant_name: 'tenant',
+        app_name: 'UDP-App',
+        virtual_address: '10.0.0.10',
+        pool_members: [
+            { serverAddresses: ['10.0.0.10'] }
+        ]
+    }));
     it('Deploy bigip-fast-templates/bluegreen', () => deployApplication('bigip-fast-templates/bluegreen', {
         tenant_name: 'tenant',
         app_name: 'bluegreen'

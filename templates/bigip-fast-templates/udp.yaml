@@ -1,0 +1,28 @@
+contentType: application/json
+title: UDP Application Template
+description: Configure high availability and optimization for UDP implementations.
+allOf:
+  - $ref: "_as3.yaml#"
+  - $ref: "_virtual.yaml#/udp"
+  - $ref: "_snat.yaml#"
+  - $ref: "_persist.yaml#/udp"
+  - $ref: "_pool.yaml#"
+  - $ref: "_monitors.yaml#/udp"
+  - $ref: "_udp_profile.yaml#"
+  - $ref: "_irule.yaml#"
+  - $ref: "_vlan_allow.yaml#"
+anyOf:
+  - {}
+  - $ref: "_security_policy.yaml#/udp"
+  - $ref: "_security_firewall.yaml#/udp"
+  - $ref: "_shape.yaml#/fastl4"
+  - $ref: "_telemetry.yaml#"
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}": {
+        }
+      }
+    }
+  }

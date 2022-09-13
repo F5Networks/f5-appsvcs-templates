@@ -1,0 +1,36 @@
+bigipHideTemplate: true
+title: UDP Profile
+contentType: application/json
+definitions: &udp_base_def
+  udp_profile_name:
+    title: UDP profile
+    description: Select an existing BIG-IP UDP profile. It will be applied to both client-side and server-side context.
+    type: string
+    enumFromBigip: ltm/profile/udp
+    default: "/Common/udp"
+  udp_ingress_profile_name:
+    title: Ingress UDP Profile
+    description: Select an existing BIG-IP UDP profile for client-side context.
+    type: string
+    enumFromBigip: ltm/profile/udp
+    default: "/Common/f5-udp-progressive"
+  udp_egress_profile_name:
+    title: Egress UDP Profile
+    description: Select an existing BIG-IP UDP profile for server-side context
+    type: string
+    enumFromBigip: ltm/profile/udp
+    default: "/Common/f5-udp-progressive"
+template: |
+  {
+    "{{tenant_name}}": {
+      "{{app_name}}": {
+        "{{app_name}}": {
+          {{^fastl4}}
+              "profileUDP": {
+                "bigip": "{{udp_profile_name}}"
+              },
+          {{/fastl4}}
+        }
+      }
+    }
+  }

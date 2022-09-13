@@ -233,3 +233,51 @@ dns:
         }
   template: |
     {{> fw_partial_template}}
+
+
+# subtemplate for UDP
+udp:
+  <<: *fw_base
+  definitions:
+    <<: *fw_base_def
+    firewall_allow_list:
+      title: Allowed Networks
+      description: Enter the source IP addresses allowed to access this application. To specify a network, use CIDR notation (e.g. 192.168.1.0/24)
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+      default: ['0.0.0.0/0']
+      dependencies:
+        - enable_firewall
+        - make_afm_policy
+    fw_partial_rules:
+      template: |
+        {
+          "protocol": "udp",
+          "name": "acceptUdpPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
+              {
+                "use": "{{app_name}}_fw_allow_list"
+              }
+            ]
+          },
+          "action": "accept"
+        },
+        {
+          "protocol": "any",
+          "name": "dropPackets",
+          "loggingEnabled": true,
+          "source": {
+            "addressLists": [
+              {
+                "use": "default_fw_deny_list"
+              }
+            ]
+          },
+          "action": "drop"
+        }
+  template: |
+    {{> fw_partial_template}}

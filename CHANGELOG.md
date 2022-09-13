@@ -1,5 +1,6 @@
 # 1.21.0
 ## Added
+* bigip-fast-templates: New UDP template 
 
 ## Fixed
 

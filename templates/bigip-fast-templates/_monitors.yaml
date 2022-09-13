@@ -86,6 +86,41 @@ tcp:
   template: |
     {{> monitor_partial_template}}
 
+# subtemplate for udp monitor
+udp:
+  <<: *monitor_base
+  definitions: 
+    <<: *monitor_base_def
+    monitor_name:
+      title: Monitor
+      description: Select an existing BIG-IP pool monitor. Monitors are used to determine the health of the application on each
+        server. If an application instance does not respond or responds incorrectly, the
+        system will cease to send client requests to that web server. The system will
+        continue to monitor the instance and will begin sending requests once the application
+        responds correctly.
+      type: string
+      enumFromBigip: ltm/monitor/udp
+      default: '/Common/udp'
+    monitor_send_string:
+      title: Send String
+      description: Optional data to be sent during each health check.
+      type: string
+      default: ''
+    monitor_expected_response:
+      title: Expected Response
+      description: The presence of this optional string is required in the response, if specified to confirms availability.
+      type: string
+      default: ''
+    monitor_partial_type:
+      template: >-
+        "monitorType": "udp",
+    monitor_partial_type_specifics:
+      template: |
+        "send": "{{monitor_send_string}}",
+        "receive": "{{monitor_expected_response}}"
+  template: |
+    {{> monitor_partial_template}}
+
 # subtemplate for smtp monitor
 smtp:
   <<: *monitor_base
