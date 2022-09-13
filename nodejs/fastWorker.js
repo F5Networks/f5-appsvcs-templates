@@ -1265,7 +1265,7 @@ class FASTWorker {
                                 });
                         })
                         .catch(e => this.handleResponseError(e, `GET to ${endPoint}`))
-                        .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.stack}`))))))
+                        .catch(e => Promise.reject(new Error(`Failed to hydrate ${endPoint}\n${e.message}`))))))
                     .then(itemsArrays => itemsArrays.flat())
                     .then((items) => {
                         if (items.length !== 0) {
@@ -1501,7 +1501,7 @@ class FASTWorker {
                 ))
                 .then(setData => Object.assign(tsData, setData))
                 .then(() => this.fetchTemplate(reqid, tmplData.name, ctx))
-                .catch(e => Promise.reject(new Error(`unable to load template: ${tmplData.name}\n${e.stack}`)))
+                .catch(e => Promise.reject(new Error(`Unable to load template: ${tmplData.name}. ${e.message}`)))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
                     const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam', true);
@@ -1530,7 +1530,7 @@ class FASTWorker {
                     // Release any IPAM IP addrs
                     .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, { ipamAddrs }))
                     // Now re-reject
-                    .then(() => Promise.reject(new Error(`failed to render template: ${tmplData.name}\n${e.stack}`))))
+                    .then(() => Promise.reject(new Error(`Failed to render template: ${tmplData.name}. ${e.message}`))))
                 .then((decl) => {
                     const templateType = this._returnTemplateType(tsData);
                     const appData = {
@@ -1598,7 +1598,8 @@ class FASTWorker {
         const minOp = {
             method: restOp.getMethod(),
             path: restOp.getUri().pathname,
-            status: restOp.getStatusCode()
+            status: restOp.getStatusCode(),
+            errorMessage: restOp.stack
         };
         if (minOp.status === 202 && ['Post', 'Patch', 'Delete'].includes(minOp.method) && minOp.path.includes('/shared/fast/applications')) {
             minOp.task = restOp.getBody().message.map(x => x.id).pop();
@@ -1620,7 +1621,7 @@ class FASTWorker {
         }
     }
 
-    genRestResponse(restOperation, code, message, ctx) {
+    genRestResponse(restOperation, code, message, stack, ctx) {
         let doParse = false;
         if (typeof message !== 'string') {
             message = JSON.stringify(message, null, 2);
@@ -1638,6 +1639,9 @@ class FASTWorker {
             requestId: restOperation.requestId,
             message
         });
+        if (stack) {
+            restOperation.stack = stack;
+        }
         this.completeRestOperation(restOperation, ctx);
         if (code >= 400) {
             this.generateTeemReportError(restOperation);
@@ -1653,7 +1657,7 @@ class FASTWorker {
                 restOperation.setBody(info);
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not gather info.', e.stack, ctx));
     }
 
     getTemplates(restOperation, tmplid, ctx) {
@@ -1671,9 +1675,9 @@ class FASTWorker {
                 })
                 .catch((e) => {
                     if (e.message.match(/Could not find template/)) {
-                        return this.genRestResponse(restOperation, 404, e.stack, ctx);
+                        return this.genRestResponse(restOperation, 404, `Client Error: Could not find template ${tmplid}`, e.stack, ctx);
                     }
-                    return this.genRestResponse(restOperation, 400, `Error: Failed to load template ${tmplid}\n${e.stack}`, ctx);
+                    return this.genRestResponse(restOperation, 400, `Client Error: Could not load template ${tmplid}`, e.stack, ctx);
                 });
         }
 
@@ -1688,7 +1692,7 @@ class FASTWorker {
                 restOperation.setBody(templates);
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not fetch templates list', e.stack, ctx));
     }
 
     getApplications(restOperation, appid, ctx) {
@@ -1710,7 +1714,7 @@ class FASTWorker {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation, ctx);
                 })
-                .catch(e => this.genRestResponse(restOperation, 404, e.stack, ctx));
+                .catch(e => this.genRestResponse(restOperation, 404, `Client Error: Could not find application ${tenant}/${app}`, e.stack, ctx));
         }
 
         return Promise.resolve()
@@ -1738,13 +1742,13 @@ class FASTWorker {
                 .then(taskList => taskList.filter(x => x.id === taskid))
                 .then((taskList) => {
                     if (taskList.length === 0) {
-                        return this.genRestResponse(restOperation, 404, `unknown task ID: ${taskid}`, ctx);
+                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown task ID: ${taskid}`, undefined, ctx);
                     }
                     restOperation.setBody(taskList[0]);
                     this.completeRestOperation(restOperation, ctx);
                     return Promise.resolve();
                 })
-                .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+                .catch(e => this.genRestResponse(restOperation, 500, `Internal Error: Could not get task ${taskid}`, e.stack, ctx));
         }
 
         return Promise.resolve()
@@ -1757,7 +1761,7 @@ class FASTWorker {
                 restOperation.setBody(tasksList);
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get tasks list', e.stack, ctx));
     }
 
     getTemplateSets(restOperation, tsid, ctx) {
@@ -1782,9 +1786,9 @@ class FASTWorker {
                 })
                 .catch((e) => {
                     if (e.message.match(/No templates found/) || e.message.match(/does not exist/)) {
-                        return this.genRestResponse(restOperation, 404, e.message, ctx);
+                        return this.genRestResponse(restOperation, 404, e.message, undefined, ctx);
                     }
-                    return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    return this.genRestResponse(restOperation, 500, `Internal Error: Could not get templateset ${tsid}`, e.stack, ctx);
                 });
         }
 
@@ -1808,7 +1812,7 @@ class FASTWorker {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get templatesets list', e.stack, ctx));
     }
 
     getSettings(restOperation, ctx) {
@@ -1826,7 +1830,7 @@ class FASTWorker {
                 restOperation.setBody(retVal);
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get settings', e.stack, ctx));
     }
 
     getSettingsSchema(restOperation, ctx) {
@@ -1836,7 +1840,7 @@ class FASTWorker {
                 restOperation.setBody(schema);
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get settings schema', e.stack, ctx));
     }
 
     onGet(restOperation) {
@@ -1869,13 +1873,13 @@ class FASTWorker {
                     case 'settings-schema':
                         return this.getSettingsSchema(restOperation, ctx);
                     default:
-                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);
+                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${uri.pathname}`, undefined, ctx);
                     }
                 } catch (e) {
-                    return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    return this.genRestResponse(restOperation, 500, 'Internal Error: Failed to process get request', e.stack, ctx);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, ctx));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, undefined, ctx));
     }
 
     postApplications(restOperation, data, ctx) {
@@ -1895,7 +1899,7 @@ class FASTWorker {
                     code = 404;
                 }
 
-                return Promise.reject(this.genRestResponse(restOperation, code, e.stack, ctx));
+                return Promise.reject(this.genRestResponse(restOperation, code, e.message, e.stack, ctx));
             })
             .then((renderResults) => {
                 appsData = renderResults;
@@ -1919,13 +1923,14 @@ class FASTWorker {
                     .then(() => Promise.reject(this.genRestResponse(
                         restOperation,
                         code,
-                        `error generating AS3 declaration\n${e.stack}`,
+                        'Internal Error: Could not generate AS3 declaration',
+                        e.stack,
                         ctx
                     )));
             })
             .then((response) => {
                 if (response.status >= 300) {
-                    return this.genRestResponse(restOperation, response.status, response.body);
+                    return this.genRestResponse(restOperation, response.status, response.body, undefined, ctx);
                 }
                 return this.genRestResponse(restOperation, response.status, data.map(
                     x => ({
@@ -1933,11 +1938,11 @@ class FASTWorker {
                         name: x.name,
                         parameters: x.parameters
                     })
-                ), ctx);
+                ), undefined, ctx);
             })
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
-                    this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    this.genRestResponse(restOperation, 500, `Internal Error: Could not create applications: ${e.message}`, e.stack, ctx);
                 }
             });
     }
@@ -2021,7 +2026,7 @@ class FASTWorker {
         const reqid = restOperation.requestId;
 
         if (!data.name && !data.gitHubRepo && !data.gitLabRepo) {
-            return this.genRestResponse(restOperation, 400, 'must supply one of the following parameters: name, gitHubRepo, gitLabRepo', ctx);
+            return this.genRestResponse(restOperation, 400, 'Client Error: Must supply one of the following parameters: name, gitHubRepo, gitLabRepo', undefined, ctx);
         }
 
         data.gitRef = data.gitRef || 'main';
@@ -2204,21 +2209,21 @@ class FASTWorker {
                         .then(apps => this.convertPoolMembers(reqid, apps))
                 );
             })
-            .then(() => this.genRestResponse(restOperation, 200, '', ctx))
+            .then(() => this.genRestResponse(restOperation, 200, '', undefined, ctx))
             .catch((e) => {
                 if (e.message.match(/no such file/)) {
-                    return this.genRestResponse(restOperation, 404, `${setsrc} does not exist`, ctx);
+                    return this.genRestResponse(restOperation, 404, `Client Error: ${setsrc} does not exist`, undefined, ctx);
                 }
                 if (e.message.match(/failed fetching/)) {
-                    return this.genRestResponse(restOperation, 404, e.message, ctx);
+                    return this.genRestResponse(restOperation, 404, e.message, e.stack, ctx);
                 }
                 if (e.message.match(/failed validation/)) {
-                    return this.genRestResponse(restOperation, 400, e.message, ctx);
+                    return this.genRestResponse(restOperation, 400, e.message, e.stack, ctx);
                 }
                 if (e.message.match(/Must set "unprotected" boolean property/)) {
-                    return this.genRestResponse(restOperation, 422, e.message, ctx);
+                    return this.genRestResponse(restOperation, 422, e.message, e.stack, ctx);
                 }
-                return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                return this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
             })
             .finally(() => fs.removeSync(scratch));
     }
@@ -2231,16 +2236,17 @@ class FASTWorker {
             .catch(e => Promise.reject(this.genRestResponse(
                 restOperation,
                 422,
-                `supplied settings were not valid:\n${e.message}`,
+                `Client Error: Supplied settings were not valid:\n${e.message}`,
+                e.stack,
                 ctx
             )))
             .then(() => this.encryptConfigSecrets(config))
             .then(() => this.saveConfig(config, reqid, ctx))
             .then(() => Promise.resolve(this.setTracer(config.perfTracing)))
-            .then(() => this.genRestResponse(restOperation, 200, '', ctx))
+            .then(() => this.genRestResponse(restOperation, 200, '', undefined, ctx))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
-                    this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             });
     }
@@ -2261,14 +2267,14 @@ class FASTWorker {
                     code = 404;
                 }
 
-                return Promise.reject(this.genRestResponse(restOperation, code, e.stack, ctx));
+                return Promise.reject(this.genRestResponse(restOperation, code, e.message, e.stack, ctx));
             })
             .then(rendered => this.releaseIPAMAddressesFromApps(reqid, rendered, ctx)
                 .then(() => rendered))
-            .then(rendered => this.genRestResponse(restOperation, 200, rendered, ctx))
+            .then(rendered => this.genRestResponse(restOperation, 200, rendered, undefined, ctx))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
-                    this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             });
     }
@@ -2294,7 +2300,7 @@ class FASTWorker {
                 });
                 this.completeRestOperation(restOperation, ctx);
             })
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .catch(e => this.genRestResponse(restOperation, 500, e.message, e.stack, ctx));
     }
 
     _checkOffboxTemplatesStatus(reqid, config, ctx) {
@@ -2393,13 +2399,13 @@ class FASTWorker {
                     case 'offbox-templatesets':
                         return this.postOffBoxTemplates(restOperation, body, ctx);
                     default:
-                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);
+                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${uri.pathname}`, undefined, ctx);
                     }
                 } catch (e) {
-                    return this.genRestResponse(restOperation, 500, e.message, ctx);
+                    return this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, ctx));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, ctx));
     }
 
     deleteApplications(restOperation, appid, data, ctx) {
@@ -2481,18 +2487,18 @@ class FASTWorker {
             })
             .catch((e) => {
                 if (e.message.match('no tenant found')) {
-                    return this.genRestResponse(restOperation, 404, e.message, ctx);
+                    return this.genRestResponse(restOperation, 404, e.message, e.stack, ctx);
                 }
                 if (e.message.match('could not find application')) {
-                    return this.genRestResponse(restOperation, 404, e.message, ctx);
+                    return this.genRestResponse(restOperation, 404, e.message, e.stack, ctx);
                 }
                 if (e.message.match('Invalid application name')) {
-                    return this.genRestResponse(restOperation, 400, e.message, ctx);
+                    return this.genRestResponse(restOperation, 400, e.message, e.stack, ctx);
                 }
                 if (e.message.match('Incorrect app info provided')) {
-                    return this.genRestResponse(restOperation, 400, e.message, ctx);
+                    return this.genRestResponse(restOperation, 400, e.message, e.stack, ctx);
                 }
-                return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                return this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
             });
     }
 
@@ -2541,15 +2547,15 @@ class FASTWorker {
                         this.storage.persist()
                     );
                 })
-                .then(() => this.genRestResponse(restOperation, 200, 'success', ctx))
+                .then(() => this.genRestResponse(restOperation, 200, 'success', undefined, ctx))
                 .catch((e) => {
                     if (e.message.match(/failed to find template set/)) {
-                        return this.genRestResponse(restOperation, 404, e.message, ctx);
+                        return this.genRestResponse(restOperation, 404, e.message, e.stack, ctx);
                     }
                     if (e.message.match(/being used by/)) {
-                        return this.genRestResponse(restOperation, 400, e.message, ctx);
+                        return this.genRestResponse(restOperation, 400, e.message, e.stack, ctx);
                     }
-                    return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    return this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 });
         }
 
@@ -2587,8 +2593,8 @@ class FASTWorker {
                         );
                     });
             })
-            .then(() => this.genRestResponse(restOperation, 200, 'success', ctx))
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .then(() => this.genRestResponse(restOperation, 200, 'success', undefined, ctx))
+            .catch(e => this.genRestResponse(restOperation, 500, e.message, e.stack, ctx));
     }
 
     deleteSettings(restOperation, ctx) {
@@ -2601,8 +2607,8 @@ class FASTWorker {
             .then(() => this.saveConfig(defaultConfig, reqid, ctx))
             .then(() => (this.configStorage instanceof StorageDataGroup
                 ? Promise.resolve() : this.configStorage.persist()))
-            .then(() => this.genRestResponse(restOperation, 200, 'success', ctx))
-            .catch(e => this.genRestResponse(restOperation, 500, e.stack, ctx));
+            .then(() => this.genRestResponse(restOperation, 200, 'success', undefined, ctx))
+            .catch(e => this.genRestResponse(restOperation, 500, e.message, e.stack, ctx));
     }
 
     onDelete(restOperation) {
@@ -2630,19 +2636,19 @@ class FASTWorker {
                     case 'settings':
                         return this.deleteSettings(restOperation, ctx);
                     default:
-                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);
+                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${uri.pathname}`, undefined, ctx);
                     }
                 } catch (e) {
-                    return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    return this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, ctx));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, ctx));
     }
 
     patchApplications(restOperation, appid, data, ctx) {
         if (!appid) {
             return Promise.resolve()
-                .then(() => this.genRestResponse(restOperation, 400, 'PATCH is not supported on this endpoint', ctx));
+                .then(() => this.genRestResponse(restOperation, 400, 'Client Error: PATCH is not supported on this endpoint', undefined, ctx));
         }
 
         const reqid = restOperation.requestId;
@@ -2684,7 +2690,8 @@ class FASTWorker {
                         this.genRestResponse(
                             restOperation,
                             422,
-                            `PATCH would change tenant name from ${tenant} to ${tenantName}`,
+                            `Client Error: PATCH would change tenant name from ${tenant} to ${tenantName}`,
+                            undefined,
                             ctx
                         )
                     );
@@ -2694,7 +2701,8 @@ class FASTWorker {
                         this.genRestResponse(
                             restOperation,
                             422,
-                            `PATCH would change application name from ${app} to ${appName}`,
+                            `Client Error: PATCH would change application name from ${app} to ${appName}`,
+                            undefined,
                             ctx
                         )
                     );
@@ -2712,11 +2720,11 @@ class FASTWorker {
             .then(() => {
                 let respBody = postOp.getBody();
                 respBody = respBody.message || respBody;
-                this.genRestResponse(restOperation, postOp.getStatusCode(), respBody, ctx);
+                this.genRestResponse(restOperation, postOp.getStatusCode(), respBody, undefined, ctx);
             })
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
-                    this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             });
     }
@@ -2736,15 +2744,16 @@ class FASTWorker {
             .catch(e => Promise.reject(this.genRestResponse(
                 restOperation,
                 422,
-                `supplied settings were not valid:\n${e.message}`,
+                `Client Error: Supplied settings were not valid:\n${e.message}`,
+                e.stack,
                 ctx
             )))
             .then(() => this.saveConfig(combinedConfig, reqid, ctx))
             .then(() => Promise.resolve(this.setTracer(combinedConfig.perfTracing)))
-            .then(() => this.genRestResponse(restOperation, 200, '', ctx))
+            .then(() => this.genRestResponse(restOperation, 200, '', undefined, ctx))
             .catch((e) => {
                 if (restOperation.getStatusCode() < 400) {
-                    this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             });
     }
@@ -2772,13 +2781,13 @@ class FASTWorker {
                     case 'settings':
                         return this.patchSettings(restOperation, body, ctx);
                     default:
-                        return this.genRestResponse(restOperation, 404, `unknown endpoint ${uri.pathname}`, ctx);
+                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${uri.pathname}`, undefined, ctx);
                     }
                 } catch (e) {
-                    return this.genRestResponse(restOperation, 500, e.stack, ctx);
+                    return this.genRestResponse(restOperation, 500, e.message, e.stack, ctx);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, ctx));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, ctx));
     }
 
     validateRequest(restOperation) {
