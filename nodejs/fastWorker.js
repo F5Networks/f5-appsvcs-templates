@@ -1938,7 +1938,7 @@ class FASTWorker {
                     .then(() => Promise.reject(this.genRestResponse(
                         restOperation,
                         code,
-                        `Error: Could not generate AS3 declaration: ${e.message}`,
+                        'Internal Error: Could not generate AS3 declaration',
                         e.stack,
                         ctx
                     )));
