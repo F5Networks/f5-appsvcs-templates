@@ -5,14 +5,33 @@ FAST Settings
 
 Settings is where optional deployment parameters are set.  
 
-Telemetery Streaming
---------------------
+F5 BIG-IP Telemetery Streaming
+------------------------------
 
-| In order for FAST to utilize Telemetry Streaming, it must first be installed on the BIG-IP. See `Downloading and Installing Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/installation.html>`_ for instructions on installing Telemetry Streaming.
-| Once Telemetry Streaming is installed, ASM and/or AFM logging can be enabled (default if provisioned) or disabled per deployment. 
+| In order for FAST to utilize F5 BIG-IP Telemetry Streaming (TS), it must first be installed on the BIG-IP. See `Downloading and Installing F5 BIG-IP Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/installation.html>`_ for instructions on installing TS.
+| Once TS is installed, ASM and/or AFM logging can be enabled (default if provisioned) or disabled per deployment. 
 | For instructions on provisioning BIG-IP modules see `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_.
 |
-.. seealso:: `Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for using Telemetry Streaming and configuring logging.
+*tsIPAddress* is used to configure F5 BIG-IP Telemetry Streaming by allowing the setting of and IP address used to create TS objects.
+The IP address will be used in both node and virtual addresses by parameterizing the values.  
+
+For example:
+
+.. code-block:: none
+
+   "fast_svc_addr": {
+        "class": "Service_Address",
+        "virtualAddress": "{{tsIpAddress}}"
+	}
+
+.. code-block:: none
+
+    {
+        "name": "fast_telemetry_node",
+        "address": "{{tsIpAddress}}"
+    }
+
+.. seealso:: `F5 BIG-IP Telemetry Streaming <https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html>`_ documentation for using TS and configuring logging.
 
 
 IPAM
