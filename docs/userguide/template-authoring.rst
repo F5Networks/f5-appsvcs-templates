@@ -486,4 +486,4 @@ In the body of the response, you will find:
 In the response, the value of “protected” has changed to indicate SecureVault encryption (literally {"alg":"dir","enc":"f5sv"}), and “ciphertext” is the encrypted secret.
 These examples are directly tied to AS3, and works only for protected ciphertext elements in a declaration.
 
-.. seealso:: `Secrets in AS3 Declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/declaration-purpose-function.html?highlight=secret#secrets-in-as3-declarations>`_ for a more expanded definition of AS3 secrets.
+.. seealso:: `Secrets in AS3 Declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/declaration-purpose-function.html#secrets-in-as3-declarations>`_ for a more expanded definition of AS3 secrets.
