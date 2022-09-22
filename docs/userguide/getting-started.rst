@@ -2,12 +2,12 @@
 
 Getting Started
 ===============
-This guide contains information about how to install and use F5 Application Services Templates.
+This guide contains information about how to install and use F5 BIG-IP Application Services Templates.
 
 .. _about:
 
-About F5 BIG-IP Application Services Templates
-----------------------------------------------
+About F5 BIG-IP Application Services Templates (BIG-IP FAST)
+------------------------------------------------------------
 
 The F5 BIG-IP Application Services Templates extension, or BIG-IP FAST, provides a way to streamline deployment of applications on BIG-IP using templatized AS3 declarations.
 
