@@ -1,5 +1,5 @@
-Deploying a FAST Application 
-============================
+Deploying an F5 BIG-IP FAST Application 
+=======================================
 
 Deploy using the GUI
 --------------------
@@ -9,8 +9,8 @@ Deploy using the GUI
 
 For this example we are using **examples/simple_udp.** Fields noted with an asterisk * are required.
 
-| 1. Enter a Tenant Name. The *tenant* is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
-| 2. Enter an Application Name. The *application* is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
+| 1. Enter a Tenant Name. The *tenant* is the high-level grouping in an AS3 declaration. BIG-IP FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
+| 2. Enter an Application Name. The *application* is the low-level grouping in an AS3 declaration. BIG-IP FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
 | 3. Enter the virtual_port.
 | 4. Enter the virtual_address.
 | 5. Enter the server_port.
@@ -31,10 +31,10 @@ From the Debug View buttons, select View Rendered to display a sample of the ren
 | Clicking on Deploy will start a deployment job.
 | The current status of the job can be found on the *History* tab.
 
-Deploy using the FAST API
--------------------------
+Deploy using the BIG-IP FAST API
+--------------------------------
 
-FAST also exposes a REST API for programmability and automation.
+BIG-IP FAST also exposes a REST API for programmability and automation.
 The basics of working with REST APIs is assumed and will not be covered in this document.
 
 
@@ -59,4 +59,4 @@ Using cURL to do this would look like:
 This job is asynchronous and a successful response indicates that the task was submitted, not that it completed successfully.
 The response payload contains an `id` that can be used to query `mgmt/shared/fast/tasks/<task ID>` for the current status of the task.
 
-.. seealso:: :ref:`api-ref` for a reference of the FAST REST API.
+.. seealso:: :ref:`api-ref` for a reference of the BIG-IP FAST REST API.

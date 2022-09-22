@@ -6,8 +6,8 @@ Appendix E: APM Guidance
 Exchange
 ^^^^^^^^
 
-The Microsoft Exchange for FAST Template does not support `Access Policy Manager (APM) <https://www.f5.com/products/security/access-policy-manager>`_ configuration.  
-In order to configure APM using the FAST Microsoft Exchange template, refer to the following information.
+The Microsoft Exchange for BIG-IP FAST Template does not support `Access Policy Manager (APM) <https://www.f5.com/products/security/access-policy-manager>`_ configuration.  
+In order to configure APM using the BIG-IP FAST Microsoft Exchange template, refer to the following information.
 
 Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_
 
@@ -16,8 +16,8 @@ Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K1211
 Sharepoint
 ^^^^^^^^^^
 
-The Microsoft SharePoint for FAST Template does not support `Access Policy Manager (APM) <https://www.f5.com/products/security/access-policy-manager>`_ configuration.  
-In order to configure APM using the FAST Microsoft SharePoint template, refer to the following information.
+The Microsoft SharePoint for BIG-IP FAST Template does not support `Access Policy Manager (APM) <https://www.f5.com/products/security/access-policy-manager>`_ configuration.  
+In order to configure APM using the BIG-IP FAST Microsoft SharePoint template, refer to the following information.
 
 Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_
 
@@ -26,8 +26,8 @@ Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K1211
 Active Directory Federation Services (ADFS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Microsoft ADFS for FAST Template does not support `Access Policy Manager (APM) <https://www.f5.com/products/security/access-policy-manager>`_ configuration.  
-In order to configure APM using the FAST Microsoft ADFS template, refer to the following information.
+The Microsoft ADFS for BIG-IP FAST Template does not support `Access Policy Manager (APM) <https://www.f5.com/products/security/access-policy-manager>`_ configuration.  
+In order to configure APM using the BIG-IP FAST Microsoft ADFS template, refer to the following information.
 
 Before you begin, APM must be licensed and provisioned on the BIG-IP. See `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_
 

@@ -3,7 +3,7 @@
 GUI Overview
 ============
 
-This section has a summary of FAST's user interface and how to manage applications
+This section has a summary of F5 BIG-IP FAST's user interface and how to manage applications
 using loaded templates as well as a short Overview video.
 
 |video|
@@ -13,19 +13,19 @@ using loaded templates as well as a short Overview video.
    <iframe width="560" height="315" src="https://www.youtube.com/embed/sAP30rwIubs" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 
-FAST Menu Tabs
---------------
+BIG-IP FAST Menu Tabs
+---------------------
 
-When launching FAST, the **FAST Templates** tab is selected. 
+When launching BIG-IP FAST, the **FAST Templates** tab is selected. 
 The page is divided into 2 sections: *bigip-fast-templates* and *examples*.
 If new template sets are added in the future, those will be displayed here as well. 
 See `Creating New Templates <https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/userguide/template-authoring.html>`_ for information on creating templates sets.
 
-The tabs in the FAST interface:
+The tabs in the BIG-IP FAST interface:
 
 .. .. image:: fast-menu.png
 ..  :width: 300
-.. :alt: The FAST menu
+.. :alt: The BIG-IP FAST menu
 
 
 .. list-table::
@@ -39,7 +39,7 @@ The tabs in the FAST interface:
         - This is where you create a new application. Use this tab to choose a template and provide parameters to submit a new application to AS3.
 
       * - :ref:`applisttab`
-        - A list of AS3 applications currently deployed onto the BIG-IP. In the table, AS3 applications are displayed along with the template they were deployed with, if deployed using a FAST Template. Applications can be modified or deleted from this page.
+        - A list of BIG-IP AS3 applications currently deployed onto the BIG-IP. In the table, BIG-IP AS3 applications are displayed along with the template they were deployed with, if deployed using a BIG-IP FAST Template. Applications can be modified or deleted from this page.
 
       * - :ref:`historytab`
         - This is a list of installed templates, along with any applications using them and timestamp information.
@@ -48,17 +48,17 @@ The tabs in the FAST interface:
         - Settings is where optional deployment parameters are set.
 
       * - :ref:`apitab`
-        - This tab contains documentation on how to use FAST's REST API.
+        - This tab contains documentation on how to use BIG-IP FAST's REST API.
 
-Expanded definitions the FAST Menu tabs are below.
+Expanded definitions the BIG-IP FAST Menu tabs are below.
 
 
 .. _deploytab:
 
-FAST Templates
-^^^^^^^^^^^^^^
+BIG-IP FAST Templates
+^^^^^^^^^^^^^^^^^^^^^
 
-The FAST Templates tab is where you create new AS3 applications using a FAST template.
+The BIG-IP FAST Templates tab is where you create new BIG-IP AS3 applications using a BIG-IP FAST template.
 
 .. .. image:: deploy-view.png
 ..   :width: 300
@@ -115,17 +115,17 @@ New Templates and Template Sets
 
 A template is a parameterized AS3 declaration while a template set is a grouping of templates.
 
-FAST can be extended beyond the included templates. New templates can be self-authored and installed for any AS3 use case. 
+BIG-IP FAST can be extended beyond the included templates. New templates can be self-authored and installed for any AS3 use case. 
 Template sets are templates packaged into a single .zip file that can be loaded into the system via the REST API. They may be provided by F5, sourced from the community, or custom written. 
 Template sets can be added or removed via the user interface by clicking either the **Add Template Set** or **Remove** buttons. 
 
-.. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of FAST installed templates.
+.. seealso:: :ref:`authoring` for information on authoring template sets and understanding the template set format. :ref:`managing-templates` for information on updating, adding and removing template sets. :ref:`temp-list` for a list of BIG-IP FAST installed templates.
 
 .. _applisttab:
 
 Applications
 ^^^^^^^^^^^^
-Use this tab to view existing FAST/AS3 applications currently deployed on this BIG-IP. 
+Use this tab to view existing BIG-IP FAST/BIG-IP AS3 applications currently deployed on this BIG-IP. 
 
 Each application is identified by its Tenant and Application name. It also shows the Template used to deploy the application.
 
@@ -206,4 +206,4 @@ API
 ---
 The API tab contains documentation for the F5 Application Services API and SDK.  Use the index in the left pane to find specific information.
 
-.. IMPORTANT:: If you manually modify a FAST tenant outside of FAST via TMSH, GUI, REST API for example, FAST will overwrite those changes the next time the FAST template modifies the tenant. See :ref:`faq` for more information.
+.. IMPORTANT:: If you manually modify a BIG-IP FAST tenant outside of BIG-IP FAST via TMSH, GUI, REST API for example, BIG-IP FAST will overwrite those changes the next time the BIG-IP FAST template modifies the tenant. See :ref:`faq` for more information.

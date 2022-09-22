@@ -1,13 +1,13 @@
 .. _json:
 
-Templating with FAST
-====================
+Templating with F5 BIG-IP FAST
+==============================
 
 This chapter is dedicated to explaining the relationship of schema vs templates. 
-FAST makes use of Mustache, JSON schema and JSONPath, therefore FAST may be familiar if you already understand any of these syntaxes.  
-FAST combines these technologies to provide a complete templating solution. At the foundation, FAST uses a templating specification called mustache to convert parameters into a fully rendered API body. 
+BIG-IP FAST makes use of Mustache, JSON schema and JSONPath, therefore BIG-IP FAST may be familiar if you already understand any of these syntaxes.  
+BIG-IP FAST combines these technologies to provide a complete templating solution. At the foundation, BIG-IP FAST uses a templating specification called mustache to convert parameters into a fully rendered API body. 
 Parameter types can be specified in JSON schema, and are used to validate template inputs when the template is rendered. 
-FAST will auto generate a schema for each template based off the template and json-schema provided.
+BIG-IP FAST will auto generate a schema for each template based off the template and json-schema provided.
 Schema is generated from template text, combined with definitions, and used to validate template parameters.  
 
 Mustache
@@ -95,7 +95,7 @@ Partials
 Along with sections, Mustache utilizes partials. Mustache partials can be thought of as a way to insert template snippets.
 The syntax for including a partial uses curley braces and an angle bracket {{> }}. 
 
-For FAST, a partial definition must contain template text, i.e., define a template property
+For BIG-IP FAST, a partial definition must contain template text, i.e., define a template property
 
 .. code-block:: yaml
 
@@ -135,9 +135,9 @@ Outputs:
 Overlaid Definitions
 ^^^^^^^^^^^^^^^^^^^^
 
-The way FAST generates parameter definitions can be surprising at times if that parameter shows up multiple times in the template text. 
+The way BIG-IP FAST generates parameter definitions can be surprising at times if that parameter shows up multiple times in the template text. 
 
-When generating parameter definitions, FAST looks at the following locations **in the following order**, with later definitions overriding/modifying previous ones:
+When generating parameter definitions, BIG-IP FAST looks at the following locations **in the following order**, with later definitions overriding/modifying previous ones:
 
 1. Embedded mustache tags in any merged templates.  For example: ``{{var:f5:port}}``
 2. The *definitions* properties of any merged templates. Templates are merged by name using ``$ref`` inside a *oneOf*, *anyOf*, or *allOf* clause.
@@ -249,7 +249,7 @@ Combining Schema
 ----------------
 
 | JSON uses the keywords *allOf*, *anyOf* and *oneOf* for combining schema together.  
-| FAST also uses they keywords of *oneOf/allOf/anyOf* for template merging, however this section is focused on JSON schema.
+| BIG-IP FAST also uses they keywords of *oneOf/allOf/anyOf* for template merging, however this section is focused on JSON schema.
 |
 | **anyOf**: One or more of the contained schema is validated against the instance value.  
 It is less restrictive than *allOf* as more than one of the same *type* may be specified.

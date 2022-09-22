@@ -1,7 +1,7 @@
 .. _troubleshooting:
 
-Troubleshooting FAST
-====================
+Troubleshooting F5 BIG-IP FAST
+==============================
 
 Use this section to read about common troubleshooting steps.
 
@@ -22,10 +22,10 @@ View the template set hashes using cURL:
 Restnoded Log
 -------------
 
-The main log for FAST can be found at ``/var/log/restnoded/restnoded.log``.
+The main log for BIG-IP FAST can be found at ``/var/log/restnoded/restnoded.log``.
 This log is shared for all iApps LX extensions.
-To locate messages specific to FAST, search for lines containing ``FAST Worker``.
-Each message from FAST contains a unique request ID of the form ``[<id>]`` to facilitate tracing log messages belonging to a specific request.
+To locate messages specific to BIG-IP FAST, search for lines containing ``FAST Worker``.
+Each message from BIG-IP FAST contains a unique request ID of the form ``[<id>]`` to facilitate tracing log messages belonging to a specific request.
 A request ID of 0 is used for startup of the extension.
 
 Below is an example log message::
@@ -66,7 +66,7 @@ No matter your BIG-IP user account name, audit logs show all messages from ``adm
 Why is my BIG-IP experiencing occasional high CPU usage and slower performance?
 -------------------------------------------------------------------------------
 If your BIG-IP system seems to be using a relatively high amount of CPU and degraded performance, you may be experiencing a known issue with the **restjavad** daemon. 
-This is an issue with the underlying BIG-IP framework, and not an issue with FAST.
+This is an issue with the underlying BIG-IP framework, and not an issue with BIG-IP FAST.
 
 **More information** |br|
 Restjavad may become unstable if the amount of memory required by the daemon exceeds the value allocated for its use. The memory required by the restjavad daemon may grow significantly in system configurations with either a high volume of device statistics collection (AVR provisioning), or a with relatively large number of LTM objects managed by the REST framework (SSL Orchestrator provisioning). The overall system performance is degraded during the continuous restart of the restjavad daemon due to high CPU usage. 
@@ -87,30 +87,30 @@ See Note below.
 Module Provision Dependencies
 -----------------------------
 
-FAST templates depend on module provisioning, and the deployed configuration will become invalid if the module is de-provisioned.  
+BIG-IP FAST templates depend on module provisioning, and the deployed configuration will become invalid if the module is de-provisioned.  
 In addition, if other applications use the tenant in the invalid module, the tenant will fail to deploy.
 
 To correct this condition:
 
 * Re-provision the module
-* Delete the affected FAST applications 
-* Re-deploy the FAST template
+* Delete the affected BIG-IP FAST applications 
+* Re-deploy the BIG-IP FAST template
 
-FAST UI not Updating after Config-sync
---------------------------------------
+BIG-IP FAST UI not Updating after Config-sync
+---------------------------------------------
 
-Beginning in v1.16.0, FAST checks for a successful config-sync, reloading caches within 1 minute of the check. 
-If you are running a FAST version prior to v1.16.0, and the FAST UI is not updating, refer to the instructions below.
+Beginning in v1.16.0, BIG-IP FAST checks for a successful config-sync, reloading caches within 1 minute of the check. 
+If you are running a BIG-IP FAST version prior to v1.16.0, and the BIG-IP FAST UI is not updating, refer to the instructions below.
 
-FAST stores all config in data-groups, which are synched via device-groups. 
-When a FAST app is deployed on device A, the resulting BIG-IP config appears on device B, including the data-groups. 
-On device B, FAST has the information it needs, however the FAST UI has not been notified to reload. 
+BIG-IP FAST stores all config in data-groups, which are synched via device-groups. 
+When a BIG-IP FAST app is deployed on device A, the resulting BIG-IP config appears on device B, including the data-groups. 
+On device B, BIG-IP FAST has the information it needs, however the BIG-IP FAST UI has not been notified to reload. 
 
-Beginning with FAST version 1.10, a checkbox has been added to the **Settings** tab to **Disable AS3 Declaration Cache**. 
-By disabling AS3 caching, FAST uses the most up-to-date declarations from AS3 which can affect the UI updating when config-sync is modifying an AS3 declaration.
-Be aware that by checking **Disable AS3 Declaration Cache**, FAST will check more frequently for application state which may slow performance, but solves the config-sync issue. 
+Beginning with BIG-IP FAST version 1.10, a checkbox has been added to the **Settings** tab to **Disable AS3 Declaration Cache**. 
+By disabling BIG-IP AS3 caching, BIG-IP FAST uses the most up-to-date declarations from AS3 which can affect the UI updating when config-sync is modifying an AS3 declaration.
+Be aware that by checking **Disable AS3 Declaration Cache**, BIG-IP FAST will check more frequently for application state which may slow performance, but solves the config-sync issue. 
 
-Versions prior to 1.10, restarting the restnoded daemon forces a reload and causes all apps to sync in FAST.
+Versions prior to 1.10, restarting the restnoded daemon forces a reload and causes all apps to sync in BIG-IP FAST.
 
 To restart the daemon, run the following command in a BIG-IP terminal:
 
@@ -120,10 +120,10 @@ The restart should only take a few seconds with the BIG-IP having limited REST a
 
 See `K67197865: BIG-IP daemons <https://support.f5.com/csp/article/K67197865>`_ for information on BIG-IP daemons.
 
-FAST Returns 404 After BIG-IP Reboot
-------------------------------------
+BIG-IP FAST Returns 404 After BIG-IP Reboot
+-------------------------------------------
 
-Running a BIG-IP VE version 16.1 with limited resources, along with a FAST version prior to 1.16.0, and performing a reboot, may result in the following error::
+Running a BIG-IP VE version 16.1 with limited resources, along with a BIG-IP FAST version prior to 1.16.0, and performing a reboot, may result in the following error::
 
   {
   "code": 404,
@@ -132,7 +132,7 @@ Running a BIG-IP VE version 16.1 with limited resources, along with a FAST versi
   "errorStack": []
   }
 
-The resolution is to upgrade to FAST version 1.16.0 or later.
+The resolution is to upgrade to BIG-IP FAST version 1.16.0 or later.
 
 HTTP Template Health Monitors not Displaying Properly
 -----------------------------------------------------
@@ -140,15 +140,15 @@ HTTP Template Health Monitors not Displaying Properly
 | There are 2 instances where health monitors associated with the HTTP template may not display as expected.
 |
 | 1. Combining the HTTP template with the FastL4 health monitor may result in the health monitor not displaying correctly. 
-| 2. HTTPS monitor may not hide when the FAST generated HTTPS monitor is selected.
+| 2. HTTPS monitor may not hide when the BIG-IP FAST generated HTTPS monitor is selected.
 |
-The resolution is to upgrade to FAST version 1.17.0 or later.
+The resolution is to upgrade to BIG-IP FAST version 1.17.0 or later.
 
 Known Issues
 ------------
 
 | All known issues are now on GitHub as Issues for better tracking and visibility.
-| See issues with a label of **Known Issue** at `FAST GitHub <https://github.com/F5Networks/f5-appsvcs-templates/issues>`_.
+| See issues with a label of **Known Issue** at `BIG-IP FAST GitHub <https://github.com/F5Networks/f5-appsvcs-templates/issues>`_.
 
 
 .. |br| raw:: html

@@ -1,10 +1,10 @@
 .. _temp-list:
 
-Appendix C: FAST Available Templates
-====================================
+Appendix C: F5 BIG-IP FAST Available Templates
+==============================================
 
-| FAST comes pre-installed with a base set of templates. Included are templates to deploy virtual servers for basic deployments as well as several example templates. 
-| FAST templates are broken into 2 sections; bigip-fast-templates and examples. 
+| BIG-IP FAST comes pre-installed with a base set of templates. Included are templates to deploy virtual servers for basic deployments as well as several example templates. 
+| BIG-IP FAST templates are broken into 2 sections; bigip-fast-templates and examples. 
 |
 
 The following table lists the template set, the corresponding template(s) and a brief description:
@@ -87,4 +87,4 @@ The following table lists the template set, the corresponding template(s) and a 
 
 .. NOTE:: Before the UDP Application with IPAM template can be used, an IPAM provider must be configured on the **Settings** tab.
 
-Please report any issues or an RFE on the `FAST GitHub page <https://github.com/F5Networks/f5-appsvcs-templates>`_ > Issues tab, click New Issue.
+Please report any issues or an RFE on the `BIG-IP FAST GitHub page <https://github.com/F5Networks/f5-appsvcs-templates>`_ > Issues tab, click New Issue.

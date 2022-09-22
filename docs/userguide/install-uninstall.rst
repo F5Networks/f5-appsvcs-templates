@@ -3,7 +3,7 @@
 Install / Upgrade / Uninstall
 =============================
 
-The following information will assist in installing and uninstalling FAST on the BIG-IP.
+The following information will assist in installing and uninstalling F5 BIG-IP FAST on the BIG-IP.
 
 
 Installation
@@ -14,7 +14,7 @@ Requirements:
 * BIG-IP v13.1 or later.
 * AS3 v3.16 or later must be installed, see  `Downloading and Installing AS3 <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html>`_.
 
-| 1. Download the FAST extension RPM from `FAST GitHub <https://github.com/F5Networks/f5-appsvcs-templates/tags>`_
+| 1. Download the BIG-IP FAST extension RPM from `BIG-IP FAST GitHub <https://github.com/F5Networks/f5-appsvcs-templates/tags>`_
 
    * Choose the most current version
    * Under the **Assets** section, click the .rpm file, downloading to a location accessible from the BIG-IP
@@ -30,20 +30,20 @@ Once the package is imported, **f5-appsvcs-templates** will appear in the list o
       This is not necessary with BIG-IP 14.0 and later.
 
 
-Upgrading FAST
---------------
+Upgrading BIG-IP FAST
+---------------------
 
-When F5 releases a new version of FAST, use the same procedure you used to initially install the RPM. 
+When F5 releases a new version of BIG-IP FAST, use the same procedure you used to initially install the RPM. 
 See the *Installation* instructions above.
 
 **Notes:** 
 
-* TMUI caches iApps LX GUIs and the cache needs to be cleared on FAST upgrades to get the GUI changes (i.e., use a cache-clearing refresh or reset depending on the browser)
-* FAST follows semantic versioning and all releases of FAST, and bundled template sets, are backward compatible with previous releases in the same major version
+* TMUI caches iApps LX GUIs and the cache needs to be cleared on BIG-IP FAST upgrades to get the GUI changes (i.e., use a cache-clearing refresh or reset depending on the browser)
+* BIG-IP FAST follows semantic versioning and all releases of BIG-IP FAST, and bundled template sets, are backward compatible with previous releases in the same major version
 
 
-Uninstalling FAST
------------------
+Uninstalling BIG-IP FAST
+------------------------
 
 To completely uninstall, and remove, the "F5 Applications Services Templates" entry from the GUI, perform the following steps:
 
