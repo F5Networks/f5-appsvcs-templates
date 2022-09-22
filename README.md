@@ -1,11 +1,11 @@
-# F5 BIG-IP Application Services Templates (FAST)
-FAST templates are an easy and effective way to deploy applications on the BIG-IP system using [AS3](https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/).
+# F5 BIG-IP Application Services Templates (BIG-IP FAST)
+BIG-IP FAST templates are an easy and effective way to deploy applications on the BIG-IP system using [BIG-IP AS3](https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/).
 
-The FAST Extension provides a toolset for templating and managing AS3 Applications on BIG-IP.
+The BIG-IP FAST Extension provides a toolset for templating and managing BIG-IP AS3 Applications on BIG-IP.
 
 ## Documentation
 
-For more information about FAST, including installation and usage information, see the [FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
+For more information about BIG-IP FAST, including installation and usage information, see the [BIG-IP FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
 
 ## Filing Issues and Getting Help
@@ -19,11 +19,11 @@ You can also see current known issues on that page.
 **Prerequisites**
 
 * BIG-IP, TMOS v13.1 or later.
-* AS3 version 3.16 or later must be installed (see the [AS3 Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html) for details on installing AS3).
+* BIG-IP AS3 version 3.16 or later must be installed (see the [BIG-IP AS3 Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/userguide/installation.html) for details on installing BIG-IP AS3).
 
-### Installing the FAST Extension
+### Installing the BIG-IP FAST Extension
 
-1. Download the FAST extension RPM the [GitHub Release](https://github.com/F5networks/f5-appsvcs-templates/releases) Assets.
+1. Download the BIG-IP FAST extension RPM the [GitHub Release](https://github.com/F5networks/f5-appsvcs-templates/releases) Assets.
 
 2. From the BIG-IP system, install the extension by navigating to **iApps > Package Management LX**. Click **Import** and then select the RPM you downloaded.
 
@@ -33,7 +33,7 @@ You can also see current known issues on that page.
 
 3. Click **iApps > Application Services > Applications LX**.
 
-4. Click **F5 Application Services Templates** to start using FAST.
+4. Click **F5 Application Services Templates** to start using BIG-IP FAST.
 
 ## Development
 
@@ -73,7 +73,7 @@ There is also an `install-rpm` script provided in `scripts` that installs the la
 
 ### Perfomance Tracing
 
-FAST supports perfomance tracing using [Jaeger](https://www.jaegertracing.io/).
+BIG-IP FAST supports perfomance tracing using [Jaeger](https://www.jaegertracing.io/).
 
 To build RPM package with all required modules for Perfmonace tracing, run:
 ```bash
@@ -82,13 +82,13 @@ npm run buildperf
 
 After installing RPM package on the BIGIP system, in order to enable perfomance tracing, the following environment variables are required to be set on the BIGIP system:
 
- * F5_PERF_TRACING_ENABLED - boolean flag to enable FAST Perfomance tracing
+ * F5_PERF_TRACING_ENABLED - boolean flag to enable BIG-IP FAST Perfomance tracing
  * F5_PERF_TRACING_DEBUG - boolean flag to enable additional logging on Jaeger client
  * F5_PERF_TRACING_ENDPOINT - Jaeger url for sending traces (i.e. http://<ip_address>:14268/api/traces)
  
 ### Logging
 
-All log messages should contain the worker name (FAST Worker) for easier filtering.
+All log messages should contain the worker name (BIG-IP FAST Worker) for easier filtering.
 
 The following logging levels are used (from low priority to high):
 
@@ -102,7 +102,7 @@ A `finest` is also available, but already gets spammed with a lot of socket info
 All requests and responses are logged at a `fine` log level by default.
 Any response that contains an error status code (>=400) will default to an `error`.
 
-**NOTE:** FAST is the next-generation successor to the now deprecated iApps templates. We strongly recommend **not** using both FAST AND iApp templates together as these templating solutions are incompatible with each other. Using both FAST and iApps is likely to create configuration and source-of-truth conflicts, resulting in an undesirable end-state. 
+**NOTE:** BIG-IP FAST is the next-generation successor to the now deprecated iApps templates. We strongly recommend **not** using both BIG-IP FAST AND iApp templates together as these templating solutions are incompatible with each other. Using both BIG-IP FAST and iApps is likely to create configuration and source-of-truth conflicts, resulting in an undesirable end-state. 
 
 ## License
 
