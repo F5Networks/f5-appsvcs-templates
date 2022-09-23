@@ -130,7 +130,7 @@ class FASTWorker {
         this.lazyInit = options.lazyInit;
 
         this.initRetries = 0;
-        this.initMaxRetries = 2;
+        this.initMaxRetries = 15;
         this.initTimeout = false;
 
         this.isPublic = true;
@@ -517,7 +517,7 @@ class FASTWorker {
             // Errors
             .catch((e) => {
                 this.logger.info(`FAST Worker: Entering UNHEALTHY state: ${e.message}`);
-                if ((e.status && e.status === 404) || e.message.match(/ 404/)) {
+                if ((e.status && e.status === 404) || e.message.match(/404/)) {
                     this.logger.info('FAST Worker: onStart 404 error in initWorker; retry initWorker but start Express');
                     return success();
                 }
@@ -561,16 +561,22 @@ class FASTWorker {
                     clearTimeout(this.initTimeout);
                 }
                 this.logger.info(`FAST Worker: Entering UNHEALTHY state: ${e.message}`);
-                // we will retry initWorker 3 times for 404 errors
-                if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/ 404/))) {
+                // we will retry initWorker 5 times with 5 seconds delay for 404 errors
+                if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/404/))) {
                     this.initRetries += 1;
-                    this.initTimeout = setTimeout(() => { this.initWorker(reqid, ctx); }, 2000);
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
-                    return Promise.resolve();
+                    return this._delay(2000)
+                        .then(() => this.initWorker(reqid, ctx));
                 }
                 this.logger.severe(`FAST Worker: initWorker failed. ${e.message}`);
                 return Promise.reject(e);
             });
+    }
+
+    _delay(milliSeconds) {
+        return new Promise((resolve) => {
+            this.initTimeout = setTimeout(resolve(), milliSeconds);
+        });
     }
 
     handleLazyInit(reqid, ctx) {
@@ -587,6 +593,14 @@ class FASTWorker {
 
     prepareAS3Driver(reqid, config, ctx) {
         return Promise.resolve()
+            .then(() => this.driver.getInfo())
+            .then((as3InfoResponse) => {
+                if (as3InfoResponse.status === 200) {
+                    return Promise.resolve();
+                }
+                const errMessage = typeof as3InfoResponse.data === 'object' ? JSON.stringify(as3InfoResponse.data) : as3InfoResponse.statusText;
+                return Promise.reject(new Error(`AS3 Info Response: ${errMessage}`));
+            })
             .then(() => this.recordTransaction(
                 reqid,
                 'ready AS3 driver',

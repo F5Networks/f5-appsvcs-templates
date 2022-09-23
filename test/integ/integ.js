@@ -424,9 +424,9 @@ describe('Applications', function () {
     it('C72081270 PATCH existing application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
             application_name: 'patch',
-            virtual_address: '10.0.0.10',
+            virtual_address: '10.0.0.11',
             server_addresses: [
-                '10.0.0.10'
+                '10.0.0.11'
             ]
         }))
         .then(() => patchApplication('foo/patch', {
@@ -435,14 +435,14 @@ describe('Applications', function () {
     it('C72081271 PATCH existing application should not create a new application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
             application_name: 'patchBad',
-            virtual_address: '10.0.0.11',
+            virtual_address: '10.0.0.12',
             server_addresses: [
-                '10.0.0.11'
+                '10.0.0.12'
             ]
         }))
         .then(() => patchApplication('foo/patchBad', {
             application_name: 'patchBad2',
-            virtual_address: '10.0.0.12'
+            virtual_address: '10.0.0.13'
         }, {
             code: 422,
             message: 'change application name'
