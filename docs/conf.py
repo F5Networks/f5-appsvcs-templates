@@ -72,7 +72,7 @@ source_encoding = 'utf-8-sig'
 master_doc = 'index'
 
 # General information about the project.
-project = u'FAST'
+project = u'F5 BIG-IP FAST'
 copyright = u'2022, F5 Networks'
 author = u'F5 Networks'
 
