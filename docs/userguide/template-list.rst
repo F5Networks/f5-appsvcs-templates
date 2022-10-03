@@ -52,6 +52,10 @@ The following table lists the template set, the corresponding template(s) and a 
       * - bigip-fast-templates
         - TCP Application Template
         - Configure high availability and optimization for TCP implementations
+      
+      * - bigip-fast-templates
+        - UDP Application Template
+        - Configure high availability and optimization for UDP implementations
 
       * - bigip-fast-templates
         - Blue/Green Template
