@@ -15,7 +15,7 @@ Beginning with BIG-IP FAST version 1.15.0, the Revision History document will re
         - Date
 
       * - 25.0
-        - BIG-IP FAST **v1.21** can be found `here <https://github.com/F5Networks/f5-appsvcs-templates/releases/tag/v1.21.0>`_
+        - BIG-IP FAST **v1.21** can be found `here <https://github.com/F5Networks/f5-appsvcs-templates/releases>`_
         - 10-04-22
 
       * - 24.0
