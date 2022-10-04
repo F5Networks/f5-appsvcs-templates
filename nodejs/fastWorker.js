@@ -100,6 +100,7 @@ const supportedHashes = {
     ]
 };
 
+/** Class representing a FAST Worker process. */
 class FASTWorker {
     constructor(options) {
         options = options || {};
@@ -183,6 +184,9 @@ class FASTWorker {
         ctx.span.finish();
     }
 
+    /**
+     * hook for additional logging during start up
+     */
     hookCompleteRestOp() {
         // Hook completeRestOperation() so we can add additional logging
         this._prevCompleteRestOp = this.completeRestOperation;
@@ -217,6 +221,9 @@ class FASTWorker {
         };
     }
 
+    /**
+     * hook for closing tracer on shut down
+     */
     hookOnShutDown() {
         this._prevShutDown = this.onShutDown;
         this.onShutDown = () => {
@@ -225,6 +232,11 @@ class FASTWorker {
         };
     }
 
+    /**
+     * validate FASTWorker configuration
+     * @param {Object} config - object containing the FASTWorker config Settings
+     * @returns {Promise}
+     */
     validateConfig(config) {
         return Promise.resolve()
             .then(() => ajv.compile(this.getConfigSchema()))
@@ -240,6 +252,10 @@ class FASTWorker {
             });
     }
 
+    /**
+     * get default FASTWorker configuration
+     * @returns {Object}
+     */
     _getDefaultConfig() {
         const defaultConfig = {
             deletedTemplateSets: [],
@@ -255,6 +271,11 @@ class FASTWorker {
         return Object.assign({}, defaultConfig);
     }
 
+    /**
+     * get FASTWorker configuration
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @returns {Promise}
+     */
     getConfig(reqid) {
         reqid = reqid || 0;
         let mergedDefaults = this._getDefaultConfig();
@@ -301,6 +322,10 @@ class FASTWorker {
             });
     }
 
+    /**
+     * get FASTWorker configuration schema
+     * @returns {Object}
+     */
     getConfigSchema() {
         let baseSchema = {
             $schema: 'http://json-schema.org/schema#',
@@ -370,6 +395,13 @@ class FASTWorker {
         return merge(this.driver.getSettingsSchema(), baseSchema);
     }
 
+    /**
+     * save FASTWorker configuration
+     * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     saveConfig(config, reqid, ctx) {
         reqid = reqid || 0;
         let prevConfig;
@@ -402,6 +434,11 @@ class FASTWorker {
             });
     }
 
+    /**
+     * encrypt secrets in FASTWorker settings
+     * @param {Object} newConfig - object containing the FASTWorker config Settings
+     * @returns {Promise}
+     */
     encryptConfigSecrets(newConfig) {
         return Promise.all((newConfig.ipamProviders || []).map(provider => Promise.resolve()
             .then(() => {
@@ -419,6 +456,12 @@ class FASTWorker {
             })));
     }
 
+    /**
+     * handle error from Response
+     * @param {Object} e - error object returned with response
+     * @param {string} description - describes what triggered the error
+     * @returns {Promise}
+     */
     handleResponseError(e, description) {
         description = description || 'request';
         if (e.response) {
@@ -437,7 +480,10 @@ class FASTWorker {
     }
 
     /**
-     * Worker Handlers
+     * FASTWorker's start up handler
+     * @param {Object} success - callback for resolving the returned Promise
+     * @param {Object} error - callback for rejecting the returned Promise
+     * @returns {Promise}
      */
     onStart(success, error) {
         this.hookCompleteRestOp();
@@ -527,6 +573,14 @@ class FASTWorker {
             });
     }
 
+    /**
+     * handle FASTWorker's start up completed event
+     * @param {Object} success - callback for resolving the returned Promise
+     * @param {Object} error - callback for rejecting the returned Promise
+     * @param {Object} _loadedState - not used anywhere, but Lint doesn't care
+     * @param {string} errMsg - description of an error that occurred during start up
+     * @returns {Object} either the success or error callback function
+     */
     onStartCompleted(success, error, _loadedState, errMsg) {
         if (typeof errMsg === 'string' && errMsg !== '') {
             this.logger.error(`FAST Worker onStart error: ${errMsg}`);
@@ -535,6 +589,12 @@ class FASTWorker {
         return success();
     }
 
+    /**
+     * initialize the FASTWorker process
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     initWorker(reqid, ctx) {
         reqid = reqid || 0;
         let config;
@@ -573,12 +633,23 @@ class FASTWorker {
             });
     }
 
+    /**
+     * set timeout for retrying initialization of the FASTWorker process
+     * @param {number} milliSeconds - FASTWorker process id, identifying the request
+     * @returns {Promise}
+     */
     _delay(milliSeconds) {
         return new Promise((resolve) => {
             this.initTimeout = setTimeout(resolve(), milliSeconds);
         });
     }
 
+    /**
+     * Lazy Initialization event handler
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     handleLazyInit(reqid, ctx) {
         if (!this.lazyInit || this._lazyInitComplete) {
             return Promise.resolve();
@@ -591,6 +662,13 @@ class FASTWorker {
         );
     }
 
+    /**
+     * prepare the AS3 Driver
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     prepareAS3Driver(reqid, config, ctx) {
         return Promise.resolve()
             .then(() => this.driver.getInfo())
@@ -613,6 +691,12 @@ class FASTWorker {
             ));
     }
 
+    /**
+     * load Template Sets from filesystem
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} config - object containing the FASTWorker config Settings
+     * @returns {Promise}
+     */
     loadOnDiskTemplateSets(reqid, config) {
         let saveState = true;
 
@@ -650,6 +734,9 @@ class FASTWorker {
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
 
+    /**
+     * clear cache whenever BIG-IP device configuration is sync'd to this device
+     */
     onConfigSync() {
         return Promise.resolve()
             .then(() => this.storage.clearCache())
@@ -658,6 +745,12 @@ class FASTWorker {
             .then(() => this.templateProvider.invalidateCache());
     }
 
+    /**
+     * set information about the BIG-IP Device
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     setDeviceInfo(reqid, ctx) {
         // If device-info is unavailable intermittently, this can be placed in onStart
         // and call setDeviceInfo in onStartCompleted
@@ -690,6 +783,14 @@ class FASTWorker {
     /**
      * TEEM Report Generators
      */
+
+    /**
+     * send Report data to TEEM server
+     * @param {string} reportName - describes the event being reported
+     * @param {number} reportVersion - 1
+     * @param {Object} data - FAST config Settings and AS3 Driver data
+     * @returns {Promise}
+     */
     sendTeemReport(reportName, reportVersion, data) {
         if (!this.teemDevice) {
             return Promise.resolve();
@@ -705,6 +806,10 @@ class FASTWorker {
         return Promise.resolve();
     }
 
+    /**
+     * create new Performance Tracer
+     * @param {Object} options - Performance Tracer configuration
+     */
     setTracer(options) {
         if (this.tracer) {
             this.tracer.close();
@@ -730,6 +835,12 @@ class FASTWorker {
         this.tracer = new Tracer(pkg.name, tracerOpts);
     }
 
+    /**
+     * generate TEEM report for onStart event
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     generateTeemReportOnStart(reqid, ctx) {
         if (!this.teemDevice) {
             return Promise.resolve();
@@ -742,6 +853,13 @@ class FASTWorker {
         return Promise.resolve();
     }
 
+    /**
+     * generate TEEM report for Application Management activity
+     * @param {string} action - action being performed on Application
+     * @param {string} templateName - name of Application's template
+     * @param {string} templateType - Application's template type
+     * @returns {Promise}
+     */
     generateTeemReportApplication(action, templateName, templateType) {
         if (!this.teemDevice) {
             return Promise.resolve();
@@ -760,6 +878,13 @@ class FASTWorker {
         return Promise.resolve();
     }
 
+    /**
+     * generate TEEM report for Template Set Management activity
+     * @param {string} action - action being performed on Template Set
+     * @param {string} templateSetName - name of Template Set
+     * @param {string} templateType - Template Set's type
+     * @returns {Promise}
+     */
     generateTeemReportTemplateSet(action, templateSetName, templateType) {
         if (!this.teemDevice) {
             return Promise.resolve();
@@ -792,6 +917,11 @@ class FASTWorker {
         return Promise.resolve();
     }
 
+    /**
+     * generate TEEM report for Error event
+     * @param {Object} restOp - restOperation
+     * @returns {Promise}
+     */
     generateTeemReportError(restOp) {
         if (!this.teemDevice) {
             return Promise.resolve();
@@ -817,12 +947,22 @@ class FASTWorker {
     /**
      * Helper functions
      */
+
+    /**
+     * get new FASTWorker request ID
+     * @returns {Promise}
+     */
     generateRequestId() {
         const retval = this.requestCounter;
         this.requestCounter += 1;
         return retval;
     }
 
+    /**
+     * get new Context for Performance Tracing
+     * @param {Object} operation - restOperation
+     * @returns {Promise}
+     */
     generateContext(operation) {
         // returns /shared/fast/{collection}{/item...}{?queryParams}
         // no restOp indicates one of initial runs (i.e. onStart, fastWorker init)
@@ -871,18 +1011,42 @@ class FASTWorker {
         return context;
     }
 
+    /**
+     * enter Transaction Logging operation
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {string} text - description of transaction
+     * @returns {Promise}
+     */
     enterTransaction(reqid, text) {
         this.transactionLogger.enter(`${reqid}@@${text}`);
     }
 
+    /**
+     * exit Transaction Logging operation
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {string} text - description of transaction
+     * @returns {Promise}
+     */
     exitTransaction(reqid, text) {
         this.transactionLogger.exit(`${reqid}@@${text}`);
     }
 
+    /**
+     * record Transaction Logging operation
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {string} text - description of transaction
+     * @param {Promise} promise - Promise to resolve in this transaction
+     * @returns {Promise}
+     */
     recordTransaction(reqid, text, promise) {
         return this.transactionLogger.enterPromise(`${reqid}@@${text}`, promise);
     }
 
+    /**
+     * filter list of Templates
+     * @param {Object} templateNames - list of Templates to filter
+     * @returns {Promise}
+     */
     filterTemplates(templateNames) {
         if (!templateNames) {
             return Promise.resolve([]);
@@ -901,6 +1065,13 @@ class FASTWorker {
             .then(tmpls => tmpls.map(x => x[0]));
     }
 
+    /**
+     * gather Template Set information
+     * @param {string} tsid - name of Template Set to gather
+     * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     gatherTemplateSet(tsid, config, ctx) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
@@ -953,6 +1124,12 @@ class FASTWorker {
             }));
     }
 
+    /**
+     * collect FAST config Settings and AS3 Driver data
+     * @param {number} requestId - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     gatherInfo(requestId, ctx) {
         requestId = requestId || 0;
         const info = {
@@ -997,6 +1174,14 @@ class FASTWorker {
             .then(() => info);
     }
 
+    /**
+     * gather Provision data for FASTWorker Settings
+     * @param {number} requestId - FASTWorker process id, identifying the request
+     * @param {boolean} clearCache - if true, rebuild provision data when cache is more than 10 seconds old
+     * @param {boolean} skipAS3 - if true, use cached AS3 info
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     gatherProvisionData(requestId, clearCache, skipAS3, ctx) {
         if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
             this.provisionData = null;
@@ -1060,6 +1245,14 @@ class FASTWorker {
             ]));
     }
 
+    /**
+     * check Dependencies and only display (sub)templates/properties available on the device
+     * @param {Object} tmpl - Template to check
+     * @param {number} requestId - FASTWorker process id, identifying the request
+     * @param {boolean} clearCache - if true, rebuild provision data when cache is more than 10 seconds old
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     checkDependencies(tmpl, requestId, clearCache, ctx) {
         return Promise.resolve()
             .then(() => this.gatherProvisionData(requestId, clearCache, false, ctx))
@@ -1167,6 +1360,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * get child properties from Schema by name
+     * @param {Object} schema - property schema object
+     * @param {string} childName - name of properties to find
+     * @param {boolean} recurse - if true, get child properties from results
+     * @returns {Promise}
+     */
     getPropsWithChild(schema, childName, recurse) {
         const subSchemas = [
             ...schema.allOf || [],
@@ -1199,6 +1399,14 @@ class FASTWorker {
         return props;
     }
 
+    /**
+     * hydrate Schema for Template
+     * @param {Object} tmpl - Template to hydrate
+     * @param {number} requestId - FASTWorker process id, identifying the request
+     * @param {boolean} clearCache - if true, reset FASTWorker.hydrateCache to null
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     hydrateSchema(tmpl, requestId, clearCache, ctx) {
         const schema = tmpl._parametersSchema;
         const subTemplates = [
@@ -1293,6 +1501,13 @@ class FASTWorker {
             .then(() => schema);
     }
 
+    /**
+     * remove IPAM properties when not enabled
+     * @param {Object} tmpl - Template to remove IPAM from
+     * @param {number} requestId - FASTWorker process id, identifying the request
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     removeIpamProps(tmpl, requestId, ctx) {
         const subTemplates = [
             ...tmpl._allOf || [],
@@ -1346,6 +1561,12 @@ class FASTWorker {
             });
     }
 
+    /**
+     * ensure Pool Member config get updated for Applications
+     * @param {Object} restOperation
+     * @param {Object[]} apps - array of Applications to convert
+     * @returns {Promise}
+     */
     convertPoolMembers(restOperation, apps) {
         const reqid = restOperation.requestId;
 
@@ -1411,6 +1632,13 @@ class FASTWorker {
             .then(() => apps);
     }
 
+    /**
+     * release IP Address from IPAM
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {string} appsData - rendered Template
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     releaseIPAMAddressesFromApps(reqid, appsData, ctx) {
         let config;
         let promiseChain = Promise.resolve();
@@ -1442,6 +1670,13 @@ class FASTWorker {
         return promiseChain;
     }
 
+    /**
+     * GET Template
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {string} tmplid - name of Template
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     fetchTemplate(reqid, tmplid, ctx) {
         return Promise.resolve()
             .then(() => this.recordTransaction(
@@ -1468,6 +1703,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * Render Templates
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object[]} data - array of Template objects to Render
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     renderTemplates(reqid, data, ctx) {
         const appsData = [];
         const lastModified = new Date().toISOString();
@@ -1579,6 +1821,12 @@ class FASTWorker {
     /**
      * HTTP/REST handlers
      */
+
+    /**
+     * record REST Request
+     * @param {Object} restOp - restOperation
+     * @returns {Promise}
+     */
     recordRestRequest(restOp) {
         if (this.driver.userAgent) {
             // Update driver's user agent if one was provided with the request
@@ -1609,6 +1857,12 @@ class FASTWorker {
         );
     }
 
+    /**
+     * record REST Response
+     * @param {Object} restOp - restOperation
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     recordRestResponse(restOp, ctx) {
         const minOp = {
             method: restOp.getMethod(),
@@ -1636,6 +1890,15 @@ class FASTWorker {
         }
     }
 
+    /**
+     * generate Response for REST Request
+     * @param {Object} restOperation
+     * @param {number} code - status code for Response
+     * @param {string} message - message sent with Response
+     * @param {string} stack - stack trace if error
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     genRestResponse(restOperation, code, message, stack, ctx) {
         let doParse = false;
         if (typeof message !== 'string') {
@@ -1665,6 +1928,12 @@ class FASTWorker {
         return Promise.resolve();
     }
 
+    /**
+     * GET FAST config Settings and AS3 Driver data
+     * @param {Object} restOperation
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getInfo(restOperation, ctx) {
         return Promise.resolve()
             .then(() => this.gatherInfo(restOperation.requestId, ctx))
@@ -1675,6 +1944,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not gather info.', e.stack, ctx));
     }
 
+    /**
+     * GET Template by name
+     * @param {Object} restOperation
+     * @param {string} tmplid - name of Template
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getTemplates(restOperation, tmplid, ctx) {
         const reqid = restOperation.requestId;
         if (tmplid) {
@@ -1710,6 +1986,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not fetch templates list', e.stack, ctx));
     }
 
+    /**
+     * GET Applications
+     * @param {Object} restOperation
+     * @param {string} appid - name of Applications to GET
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getApplications(restOperation, appid, ctx) {
         const reqid = restOperation.requestId;
         if (appid) {
@@ -1745,6 +2028,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * GET Tasks
+     * @param {Object} restOperation
+     * @param {string} taskid - Task ID to GET
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getTasks(restOperation, taskid, ctx) {
         const reqid = restOperation.requestId;
         if (taskid) {
@@ -1779,6 +2069,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get tasks list', e.stack, ctx));
     }
 
+    /**
+     * GET Template Sets
+     * @param {Object} restOperation
+     * @param {string} tsid - name of Template Set to get
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getTemplateSets(restOperation, tsid, ctx) {
         const queryParams = restOperation.getUri().query;
         const showDisabled = queryParams.showDisabled || false;
@@ -1830,6 +2127,12 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get templatesets list', e.stack, ctx));
     }
 
+    /**
+     * GET FAST's Global-Settings config
+     * @param {Object} restOperation
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getSettings(restOperation, ctx) {
         const reqid = restOperation.requestId;
         return Promise.resolve()
@@ -1848,6 +2151,12 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get settings', e.stack, ctx));
     }
 
+    /**
+     * GET FASTWorker's config Settings Schema
+     * @param {Object} restOperation
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     getSettingsSchema(restOperation, ctx) {
         return Promise.resolve()
             .then(() => {
@@ -1858,6 +2167,11 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, 'Internal Error: Could not get settings schema', e.stack, ctx));
     }
 
+    /**
+     * GET Request handler
+     * @param {Object} restOperation
+     * @returns {Promise}
+     */
     onGet(restOperation) {
         const uri = restOperation.getUri();
         const pathElements = uri.pathname.split('/');
@@ -1897,6 +2211,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 400, e.message, undefined, ctx));
     }
 
+    /**
+     * POST Applications
+     * @param {Object} restOperation
+     * @param {Object[]} data - array of Application to create
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     postApplications(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
         if (!Array.isArray(data)) {
@@ -1962,6 +2283,12 @@ class FASTWorker {
             });
     }
 
+    /**
+     * validate Template Set
+     * @param {string} tsRoot - a path to a directory containing template set directories
+     * @param {string[]} tsFilter - only load template sets in this list (or all if list is empty)
+     * @returns {Promise}
+     */
     _validateTemplateSet(tsRoot, tsFilter) {
         const tmplProvider = new FsTemplateProvider(tsRoot, tsFilter);
         return tmplProvider.list()
@@ -1974,6 +2301,11 @@ class FASTWorker {
             .then(templateList => Promise.all(templateList.map(tmpl => tmplProvider.fetch(tmpl))));
     }
 
+    /**
+     * get link to compressed Template Set download
+     * @param {Object} data - Template Set configuration
+     * @returns {Promise}
+     */
     _getTsUrl(data) {
         if (data.gitHubRepo) {
             return `https://github.com/${data.gitHubRepo}/archive/${data.gitRef}.zip`;
@@ -1986,6 +2318,14 @@ class FASTWorker {
         return undefined;
     }
 
+    /**
+     * create local Template Set zip file from Git
+     * @param {string} tsUrl - location of Template Set in Git
+     * @param {string} setpath - path to file being created
+     * @param {Object} data - Template Set configuration
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @returns {Promise}
+     */
     _fetchTsFromGit(tsUrl, setpath, data, reqid) {
         return Promise.resolve()
             .then(() => (data.gitToken ? this.secretsManager.decrypt(data.gitToken) : Promise.resolve()))
@@ -2019,6 +2359,12 @@ class FASTWorker {
             });
     }
 
+    /**
+     * create directory for validating Template Set
+     * @param {number} reqId - FASTWorker process id, identifying the request
+     * @param {string} scratch - path to temp dir for validating Template Set
+     * @returns {Promise}
+     */
     _scratchDirectoryForValidation(reqId, scratch) {
         // Setup a scratch location we can use while validating the template set
         this.enterTransaction(reqId, 'prepare scratch space');
@@ -2027,6 +2373,11 @@ class FASTWorker {
         this.exitTransaction(reqId, 'prepare scratch space');
     }
 
+    /**
+     * get Template Set type
+     * @param {Object} data - Template Set configuration
+     * @returns {Promise}
+     */
     _returnTemplateType(data) {
         let templateType = 'local';
         if (data.gitHubRepo) {
@@ -2037,6 +2388,13 @@ class FASTWorker {
         return templateType;
     }
 
+    /**
+     * POST Template Set
+     * @param {Object} restOperation
+     * @param {Object} data - Template Set configuration
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     postTemplateSets(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
 
@@ -2243,6 +2601,13 @@ class FASTWorker {
             .finally(() => fs.removeSync(scratch));
     }
 
+    /**
+     * POST FASTWorker Settings
+     * @param {Object} restOperation
+     * @param {Object} config - FASTWorker Settings configuration
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     postSettings(restOperation, config, ctx) {
         const reqid = restOperation.requestId;
 
@@ -2266,6 +2631,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * POST to Render Templates
+     * @param {Object} restOperation
+     * @param {Object[]} config - array of Template objects to Render
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     postRender(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
         if (!Array.isArray(data)) {
@@ -2294,6 +2666,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * POST new OffBox Template Set
+     * @param {Object} restOperation
+     * @param {Object} data - config for new OffBox Template Set
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     postOffBoxTemplates(restOperation, data, ctx) {
         const reqid = restOperation.requestId;
         return Promise.resolve()
@@ -2318,6 +2697,13 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.message, e.stack, ctx));
     }
 
+    /**
+     * update config with any new OffBox Template Sets
+     * @param {number} reqid - FASTWorker process id, identifying the request
+     * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     _checkOffboxTemplatesStatus(reqid, config, ctx) {
         const foundGitRepos = [];
         const scratchGit = `${this.scratchPath}/git/`;
@@ -2372,6 +2758,11 @@ class FASTWorker {
             });
     }
 
+    /**
+     * get hash for OffBox Template Set
+     * @param {string} zipFileName - location of zipped OffBox Template Set
+     * @returns {Promise}
+     */
     _generateGitRepoHashValue(zipFileName) {
         return new Promise((resolve, reject) => {
             const zipFileHash = crypto.createHash('sha256');
@@ -2386,6 +2777,11 @@ class FASTWorker {
         });
     }
 
+    /**
+     * POST Request handler
+     * @param {Object} restOperation
+     * @returns {Promise}
+     */
     onPost(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -2423,6 +2819,14 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, ctx));
     }
 
+    /**
+     * DELETE FAST Applications
+     * @param {Object} restOperation
+     * @param {string} appid - name of Application to delete
+     * @param {Object} data - configuration of the Application being deleted
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     deleteApplications(restOperation, appid, data, ctx) {
         const reqid = restOperation.requestId;
         const uri = restOperation.getUri();
@@ -2517,6 +2921,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * DELETE FAST Template Sets
+     * @param {Object} restOperation
+     * @param {string} tsid - name of Template Set to delete
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     deleteTemplateSets(restOperation, tsid, ctx) {
         const reqid = restOperation.requestId;
         if (tsid) {
@@ -2612,6 +3023,12 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.message, e.stack, ctx));
     }
 
+    /**
+     * DELETE FASTWorker config Settings
+     * @param {Object} restOperation
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     deleteSettings(restOperation, ctx) {
         const reqid = restOperation.requestId;
         const defaultConfig = this._getDefaultConfig();
@@ -2626,6 +3043,11 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 500, e.message, e.stack, ctx));
     }
 
+    /**
+     * DELETE Request handler
+     * @param {Object} restOperation
+     * @returns {Promise}
+     */
     onDelete(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -2660,6 +3082,14 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, ctx));
     }
 
+    /**
+     * modify FAST Applications
+     * @param {Object} restOperation
+     * @param {string} appid - name of Application to modify
+     * @param {Object} data - new Application configuration
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     patchApplications(restOperation, appid, data, ctx) {
         if (!appid) {
             return Promise.resolve()
@@ -2744,6 +3174,13 @@ class FASTWorker {
             });
     }
 
+    /**
+     * modify FAST config Settings
+     * @param {Object} restOperation
+     * @param {Object} config - new FASTWorker config Settings
+     * @param {Object} ctx - context for Jaeger tracing
+     * @returns {Promise}
+     */
     patchSettings(restOperation, config, ctx) {
         const reqid = restOperation.requestId;
         let combinedConfig = {};
@@ -2773,6 +3210,11 @@ class FASTWorker {
             });
     }
 
+    /**
+     * PATCH Request handler
+     * @param {Object} restOperation
+     * @returns {Promise}
+     */
     onPatch(restOperation) {
         const body = restOperation.getBody();
         const uri = restOperation.getUri();
@@ -2805,6 +3247,11 @@ class FASTWorker {
             .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, ctx));
     }
 
+    /**
+     * validate Request
+     * @param {Object} restOperation
+     * @returns {Promise}
+     */
     validateRequest(restOperation) {
         const requestContentType = restOperation.getContentType();
         if (['Post', 'Patch'].includes(restOperation.getMethod()) && requestContentType !== 'application/json') {
