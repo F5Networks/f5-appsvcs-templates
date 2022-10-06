@@ -40,11 +40,8 @@ Previous buttons to explore the documentation.
    userguide/app-integration
    userguide/troubleshooting
    userguide/revision-history
-   userguide/api-ref
-   userguide/advanced-features
-   userguide/template-list
-   userguide/endpoint-list
-   userguide/APM-guidance
+   userguide/appendices
+
 
 
 
