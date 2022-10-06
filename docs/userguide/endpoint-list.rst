@@ -69,6 +69,7 @@ On the BIG-IP, there are endpoints that look for the presence of a given file, a
 | /sys/log-config/destination/remote-syslog
 | /sys/log-config/destination/splunk
 | /asm/policies (module: asm)
+| /security/bot-defense/profile (module asm)
 | /security/firewall/address-list (module: afm)
 | /security/firewall/port-list (module: afm)
 | /security/firewall/rule-list (module: afm)
