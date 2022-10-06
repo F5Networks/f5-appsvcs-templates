@@ -1,6 +1,6 @@
 .. _asm:
 
-Appendix G: ASM Guidance (WAF Security Policy)
+Appendix F: ASM Guidance (WAF Security Policy)
 ==============================================
 
 F5 BIG-IP FAST supports bot defense, rapid deployment and security logging for Application Security Manager (ASM/WAF) policies.
