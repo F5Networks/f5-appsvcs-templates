@@ -75,12 +75,12 @@ There is also an `install-rpm` script provided in `scripts` that installs the la
 
 BIG-IP FAST supports perfomance tracing using [Jaeger](https://www.jaegertracing.io/).
 
-To build RPM package with all required modules for Perfmonace tracing, run:
+To build RPM package with all required modules for performance tracing, run:
 ```bash
 npm run buildperf
 ```
 
-After installing RPM package on the BIGIP system, in order to enable perfomance tracing, the following environment variables are required to be set on the BIGIP system:
+After installing RPM package on the BIGIP system, in order to enable performance tracing, the following environment variables are required to be set on the BIGIP system:
 
  * F5_PERF_TRACING_ENABLED - boolean flag to enable BIG-IP FAST Perfomance tracing
  * F5_PERF_TRACING_DEBUG - boolean flag to enable additional logging on Jaeger client

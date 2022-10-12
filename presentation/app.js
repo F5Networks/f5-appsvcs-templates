@@ -290,10 +290,7 @@ const router = createRouter({
         { path: '/api', component: pageComponents.api },
         { path: '/templates', component: pageComponents.templates },
         // Fixes for embedding in TMUI
-        { path: '/application/*/edit', redirect: '/' },
-        { path: '/iapps/f5-appsvcs-templates/index.html', redirect: '/templates' },
-        { path: '/img/fastrobot.png', redirect: '/iapps/f5-appsvcs-templates/img/fastrobot.png' },
-        { path: '/*/undefined', redirect: '/#' }
+        { path: '/application/*/edit', redirect: '/' }
     ]
 });
 
