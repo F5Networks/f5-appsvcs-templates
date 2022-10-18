@@ -7,6 +7,18 @@ The BIG-IP FAST Extension provides a toolset for templating and managing BIG-IP 
 
 For more information about BIG-IP FAST, including installation and usage information, see the [BIG-IP FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
+Class Function Documentation can be generated locally in either html or markdown, using the following commands to create files in the class's directory:
+```bash
+# default format is html
+npm run buildjsdoc
+
+# specify html as the format
+npm run buildjsdoc html
+
+# specifiy markdown as the format
+npm run buildjsdoc md
+```
+
 
 ## Filing Issues and Getting Help
 

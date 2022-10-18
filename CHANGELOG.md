@@ -1,5 +1,6 @@
 # 1.22.0
 ## Added
+* Class Function Documentation and an option to create the associaited HTML or Markdown files 
 
 ## Fixed
 
