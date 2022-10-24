@@ -456,10 +456,12 @@ class FASTWorker {
                 if (typeof provider.authHeaderValue !== 'undefined') {
                     promises.push(this.secretsManager.encrypt(provider.authHeaderValue || ''));
                 }
-                Promise.all(promises).then((encryptedValues) => {
-                    provider.password = encryptedValues[0];
-                    provider.authHeaderValue = encryptedValues[1];
-                });
+                return Promise.all(promises)
+                    .then((encryptedValues) => {
+                        provider.password = encryptedValues[0];
+                        provider.authHeaderValue = encryptedValues[1];
+                        return Promise.resolve();
+                    });
             })));
     }
 
