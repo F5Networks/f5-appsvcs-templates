@@ -49,7 +49,7 @@ const safeFetch = (uri, opts, numAttempts) => {
         opts.headers['X-F5-Auth-Token'] = auth.token;
     }
 
-    if (opts.body && typeof opts.body === 'object') {
+    if (opts.body && typeof opts.body === 'object' && opts.headers['Content-Type'] !== 'application/octet-stream') {
         opts.body = JSON.stringify(opts.body);
     }
 

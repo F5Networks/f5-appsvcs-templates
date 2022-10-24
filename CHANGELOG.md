@@ -3,6 +3,7 @@
 * Class Function Documentation and an option to create the associaited HTML or Markdown files 
 
 ## Fixed
+* bigip-fast-templates: uploading zipped Template Set files works in GUI (was broken in v1.20.0 and v1.21.0)
 
 ## Changed
 
