@@ -271,6 +271,7 @@ class FASTWorker {
                 debug: String(process.env.F5_PERF_TRACING_DEBUG).toLowerCase() === 'true'
             },
             enableIpam: false,
+            tsIpAddress: '',
             ipamProviders: [],
             disableDeclarationCache: false,
             _gitTemplateSets: {}
@@ -420,7 +421,7 @@ class FASTWorker {
                 prevConfig = data;
             })
             .then(() => this.gatherProvisionData(reqid, true, false))
-            .then(provisionData => this.driver.setSettings(config, provisionData, { reqid }))
+            .then(provisionData => this.driver.setSettings(config, provisionData, false, { reqid }))
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
