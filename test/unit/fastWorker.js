@@ -44,20 +44,6 @@ const FASTWorker = require('../../nodejs/fastWorker');
 const IpamProviders = require('../../lib/ipam');
 
 const templatesPath = path.join(process.cwd(), 'templates');
-const testCtx = {
-    tracer: {
-        startChildSpan: sinon.stub().returns({
-            log: sinon.stub(),
-            finish: sinon.stub(),
-            error: sinon.stub()
-        })
-    },
-    span: {
-        log: sinon.stub(),
-        error: sinon.stub(),
-        finish: sinon.stub()
-    }
-};
 
 class RestOp {
     constructor(uri) {
@@ -145,12 +131,6 @@ const patchWorker = (worker) => {
         fine: console.log,
         log: console.log
     };
-    worker.ipamProviders = new IpamProviders({
-        secretsManager: worker.secretsManager,
-        logger: worker.logger,
-        transactionLogger: worker.transactionLogger
-    });
-    worker.setDeviceInfo({}, testCtx);
     worker.completedRestOp = false;
     worker.completeRestOperation = function (op) {
         console.log('Completed REST Operation:');
@@ -223,6 +203,16 @@ function createWorker() {
     patchWorker(worker);
 
     worker.teemDevice = new TeemDeviceMock();
+    worker.ipamProviders = new IpamProviders({
+        secretsManager: worker.secretsManager,
+        logger: worker.logger,
+        transactionLogger: worker.transactionLogger
+    });
+    worker.tracer.startSpan({
+        requestId: 0,
+        message: 'unit_test_start'
+    });
+    worker.setDeviceInfo(0);
 
     worker.hookCompleteRestOp();
     return worker;
@@ -499,7 +489,7 @@ describe('fastWorker tests', function () {
             const tmpl = {
                 _parametersSchema: inputSchema
             };
-            return worker.hydrateSchema(tmpl, 0, false, testCtx)
+            return worker.hydrateSchema(tmpl, 0, false)
                 .then((schema) => {
                     console.log(schema);
                     assert.deepEqual(schema.properties.foo.enum, [
@@ -576,14 +566,14 @@ describe('fastWorker tests', function () {
             const tmpl = {
                 _parametersSchema: inputSchema
             };
-            return worker.hydrateSchema(tmpl, 0, false, testCtx)
+            return worker.hydrateSchema(tmpl, 0, false)
                 .then((schema) => {
                     console.log(schema);
                     console.log(worker.bigip.getSharedObjects);
-                    assert.deepEqual(worker.bigip.getSharedObjects.firstCall.args, ['files', undefined, testCtx]);
-                    assert.deepEqual(worker.bigip.getSharedObjects.secondCall.args, ['files', { type: '^CERT.*' }, testCtx]);
-                    assert.deepEqual(worker.bigip.getSharedObjects.thirdCall.args, ['files', { type: '^CERT.*' }, testCtx]);
-                    assert.deepEqual(worker.bigip.getSharedObjects.lastCall.args, ['waf-policy', { type: '^CERT.*' }, testCtx]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.firstCall.args, ['files', undefined]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.secondCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.thirdCall.args, ['files', { type: '^CERT.*' }]);
+                    assert.deepEqual(worker.bigip.getSharedObjects.lastCall.args, ['waf-policy', { type: '^CERT.*' }]);
                 });
         });
         it('bigipDependencies', function () {
@@ -597,7 +587,7 @@ describe('fastWorker tests', function () {
                         retTmpl = tmpl;
                         return tmpl;
                     })
-                    .then(tmpl => worker.checkDependencies(tmpl, 0, false, testCtx))
+                    .then(tmpl => worker.checkDependencies(tmpl, 0, false))
                     .then(() => retTmpl);
             };
 
@@ -686,7 +676,7 @@ describe('fastWorker tests', function () {
                         retTmpl = tmpl;
                         return tmpl;
                     })
-                    .then(tmpl => worker.checkDependencies(tmpl, 0, false, testCtx))
+                    .then(tmpl => worker.checkDependencies(tmpl, 0, false))
                     .then(() => retTmpl);
             };
 
@@ -721,7 +711,7 @@ describe('fastWorker tests', function () {
                         retTmpl = tmpl;
                         return tmpl;
                     })
-                    .then(tmpl => worker.checkDependencies(tmpl, 0, false, testCtx))
+                    .then(tmpl => worker.checkDependencies(tmpl, 0, false))
                     .then(() => retTmpl);
             };
 
@@ -776,7 +766,7 @@ describe('fastWorker tests', function () {
                         retTmpl = tmpl;
                         return tmpl;
                     })
-                    .then(tmpl => worker.checkDependencies(tmpl, 0, false, testCtx))
+                    .then(tmpl => worker.checkDependencies(tmpl, 0, false))
                     .then(() => retTmpl);
             };
 
@@ -827,7 +817,7 @@ describe('fastWorker tests', function () {
                     assert.equal(op.status, 200);
                     expect(op.body).to.satisfySchemaInApiSpec('Settings');
                 })
-                .then(() => worker.getConfig(0, testCtx))
+                .then(() => worker.getConfig(0))
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
@@ -858,7 +848,7 @@ describe('fastWorker tests', function () {
                     assert.equal(op.status, 200);
                     expect(op.body).to.satisfySchemaInApiSpec('Settings');
                 })
-                .then(() => worker.getConfig(0, testCtx))
+                .then(() => worker.getConfig(0))
                 .then((config) => {
                     assert.strictEqual(config.tsIpAddress, '255.255.255.254');
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
@@ -896,7 +886,7 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 200);
                 })
-                .then(() => worker.getConfig(0, testCtx))
+                .then(() => worker.getConfig(0))
                 .then((config) => {
                     assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
                     assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
@@ -961,7 +951,7 @@ describe('fastWorker tests', function () {
             const getOp = new RestOp('/shared/fast/settings');
             const deleteOp = new RestOp('/shared/fast/settings');
 
-            return worker.getConfig(0, testCtx)
+            return worker.getConfig(0)
                 .then((config) => {
                     config.foo = 'bar';
                 })
@@ -1700,7 +1690,7 @@ describe('fastWorker tests', function () {
                     const sets = objFromSets(getTsOpEnabled.body);
                     assert.equal(sets.examples.enabled, true);
                 })
-                .then(() => worker.getConfig(0, testCtx))
+                .then(() => worker.getConfig(0))
                 .then((config) => {
                     console.log(JSON.stringify(config, null, 2));
                     assert.deepStrictEqual(config.deletedTemplateSets, []);

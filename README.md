@@ -7,6 +7,18 @@ The BIG-IP FAST Extension provides a toolset for templating and managing BIG-IP 
 
 For more information about BIG-IP FAST, including installation and usage information, see the [BIG-IP FAST Documentation](https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/)
 
+Class Function Documentation can be generated locally in either html or markdown, using the following commands to create files in the class's directory:
+```bash
+# default format is html
+npm run buildjsdoc
+
+# specify html as the format
+npm run buildjsdoc html
+
+# specifiy markdown as the format
+npm run buildjsdoc md
+```
+
 
 ## Filing Issues and Getting Help
 
@@ -75,12 +87,12 @@ There is also an `install-rpm` script provided in `scripts` that installs the la
 
 BIG-IP FAST supports perfomance tracing using [Jaeger](https://www.jaegertracing.io/).
 
-To build RPM package with all required modules for Perfmonace tracing, run:
+To build RPM package with all required modules for performance tracing, run:
 ```bash
 npm run buildperf
 ```
 
-After installing RPM package on the BIGIP system, in order to enable perfomance tracing, the following environment variables are required to be set on the BIGIP system:
+After installing RPM package on the BIGIP system, in order to enable performance tracing, the following environment variables are required to be set on the BIGIP system:
 
  * F5_PERF_TRACING_ENABLED - boolean flag to enable BIG-IP FAST Perfomance tracing
  * F5_PERF_TRACING_DEBUG - boolean flag to enable additional logging on Jaeger client

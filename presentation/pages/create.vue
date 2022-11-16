@@ -109,7 +109,7 @@ export default {
     },
     watch: {
         $route(to) {
-            this.update(to.params);
+            this.update(to.params, to);
         }
     },
     async created() {
@@ -125,7 +125,7 @@ export default {
                 set.expanded = set.name === setName;
             });
         },
-        update(params) {
+        update(params, to) {
             this.sets = [];
 
             let promiseChain = Promise.resolve();
@@ -160,11 +160,14 @@ export default {
                 this.backTo = '/tasks';
                 template = submissionData[taskid].template;
                 parameters = submissionData[taskid].parameters;
-            } else {
+            } else if (params.tmplid) {
                 // Create
                 this.$root.forceNav('templates');
                 this.backTo = '/templates';
                 template = params.tmplid;
+            } else {
+                this.$root.forceNav(to.path.substring(1));
+                this.backTo = to.path;
             }
 
             return promiseChain

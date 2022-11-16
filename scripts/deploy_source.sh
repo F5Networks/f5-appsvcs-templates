@@ -20,6 +20,7 @@ INSTANCES=$(cat $PATH_TO_DEPLOYMENT_INFO | jq .instances -r)
 FIRST_IP=$(echo $INSTANCES | jq '.[0] | .mgmt_address' -r)
 USERNAME=$(echo $INSTANCES | jq '.[0] | .admin_username' -r)
 PASSWORD=$(echo $INSTANCES | jq '.[0] | .admin_password' -r)
+PORT=$(echo $INSTANCES | jq '.[0] | .mgmt_port' -r)
 
 for HOST in ${FIRST_IP}; do
 	echo "IP: ${HOST} USER: ${USERNAME} PASSWORD: ${PASSWORD}"
@@ -36,7 +37,7 @@ CURL_FLAGS="--silent --show-error --write-out \n --insecure -u ${USERNAME}:${PAS
 
 echo "Waiting for fast/info endpoint to be available"
 until curl ${CURL_FLAGS} -o /dev/null --write-out "" --fail 2> /dev/null \
-    "https://$FIRST_IP/mgmt/shared/fast/info"; do
+    "https://${FIRST_IP}:${PORT}/mgmt/shared/fast/info"; do
     sleep 1
 done
 

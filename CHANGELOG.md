@@ -1,3 +1,13 @@
+# 1.22.0
+## Added
+* Class Function Documentation and an option to create the associaited HTML or Markdown files 
+
+## Fixed
+* bigip-fast-templates: uploading zipped Template Set files works in GUI (was broken in v1.20.0 and v1.21.0)
+* gui: Fix displaying template parameters that are not required and have no default value
+
+## Changed
+
 # 1.21.0
 ## Added
 * bigip-fast-templates: New UDP template 

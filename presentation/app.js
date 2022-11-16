@@ -49,7 +49,7 @@ const safeFetch = (uri, opts, numAttempts) => {
         opts.headers['X-F5-Auth-Token'] = auth.token;
     }
 
-    if (opts.body && typeof opts.body === 'object') {
+    if (opts.body && typeof opts.body === 'object' && opts.headers['Content-Type'] !== 'application/octet-stream') {
         opts.body = JSON.stringify(opts.body);
     }
 
@@ -290,10 +290,7 @@ const router = createRouter({
         { path: '/api', component: pageComponents.api },
         { path: '/templates', component: pageComponents.templates },
         // Fixes for embedding in TMUI
-        { path: '/application/*/edit', redirect: '/' },
-        { path: '/iapps/f5-appsvcs-templates/index.html', redirect: '/templates' },
-        { path: '/img/fastrobot.png', redirect: '/iapps/f5-appsvcs-templates/img/fastrobot.png' },
-        { path: '/*/undefined', redirect: '/#' }
+        { path: '/application/*/edit', redirect: '/' }
     ]
 });
 

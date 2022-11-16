@@ -76,6 +76,7 @@ export default {
                 startval: guiUtils.filterExtraProperties(defaults, schema),
                 compact: true,
                 show_errors: 'always',
+                show_opt_in: true,
                 disable_edit_json: true,
                 disable_properties: true,
                 disable_collapse: true,
@@ -84,6 +85,11 @@ export default {
             });
 
             this.editor.on('ready', () => {
+                // Auto-activate "opt ins" from show_opt_in
+                Object.values(this.editor.editors || {})
+                    .filter(ed => !ed.isActive())
+                    .forEach(ed => ed.activate());
+
                 // Render Markdown in descriptions
                 const descElements = formElement.getElementsByClassName('je-desc');
                 Array.prototype.map.call(descElements, (elem) => {
@@ -144,5 +150,10 @@ export default {
 .je-desc a {
   text-decoration: revert;
   color: revert;
+}
+
+/* Hide opt-in checkboxes */
+.json-editor-opt-in {
+  display: none;
 }
 </style>
