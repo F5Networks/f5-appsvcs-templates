@@ -538,9 +538,9 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                enable_telemetry: true,
-                log_asm: true,
-                log_afm: true,
+                enable_telemetry: enableTelemetry,
+                log_asm: logASM,
+                log_afm: logAFM,
                 perfTracing: {
                     debug: perfTracing.debug,
                     enabled: perfTracing.enabled
@@ -570,9 +570,9 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     // driver defaults
-                    enable_telemetry: true,
-                    log_asm: true,
-                    log_afm: true,
+                    enable_telemetry: enableTelemetry,
+                    log_asm: logASM,
+                    log_afm: logAFM,
                     perfTracing: {
                         debug: perfTracing.debug,
                         enabled: perfTracing.enabled
@@ -603,8 +603,8 @@ describe('Settings', function () {
                 authHeaderValue: 'Bearer SecretValue'
             }],
             enableIpam: false,
-            log_afm: true,
-            log_asm: true,
+            log_afm: logAFM,
+            log_asm: logASM,
             perfTracing: {
                 debug: perfTracing.debug,
                 enabled: perfTracing.enabled
@@ -649,12 +649,12 @@ describe('Settings', function () {
             .then(actual => assertResponse(actual, expected))
             .then(() => {
                 expected.data = {
-                    enable_telemetry: true,
+                    enable_telemetry: enableTelemetry,
                     deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
-                    log_afm: true,
-                    log_asm: true,
+                    log_afm: logAFM,
+                    log_asm: logASM,
                     perfTracing: {
                         debug: perfTracing.debug,
                         enabled: perfTracing.enabled
