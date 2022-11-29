@@ -171,6 +171,25 @@ describe('AS3 Driver tests', function () {
 
         return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
     });
+    it('create_app_with_route_domain', function () {
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+        mockAS3(as3stub);
+
+        appDef = {
+            tenantName: {
+                class: 'Tenant',
+                defaultRouteDomain: 0,
+                appName: {
+                    class: 'Application'
+                }
+            }
+        };
+
+        return driver._prepareAppDef(appDef)
+            .then(preparedDef => driver._stitchDecl(as3stub, preparedDef))
+            .then(decl => assert.deepInclude(JSON.stringify(decl), 'defaultRouteDomain'));
+    });
     it('create_app_user_agent', function () {
         const driver = new AS3Driver({ userAgent: 'foo-bar/1.0' });
         driver._static_id = 'STATIC';
