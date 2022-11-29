@@ -2379,6 +2379,12 @@ describe('fastWorker tests', function () {
                         { fullPath: '/Common/httpcompression' },
                         { fullPath: '/Common/wan-optimized-compression' }
                     ]
+                })
+                .get(/mgmt\/tm\/.*\?/)
+                .reply(200, {
+                    items: [
+                        { name: '/Common/0' }
+                    ]
                 });
             const op = new RestOp('/shared/fast/applications');
             return worker.onGet(op)
