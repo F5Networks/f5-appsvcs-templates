@@ -206,7 +206,7 @@ describe('BigipDeviceClassic tests', function () {
                 .persist()
                 .get('/mgmt/tm/ltm/pool?$select=fullPath')
                 .reply(200, mockLtmMetadata);
-            return bigip.getSharedObjects('ltm/pool', { name: 'test' }, testCtx)
+            return bigip.getSharedObjects('ltm/pool', { name: 'test' })
                 .then(result => assert.deepEqual(result, ['/Common/test-pool-01', '/Common/test-pool-02']));
         });
 
