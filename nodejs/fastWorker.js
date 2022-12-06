@@ -2724,6 +2724,15 @@ class FASTWorker {
     }
 
     /**
+     * PUT Request handler
+     * @param {Object} restOperation
+     * @returns {Promise}
+     */
+    onPut(restOperation) {
+        return this.onPost(restOperation);
+    }
+
+    /**
      * POST Request handler
      * @param {Object} restOperation
      * @returns {Promise}
