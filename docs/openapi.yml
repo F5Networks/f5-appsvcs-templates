@@ -97,6 +97,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FastResponse500"
+    put:
+      tags:
+        - Application Management
+      summary: Create or update Applications from Templates.
+      description: This is method to deploy a templated Application. This will be used to render a Template, and that Template will get posted to AS3. The call to AS3 may be async, so this endpoint must also be async. A Task will be returned upon successful parameter submission that can track the progress of the deployment.
+      operationId: putFASTApplications
+      requestBody:
+        description: An application definition, including the name of the template to run and the parameters needed to render and post the output.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FastApplicationRequest"
+      responses:
+        '202':
+          description: Template Job Submitted Successfully, check the provided Task ID to get the status of the deployment.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastApplicationResponse"
+        '400':
+          description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse400"
+        '500':
+          description: Internal error. A bug report should be filed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - Application Management
@@ -510,6 +542,126 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FastResponse500"
+    put:
+      summary: Install Template Set
+      description: Installs a new template set or updates existent templateset from a variety of sources
+      operationId: putFASTTemplateSets
+      tags:
+        - Template Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - title: File Upload
+                  description: Install a previously uploaded zip archive as a template set
+                  required:
+                    - name
+                  properties:
+                    name:
+                      title: Template Set name
+                      description: The name of the Template Set to install (excluding the .zip extension).
+                      type: string
+                      example: new_template_set
+                - title: GitHub Repository
+                  description: Install a GitHub repository (or sub-directory in a repository) as a template set
+                  required:
+                    - gitHubRepo
+                  properties:
+                    gitHubRepo:
+                      title: GitHub Repository
+                      description: A GitHub repository to use as a template set
+                      type: string
+                      example: org/templateset
+                    gitToken:
+                      title: GitHub API token
+                      description: An API token used to access private repositories
+                      type: string
+                      default: null
+                    gitSubDir:
+                      title: Git sub-directory
+                      description: The sub-directory in the git repo to install as a template set
+                      default: null
+                      nullable: true
+                      example: org-templates
+                      oneOf:
+                        - type: string
+                    gitRef:
+                      title: Git ref
+                      description: The Git ref to use when fetching the repository
+                      default: master
+                      type: string
+                      example: master
+                    name:
+                      title: Template set name
+                      description: Template set name to use (defaults gitSubDir if available or the repo name)
+                      type: string
+                      example: newTemplateSet
+                - title: GitLab Repository
+                  description: Install a GitLab repository (or sub-directory in a repository) as a template set
+                  required:
+                    - gitLabRepo
+                  properties:
+                    gitLabRepo:
+                      title: GitLab Repository
+                      description: A GitLab repository to use as a template set
+                      type: string
+                      example: org/templateset
+                    gitLabUrl:
+                      title: GitLab URL
+                      description: URL to the GitLab instance
+                      type: string
+                      default: https://gitlab.com
+                    gitToken:
+                      title: GitLab API token
+                      description: An API token used to access private repositories
+                      type: string
+                      default: null
+                    gitSubDir:
+                      title: Git sub-directory
+                      description: The sub-directory in the git repo to install as a template set
+                      default: null
+                      nullable: true
+                      example: org-templates
+                      oneOf:
+                        - type: string
+                    gitRef:
+                      title: Git ref
+                      description: The Git ref to use when fetching the repository
+                      default: master
+                      type: string
+                      example: master
+                    name:
+                      title: Template set name
+                      description: Template set name to use (defaults gitSubDir if available or the repo name)
+                      type: string
+                      example: newTemplateSet
+      responses:
+        '200':
+          description: The Template Set installed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse200"
+        '400':
+          description: The supplied Template Set name is invalid or missing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse400"
+        '404':
+          description: The supplied Template name was not found in /var/config/rest/downloads.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse404"
+        '500':
+          description: Internal error. A bug report should be filed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse500"
     delete:
       tags:
         - Template Management
@@ -645,6 +797,31 @@ paths:
       summary: Replace FAST settings (Full overwrite)
       description: Replace the full FAST configuration with supplied body.
       operationId: postFASTSettings
+      responses:
+        '200':
+          description: Replace the FAST Settings configuration.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse200"
+        '422':
+          description: supplied configuration was invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse422"
+        '500':
+          description: Internal error. A bug report should be filed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FastResponse500"
+    put:
+      tags:
+        - FAST Extension
+      summary: Replace FAST settings (Full overwrite)
+      description: Replace the full FAST configuration with supplied body.
+      operationId: putFASTSettings
       responses:
         '200':
           description: Replace the FAST Settings configuration.
