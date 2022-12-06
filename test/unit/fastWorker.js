@@ -158,6 +158,7 @@ const patchWorker = (worker) => {
     ensureCompletedOp('onPost');
     ensureCompletedOp('onDelete');
     ensureCompletedOp('onPatch');
+    ensureCompletedOp('onPut');
 
     mockfs({
         [worker.uploadPath]: mockfs.load(worker.uploadPath, { recursive: true }),
@@ -867,6 +868,37 @@ describe('fastWorker tests', function () {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 422);
                     expect(op.body).to.satisfySchemaInApiSpec('FastResponse422');
+                });
+        });
+        it('put_settings', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/settings');
+            op.setBody({
+                deletedTemplateSets: [
+                    'foo'
+                ],
+                enableIpam: true,
+                ipamProviders: [
+                    {
+                        name: 'test',
+                        password: 'foobar',
+                        serviceType: 'Infoblox',
+                        apiVersion: 'v2.4',
+                        network: 'foo.bar'
+                    }
+                ]
+            });
+            return worker.onPut(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('Settings');
+                })
+                .then(() => worker.getConfig(0))
+                .then((config) => {
+                    assert.deepStrictEqual(config.deletedTemplateSets, ['foo']);
+                    assert(config.ipamProviders[0].password !== 'foobar', 'IPAM password was not encrypted');
+                    expect(config).to.satisfySchemaInApiSpec('IpamInfoblox');
                 });
         });
         it('patch_settings', function () {
@@ -1696,6 +1728,38 @@ describe('fastWorker tests', function () {
                     assert.deepStrictEqual(config.deletedTemplateSets, []);
                 });
         });
+        it('put_templateset', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/templatesets');
+            const infoOp = new RestOp('/shared/fast/info');
+
+            this.clock.restore();
+            op.setBody({
+                name: 'testset'
+            });
+
+            nock(host)
+                .get('/mgmt/shared/appsvcs/info')
+                .reply(404);
+
+            return worker.onPut(op)
+                .then(() => {
+                    assert(fs.existsSync(path.join(process.cwd(), 'scratch')));
+                    assert.equal(op.status, 200);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
+                })
+                .then(() => worker.templateProvider.listSets())
+                .then((tmplSets) => {
+                    assert(tmplSets.includes('testset'));
+                })
+                .then(() => worker.onGet(infoOp))
+                .then(() => {
+                    assert.strictEqual(infoOp.status, 200);
+
+                    const tsNames = infoOp.body.installedTemplates.map(x => x.name);
+                    assert(tsNames.includes('testset'));
+                });
+        });
         it('delete_templateset', function () {
             const worker = createWorker();
             const templateSet = 'bigip-fast-templates';
@@ -2152,6 +2216,25 @@ describe('fastWorker tests', function () {
                 .post(`${as3ep}/tenant 01?async=true`)
                 .reply(202, {});
             return worker.onPost(op)
+                .then(() => {
+                    console.log(JSON.stringify(op.body, null, 2));
+                    assert.equal(op.status, 202);
+                    assert.equal(op.requestId, 1);
+                    expect(op.body).to.satisfySchemaInApiSpec('FastApplicationResponse');
+                });
+        });
+        it('put_apps', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/applications');
+            op.setBody({
+                name: 'examples/simple_udp_defaults',
+                parameters: {}
+            });
+            nock(host)
+                .persist()
+                .post(`${as3ep}/foo?async=true`)
+                .reply(202, {});
+            return worker.onPut(op)
                 .then(() => {
                     console.log(JSON.stringify(op.body, null, 2));
                     assert.equal(op.status, 202);
