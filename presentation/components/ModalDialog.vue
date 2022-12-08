@@ -64,6 +64,12 @@ export default {
     },
     methods: {
         show(msg, confirmFunc) {
+            // eslint-disable-next-line no-restricted-globals
+            if (parent.Xui) {
+                document.getElementById('vue-app').scrollIntoView();
+                document.getElementsByClassName('modal-container').forEach((elem) => { elem.style.marginTop = '100px'; });
+                document.getElementsByClassName('modal').forEach((elem) => { elem.style.alignItems = 'flex-start'; });
+            }
             this.message = msg;
             this.confirmFunc = confirmFunc;
             this.visible = true;
@@ -82,6 +88,9 @@ export default {
 </script>
 
 <style scoped>
+.modal {
+    background-color: rgba(50, 50, 50, .4);
+}
 .modal-container {
     background-color: #f7f6f5;
     padding: 0 !important;

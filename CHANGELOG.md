@@ -5,6 +5,7 @@
 ## Fixed
 
 ## Changed
+* gui: Dim the disabled background and scroll to modal window at top of content when it pops up
 
 # 1.22.0
 ## Added
