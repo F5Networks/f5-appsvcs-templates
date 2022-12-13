@@ -151,7 +151,8 @@ class FASTWorker {
         this.bigip = options.bigipDevice || new BigipDeviceClassic(bigipInfo);
         this.driver = options.as3Driver || new AS3Driver({
             userAgent: this.baseUserAgent,
-            bigipInfo
+            bigipInfo,
+            logger: this.logger
         });
         this.driver.setTracer(this.tracer);
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
