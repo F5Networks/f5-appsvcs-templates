@@ -109,10 +109,11 @@ class FASTWorker {
         }
         this.as3Info = null;
         this.requestCounter = 1;
+        this.packageName = options.packageName || pkg.name;
         this.version = options.version || pkg.version;
 
         this.tracer = new Tracer({
-            name: pkg.name,
+            name: this.packageName,
             version: this.version,
             spanNameFromRestOp: this._getTracerSpanFromOp,
             logger: this.logger
@@ -124,7 +125,7 @@ class FASTWorker {
         this.hookOnShutDown();
         this.state = {};
 
-        this.baseUserAgent = `${pkg.name}/${this.version}`;
+        this.baseUserAgent = `${this.packageName}/${this.version}`;
         this.incomingUserAgent = '';
 
         this.configPath = options.configPath || `/var/config/rest/iapps/${projectName}`;
@@ -509,7 +510,7 @@ class FASTWorker {
         this.tracer.setLogger(this.logger);
 
         this.logger.info('FAST Worker: Entering STARTED state');
-        this.logger.fine(`FAST Worker: Starting ${pkg.name} v${this.version}`);
+        this.logger.fine(`FAST Worker: Starting ${this.packageName} v${this.version}`);
         this.logger.fine(`FAST Worker: Targetting ${this.bigip.host}`);
         const startTime = Date.now();
 
