@@ -184,3 +184,24 @@ Rendering in the GUI as the descriptor for the iRule list.
    :width: 500
 
 .. seealso::  `Markdown Syntax <https://enterprise.github.com/downloads/en/markdown-cheatsheet.pdf>`_ and `Markdown Guide <https://www.markdownguide.org/>`_ for additional information.
+
+.. defaultRouteDomain:
+
+Use Existing Default Route Domain on Tenant on Custom Templates
+---------------------------------------------------------------
+
+| F5 BIG-IP FAST supports Tenant-level default route domains allowing you to set a non-zero default route domain.
+| This setting can be exercised only during the very first F5 BIG-IP FAST deployment. Subsequent route domain updates will be ignored.
+| You can only use a route domain created before the deployment. F5 BIG-IP FAST cannot create new route domains as of yet. Setting this value is optional and ignoring it will keep the default route domain of zero.
+| 
+In the following example, *defaultRouteDomain* is set to 1 for the given tenant. In the next update, no *defaultRouteDomain* needs to be specified:
+
+.. code-block:: json
+
+    "Sample_01": {
+     "class": "Tenant",
+     "defaultRouteDomain": 1,
+     "Application_1": {
+      "class": "Application",
+
+.. seealso:: `AS3 Schema Reference <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/schema-reference.html?highlight=defaultroutedomain#tenant>`_ for permitted set of values for the **defaultRouteDomain** field.
