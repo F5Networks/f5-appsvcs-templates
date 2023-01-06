@@ -100,6 +100,22 @@ const supportedHashes = {
     ]
 };
 
+function _getPathElements(restOp) {
+    const uri = restOp.getUri();
+    const pathElements = uri.pathname.split('/');
+    if (!uri.pathname.includes('shared/fast')) {
+        pathElements.shift();
+    }
+    return {
+        pathName: uri.pathname,
+        collection: pathElements[3],
+        collectionPath: pathElements.slice(0, 4).join('/'),
+        itemId: pathElements[4],
+        itemSubId: pathElements[5],
+        elements: pathElements
+    };
+}
+
 /** Class representing a FAST Worker process. */
 class FASTWorker {
     constructor(options) {
@@ -143,6 +159,7 @@ class FASTWorker {
         this.isPublic = true;
         this.isPassThrough = true;
         this.WORKER_URI_PATH = `shared/${endpointName}`;
+        this.WORKER_ALT_URI_PATHS = options.altUriPaths || [];
         const bigipInfo = options.bigipInfo || {
             host: 'http://localhost:8100',
             username: 'admin',
@@ -201,22 +218,29 @@ class FASTWorker {
         this._prevCompleteRestOp = this.completeRestOperation;
         this.completeRestOperation = (restOperation) => {
             if (!Array.isArray(restOperation.body) && restOperation.body) {
+                let selfLink = restOperation.uri.path ? `${restOperation.uri.path}` : `${restOperation.uri}`;
+                if (selfLink.includes(this.WORKER_URI_PATH)) {
+                    selfLink = selfLink.startsWith('/') ? `/mgmt${selfLink}` : `/mgmt/${selfLink}`;
+                }
                 restOperation.body._links = {
-                    self: restOperation.uri.path ? `/mgmt${restOperation.uri.path}` : `/mgmt/${restOperation.uri}`
+                    self: selfLink
                 };
-                if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications') && ['Post', 'Patch', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
-                    restOperation.body._links.task = restOperation.body.message.map(x => `/mgmt/shared/fast/tasks/${x.id}`).pop();
+                if (restOperation.uri.path && restOperation.uri.path.includes('/applications') && ['Post', 'Patch', 'Put', 'Delete'].includes(restOperation.method) && restOperation.statusCode === 202) {
+                    restOperation.body._links.task = restOperation.body.message.map(x => `${selfLink.substring(0, selfLink.lastIndexOf('/'))}/tasks/${x.id}`).pop();
                 }
             } else if (Array.isArray(restOperation.body)) {
                 restOperation.body = restOperation.body.map((x) => {
                     if (typeof x === 'object') {
                         let selfLink = '';
-                        if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/applications')) {
-                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.tenant}/${x.name}` : `/mgmt/${restOperation.uri}`;
-                        } else if (restOperation.uri.path && restOperation.uri.path.includes('/shared/fast/tasks')) {
-                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.id}` : `/mgmt/${restOperation.uri}`;
+                        if (restOperation.uri.path && restOperation.uri.path.includes('/applications')) {
+                            selfLink = restOperation.uri.path ? `${restOperation.uri.path.replace(/\/$/, '')}/${x.tenant}/${x.name}` : `${restOperation.uri}`;
+                        } else if (restOperation.uri.path && restOperation.uri.path.includes('/tasks')) {
+                            selfLink = restOperation.uri.path ? `${restOperation.uri.path.replace(/\/$/, '')}/${x.id}` : `${restOperation.uri}`;
                         } else {
-                            selfLink = restOperation.uri.path ? `/mgmt${restOperation.uri.path.replace(/\/$/, '')}/${x.name}` : `/mgmt/${restOperation.uri}`;
+                            selfLink = restOperation.uri.path ? `${restOperation.uri.path.replace(/\/$/, '')}/${x.name}` : `${restOperation.uri}`;
+                        }
+                        if (selfLink.includes(this.WORKER_URI_PATH)) {
+                            selfLink = selfLink.startsWith('/') ? `/mgmt${selfLink}` : `/mgmt/${selfLink}`;
                         }
                         x._links = {
                             self: selfLink
@@ -908,11 +932,9 @@ class FASTWorker {
         if (!this.teemDevice) {
             return Promise.resolve();
         }
-
-        const uri = restOp.getUri();
-        const pathElements = uri.pathname.split('/');
-        let endpoint = pathElements.slice(0, 4).join('/');
-        if (pathElements[4]) {
+        const pathElements = _getPathElements(restOp);
+        let endpoint = pathElements.pathName;
+        if (pathElements.itemId) {
             endpoint = `${endpoint}/item`;
         }
         const report = {
@@ -956,11 +978,11 @@ class FASTWorker {
             context.span = this.tracer.startHttpSpan(operation.message, 'None', 'None');
             return context;
         }
-        const pathName = operation.getUri().pathname;
-        const pathElements = pathName.split('/');
-        const collectionPath = pathElements.slice(0, 4).join('/');
-        const collection = pathElements[3];
-        const itemId = pathElements[4];
+        const pathElements = _getPathElements(operation);
+        const pathName = pathElements.pathName;
+        const collectionPath = pathElements.collectionPath;
+        const collection = pathElements.collection;
+        const itemId = pathElements.itemId;
 
         const spanPath = (() => {
             switch (collection) {
@@ -1917,9 +1939,8 @@ class FASTWorker {
     getTemplates(restOperation, tmplid) {
         const reqid = restOperation.requestId;
         if (tmplid) {
-            const uri = restOperation.getUri();
-            const pathElements = uri.pathname.split('/');
-            tmplid = pathElements.slice(4, 6).join('/');
+            const pathElements = _getPathElements(restOperation);
+            tmplid = `${pathElements.itemId}/${pathElements.itemSubId}`;
 
             return Promise.resolve()
                 .then(() => this.fetchTemplate(reqid, tmplid))
@@ -1958,10 +1979,9 @@ class FASTWorker {
     getApplications(restOperation, appid) {
         const reqid = restOperation.requestId;
         if (appid) {
-            const uri = restOperation.getUri();
-            const pathElements = uri.pathname.split('/');
-            const tenant = decodeURI(pathElements[4]);
-            const app = decodeURI(pathElements[5]);
+            const pathElements = _getPathElements(restOperation);
+            const tenant = decodeURI(pathElements.itemId);
+            const app = decodeURI(pathElements.itemSubId);
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid,
@@ -2131,10 +2151,10 @@ class FASTWorker {
      * @returns {Promise}
      */
     onGet(restOperation) {
-        const uri = restOperation.getUri();
-        const pathElements = uri.pathname.split('/');
-        const collection = pathElements[3];
-        const itemid = pathElements[4];
+        const pathElements = _getPathElements(restOperation);
+        const collection = pathElements.collection;
+        const itemid = pathElements.itemId;
+
         restOperation.requestId = this.generateRequestId();
         this.recordRestRequest(restOperation);
 
@@ -2159,7 +2179,7 @@ class FASTWorker {
                     case 'settings-schema':
                         return this.getSettingsSchema(restOperation);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${uri.pathname}`, undefined);
+                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${pathElements.pathname}`, undefined);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, 'Internal Error: Failed to process get request', e.stack);
@@ -2741,10 +2761,8 @@ class FASTWorker {
      */
     onPost(restOperation) {
         const body = restOperation.getBody();
-        const uri = restOperation.getUri();
-        const pathElements = uri.pathname.split('/');
-        const collection = pathElements[3];
-
+        const pathElements = _getPathElements(restOperation);
+        const collection = pathElements.collection;
         restOperation.requestId = this.generateRequestId();
 
         this.recordRestRequest(restOperation);
@@ -2766,7 +2784,7 @@ class FASTWorker {
                     case 'offbox-templatesets':
                         return this.postOffBoxTemplates(restOperation, body);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${uri.pathname}`, undefined);
+                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${pathElements.pathname}`, undefined);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message, e.stack);
@@ -2784,11 +2802,10 @@ class FASTWorker {
      */
     deleteApplications(restOperation, appid, data) {
         const reqid = restOperation.requestId;
-        const uri = restOperation.getUri();
-        const pathElements = uri.pathname.split('/');
+        const pathElements = _getPathElements(restOperation);
 
         if (appid) {
-            data = [`${decodeURI(pathElements[4])}/${decodeURI(pathElements[5])}`];
+            data = [`${decodeURI(pathElements.itemId)}/${decodeURI(pathElements.itemSubId)}`];
         } else if (!data) {
             data = [];
         }
@@ -3003,10 +3020,9 @@ class FASTWorker {
      */
     onDelete(restOperation) {
         const body = restOperation.getBody();
-        const uri = restOperation.getUri();
-        const pathElements = uri.pathname.split('/');
-        const collection = pathElements[3];
-        const itemid = pathElements[4];
+        const pathElements = _getPathElements(restOperation);
+        const collection = pathElements.collection;
+        const itemid = pathElements.itemId;
 
         restOperation.requestId = this.generateRequestId();
 
@@ -3025,7 +3041,7 @@ class FASTWorker {
                     case 'settings':
                         return this.deleteSettings(restOperation);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${uri.pathname}`, undefined);
+                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${pathElements.pathname}`, undefined);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message, e.stack);
@@ -3046,12 +3062,10 @@ class FASTWorker {
             return Promise.resolve()
                 .then(() => this.genRestResponse(restOperation, 400, 'Client Error: PATCH is not supported on this endpoint', undefined));
         }
-
         const reqid = restOperation.requestId;
-        const uri = restOperation.getUri();
-        const pathElements = uri.pathname.split('/');
-        const tenant = decodeURI(pathElements[4]);
-        const app = decodeURI(pathElements[5]);
+        const pathElements = _getPathElements(restOperation);
+        const tenant = decodeURI(pathElements.itemId);
+        const app = decodeURI(pathElements.itemSubId);
         const newParameters = data.parameters;
         // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
@@ -3168,10 +3182,9 @@ class FASTWorker {
      */
     onPatch(restOperation) {
         const body = restOperation.getBody();
-        const uri = restOperation.getUri();
-        const pathElements = uri.pathname.split('/');
-        const collection = pathElements[3];
-        const itemid = pathElements[4];
+        const pathElements = _getPathElements(restOperation);
+        const collection = pathElements.collection;
+        const itemid = pathElements.itemId;
 
         restOperation.requestId = this.generateRequestId();
 
@@ -3188,7 +3201,7 @@ class FASTWorker {
                     case 'settings':
                         return this.patchSettings(restOperation, body);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${uri.pathname}`, undefined);
+                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${pathElements.pathname}`, undefined);
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message, e.stack);
