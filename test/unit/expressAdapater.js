@@ -44,7 +44,8 @@ describe('Express Adapter', function () {
             onPut: (success, error) => Promise.resolve(success, error),
             onPatch: (success, error) => Promise.resolve(success, error),
             onDelete: (success, error) => Promise.resolve(success, error),
-            WORKER_URI_PATH: 'shared/fast'
+            WORKER_URI_PATH: 'shared/fast',
+            NEXT_WORKER_URI_PATH: '/api/v1/application-templates'
         };
         mockFastWorkerConfig02 = {
             onStart: (success, error) => Promise.resolve(success, error),
@@ -54,7 +55,8 @@ describe('Express Adapter', function () {
             onPut: (success, error) => Promise.resolve(success, error),
             onPatch: (success, error) => Promise.resolve(success, error),
             onDelete: (success, error) => Promise.resolve(success, error),
-            WORKER_URI_PATH: 'shared/fast'
+            WORKER_URI_PATH: 'shared/fast',
+            WORKER_ALT_URI_PATHS: '/api/v1/application-templates'
         };
         mockFastWorker01 = sinon.stub(mockFastWorkerConfig01);
         mockFastWorker02 = sinon.stub(mockFastWorkerConfig02);
