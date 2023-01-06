@@ -101,9 +101,10 @@ function _createExpressApp(options) {
 
 function generateStubApp(worker, options) {
     const app = _createExpressApp(options);
-    app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
-        .then(() => res.status(503).send({ message: 'FAST is in unhealthy state' }))
-        .catch(next));
+    const uriPaths = [`/mgmt/${worker.WORKER_URI_PATH}`, ...worker.WORKER_ALT_URI_PATHS || []];
+    uriPaths.forEach(workerUriPath => app.all(`${workerUriPath}/*`, (req, res, next) => Promise.resolve()
+        .then(() => res.status(503).send({ message: `FAST ${workerUriPath} is in unhealthy state` }))
+        .catch(next)));
     return Promise.resolve(app);
 }
 
@@ -132,9 +133,10 @@ function generateApp(workers, options) {
             makeRestjavadUri() {}
         };
         worker.dependencies = [];
-        app.all(`/mgmt/${worker.WORKER_URI_PATH}/*`, (req, res, next) => Promise.resolve()
+        const uriPaths = [`/mgmt/${worker.WORKER_URI_PATH}`, ...worker.WORKER_ALT_URI_PATHS || []];
+        uriPaths.forEach(workerUriPath => app.all(`${workerUriPath}/*`, (req, res, next) => Promise.resolve()
             .then(() => getWorkerResponse(worker, req, res))
-            .catch(next));
+            .catch(next)));
     });
 
     // Create an endpoint to forward remaining requests to BIG-IP
