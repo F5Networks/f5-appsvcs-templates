@@ -37,10 +37,10 @@ const view = {
     make_pool: true,
     pool_members: [
         {
-            serverAddresses: ['10.2.1.1'], servicePort: 4433, connectionLimit: 0, priorityGroup: 0, shareNodes: true
+            addressDiscovery: 'static', serverAddresses: ['10.2.1.1'], servicePort: 4433, connectionLimit: 0, priorityGroup: 0, shareNodes: true
         },
         {
-            serverAddresses: ['10.2.1.2'], servicePort: 4444, connectionLimit: 1000, priorityGroup: 0, shareNodes: true
+            addressDiscovery: 'static', serverAddresses: ['10.2.1.2'], servicePort: 4444, connectionLimit: 1000, priorityGroup: 0, shareNodes: true
         }
     ],
     load_balancing_mode: 'round-robin',

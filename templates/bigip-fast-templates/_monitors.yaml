@@ -172,7 +172,7 @@ smtp:
 ldap:
   <<: *monitor_base
   parameters:
-    monitor_passphrase: 'passphrase'
+    monitor_passphrase: 'cGFzc3BocmFzZQ=='
   definitions: 
     <<: *monitor_base_def
     monitor_name:
@@ -301,7 +301,6 @@ http:
       default: ''
     monitor_partial_type:
       template: |
-        {{protected_host}}
         {{#enable_tls_client}}
           "monitorType": "https",
         {{/enable_tls_client}}

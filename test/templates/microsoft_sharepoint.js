@@ -39,10 +39,10 @@ const view = {
     make_pool: true,
     pool_members: [
         {
-            serverAddresses: ['10.2.1.1'], servicePort: 4433, connectionLimit: 0, priorityGroup: 0, shareNodes: true
+            addressDiscovery: 'static', serverAddresses: ['10.2.1.1'], servicePort: 4433, connectionLimit: 0, priorityGroup: 0, shareNodes: true
         },
         {
-            serverAddresses: ['10.2.1.2'], servicePort: 4444, connectionLimit: 1000, priorityGroup: 0, shareNodes: true
+            addressDiscovery: 'static', serverAddresses: ['10.2.1.2'], servicePort: 4444, connectionLimit: 1000, priorityGroup: 0, shareNodes: true
         }
     ],
     load_balancing_mode: 'round-robin',
@@ -324,6 +324,27 @@ describe(template, function () {
             expected.t1.app1.app1.profileAnalyticsTcp = { bigip: '/Common/tcp-analytics' };
             delete expected.t1.app1.app1_tcp_analytics;
         });
+    });
+
+    describe('no members, just Service Discovery', function () {
+        before(() => {
+            view.use_sd = true;
+            view.use_static_members = false;
+            view.service_discovery = [
+                {
+                    sd_port: 80, sd_type: 'fqdn', sd_host: 'f5.com'
+                }
+            ];
+            expected.t1.app1.app1_pool.members = [
+                {
+                    servicePort: 80,
+                    addressDiscovery: 'fqdn',
+                    hostname: 'f5.com',
+                    shareNodes: true
+                }
+            ];
+        });
+        util.assertRendering(template, view, expected);
     });
 
     describe('clean up', function () {
