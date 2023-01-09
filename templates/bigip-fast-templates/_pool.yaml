@@ -21,6 +21,11 @@ pool_base: &pool_base
       type: string
       enumFromBigip: ltm/pool
       default: ''
+    use_static_members:
+      title: Use Static Pool Members
+      description: Manually Define Pool Members
+      type: boolean
+      default: true
     pool_members:
       title: Pool Members
       description: Add the addresses of the servers in the pool. Use a connection limit
@@ -54,6 +59,260 @@ pool_base: &pool_base
             title: Share Node
             type: boolean
             default: true
+    use_sd:
+      title: Use Service Discovery
+      description: Automatically Discover Pool Members with Service Discovery
+      type: boolean
+      default: false
+    service_discovery:
+      title: Pool Members
+      description: Configure Pool Member Address Discovery.
+      type: array
+      uniqueItems: true
+      default:
+        - {}
+      options:
+        infoText: "<h4>Select Address Discovery type</h4>and provide all additional information that displayed to the right of it
+          <style>
+            tr[data-schemapath^='root.service_discovery.'] td {
+              vertical-align: top; 
+            }
+            tr[data-schemapath^='root.service_discovery.'] td:not(td[data-schemapath$='.sd_port']):not(td[data-schemapath$='.sd_type']) { 
+              display:inline; 
+              padding: 0;
+            }
+            td[data-schemapath$='.sd_type'] select,
+            tr[data-schemapath^='root.service_discovery.'] td:not(td[data-schemapath$='.sd_credentialUpdate']):not(td[data-schemapath$='.sd_rejectUnauthorized']):not(td[data-schemapath$='.sd_autoPopulate']):not(td[data-schemapath$='.sd_useManagedIdentity'])  input {
+              width: 100px; 
+            }
+            tr[data-schemapath^='root.service_discovery.'] td:not(td[data-schemapath$='.sd_port']):not(td[data-schemapath$='.sd_type']):not(td[data-schemapath$='.sd_credentialUpdate']):not(td[data-schemapath$='.sd_rejectUnauthorized']):not(td[data-schemapath$='.sd_autoPopulate']):not(td[data-schemapath$='.sd_useManagedIdentity']) input {
+              width: 300px
+            }
+            td[data-schemapath$='.sd_autoPopulate'] input
+            td[data-schemapath$='.sd_rejectUnauthorized'] input,
+            td[data-schemapath$='.sd_credentialUpdate'] input {
+              width: 25px; 
+            }
+            td[data-schemapath$='.sd_type'] > div {
+              margin-right: 15px;
+            }
+            td[data-schemapath$='.sd_host'] div,
+            td[data-schemapath$='.sd_tag_key'] div,
+            td[data-schemapath$='.sd_rg'] div,
+            td[data-schemapath$='.sd_uri'] div  {
+              padding-top: 7px;
+            }
+          <style>"
+      minItems: 1
+      items:
+        title: Type
+        type: object
+        properties:
+          sd_port:
+            title: Port
+            type: integer
+            minLength: 1
+            propertyOrder: 0
+            default: 80
+            options:
+              input_width: 100px
+          sd_type:
+            title: Type
+            type: string
+            enum: ["fqdn", "event", "aws", "gce", "azure", "consul"]
+            propertyOrder: 1
+            default: "event"
+            options:
+              input_width: 100px
+              enum_titles: ["FQDN", "Event", "AWS", "GCE", "Azure", "Consul"]
+          sd_host:
+            title: "   "
+            description: "FQDN"
+            type: string
+            format: "hostname"
+            pattern: '(^(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63})$)|(^$)'
+            maxLength: 255
+            propertyOrder: 2
+            options: &sd_fqdn
+              input_width: 100px
+              dependencies:
+                sd_type: ["fqdn"]
+          sd_fqdnPrefix: &sd_string_optional
+            title: "   "
+            description: "String to prepend onto the hostname to create the node name"
+            type: string
+            minLength: 0
+            propertyOrder: 2
+            options: *sd_fqdn
+          sd_autoPopulate:
+            title: "   "
+            description: "Use multiple server (node) addresses when available, otherwise use only one"
+            type: boolean
+            propertyOrder: 2
+            options: *sd_fqdn
+          sd_downInterval:
+            <<: *sd_string_optional
+            description: "DNS retry interval after resolution failure (seconds)"
+            type: string
+            pattern: '^(\d+)|()$'
+            options: *sd_fqdn
+          sd_queryInterval:
+            <<: *sd_string_optional
+            description: "Normal DNS query interval (seconds, default 0 means RR TTL)"
+            pattern: '^(\d+)|()$'
+            options: *sd_fqdn
+          sd_tag_key: &sd_string_required
+            title: "   "
+            description: "Tag Key"
+            type: string
+            minLength: 1
+            maxLength: 255
+            propertyOrder: 2
+            options:
+              input_width: 100px
+              dependencies:
+                sd_type: ["aws","gce"]
+          sd_tag_val:
+            <<: *sd_string_required
+            description: "Tag Value"
+          sd_region:
+            <<: *sd_string_required
+            description: "Region"
+            options: &sd_gce
+              input_width: 100px
+              dependencies:
+                sd_type: ["gce"]
+          sd_rg:
+            <<: *sd_string_required
+            description: "Resource Group"
+            options: &sd_azure
+              input_width: 100px
+              dependencies:
+                sd_type: ["azure"]
+          sd_sid:
+            <<: *sd_string_required
+            description: "Subscription ID"
+            options: *sd_azure
+          sd_rid:
+            <<: *sd_string_optional
+            description: "Resource ID; required if not using Tag Key and Value"
+            options: *sd_azure
+          sd_rtype:
+            <<: *sd_string_optional
+            description: "Resource Type; required if not using Tag Key and Value"
+            enum: ["tag","scaleSet"]
+            options: *sd_azure
+          sd_dirid:
+            <<: *sd_string_optional
+            description: "Directory ID; required if not using Managed Identity"
+            options: *sd_azure
+          sd_appid:
+            <<: *sd_string_optional
+            description: "Application ID; required if not using Managed Identity"
+            options: *sd_azure
+          sd_apikey:
+            <<: *sd_string_optional
+            description: "API Key; required if not using Managed Identity"
+            options: *sd_azure
+          sd_uri:
+            <<: *sd_string_required
+            description: "URI"
+            options: &sd_consul
+              input_width: 100px
+              dependencies:
+                sd_type: ["consul"]
+          sd_accessKeyId:
+            <<: *sd_string_optional
+            description: "Access Key ID; required if using Secret Access Key"
+            options: &sd_aws
+              input_width: 100px
+              dependencies:
+                sd_type: ["aws"]
+          sd_secretAccessKey:
+            <<: *sd_string_optional
+            description: "Secret Access Key; required if using Access Key ID"
+            options: *sd_aws
+          sd_addressRealm:
+            <<: *sd_string_optional
+            description: "Address Realm"
+            enum: ["private", "public"]
+            options: &sd_all
+              input_width: 100px
+              dependencies:
+                sd_type: ["aws","azure","consul","gce"]
+          sd_credentialUpdate: &sd_boolean_optional
+            title: "   "
+            description: "Credential Update"
+            type: boolean
+            propertyOrder: 2
+            options: *sd_all
+          sd_encodedCredentials:
+            <<: *sd_string_optional
+            description: "Encoded Credentials"
+            options: *sd_gce
+          sd_encodedToken:
+            <<: *sd_string_optional
+            description: "Encoded Token"
+            options: *sd_consul
+          sd_environment:
+            <<: *sd_string_optional
+            description: "Environment"
+            options: *sd_azure
+          sd_externalId:
+            <<: *sd_string_optional
+            description: "External ID; required if using Role ARN"
+            options: *sd_aws
+          sd_roleARN:
+            <<: *sd_string_optional
+            description: "Role ARN; required if using External ID"
+            options: *sd_aws
+          sd_jmesPathQuery:
+            <<: *sd_string_optional
+            description: "Custom JMESPath Query"
+            options: *sd_consul
+          sd_minimumMonitors:
+            <<: *sd_string_optional
+            description: "Minimum Monitors"
+            pattern: '^(\d+)|()$'
+            options: *sd_all
+          sd_projectId:
+            <<: *sd_string_optional
+            description: "Project ID"
+            options: *sd_gce
+          sd_aws_region:
+            <<: *sd_string_optional
+            description: "Region"
+            options: *sd_aws
+          sd_rejectUnauthorized:
+            <<: *sd_boolean_optional
+            description: "Verify Certificate/Reject Unauthorized"
+            options: *sd_consul
+          sd_trustCA:
+            <<: *sd_string_optional
+            description: "Full path to the CA Bundle that validates server certificates"
+            options: *sd_consul
+          sd_azure_tag_key:
+            <<: *sd_string_optional
+            description: "Tag Key"
+            options: *sd_azure
+          sd_azure_tag_val:
+            <<: *sd_string_optional
+            description: "Tag Value"
+            options: *sd_azure
+          sd_undetectableAction:
+            <<: *sd_string_optional
+            description: "Undetectable Action"
+            enum: ["remove", "disable"]
+            options: *sd_all
+          sd_updateInterval:
+            <<: *sd_string_optional
+            pattern: '^([1-9]|[1-9][0-9]{1,2}|[1-2][0-9]{3}|3[0-5][0-9][0-9]|3600)|()$'
+            description: "Server-discovery update interval (from 1 to 3600 seconds)"
+            options: *sd_all
+          sd_useManagedIdentity:
+            <<: *sd_boolean_optional
+            description: "Use Managed Identity"
+            options: *sd_azure
     load_balancing_mode:
       title: Load Balancing Method
       description: A *load balancing method* is an algorithm that the BIG-IP system uses
@@ -92,15 +351,162 @@ pool_base: &pool_base
                   "{{app_name}}_pool": {
                     "class": "Pool",
                     "members": [
-                    {{#pool_members}}
-                      {
-                        "serverAddresses": [{{serverAddresses:f5:ipv4_ipv6_array}}],
-                        "servicePort": {{servicePort:f5:port}},
-                        "connectionLimit": {{connectionLimit}},
-                        "priorityGroup": {{priorityGroup}},
-                        "shareNodes": {{shareNodes::boolean}}
-                      },
-                    {{/pool_members}}
+                      {{#use_static_members}}
+                      {{#pool_members}}
+                        {
+                          "serverAddresses": [{{serverAddresses:f5:ipv4_ipv6_array}}],
+                          "servicePort": {{servicePort:f5:port}},
+                          "connectionLimit": {{connectionLimit}},
+                          "priorityGroup": {{priorityGroup}},
+                          "shareNodes": {{shareNodes::boolean}}
+                        },
+                      {{/pool_members}}
+                      {{/use_static_members}}
+                      
+                      {{#use_sd}}
+                        {{#service_discovery}}
+                          {{#sd_type}}
+                            {
+                              "servicePort": {{sd_port}},
+                              "addressDiscovery": "{{sd_type}}",
+                              {{#sd_host}}"hostname": "{{sd_host}}",{{/sd_host}}
+                              {{#sd_fqdnPrefix}}"fqdnPrefix": "{{sd_fqdnPrefix}}",{{/sd_fqdnPrefix}}                              
+                              {{#sd_autoPopulate}}"autoPopulate": {{sd_autoPopulate}},{{/sd_autoPopulate}}
+                              {{#sd_downInterval}}"downInterval": {{sd_downInterval}},{{/sd_downInterval}}
+                              {{#sd_queryInterval}}"queryInterval": {{sd_queryInterval}},{{/sd_queryInterval}}
+                              {{#sd_tag_key}}"tagKey": "{{sd_tag_key}}",{{/sd_tag_key}}
+                              {{#sd_tag_val}}"tagValue": "{{sd_tag_val}}",{{/sd_tag_val}}
+                              {{#sd_region}}"region": "{{sd_region}}",{{/sd_region}}
+                              {{#sd_rg}}"resourceGroup": "{{sd_rg}}",{{/sd_rg}}
+                              {{#sd_sid}}"subscriptionId": "{{sd_sid}}",{{/sd_sid}}
+
+                              {{#sd_rid}}
+                                {{#sd_azure_tag_key}}
+                                  {{^sd_azure_tag_val}}
+                                    "resourceId": "{{sd_rid}}",
+                                  {{/sd_azure_tag_val}}
+                                {{/sd_azure_tag_key}}
+                                {{#sd_azure_tag_val}}
+                                  {{^sd_azure_tag_key}}
+                                    "resourceId": "{{sd_rid}}",
+                                  {{/sd_azure_tag_key}}
+                                {{/sd_azure_tag_val}}
+                                {{^sd_azure_tag_key}}
+                                  {{^sd_azure_tag_val}}
+                                    "resourceId": "{{sd_rid}}",
+                                  {{/sd_azure_tag_val}}
+                                {{/sd_azure_tag_key}}
+                              {{/sd_rid}}
+                              {{#sd_rtype}}
+                                {{#sd_azure_tag_key}}
+                                  {{^sd_azure_tag_val}}
+                                    "resourceType": "{{sd_rtype}}",
+                                  {{/sd_azure_tag_val}}
+                                {{/sd_azure_tag_key}}
+                                {{#sd_azure_tag_val}}
+                                  {{^sd_azure_tag_key}}
+                                    "resourceType": "{{sd_rtype}}",
+                                  {{/sd_azure_tag_key}}
+                                {{/sd_azure_tag_val}}
+                                {{^sd_azure_tag_key}}
+                                  {{^sd_azure_tag_val}}
+                                    "resourceType": "{{sd_rtype}}",
+                                  {{/sd_azure_tag_val}}
+                                {{/sd_azure_tag_key}}
+                              {{/sd_rtype}}
+
+                              {{#sd_dirid}}
+                                {{^sd_useManagedIdentity}}
+                                  "directoryId": "{{sd_dirid}}",
+                                {{/sd_useManagedIdentity}}
+                              {{/sd_dirid}}
+                              {{#sd_appid}}
+                                {{^sd_useManagedIdentity}}
+                                  "applicationId": "{{sd_appid}}",
+                                {{/sd_useManagedIdentity}}
+                              {{/sd_appid}}
+                              {{#sd_apikey}}
+                                {{^sd_useManagedIdentity}}
+                                  "apiAccessKey": "{{sd_apikey}}",
+                                {{/sd_useManagedIdentity}}
+                              {{/sd_apikey}}
+
+                              {{#sd_uri}}"uri": "{{sd_uri}}",{{/sd_uri}}
+                              {{#sd_accessKeyId}}
+                                {{#sd_secretAccessKey}}
+                                  "accessKeyId": "{{sd_accessKeyId}}",
+                                  "secretAccessKey": "{{sd_secretAccessKey}}",
+                                {{/sd_secretAccessKey}}
+                              {{/sd_accessKeyId}}
+                              {{#sd_addressRealm}}"addressRealm": "{{sd_addressRealm}}",{{/sd_addressRealm}}
+                              {{#sd_credentialUpdate}}"credentialUpdate": {{sd_credentialUpdate}},{{/sd_credentialUpdate}}
+                              {{#sd_encodedCredentials}}"encodedCredentials": "{{sd_encodedCredentials}}",{{/sd_encodedCredentials}}
+                              {{#sd_encodedToken}}"encodedToken": "{{sd_encodedToken}}",{{/sd_encodedToken}}
+                              {{#sd_environment}}"environment": "{{sd_environment}}",{{/sd_environment}}
+                              {{#sd_jmesPathQuery}}"jmesPathQuery": "{{sd_jmesPathQuery}}",{{/sd_jmesPathQuery}}
+                              {{#sd_minimumMonitors}}"minimumMonitors": {{sd_minimumMonitors}},{{/sd_minimumMonitors}}
+                              {{#sd_projectId}}"projectId": "{{sd_projectId}}",{{/sd_projectId}}
+                              {{#sd_aws_region}}"region": "{{sd_aws_region}}",{{/sd_aws_region}}
+                              {{#sd_rejectUnauthorized}}"rejectUnauthorized": {{sd_rejectUnauthorized}},{{/sd_rejectUnauthorized}}
+                              {{#sd_trustCA}}"trustCA": { "bigip": "{{sd_trustCA}}" },{{/sd_trustCA}}
+                              {{#sd_roleARN}}
+                                {{#sd_externalId}}
+                                  "externalId": "{{sd_externalId}}",
+                                  "roleARN": "{{sd_roleARN}}",
+                                {{/sd_externalId}}
+                              {{/sd_roleARN}}
+
+                              {{#sd_azure_tag_key}}
+                                {{#sd_rid}}
+                                  {{^sd_rtype}}
+                                    "tagKey": "{{sd_azure_tag_key}}",
+                                  {{/sd_rtype}}
+                                {{/sd_rid}}
+                                {{#sd_rtype}}
+                                  {{^sd_rid}}
+                                    "tagKey": "{{sd_azure_tag_key}}",
+                                  {{/sd_rid}}
+                                {{/sd_rtype}}
+                                {{^sd_rid}}
+                                  {{^sd_rtype}}
+                                    "tagKey": "{{sd_azure_tag_key}}",
+                                  {{/sd_rtype}}
+                                {{/sd_rid}}
+                              {{/sd_azure_tag_key}}
+                              {{#sd_azure_tag_val}}
+                                {{#sd_rid}}
+                                  {{^sd_rtype}}
+                                    "tagValue": "{{sd_azure_tag_val}}",
+                                  {{/sd_rtype}}
+                                {{/sd_rid}}
+                                {{#sd_rtype}}
+                                  {{^sd_rid}}
+                                    "tagValue": "{{sd_azure_tag_val}}",
+                                  {{/sd_rid}}
+                                {{/sd_rtype}}
+                                {{^sd_rid}}
+                                  {{^sd_rtype}}
+                                    "tagValue": "{{sd_azure_tag_val}}",
+                                  {{/sd_rtype}}
+                                {{/sd_rid}}
+                                {{#sd_azure_tag_key}}
+                                  {{#sd_rid}}
+                                    {{#sd_rtype}}
+                                      "resourceId": "{{sd_rid}}",
+                                      "resourceType": "{{sd_rtype}}",
+                                    {{/sd_rtype}}
+                                  {{/sd_rid}}
+                                {{/sd_azure_tag_key}}
+                              {{/sd_azure_tag_val}}
+
+                              {{#sd_undetectableAction}}"undetectableAction": "{{sd_undetectableAction}}",{{/sd_undetectableAction}}
+                              {{#sd_updateInterval}}"updateInterval": {{sd_updateInterval}},{{/sd_updateInterval}}
+                              {{#sd_useManagedIdentity}}"useManagedIdentity": {{sd_useManagedIdentity}},{{/sd_useManagedIdentity}}
+                              "shareNodes": true
+                            },
+                          {{/sd_type}}
+                        {{/service_discovery}}
+                      {{/use_sd}}
                     ],
                     "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
                     "slowRampTime": {{slow_ramp_time}}

@@ -280,7 +280,6 @@ describe(template, function () {
     describe('default pool port, existing monitor, snatpool, and profiles', function () {
         before(() => {
             // default https pool port and existing monitor
-            console.log(JSON.stringify(view.pool_members));
             view.pool_members[0].servicePort = 80;
             expected.t1.app1.app1_pool.members[0].servicePort = 80;
             delete view.monitor_interval;
@@ -310,28 +309,23 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
-    describe('existing pool, snat automap and default profiles', function () {
+    describe('no members, just Service Discovery', function () {
         before(() => {
-            // default https virtual port
-            delete view.virtual_port;
-            expected.t1.app1.app1_tcp.virtualPort = 53;
-            expected.t1.app1.app1_udp.virtualPort = 53;
-
-            // existing pool
-            delete view.pool_members;
-            delete view.load_balancing_mode;
-            delete view.slow_ramp_time;
-            view.make_pool = false;
-            view.pool_name = '/Common/pool1';
-            delete expected.t1.app1.app1_pool;
-            expected.t1.app1.app1_tcp.pool = { bigip: '/Common/pool1' };
-            expected.t1.app1.app1_udp.pool = { bigip: '/Common/pool1' };
-
-            // snat automap
-            view.snat_automap = true;
-            delete expected.t1.app1.app1_snatpool;
-            expected.t1.app1.app1_tcp.snat = 'auto';
-            expected.t1.app1.app1_udp.snat = 'auto';
+            view.use_sd = true;
+            view.use_static_members = false;
+            view.service_discovery = [
+                {
+                    sd_port: 53, sd_type: 'fqdn', sd_host: 'f5.com'
+                }
+            ];
+            expected.t1.app1.app1_pool.members = [
+                {
+                    servicePort: 53,
+                    addressDiscovery: 'fqdn',
+                    hostname: 'f5.com',
+                    shareNodes: true
+                }
+            ];
         });
         util.assertRendering(template, view, expected);
     });
@@ -344,6 +338,9 @@ describe(template, function () {
             expected.t1.app1.app1_udp.virtualPort = 53;
 
             // existing pool
+            delete view.pool_members;
+            delete view.load_balancing_mode;
+            delete view.slow_ramp_time;
             view.make_pool = false;
             view.pool_name = '/Common/pool1';
             delete expected.t1.app1.app1_pool;
