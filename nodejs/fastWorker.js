@@ -127,6 +127,7 @@ class FASTWorker {
             options.uploadPath = '/var/config/rest/downloads';
         }
         this.as3Info = null;
+        this.foundTs = null;
         this.requestCounter = 1;
         this.packageName = options.packageName || pkg.name;
         this.version = options.version || pkg.version;
@@ -1187,58 +1188,63 @@ class FASTWorker {
     gatherProvisionData(requestId, clearCache, skipAS3) {
         if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
             this.provisionData = null;
+            this.foundTs = null;
             this._provisionConfigCacheTime = Date.now();
         }
-        return Promise.resolve()
-            .then(() => {
-                if (this.provisionData !== null) {
-                    return Promise.resolve(this.provisionData);
-                }
+        return Promise.all([
+            Promise.resolve()
+                .then(() => {
+                    if (this.provisionData !== null) {
+                        return Promise.resolve(this.provisionData);
+                    }
 
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching module provision information',
-                    this.bigip.getProvisionData()
-                );
-            })
-            .then((response) => {
-                this.provisionData = response;
-            })
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching module provision information',
+                        this.bigip.getProvisionData()
+                    );
+                })
+                .then((response) => {
+                    this.provisionData = response;
+                }),
+            Promise.resolve()
+                .then(() => {
+                    if (this.foundTs !== null) {
+                        return Promise.resolve(this.foundTs);
+                    }
+
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching TS module information',
+                        this.bigip.getTSInfo()
+                    )
+                        .then((response) => { this.foundTs = response.status && response.status < 400; });
+                }),
+            Promise.resolve()
+                .then(() => {
+                    if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
+                        return Promise.resolve(this.as3Info);
+                    }
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching AS3 info',
+                        this.driver.getInfo({ requestId })
+                    )
+                        .then(response => response.data);
+                })
+                .then((response) => {
+                    this.as3Info = response;
+                })
+        ])
             .then(() => {
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
-                if (tsInfo) {
-                    return Promise.resolve({ status: 304 });
-                }
 
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching TS module information',
-                    this.bigip.getTSInfo()
-                );
-            })
-            .then((response) => {
-                if (response.status === 304) {
-                    return Promise.resolve();
+                if (!tsInfo) {
+                    this.provisionData.items.push({
+                        name: 'ts',
+                        level: this.foundTs ? 'nominal' : 'none'
+                    });
                 }
-
-                return this.provisionData.items.push({
-                    name: 'ts',
-                    level: (response.status === 200) ? 'nominal' : 'none'
-                });
-            })
-            .then(() => {
-                if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
-                    return Promise.resolve(this.as3Info);
-                }
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching AS3 info',
-                    this.driver.getInfo({ requestId })
-                )
-                    .then(response => response.data);
-            })
-            .then((response) => {
-                this.as3Info = response;
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
