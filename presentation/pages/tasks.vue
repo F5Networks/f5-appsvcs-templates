@@ -29,7 +29,7 @@ export default {
                 Status: 'status',
                 'App Template': {
                     property: 'edit',
-                    link: '/resubmit/{{row.id}}'
+                    link: '{{row.link}}'
                 },
                 Timestamp: 'timestamp',
                 Info: 'message'
@@ -76,7 +76,13 @@ export default {
                         submissionData[task.id]
                         && task.status !== 'In Progress'
                     );
-                    task.edit = (allowResubmit) ? 'Edit / Resubmit' : '';
+                    task.edit = '';
+                    if (allowResubmit) {
+                        task.edit = (task.status === 'Success') ? 'Edit' : 'Edit / Resubmit';
+                        task.link = (task.status === 'Success')
+                            ? `/modify/${task.tenant}/${task.application}`
+                            : `/resubmit/${task.id}`;
+                    }
 
                     if (task.operation === 'delete-all') {
                         task.operation = 'Delete All';
