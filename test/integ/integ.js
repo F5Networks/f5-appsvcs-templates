@@ -630,7 +630,7 @@ describe('Settings', function () {
     });
     it('POST then GET settings with IPAM', () => {
         const postBody = {
-            enable_telemetry: true,
+            enable_telemetry: enableTelemetry,
             deletedTemplateSets: [],
             ipamProviders: [{
                 serviceType: 'Generic',
@@ -667,11 +667,11 @@ describe('Settings', function () {
             .then(() => endpoint.get(url))
             .then((actual) => {
                 const actualIpam = actual.data.ipamProviders[0];
-                assert.strictEqual(actualIpam.password.indexOf('$M$'), 0, 'password must be encrypted');
+                assert.match(actualIpam.password, /^(\$M\$|vault:v1:)/);
                 delete actualIpam.password;
                 delete postBody.ipamProviders[0].password;
                 expected.data = postBody;
-                assert.strictEqual(actualIpam.authHeaderValue.indexOf('$M$'), 0, 'auth header value must be encrypted');
+                assert.match(actualIpam.authHeaderValue, /^(\$M\$|vault:v1:)/);
                 delete actualIpam.authHeaderValue;
                 delete postBody.ipamProviders[0].authHeaderValue;
                 expected.data = postBody;
