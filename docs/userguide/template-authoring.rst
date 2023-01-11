@@ -487,3 +487,17 @@ In the response, the value of “protected” has changed to indicate SecureVaul
 These examples are directly tied to AS3, and works only for protected ciphertext elements in a declaration.
 
 .. seealso:: `Secrets in AS3 Declarations <https://clouddocs.f5.com/products/extensions/f5-appsvcs-extension/latest/refguide/declaration-purpose-function.html#secrets-in-big-ip-as3-declarations>`_ for a more expanded definition of AS3 secrets.
+
+
+Service Discovery
+-----------------
+
+| Service discovery bridges the gap between a service's name and IP address by providing a dynamic mapping between a service name and its IP address.
+| BIG-IP FAST has added the following Address Discovery types to the pool subTemplate for creating pool members with Service Discovery:
+| 
+* Amazon Web Services (AWS)
+* Azure
+* Consul
+* Event
+* FQDN
+* Google Compute Engine (GCE)
