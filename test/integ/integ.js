@@ -221,6 +221,16 @@ describe('Template Sets', function () {
             assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
             return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
         }));
+    it('PUT re-install template set and GET by ID', () => Promise.resolve()
+        .then(() => endpoint.put(url, { name: 'examples' }))
+        .catch(e => handleHTTPError(e, 'install examples template set'))
+        .then((actual) => {
+            assert.strictEqual(actual.status, 200);
+            assert.ok(typeof actual.data.requestId === 'number');
+            delete actual.data.requestId;
+            assert.deepStrictEqual(actual.data, { code: 200, message: '', _links: { self: '/mgmt/shared/fast/templatesets' } });
+            return assertGet({ data: [{ name: 'examples', supported: false }], status: 200 }, 'examples');
+        }));
     it('POST package, upload and install custom template set', () => {
         const testSetName = 'test_integ';
         const zipFileName = `${testSetName}.zip`;
@@ -306,6 +316,26 @@ describe('Applications', function () {
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
+    function createOrUpdateApplication(templateName, parameters) {
+        parameters = parameters || {};
+        return Promise.resolve()
+            .then(() => endpoint.put('/mgmt/shared/fast/applications', {
+                name: templateName,
+                parameters
+            }))
+            .then((response) => {
+                assert.strictEqual(response.status, 202);
+                const taskid = response.data.message[0].id;
+                if (!taskid) {
+                    console.log(response.data);
+                    assert(false, 'failed to get a taskid');
+                }
+                return waitForCompletedTask(taskid);
+            })
+            .then(task => assertResponse(task))
+            .catch(e => handleHTTPError(e, `deploy ${templateName}`));
+    }
+
     function patchApplication(appName, parameters, expected) {
         return Promise.resolve()
             .then(() => endpoint.patch(`/mgmt/shared/fast/applications/${appName}`, {
@@ -333,6 +363,14 @@ describe('Applications', function () {
         .then(() => deleteAllApplications()));
 
     it('C72081269 Deploy examples/simple_udp_defaults', () => deployApplication('examples/simple_udp_defaults'));
+
+    it('Deploy examples/simple_udp_defaults with PUT method', () => createOrUpdateApplication('examples/simple_udp_defaults', {
+        application_name: 'put',
+        virtual_address: '10.1.0.1',
+        server_addresses: [
+            '10.1.0.2'
+        ]
+    }));
 
     it('Deploy bigip-fast-templates/http', () => deployApplication('bigip-fast-templates/http', {
         tenant_name: 'tenant',
@@ -447,6 +485,13 @@ describe('Applications', function () {
             code: 422,
             message: 'change application name'
         })));
+    it('PUT to update existent application', () => createOrUpdateApplication('examples/simple_udp_defaults', {
+        application_name: 'put',
+        virtual_address: '10.1.2.2',
+        server_addresses: [
+            '10.1.0.2'
+        ]
+    }));
     it('C72081272 Deploy burst of applications', () => Promise.resolve()
         .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
             .then(() => endpoint.post('/mgmt/shared/fast/applications', {
@@ -538,9 +583,9 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                enable_telemetry: true,
-                log_asm: true,
-                log_afm: true,
+                enable_telemetry: enableTelemetry,
+                log_asm: logASM,
+                log_afm: logAFM,
                 perfTracing: {
                     debug: perfTracing.debug,
                     enabled: perfTracing.enabled
@@ -570,9 +615,9 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     // driver defaults
-                    enable_telemetry: true,
-                    log_asm: true,
-                    log_afm: true,
+                    enable_telemetry: enableTelemetry,
+                    log_asm: logASM,
+                    log_afm: logAFM,
                     perfTracing: {
                         debug: perfTracing.debug,
                         enabled: perfTracing.enabled
@@ -585,7 +630,7 @@ describe('Settings', function () {
     });
     it('POST then GET settings with IPAM', () => {
         const postBody = {
-            enable_telemetry: true,
+            enable_telemetry: enableTelemetry,
             deletedTemplateSets: [],
             ipamProviders: [{
                 serviceType: 'Generic',
@@ -603,8 +648,8 @@ describe('Settings', function () {
                 authHeaderValue: 'Bearer SecretValue'
             }],
             enableIpam: false,
-            log_afm: true,
-            log_asm: true,
+            log_afm: logAFM,
+            log_asm: logASM,
             perfTracing: {
                 debug: perfTracing.debug,
                 enabled: perfTracing.enabled
@@ -622,14 +667,48 @@ describe('Settings', function () {
             .then(() => endpoint.get(url))
             .then((actual) => {
                 const actualIpam = actual.data.ipamProviders[0];
-                assert.strictEqual(actualIpam.password.indexOf('$M$'), 0, 'password must be encrypted');
+                assert.match(actualIpam.password, /^(\$M\$|vault:v1:)/);
                 delete actualIpam.password;
                 delete postBody.ipamProviders[0].password;
                 expected.data = postBody;
-                assert.strictEqual(actualIpam.authHeaderValue.indexOf('$M$'), 0, 'auth header value must be encrypted');
+                assert.match(actualIpam.authHeaderValue, /^(\$M\$|vault:v1:)/);
                 delete actualIpam.authHeaderValue;
                 delete postBody.ipamProviders[0].authHeaderValue;
                 expected.data = postBody;
+                return assertResponse(actual, expected);
+            });
+    });
+    it('PUT then GET settings', () => {
+        const putBody = {
+            enable_telemetry: false,
+            deletedTemplateSets: [],
+            enableIpam: false
+        };
+        const expected = {
+            data: { code: 200, message: '', _links: { self: url } },
+            status: 200
+        };
+        return Promise.resolve()
+            .then(() => endpoint.put(url, putBody))
+            .then(actual => assertResponse(actual, expected))
+            .then(() => endpoint.get(url))
+            .then((actual) => {
+                expected.data = {
+                    deletedTemplateSets: [],
+                    ipamProviders: [],
+                    enableIpam: false,
+                    disableDeclarationCache: false,
+                    // driver defaults
+                    enable_telemetry: enableTelemetry,
+                    log_asm: logASM,
+                    log_afm: logAFM,
+                    perfTracing: {
+                        debug: perfTracing.debug,
+                        enabled: perfTracing.enabled
+                    },
+                    tsIpAddress: '255.255.255.254',
+                    _links: { self: url }
+                };
                 return assertResponse(actual, expected);
             });
     });
@@ -649,12 +728,12 @@ describe('Settings', function () {
             .then(actual => assertResponse(actual, expected))
             .then(() => {
                 expected.data = {
-                    enable_telemetry: true,
+                    enable_telemetry: enableTelemetry,
                     deletedTemplateSets: [],
                     ipamProviders: [],
                     enableIpam: false,
-                    log_afm: true,
-                    log_asm: true,
+                    log_afm: logAFM,
+                    log_asm: logASM,
                     perfTracing: {
                         debug: perfTracing.debug,
                         enabled: perfTracing.enabled
