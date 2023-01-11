@@ -1,3 +1,10 @@
+# 1.24.0
+## Added
+
+## Fixed
+
+## Changed
+
 # 1.23.0
 ## Added
 * Support for partition default route-domains; set it to an existing route-domain with a custom FAST template
