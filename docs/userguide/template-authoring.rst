@@ -493,7 +493,7 @@ Service Discovery
 -----------------
 
 | Service discovery bridges the gap between a service's name and IP address by providing a dynamic mapping between a service name and its IP address.
-| BIG-IP FAST has added the following Address Discovery types to the pool subTemplate for creating pool members with Service Discovery:
+| BIG-IP FAST has added the following Address Discovery types for creating pool members with Service Discovery:
 | 
 * Amazon Web Services (AWS)
 * Azure
