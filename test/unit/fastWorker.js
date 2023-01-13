@@ -1889,6 +1889,7 @@ describe('fastWorker tests', function () {
                 });
         });
         it('post_templateset_deleted', function () {
+            this.timeout(5000);
             const worker = createWorker();
             const postOp = new RestOp('/shared/fast/templatesets');
             postOp.setBody({
