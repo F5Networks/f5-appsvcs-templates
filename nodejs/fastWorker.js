@@ -441,8 +441,9 @@ class FASTWorker {
         reqid = reqid || 0;
         let prevConfig;
         let persisted = false;
+        const randomIntNumber = Math.floor(Math.random() * 100);
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, 'saving config data'))
+            .then(() => this.enterTransaction(reqid, `saving config data ${randomIntNumber}`))
             .then(() => this.configStorage.getItem(configKey, config))
             .then((data) => {
                 prevConfig = data;
@@ -462,7 +463,7 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
-            .then(() => this.exitTransaction(reqid, 'saving config data'))
+            .then(() => this.exitTransaction(reqid, `saving config data ${randomIntNumber}`))
             .then(() => persisted)
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
@@ -737,9 +738,9 @@ class FASTWorker {
      */
     loadOnDiskTemplateSets(reqid, config) {
         let saveState = true;
-
+        const randomIntNumber = Math.floor(Math.random() * 100);
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, 'loading template sets from disk'))
+            .then(() => this.enterTransaction(reqid, `loading template sets from disk ${randomIntNumber}`))
             .then(() => this.recordTransaction(
                 reqid,
                 'gather list of templates from disk',
@@ -767,7 +768,7 @@ class FASTWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
-            .then(() => this.exitTransaction(reqid, 'loading template sets from disk'))
+            .then(() => this.exitTransaction(reqid, `loading template sets from disk ${randomIntNumber}`))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
@@ -1015,6 +1016,7 @@ class FASTWorker {
      */
     enterTransaction(reqid, text) {
         this.transactionLogger.enter(`${reqid}@@${text}`);
+        return Promise.resolve();
     }
 
     /**
@@ -1025,6 +1027,7 @@ class FASTWorker {
      */
     exitTransaction(reqid, text) {
         this.transactionLogger.exit(`${reqid}@@${text}`);
+        return Promise.resolve();
     }
 
     /**
