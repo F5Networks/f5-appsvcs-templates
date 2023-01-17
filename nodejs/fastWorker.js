@@ -441,7 +441,7 @@ class FASTWorker {
         reqid = reqid || 0;
         let prevConfig;
         let persisted = false;
-        const randomIntNumber = Math.floor(Math.random() * 100);
+        const randomIntNumber = new Date().getMilliseconds();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, `saving config data ${randomIntNumber}`))
             .then(() => this.configStorage.getItem(configKey, config))
