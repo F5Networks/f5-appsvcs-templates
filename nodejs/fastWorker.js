@@ -29,6 +29,7 @@ const merge = require('deepmerge');
 const Mustache = require('mustache');
 const semver = require('semver');
 const axios = require('axios');
+const uuid = require('uuid');
 
 const fast = require('@f5devcentral/f5-fast-core');
 const atgStorage = require('@f5devcentral/atg-storage');
@@ -441,9 +442,9 @@ class FASTWorker {
         reqid = reqid || 0;
         let prevConfig;
         let persisted = false;
-        const randomIntNumber = new Date().getMilliseconds();
+        const uniqueStr = uuid.v4();
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, `saving config data ${randomIntNumber}`))
+            .then(() => this.enterTransaction(reqid, 'saving config data', uniqueStr))
             .then(() => this.configStorage.getItem(configKey, config))
             .then((data) => {
                 prevConfig = data;
@@ -463,7 +464,7 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
-            .then(() => this.exitTransaction(reqid, `saving config data ${randomIntNumber}`))
+            .then(() => this.exitTransaction(reqid, 'saving config data', uniqueStr))
             .then(() => persisted)
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
@@ -663,9 +664,9 @@ class FASTWorker {
                 // we will retry initWorker 5 times with 5 seconds delay for 404 errors
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/404/))) {
                     this.initRetries += 1;
-                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
+                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 10000);
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
-                    return this._delay(2000)
+                    return this._delay(10000)
                         .then(() => this.initWorker(reqid));
                 }
                 this.logger.severe(`FAST Worker: initWorker failed. ${e.message}\n${e.stack}`);
@@ -738,9 +739,9 @@ class FASTWorker {
      */
     loadOnDiskTemplateSets(reqid, config) {
         let saveState = true;
-        const randomIntNumber = Math.floor(Math.random() * 100);
+        const uniqueStr = uuid.v4();
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, `loading template sets from disk ${randomIntNumber}`))
+            .then(() => this.enterTransaction(reqid, 'loading template sets from disk', uniqueStr))
             .then(() => this.recordTransaction(
                 reqid,
                 'gather list of templates from disk',
@@ -768,7 +769,7 @@ class FASTWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
-            .then(() => this.exitTransaction(reqid, `loading template sets from disk ${randomIntNumber}`))
+            .then(() => this.exitTransaction(reqid, 'loading template sets from disk', uniqueStr))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
@@ -1012,10 +1013,11 @@ class FASTWorker {
      * enter Transaction Logging operation
      * @param {number} reqid - FASTWorker process id, identifying the request
      * @param {string} text - description of transaction
+     * @param {string} uniqueStr - unique string used for transaction id
      * @returns {Promise}
      */
-    enterTransaction(reqid, text) {
-        this.transactionLogger.enter(`${reqid}@@${text}`);
+    enterTransaction(reqid, text, uniqueStr) {
+        this.transactionLogger.enter(`${reqid}@@${text}@@${uniqueStr}`);
         return Promise.resolve();
     }
 
@@ -1023,10 +1025,11 @@ class FASTWorker {
      * exit Transaction Logging operation
      * @param {number} reqid - FASTWorker process id, identifying the request
      * @param {string} text - description of transaction
+     * @param {string} uniqueStr - unique string used for transaction id
      * @returns {Promise}
      */
-    exitTransaction(reqid, text) {
-        this.transactionLogger.exit(`${reqid}@@${text}`);
+    exitTransaction(reqid, text, uniqueStr) {
+        this.transactionLogger.exit(`${reqid}@@${text}@@${uniqueStr}`);
         return Promise.resolve();
     }
 
