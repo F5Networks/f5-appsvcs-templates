@@ -657,8 +657,6 @@ class FASTWorker {
             .then(() => this.generateTeemReportOnStart(reqid))
             .then(() => Promise.resolve(config))
             .catch((e) => {
-                console.log('>>>>> DEBUG HERE');
-                console.log(this.initTimeout);
                 if (this.initTimeout) {
                     clearTimeout(this.initTimeout);
                 }
