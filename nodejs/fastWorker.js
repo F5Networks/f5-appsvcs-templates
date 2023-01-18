@@ -657,6 +657,8 @@ class FASTWorker {
             .then(() => this.generateTeemReportOnStart(reqid))
             .then(() => Promise.resolve(config))
             .catch((e) => {
+                console.log('>>>>> DEBUG HERE');
+                console.log(this.initTimeout);
                 if (this.initTimeout) {
                     clearTimeout(this.initTimeout);
                 }
@@ -664,9 +666,8 @@ class FASTWorker {
                 // we will retry initWorker 5 times with 5 seconds delay for 404 errors
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/404/))) {
                     this.initRetries += 1;
-                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 10000);
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
-                    return this._delay(10000)
+                    return this._delay(5000)
                         .then(() => this.initWorker(reqid));
                 }
                 this.logger.severe(`FAST Worker: initWorker failed. ${e.message}\n${e.stack}`);
