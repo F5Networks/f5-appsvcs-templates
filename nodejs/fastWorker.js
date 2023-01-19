@@ -1040,7 +1040,7 @@ class FASTWorker {
      * @returns {Promise}
      */
     recordTransaction(reqid, text, promise) {
-        return this.transactionLogger.enterPromise(`${reqid}@@${text}`, promise);
+        return this.transactionLogger.enterPromise(`${reqid}@@${text}@@${uuid.v4()}`, promise);
     }
 
     /**
