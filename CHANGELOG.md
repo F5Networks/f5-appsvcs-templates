@@ -2,6 +2,7 @@
 ## Added
 
 ## Fixed
+* bigip-fast-templates: This template set will now load in BIG-IP v13.1
 
 ## Changed
 
