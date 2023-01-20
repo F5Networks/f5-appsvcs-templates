@@ -1075,9 +1075,10 @@ class FASTWorker {
      * gather Template Set information
      * @param {string} tsid - name of Template Set to gather
      * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {Array} apps - optional list of applications (will fetch if not provided)
      * @returns {Promise}
      */
-    gatherTemplateSet(reqid, tsid, config) {
+    gatherTemplateSet(reqid, tsid, config, apps) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
@@ -1096,11 +1097,18 @@ class FASTWorker {
                             return fsTsData;
                         });
                 }),
-            this.recordTransaction(
-                reqid,
-                'gathering a list of applications from the driver',
-                this.driver.listApplications({ reqid })
-            )
+            Promise.resolve()
+                .then(() => {
+                    if (typeof apps !== 'undefined') {
+                        return Promise.resolve(apps);
+                    }
+
+                    return this.recordTransaction(
+                        reqid,
+                        'gathering a list of applications from the driver',
+                        this.driver.listApplications({ reqid })
+                    );
+                })
         ])
             .then(([tsData, appsList]) => {
                 if (!tsData) {
@@ -1161,8 +1169,17 @@ class FASTWorker {
             .then(() => this.getConfig(requestId)
                 .then((data) => { config = data; }))
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
-            .then(() => this.templateProvider.listSets())
-            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(requestId, setName, config))))
+            .then(() => Promise.all([
+                this.templateProvider.listSets(),
+                this.recordTransaction(
+                    requestId,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ requestId })
+                )
+            ]))
+            .then(([setList, appsList]) => Promise.all(setList.map(
+                setName => this.gatherTemplateSet(requestId, setName, config, appsList)
+            )))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
