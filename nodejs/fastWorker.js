@@ -155,7 +155,8 @@ class FASTWorker {
         this.lazyInit = options.lazyInit;
 
         this.initRetries = 0;
-        this.initMaxRetries = 15;
+        this.initMaxRetries = process.env.FAST_INIT_MAX_RETRIES || 15;
+        this.initRetryDelay = process.env.FAST_INIT_RETRY_DELAY_IN_MS || 5000;
         this.initTimeout = false;
 
         this.isPublic = true;
@@ -208,6 +209,7 @@ class FASTWorker {
         this.provisionData = null;
         this._hydrateCache = null;
         this._provisionConfigCacheTime = null;
+        this._provisionConfigCacheTTL = process.env.FAST_PROVISION_CONFIG_CACHE_TTL_IN_MS || 10000;
 
         this.tracer.logEvent(0, 'created_fast_worker');
     }
@@ -661,11 +663,12 @@ class FASTWorker {
                     clearTimeout(this.initTimeout);
                 }
                 this.logger.info(`FAST Worker: Entering UNHEALTHY state: ${e.message}`);
-                // we will retry initWorker 5 times with 5 seconds delay for 404 errors
+                // initWorker method will be retried for 404 errors; by default, 15 retries with 5 secs delay.
+                // FAST_INIT_MAX_RETRIES and FAST_INIT_RETRY_DELAY env vars can be used for adjusting retries settings.
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/404/))) {
                     this.initRetries += 1;
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
-                    return this._delay(5000)
+                    return this._delay(this.initRetryDelay)
                         .then(() => this.initWorker(reqid));
                 }
                 this.logger.severe(`FAST Worker: initWorker failed. ${e.message}\n${e.stack}`);
@@ -1184,7 +1187,7 @@ class FASTWorker {
      * @returns {Promise}
      */
     gatherProvisionData(requestId, clearCache, skipAS3) {
-        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
+        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= this._provisionConfigCacheTTL) {
             this.provisionData = null;
             this._provisionConfigCacheTime = Date.now();
         }
