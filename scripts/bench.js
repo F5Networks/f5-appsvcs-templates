@@ -18,7 +18,8 @@
 'use strict';
 
 const https = require('https');
-
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -75,18 +76,17 @@ function createApplicationDefinition(appId, numTenants) {
     const tenantId = appId % numTenants;
 
     return ({
-        name: 'bigip-fast-templates/http',
+        name: 'examples/simple_http',
         parameters: {
             tenant_name: `tenant${tenantId + 1}`,
             app_name: `app${appId + 1}`,
+            application_name: `app${appId + 1}`,
+            virtual_port: 80,
             virtual_address: ipaddr,
-            pool_members: [
-                {
-                    serverAddresses: [ipaddr],
-                    servicePort: 80
-                }
-            ]
-        }
+            server_port: 80,
+            server_addresses: [ipaddr]
+        },
+        allowOverwrite: true
     });
 }
 
@@ -216,20 +216,23 @@ async function deployApps(endpoint, numApplications, numTenants, batchSize) {
 function report(params, results) {
     let sumDt = 0;
     let sumApps = 0;
-
     console.log('\n=== Results ===\n');
-
     console.log(JSON.stringify(params), '\n');
-
-    console.log('batch, apps deployed, time to deploy (s), total apps, total time (s)');
+    let csvContent = 'batch, apps deployed, time to deploy (s), total apps, total time (s)\n';
+    console.log(csvContent);
     Object.entries(results).forEach(([batchId, [appsDeployed, dt]]) => {
         sumDt += dt;
         sumApps += appsDeployed;
         console.log(`${batchId}, ${appsDeployed}, ${dt}, ${sumApps}, ${sumDt}`);
+        csvContent += `${batchId}, ${appsDeployed}, ${dt}, ${sumApps}, ${sumDt}\n`;
     });
+
+    // writing csv file
+    fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_results.csv`), csvContent);
+    fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_metadata.json`), JSON.stringify(params));
 }
 
-async function runBench(endpoint, numApplications, numTenants, batchSize) {
+async function runBench(endpoint, numApplications, numTenants, batchSize, testCaseName) {
     await setAuthToken(endpoint);
 
     await resetBigIp(endpoint);
@@ -240,7 +243,8 @@ async function runBench(endpoint, numApplications, numTenants, batchSize) {
         {
             numApplications,
             numTenants,
-            batchSize
+            batchSize,
+            testCaseName
         },
         results
     );
@@ -251,6 +255,12 @@ async function main(createEndpoint) {
     const argv = yargs(hideBin(process.argv))
         .alias('h', 'help')
         .options({
+            testCaseName: {
+                description: 'Test test case name.',
+                alias: 'testName',
+                type: 'string',
+                default: 'default'
+            },
             numApplications: {
                 description: 'The number of applications to deploy',
                 alias: 'n',
@@ -290,9 +300,9 @@ async function main(createEndpoint) {
     if (!bigipCreds) {
         throw new Error('BIGIP_CREDS env var needs to be defined');
     }
-
+    fs.mkdirSync(path.join(process.cwd(), 'perfomance-tests-results'), { recursive: true });
     const endpoint = createEndpoint(bigipTarget, bigipCreds);
-    await runBench(endpoint, argv.numApplications, argv.numTenants, argv.batchSize);
+    await runBench(endpoint, argv.numApplications, argv.numTenants, argv.batchSize, argv.testCaseName);
 }
 
 if (require.main === module) {
