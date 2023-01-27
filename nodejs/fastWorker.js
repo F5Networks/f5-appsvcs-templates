@@ -1257,13 +1257,17 @@ class FASTWorker {
                 })
         ])
             .then(() => {
+                const tsLevel = this.foundTs ? 'nominal' : 'none';
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
-
                 if (!tsInfo) {
+                    // Create fake ts module
                     this.provisionData.items.push({
                         name: 'ts',
                         level: this.foundTs ? 'nominal' : 'none'
                     });
+                } else {
+                    // Module already exists, update it
+                    tsInfo.level = tsLevel;
                 }
             })
             .then(() => Promise.all([
