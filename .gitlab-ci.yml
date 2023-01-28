@@ -93,7 +93,7 @@ pages:
       # Perfomance test results (coverage)
        - PERFOMANCE_TESTS=${PUBLIC_DIR}/perfomance-tests-results
        - mkdir -p ${PERFOMANCE_TESTS}
-       - cp -R perfomance-tests-results/* ${PERFOMANCE_TESTS}
+       - cp -R perfomance-tests-results/* ${PERFOMANCE_TESTS} || true # Allow failure for PerfTests
     artifacts:
         paths:
             - public
