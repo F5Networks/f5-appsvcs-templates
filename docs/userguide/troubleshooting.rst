@@ -144,6 +144,16 @@ HTTP Template Health Monitors not Displaying Properly
 |
 The resolution is to upgrade to BIG-IP FAST version 1.17.0 or later.
 
+Config not Loading after Updating /Common/Shared
+------------------------------------------------
+
+If a BIG-IP FAST application is deployed with Telemetry Streaming (TS) enabled, then objects are removed from /Common/Shared using BIG-IP AS3, the result may be the config not loading.
+This is due to BIG-IP FAST referencing objects that no longer exist.
+
+BIG-IP FAST will put them back in whenever it saves its config, which happens frequently (startup, render, deploy, save global-settings, etc).
+However, a GET can be sent to the /mgmt/shared/appsvcs/declare endpoint to get, at most, 11  
+TS objects BIG-IP FAST puts there, then include that in the declaration for /Common/Shared. 
+
 Known Issues
 ------------
 
