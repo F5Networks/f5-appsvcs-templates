@@ -127,6 +127,7 @@ class FASTWorker {
             options.uploadPath = '/var/config/rest/downloads';
         }
         this.as3Info = null;
+        this.foundTs = null;
         this.requestCounter = 1;
         this.packageName = options.packageName || pkg.name;
         this.version = options.version || pkg.version;
@@ -646,17 +647,20 @@ class FASTWorker {
                 this.tracer.logEvent(reqid, 'config_loaded');
                 config = cfg;
             })
-            .then(() => this.setDeviceInfo(reqid))
-            // Get the AS3 driver ready
-            .then(() => this.prepareAS3Driver(reqid, config))
-            // Load template sets from disk (i.e., those from the RPM)
-            .then(() => this.loadOnDiskTemplateSets(reqid, config))
-            // watch for configSync logs, if device is in an HA Pair
-            .then(() => this.recordTransaction(
-                reqid,
-                'setting up watch for config-sync',
-                this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this))
-            ))
+            .then(() => Promise.all([
+                // Get and store device information
+                this.setDeviceInfo(reqid),
+                // Get the AS3 driver ready
+                this.prepareAS3Driver(reqid, config),
+                // Load template sets from disk (i.e., those from the RPM)
+                this.loadOnDiskTemplateSets(reqid, config),
+                // watch for configSync logs, if device is in an HA Pair
+                this.recordTransaction(
+                    reqid,
+                    'setting up watch for config-sync',
+                    this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this))
+                )
+            ]))
             .then(() => this.generateTeemReportOnStart(reqid))
             .then(() => Promise.resolve(config))
             .catch((e) => {
@@ -1074,9 +1078,10 @@ class FASTWorker {
      * gather Template Set information
      * @param {string} tsid - name of Template Set to gather
      * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {Array} apps - optional list of applications (will fetch if not provided)
      * @returns {Promise}
      */
-    gatherTemplateSet(reqid, tsid, config) {
+    gatherTemplateSet(reqid, tsid, config, apps) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
@@ -1095,11 +1100,18 @@ class FASTWorker {
                             return fsTsData;
                         });
                 }),
-            this.recordTransaction(
-                reqid,
-                'gathering a list of applications from the driver',
-                this.driver.listApplications({ reqid })
-            )
+            Promise.resolve()
+                .then(() => {
+                    if (typeof apps !== 'undefined') {
+                        return Promise.resolve(apps);
+                    }
+
+                    return this.recordTransaction(
+                        reqid,
+                        'gathering a list of applications from the driver',
+                        this.driver.listApplications({ reqid })
+                    );
+                })
         ])
             .then(([tsData, appsList]) => {
                 if (!tsData) {
@@ -1160,8 +1172,17 @@ class FASTWorker {
             .then(() => this.getConfig(requestId)
                 .then((data) => { config = data; }))
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
-            .then(() => this.templateProvider.listSets())
-            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(requestId, setName, config))))
+            .then(() => Promise.all([
+                this.templateProvider.listSets(),
+                this.recordTransaction(
+                    requestId,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ requestId })
+                )
+            ]))
+            .then(([setList, appsList]) => Promise.all(setList.map(
+                setName => this.gatherTemplateSet(requestId, setName, config, appsList)
+            )))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
@@ -1190,58 +1211,67 @@ class FASTWorker {
     gatherProvisionData(requestId, clearCache, skipAS3) {
         if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= this._provisionConfigCacheTTL) {
             this.provisionData = null;
+            this.foundTs = null;
             this._provisionConfigCacheTime = Date.now();
         }
-        return Promise.resolve()
-            .then(() => {
-                if (this.provisionData !== null) {
-                    return Promise.resolve(this.provisionData);
-                }
+        return Promise.all([
+            Promise.resolve()
+                .then(() => {
+                    if (this.provisionData !== null) {
+                        return Promise.resolve(this.provisionData);
+                    }
 
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching module provision information',
-                    this.bigip.getProvisionData()
-                );
-            })
-            .then((response) => {
-                this.provisionData = response;
-            })
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching module provision information',
+                        this.bigip.getProvisionData()
+                    );
+                })
+                .then((response) => {
+                    this.provisionData = response;
+                }),
+            Promise.resolve()
+                .then(() => {
+                    if (this.foundTs !== null) {
+                        return Promise.resolve(this.foundTs);
+                    }
+
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching TS module information',
+                        this.bigip.getTSInfo()
+                    )
+                        .then((response) => { this.foundTs = response.status && response.status < 400; });
+                }),
+            Promise.resolve()
+                .then(() => {
+                    if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
+                        return Promise.resolve(this.as3Info);
+                    }
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching AS3 info',
+                        this.driver.getInfo({ requestId })
+                    )
+                        .then(response => response.data);
+                })
+                .then((response) => {
+                    this.as3Info = response;
+                })
+        ])
             .then(() => {
+                const tsLevel = this.foundTs ? 'nominal' : 'none';
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
-                if (tsInfo) {
-                    return Promise.resolve({ status: 304 });
+                if (!tsInfo) {
+                    // Create fake ts module
+                    this.provisionData.items.push({
+                        name: 'ts',
+                        level: this.foundTs ? 'nominal' : 'none'
+                    });
+                } else {
+                    // Module already exists, update it
+                    tsInfo.level = tsLevel;
                 }
-
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching TS module information',
-                    this.bigip.getTSInfo()
-                );
-            })
-            .then((response) => {
-                if (response.status === 304) {
-                    return Promise.resolve();
-                }
-
-                return this.provisionData.items.push({
-                    name: 'ts',
-                    level: (response.status === 200) ? 'nominal' : 'none'
-                });
-            })
-            .then(() => {
-                if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
-                    return Promise.resolve(this.as3Info);
-                }
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching AS3 info',
-                    this.driver.getInfo({ requestId })
-                )
-                    .then(response => response.data);
-            })
-            .then((response) => {
-                this.as3Info = response;
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
