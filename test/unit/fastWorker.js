@@ -244,6 +244,7 @@ describe('fastWorker tests', function () {
         }
     };
     let as3Scope;
+    let provisionScope;
 
     before(function () {
         const tsNames = [
@@ -256,7 +257,7 @@ describe('fastWorker tests', function () {
 
     beforeEach(function () {
         this.clock = sinon.useFakeTimers();
-        nock(host)
+        provisionScope = nock(host)
             .persist()
             .get('/mgmt/tm/sys/provision')
             .reply(200, {
@@ -280,6 +281,17 @@ describe('fastWorker tests', function () {
                         fullPath: 'asm',
                         generation: 1,
                         selfLink: 'https://localhost/mgmt/tm/sys/provision/asm?ver=15.0.1.1',
+                        cpuRatio: 0,
+                        diskRatio: 0,
+                        level: 'nominal',
+                        memoryRatio: 0
+                    },
+                    {
+                        kind: 'tm:sys:provision:provisionstate',
+                        name: 'gtm',
+                        fullPath: 'gtm',
+                        generation: 1,
+                        selfLink: 'https://localhost/mgmt/tm/sys/provision/gtm?ver=15.0.1.1',
                         cpuRatio: 0,
                         diskRatio: 0,
                         level: 'nominal',
@@ -2760,6 +2772,201 @@ describe('fastWorker tests', function () {
             return worker.onGet(op)
                 .then(() => {
                     console.log(op.body);
+                    assert(as3Scope.isDone());
+                });
+        });
+        it('convert_wideip_templates', function () {
+            const worker = createWorker();
+            as3Scope = resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        httpWideIp: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/http',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'httpWideIp',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_members: [
+                                            { serverAddresses: ['10.0.0.3'], servicePort: 80 }
+                                        ],
+                                        gtm_fqdn: 'example.com'
+                                    }
+                                }
+                            }
+                        },
+                        iisWideIp: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/microsoft_iis',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'iisWideIp',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_port: 80,
+                                        pool_members: [
+                                            '10.0.0.4'
+                                        ],
+                                        gtm_fqdn: 'example.com'
+                                    }
+                                }
+                            }
+                        },
+                        http: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/http',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'http',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_port: 80,
+                                        pool_members: [
+                                            '10.0.0.5'
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist()
+                .post(`${as3ep}/tenant?async=true`)
+                .reply(202, {
+                    code: 202,
+                    message: [
+                        { id: '0' }
+                    ]
+                });
+
+            nock(host)
+                .persist()
+                .get(/mgmt\/tm\/.*\?\$select=fullPath/)
+                .reply(200, {
+                    items: [
+                        { fullPath: '/Common/httpcompression' },
+                        { fullPath: '/Common/wan-optimized-compression' }
+                    ]
+                });
+            const op = new RestOp('/shared/fast/applications');
+            return worker.onGet(op)
+                .then(() => {
+                    console.log(op.body);
+                    assert(op.body[0].template === 'bigip-fast-templates/http_wideip');
+                    assert(op.body[1].template === 'bigip-fast-templates/microsoft_iis_wideip');
+                    assert(op.body[2].template === 'bigip-fast-templates/http');
+                    assert(as3Scope.isDone());
+                });
+        });
+        it('convert_nonwideip_templates', function () {
+            const worker = createWorker();
+            as3Scope = resetScope(as3Scope)
+                .get(as3ep)
+                .query(true)
+                .reply(200, Object.assign({}, as3stub, {
+                    tenant: {
+                        class: 'Tenant',
+                        httpWideIp: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/http',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'httpWideIp',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_members: [
+                                            { serverAddresses: ['10.0.0.6'], servicePort: 80 }
+                                        ],
+                                        gtm_fqdn: 'example.com'
+                                    }
+                                }
+                            }
+                        },
+                        iisWideIp: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/microsoft_iis',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'iisWideIp',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_port: 80,
+                                        pool_members: [
+                                            '10.0.0.7'
+                                        ],
+                                        gtm_fqdn: 'example.com'
+                                    }
+                                }
+                            }
+                        },
+                        http: {
+                            class: 'Application',
+                            constants: {
+                                [AS3DriverConstantsKey]: {
+                                    template: 'bigip-fast-templates/http',
+                                    view: {
+                                        tenant_name: 'tenant',
+                                        app_name: 'http',
+                                        enable_pool: true,
+                                        make_pool: true,
+                                        pool_port: 80,
+                                        pool_members: [
+                                            '10.0.0.8'
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }))
+                .persist()
+                .post(`${as3ep}/tenant?async=true`)
+                .reply(202, {
+                    code: 202,
+                    message: [
+                        { id: '0' }
+                    ]
+                });
+
+            provisionScope = resetScope(provisionScope)
+                .persist()
+                .get('/mgmt/tm/sys/provision')
+                .reply(200, {
+                    kind: 'tm:sys:provision:provisioncollectionstate',
+                    selfLink: 'https://localhost/mgmt/tm/sys/provision?ver=15.0.1.1',
+                    items: []
+                });
+
+            nock(host)
+                .persist()
+                .get(/mgmt\/tm\/.*\?\$select=fullPath/)
+                .reply(200, {
+                    items: [
+                        { fullPath: '/Common/httpcompression' },
+                        { fullPath: '/Common/wan-optimized-compression' }
+                    ]
+                });
+            const op = new RestOp('/shared/fast/applications');
+            return worker.onGet(op)
+                .then(() => {
+                    console.log(op.body);
+                    assert(op.body[0].template === 'bigip-fast-templates/http');
+                    assert(op.body[1].template === 'bigip-fast-templates/microsoft_iis');
+                    assert(op.body[2].template === 'bigip-fast-templates/http');
                     assert(as3Scope.isDone());
                 });
         });

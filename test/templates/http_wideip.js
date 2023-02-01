@@ -27,18 +27,37 @@ const { getView, getExpected } = require('./common/http_tests');
 
 const view = getView.run();
 const expected = getExpected.run();
-const template = 'templates/bigip-fast-templates/http.yaml';
+const template = 'templates/bigip-fast-templates/http_wideip.yaml';
 
 describe(template, function () {
-    httpTests.run(util, template, view, expected);
+    describe('HTTP DNS with Wide IP', () => {
+        before(() => {
+            view.gtm_fqdn = 'example.com';
+            expected.t1.app1.app1_gslb_pool = {
+                class: 'GSLB_Pool',
+                resourceRecordType: 'A',
+                fallbackIP: '10.1.1.1'
+            };
+            expected.t1.app1.app1_wideip = {
+                class: 'GSLB_Domain',
+                domainName: 'example.com',
+                resourceRecordType: 'A',
+                pools: [
+                    {
+                        use: 'app1_gslb_pool'
+                    }
+                ]
+            };
+        });
+        httpTests.run(util, template, view, expected);
+    });
 
     const monitorAttrs = ['monitor_interval', 'monitor_send_string', 'monitor_expected_response'];
     monitorTests.run(util, template, view, expected, monitorAttrs, '/Common/http');
+
     poolTests.run(util, template, view, expected);
 
     describe('clean up', function () {
         util.cleanUp();
     });
 });
-
-module.exports = { view, expected };
