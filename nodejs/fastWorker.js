@@ -76,7 +76,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
-        '921181b433c8bfe3b0a50877a4f0222a4d0f6abb855c19d13613e446d1cef2b0', // v1.24
+        'badf3fa1a5bcc81888ca2516c8069b176da49b0575e86c5e8e0e811e2c5fa7e9', // v1.24
         'a0982c93ca0e182a67887636fcb3b208b018c989ee1459f02ae83cf10e9e2175', // v1.23
         '2d88c05f2b7ce83e595c42c780d51b1216c0cafcc027762f6f01990d2d43105a', // v1.21
         '8b5152db4930aa1f18f6c25b7c8a508c2901b35307333505c971de3ad5e26ef4', // v1.20
@@ -1594,49 +1594,106 @@ class FASTWorker {
     }
 
     /**
-     * ensure Pool Member config get updated for Applications
+     * redeploy converted Applications with updates for version discrepencies
      * @param {Object} restOperation
      * @param {Object[]} apps - array of Applications to convert
      * @returns {Promise}
      */
-    convertPoolMembers(restOperation, apps) {
+    migrateLegacyApps(restOperation, apps) {
         const reqid = restOperation.requestId;
-
         const convertTemplateNames = [
             'bigip-fast-templates/http',
             'bigip-fast-templates/tcp',
             'bigip-fast-templates/microsoft_iis'
         ];
-
-        const newApps = [];
+        const oldGtmTemplateNames = [
+            'bigip-fast-templates/http',
+            'bigip-fast-templates/microsoft_iis'
+        ];
+        const shouldConvertWideIp = app => (
+            oldGtmTemplateNames.includes(app.template)
+            && app.template
+            && typeof app.template === 'string'
+            && app.view.gtm_fqdn
+            && typeof app.view.gtm_fqdn === 'string'
+            && app.view.gtm_fqdn !== ''
+        );
+        const poolConvertingApps = [];
+        const oldGtmApps = [];
+        let newApps = [];
 
         apps.forEach((app) => {
-            const convert = (
+            const convertPool = (
                 convertTemplateNames.includes(app.template)
                 && app.view.pool_members
                 && app.view.pool_members.length > 0
                 && typeof app.view.pool_members[0] === 'string'
             );
-            if (convert) {
+
+            if (convertPool) {
                 app.view.pool_members = [{
                     serverAddresses: app.view.pool_members,
                     servicePort: app.view.pool_port || 80
                 }];
                 delete app.view.pool_port;
+
                 newApps.push(app);
                 this.logger.info(
                     `FAST Worker [${reqid}]: updating pool_members on ${app.tenant}/${app.name}`
                 );
+
+                if (shouldConvertWideIp(app)) {
+                    poolConvertingApps.push(app);
+                }
+
+                return;
+            }
+
+            if (shouldConvertWideIp(app)) {
+                oldGtmApps.push(app);
             }
         });
 
         let promiseChain = Promise.resolve();
+        if (poolConvertingApps.length > 0 || oldGtmApps.length > 0) {
+            promiseChain = promiseChain
+                .then(() => this.gatherProvisionData(reqid, true, true))
+                .then(([provisionData]) => {
+                    const gtmProvisioned = provisionData.items.filter(x => x.name === 'gtm' && x.level !== 'none');
+                    if (gtmProvisioned.length > 0) {
+                        const convert = (app) => {
+                            const oldTemplate = app.template;
+                            app.template = `${oldTemplate}_wideip`;
+                            newApps.push(app);
+                            this.logger.info(
+                                `FAST Worker [${reqid}]: migrating ${app.tenant}/${app.name} from ${oldTemplate} to ${app.template}`
+                            );
+                        };
+
+                        // apps with pool members being converted
+                        poolConvertingApps.forEach((app) => {
+                            Object.keys(newApps).forEach((key) => {
+                                if (newApps[key].tenant === app.tenant && newApps[key].name === app.name) {
+                                    delete newApps[key];
+                                }
+                            });
+                            convert(app);
+                            newApps = newApps.filter(newApp => newApp);
+                        });
+
+                        // apps without pool members needing converted
+                        oldGtmApps.forEach((app) => {
+                            convert(app);
+                        });
+                    }
+                });
+        }
         // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
         postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
-        if (newApps.length > 0) {
+        if (newApps.length > 0 || poolConvertingApps.length > 0 || oldGtmApps.length > 0) {
             promiseChain = promiseChain
                 .then(() => {
                     postOp.setBody(newApps.map(app => ({
@@ -2029,7 +2086,7 @@ class FASTWorker {
                     this.driver.getRawDeclaration({ reqid })
                 ))
                 .then(resp => resp.data[tenant][app])
-                .then(appDef => this.convertPoolMembers(restOperation, [appDef]))
+                .then(appDef => this.migrateLegacyApps(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
@@ -2043,7 +2100,7 @@ class FASTWorker {
                 'gathering a list of applications from the driver',
                 this.driver.listApplications({ reqid })
             ))
-            .then(appsList => this.convertPoolMembers(restOperation, appsList))
+            .then(appsList => this.migrateLegacyApps(restOperation, appsList))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);
@@ -2591,9 +2648,9 @@ class FASTWorker {
                 // Automatically convert any apps using the old pool_members definition
                 return this.recordTransaction(
                     reqid,
-                    'converting applications with old pool_members definition',
+                    'converting applications with old wide ip and/or pool_members definition',
                     this.driver.listApplications({ reqid })
-                        .then(apps => this.convertPoolMembers(reqid, apps))
+                        .then(apps => this.migrateLegacyApps(reqid, apps))
                 );
             })
             .then(() => this.genRestResponse(restOperation, 200, '', undefined))

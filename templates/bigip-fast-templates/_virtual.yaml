@@ -54,17 +54,17 @@ fastl4: &fastl4
   <<: *virtual_base
   definitions: &fastl4_context_def
     <<: *virtual_base_def
-    fastl4:
+    fastl4: &fastl4_prop
       title: Use fastL4 Protocol Profiles
       description: The FastL4 profile can increase virtual server performance and throughput by using the embedded Packet Velocity Acceleration (ePVA) chip to accelerate traffic.
       type: boolean
       default: false
-    make_fastl4_profile:
+    make_fastl4_profile: &make_fastl4_prop
       title: FAST-Generated fastL4 Protocol Profile
       description: Uncheck to use an existing BIG-IP fastL4 profile.
       type: boolean
       default: true
-    fastl4_profile_name:
+    fastl4_profile_name: &fastl4_name_prop
       title: fastL4 profile
       description: Select an existing BIG-IP fastL4 profile.
       type: string
@@ -96,6 +96,74 @@ fastl4: &fastl4
                   {{/make_fastl4_profile}}
                 {{/fastl4}}
               }
+            }
+          }
+        }
+
+# gtm subtemplate
+gtm:
+  <<: *virtual_base
+  title: GTM WideIP
+  contentType: application/json
+  bigipDependencies:
+    - gtm
+  definitions:
+    <<: *virtual_base_def
+    gtm_fqdn:
+      title: FQDN for DNS WideIP 
+      description: Providing an FQDN will create the WideIP from the Virtual Server address automatically
+      type: string
+      pattern: '^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]|()$'
+      default: ''
+    fastl4: *fastl4_prop
+    make_fastl4_profile: *make_fastl4_prop
+    fastl4_profile_name: *fastl4_name_prop
+  template: |
+        {
+          "{{tenant_name}}": {
+            "{{app_name}}": {
+              "{{app_name}}": {
+                "virtualAddresses": [
+                  {{#use_ipam}}
+                    "{{virtual_address_ipam}}"
+                  {{/use_ipam}}
+                  {{^use_ipam}}
+                    "{{virtual_address:f5:ipv4_ipv6}}"
+                  {{/use_ipam}}
+                ],
+                "virtualPort": {{virtual_port:f5:port}},
+                {{#fastl4}}
+                  "class": "Service_L4",
+                  {{#make_fastl4_profile}}
+                    "profileL4": "basic",
+                  {{/make_fastl4_profile}}
+                  {{^make_fastl4_profile}}
+                    "profileL4": {
+                      "bigip": "{{fastl4_profile_name}}"
+                    },
+                  {{/make_fastl4_profile}}
+                {{/fastl4}}
+              },
+              "{{app_name}}_gslb_pool": {
+                "class":"GSLB_Pool",
+                "resourceRecordType": "A",
+                {{#use_ipam}}
+                  "fallbackIP": "{{virtual_address_ipam}}"
+                {{/use_ipam}}
+                {{^use_ipam}}
+                  "fallbackIP": "{{virtual_address:f5:ipv4_ipv6}}"
+                {{/use_ipam}}
+              },
+              {{#gtm_fqdn}}
+                "{{app_name}}_wideip": {
+                  "class": "GSLB_Domain",
+                  "domainName": {{ . }},
+                  "resourceRecordType": "A",
+                  "pools": [
+                    { "use": "{{app_name}}_gslb_pool" }
+                  ]
+                }
+              {{/gtm_fqdn}}
             }
           }
         }
