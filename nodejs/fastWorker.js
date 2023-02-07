@@ -321,10 +321,9 @@ class FASTWorker {
         let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => this.gatherProvisionData(reqid, true, false))
-            .then(provisionData => Promise.all([
+            .then(() => Promise.all([
                 this.configStorage.getItem(configKey),
-                this.driver.getSettings(provisionData[0])
+                this.driver.getSettings()
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
