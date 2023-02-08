@@ -647,20 +647,17 @@ class FASTWorker {
                 this.tracer.logEvent(reqid, 'config_loaded');
                 config = cfg;
             })
-            .then(() => Promise.all([
-                // Get and store device information
-                this.setDeviceInfo(reqid),
-                // Get the AS3 driver ready
-                this.prepareAS3Driver(reqid, config),
-                // Load template sets from disk (i.e., those from the RPM)
-                this.loadOnDiskTemplateSets(reqid, config),
-                // watch for configSync logs, if device is in an HA Pair
-                this.recordTransaction(
-                    reqid,
-                    'setting up watch for config-sync',
-                    this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this))
-                )
-            ]))
+            .then(() => this.setDeviceInfo(reqid))
+            // Get the AS3 driver ready
+            .then(() => this.prepareAS3Driver(reqid, config))
+            // Load template sets from disk (i.e., those from the RPM)
+            .then(() => this.loadOnDiskTemplateSets(reqid, config))
+            // watch for configSync logs, if device is in an HA Pair
+            .then(() => this.recordTransaction(
+                reqid,
+                'setting up watch for config-sync',
+                this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this))
+            ))
             .then(() => this.generateTeemReportOnStart(reqid))
             .then(() => Promise.resolve(config))
             .catch((e) => {
