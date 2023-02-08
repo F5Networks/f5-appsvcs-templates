@@ -567,6 +567,15 @@ describe('Settings', function () {
             .then(() => { enableTelemetry = true; })
             .catch(e => (e.response && e.response.status === 404 ? Promise.resolve() : Promise.reject(e))))
         .then(() => endpoint.get('/mgmt/tm/sys/provision')
+            .catch((e) => {
+                if (!e.response || e.response.status !== 503) {
+                    return Promise.reject(e);
+                }
+                // told to back off, so wait and try again
+                return Promise.resolve()
+                    .then(() => promiseDelay(1000))
+                    .then(() => endpoint.get('/mgmt/tm/sys/provision'));
+            })
             .then(resp => resp.data)
             .then(data => data.items
                 .filter(x => x.level !== 'none')
