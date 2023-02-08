@@ -138,6 +138,12 @@ function deleteAllApplications(retryDeleteCtr) {
         .catch(e => handleHTTPError(e, 'delete applications'));
 }
 
+function resetSettings() {
+    return Promise.resolve()
+        .then(() => endpoint.delete('/mgmt/shared/fast/settings'))
+        .catch(e => handleHTTPError(e, 'delete settings'));
+}
+
 describe('Template Sets', function () {
     this.timeout(120000);
     const url = '/mgmt/shared/fast/templatesets';
@@ -549,7 +555,7 @@ describe('Settings', function () {
 
     before('Setup', () => Promise.resolve()
         .then(() => getAuthToken())
-        .then(() => endpoint.delete(url))
+        .then(() => resetSettings())
         .then(actual => assert(actual, {
             data: { code: 200, message: 'success' },
             status: 200
@@ -569,7 +575,7 @@ describe('Settings', function () {
             .catch(e => handleHTTPError(e, 'get provision data'))));
 
     it('C72081273 GET default settings', () => Promise.resolve()
-        .then(() => endpoint.delete(url))
+        .then(() => resetSettings())
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
