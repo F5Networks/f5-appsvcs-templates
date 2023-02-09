@@ -321,10 +321,9 @@ class FASTWorker {
         let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => this.gatherProvisionData(reqid, true, false))
-            .then(provisionData => Promise.all([
+            .then(() => Promise.all([
                 this.configStorage.getItem(configKey),
-                this.driver.getSettings(provisionData[0])
+                this.driver.getSettings()
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
@@ -2186,12 +2185,17 @@ class FASTWorker {
             ))
             .then(setList => Promise.all([
                 Promise.resolve(setList),
-                this.getConfig(reqid)
+                this.getConfig(reqid),
+                this.recordTransaction(
+                    reqid,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ reqid })
+                )
             ]))
-            .then(([setList, config]) => this.recordTransaction(
+            .then(([setList, config, appsList]) => this.recordTransaction(
                 reqid,
                 'gathering data for each template set',
-                Promise.all(setList.map(x => this.gatherTemplateSet(reqid, x, config)))
+                Promise.all(setList.map(x => this.gatherTemplateSet(reqid, x, config, appsList)))
             ))
             .then(setList => ((showDisabled) ? setList.filter(x => !x.enabled) : setList))
             .then((setList) => {
@@ -3002,8 +3006,13 @@ class FASTWorker {
                     .then((data) => { config = data; }))
                 .then(() => this.recordTransaction(
                     reqid,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ reqid })
+                ))
+                .then(appsList => this.recordTransaction(
+                    reqid,
                     `gathering template set data for ${tsid}`,
-                    this.gatherTemplateSet(reqid, tsid, config)
+                    this.gatherTemplateSet(reqid, tsid, config, appsList)
                 ))
                 .then((setData) => {
                     const usedBy = setData.templates.reduce((acc, curr) => {
