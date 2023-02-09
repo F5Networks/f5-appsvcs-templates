@@ -109,9 +109,8 @@ function getAuthToken() {
         .catch(e => handleHTTPError(e, 'generate auth token'));
 }
 
-// set retryDeleteCtr to 0 before each call to deleteAll Application
-let retryDeleteCtr = 0;
-function deleteAllApplications() {
+function deleteAllApplications(retryDeleteCtr) {
+    retryDeleteCtr = retryDeleteCtr || 0;
     return Promise.resolve()
         .then(() => endpoint.delete('/mgmt/shared/fast/applications'))
         .then((response) => {
@@ -129,15 +128,20 @@ function deleteAllApplications() {
                 console.log(task);
             }
             if (retryDeleteCtr <= 11 && task.code === 503 && task.message.match(/Configuration operation in progress on device/)) {
-                retryDeleteCtr += 1;
                 console.log(`Retry Delete All Applications # ${retryDeleteCtr}`);
                 return promiseDelay(10000)
-                    .then(() => deleteAllApplications());
+                    .then(() => deleteAllApplications(retryDeleteCtr + 1));
             }
             assert.ok(task.code === okCode || task.code === 0);
             return promiseDelay(10000);
         })
         .catch(e => handleHTTPError(e, 'delete applications'));
+}
+
+function resetSettings() {
+    return Promise.resolve()
+        .then(() => endpoint.delete('/mgmt/shared/fast/settings'))
+        .catch(e => handleHTTPError(e, 'delete settings'));
 }
 
 describe('Template Sets', function () {
@@ -492,38 +496,41 @@ describe('Applications', function () {
             '10.1.0.2'
         ]
     }));
-    it('C72081272 Deploy burst of applications', () => Promise.resolve()
-        .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
-            .then(() => endpoint.post('/mgmt/shared/fast/applications', {
-                name: 'examples/simple_udp_defaults',
-                parameters: {
-                    tenant_name: 'tenant',
-                    application_name: `burst${num}`,
-                    virtual_address: `10.0.1.${num}`,
-                    server_addresses: [
-                        `10.0.1.${num}`
-                    ]
-                }
-            }))
-            .catch(e => handleHTTPError(e, `posting burst app ${num}`)))))
-        .then(responses => Promise.all(responses.map(
-            resp => waitForCompletedTask(resp.data.message[0].id)
-        )))
-        .then((tasks) => {
-            // console.log(JSON.stringify(
-            //     tasks.map(task => ({
-            //         id: task.id,
-            //         code: task.code,
-            //         message: task.message,
-            //         application: task.application
-            //     })),
-            //     null,
-            //     2
-            // ));
-            tasks.forEach((task) => {
-                assert.strictEqual(task.code, 200);
+    it('C72081272 Deploy burst of applications', function () {
+        this.timeout(240000);
+        return Promise.resolve()
+            .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
+                .then(() => endpoint.post('/mgmt/shared/fast/applications', {
+                    name: 'examples/simple_udp_defaults',
+                    parameters: {
+                        tenant_name: 'tenant',
+                        application_name: `burst${num}`,
+                        virtual_address: `10.0.1.${num}`,
+                        server_addresses: [
+                            `10.0.1.${num}`
+                        ]
+                    }
+                }))
+                .catch(e => handleHTTPError(e, `posting burst app ${num}`)))))
+            .then(responses => Promise.all(responses.map(
+                resp => waitForCompletedTask(resp.data.message[0].id)
+            )))
+            .then((tasks) => {
+                // console.log(JSON.stringify(
+                //     tasks.map(task => ({
+                //         id: task.id,
+                //         code: task.code,
+                //         message: task.message,
+                //         application: task.application
+                //     })),
+                //     null,
+                //     2
+                // ));
+                tasks.forEach((task) => {
+                    assert.strictEqual(task.code, 200);
+                });
             });
-        }));
+    });
 });
 
 describe('Settings', function () {
@@ -551,7 +558,7 @@ describe('Settings', function () {
 
     before('Setup', () => Promise.resolve()
         .then(() => getAuthToken())
-        .then(() => endpoint.delete(url))
+        .then(() => resetSettings())
         .then(actual => assert(actual, {
             data: { code: 200, message: 'success' },
             status: 200
@@ -560,6 +567,15 @@ describe('Settings', function () {
             .then(() => { enableTelemetry = true; })
             .catch(e => (e.response && e.response.status === 404 ? Promise.resolve() : Promise.reject(e))))
         .then(() => endpoint.get('/mgmt/tm/sys/provision')
+            .catch((e) => {
+                if (!e.response || e.response.status !== 503) {
+                    return Promise.reject(e);
+                }
+                // told to back off, so wait and try again
+                return Promise.resolve()
+                    .then(() => promiseDelay(1000))
+                    .then(() => endpoint.get('/mgmt/tm/sys/provision'));
+            })
             .then(resp => resp.data)
             .then(data => data.items
                 .filter(x => x.level !== 'none')
@@ -571,7 +587,7 @@ describe('Settings', function () {
             .catch(e => handleHTTPError(e, 'get provision data'))));
 
     it('C72081273 GET default settings', () => Promise.resolve()
-        .then(() => endpoint.delete(url))
+        .then(() => resetSettings())
         .then(() => endpoint.get(url))
         .then(actual => assertResponse(actual, {
             data: {
