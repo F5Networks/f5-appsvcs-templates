@@ -17,3 +17,4 @@ docs/userguide/proposed-doc-rev.rst
 scratch/
 # stryker temp files
 .stryker-tmp
+/perfomance-tests-results/

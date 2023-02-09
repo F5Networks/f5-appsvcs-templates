@@ -97,6 +97,17 @@ After installing RPM package on the BIGIP system, in order to enable performance
  * F5_PERF_TRACING_ENABLED - boolean flag to enable BIG-IP FAST Perfomance tracing
  * F5_PERF_TRACING_DEBUG - boolean flag to enable additional logging on Jaeger client
  * F5_PERF_TRACING_ENDPOINT - Jaeger url for sending traces (i.e. http://<ip_address>:14268/api/traces)
+
+### Configurable Settings
+
+ * FAST Worker: 
+   * FAST_INIT_MAX_RETRIES - integer number which represents retries number used for FAST Worker initialization workflow.
+   * FAST_INIT_RETRY_DELAY_IN_MS - milliseconds to delay between retries used within FAST Worker initialization.
+   * FAST_PROVISION_CONFIG_CACHE_TTL_IN_MS - milliseconds to define cache live time for Provision Config. 
+   
+ * AS3 Driver:
+   * FAST_PENDING_TASK_POLL_RATE_IN_MS - milliseconds to define AS3 task poll rate.
+   * FAST_OP_LOCK_TIMEOUT_IN_MS - milliseconds to wait for AS3 request OpLock.
  
 ### Logging
 

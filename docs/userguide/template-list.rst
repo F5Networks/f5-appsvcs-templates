@@ -58,6 +58,14 @@ The following table lists the template set, the corresponding template(s) and a 
         - Configure high availability and optimization for UDP implementations
 
       * - bigip-fast-templates
+        - HTTP with DNS Wide IP
+        - Configure high availability and optimization for DNS WideIP, from FQDN and Virtual Server destination IP, on devices with LTM and GTM provisioned      
+      
+      * - bigip-fast-templates
+        - IIS with DNS Wide IP
+        - Configure high availability and optimization for DNS WideIP, from FQDN and Virtual Server destination IP, on devices with LTM and GTM provisioned
+
+      * - bigip-fast-templates
         - Blue/Green Template
         - Divide application traffic between pools by percentage        
 

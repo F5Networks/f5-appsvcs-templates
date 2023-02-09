@@ -12,6 +12,7 @@ stages:
     - atg-shared-checks
     - test_build
     - build
+    - perfomance_tests
     - publish
     - release
 
@@ -76,9 +77,6 @@ pages:
         url: https://${CI_PROJECT_NAMESPACE}.${PAGES_DOMAIN}/${CI_PROJECT_NAME}/
     tags:
         - cm-official-docker-executor
-    dependencies:
-        - coverage
-        - create_docs
     script:
        # Base directory and index
        - PUBLIC_DIR='./public'
@@ -92,12 +90,17 @@ pages:
        - COVERAGE_DOCS=${PUBLIC_DIR}/coverage-docs
        - mkdir -p ${COVERAGE_DOCS}
        - cp -R coverage/* ${COVERAGE_DOCS}
+      # Perfomance test results (coverage)
+       - PERFOMANCE_TESTS=${PUBLIC_DIR}/perfomance-tests-results
+       - mkdir -p ${PERFOMANCE_TESTS}
+       - cp -R perfomance-tests-results/* ${PERFOMANCE_TESTS} || true # Allow failure for PerfTests
     artifacts:
         paths:
             - public
     only:
         - develop
         - doc-wip
+        - schedules
 
 clouddocs:
   image: ${CONTAINTHEDOCS_IMAGE}
@@ -122,4 +125,23 @@ publish_to_github:
     - scripts/release.sh
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /Bump version to ([0-9]+\.){2,2}[0-9]+[^-]/ && $CI_COMMIT_BRANCH == "master"
+
+perfomance_tests:
+  stage: perfomance_tests
+  only:
+    - schedules
+  before_script:
+    - npm ci
+  script:
+    # Test Cases name is constructed using the folliwing: ${numApplications}_${numTenants}_${batchSize}
+    - node scripts/bench.js --testCaseName 50-1-1 --numApplications 50 --numTenants 1 --batchSize 1
+    - node scripts/bench.js --testCaseName 100-1-10 --numApplications 100 --numTenants 1 --batchSize 10
+    - node scripts/bench.js --testCaseName 100-1-25 --numApplications 100 --numTenants 1 --batchSize 25
+    - node scripts/bench.js --testCaseName 100-20-10 --numApplications 100 --numTenants 20 --batchSize 10
+    - node scripts/bench.js --testCaseName 300-20-50 --numApplications 300 --numTenants 20 --batchSize 50
+    # Generating HTML results pages
+    - node scripts/generate_pref_tests_html.js
+  artifacts:
+    paths:
+      - perfomance-tests-results
 

@@ -22,9 +22,13 @@ Do BIG-IP FAST templates utilize BIG-IP AS3?
 --------------------------------------------
 
 BIG-IP FAST uses BIG-IP AS3 declarations to deploy applications and tenants.
-The declarative API represents the configuration which AS3 is responsible for creating on a BIG-IP system.
+The declarative API represents the configuration which BIG-IP AS3 is responsible for creating on a BIG-IP system.
 Therefore, if you manually edit a BIG-IP FAST application outside of BIG-IP FAST using a method such as TMSH, the changes will be overwritten the next time BIG-IP FAST modifies the tenant.
 Once a BIG-IP FAST template is used to deploy an application and tenant on a BIG-IP, BIG-IP FAST should continue to be used for that application and tenant.
+BIG-IP AS3 should not be used to directly modify the application.
+Please note: BIG-IP AS3 has a wider range of control over the BIG-IP configuration than BIG-IP FAST.
+For example, BIG-IP AS3 can modify the /Common/Shared partition, while BIG-IP FAST cannot.
+When a user modifies /Common/Shared via AS3, they should use AS3's per-tenant API to avoid modifying tenants that FAST is managing.
 
 Does BIG-IP FAST collect any usage data?
 ----------------------------------------

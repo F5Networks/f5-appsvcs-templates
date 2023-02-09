@@ -1,3 +1,13 @@
+# 1.24.0
+## Added
+* bigip-fast-templates: Add two new templates, HTTP with DNS Wide IP and IIS with DNS Wide IP, for deploying applications with DNS WideIP from FQDN and Virtual Server destination IP, on devices with LTM and GTM provisioned (issue [#119](https://github.com/F5Networks/f5-appsvcs-templates/issues/119))
+
+## Fixed
+* bigip-fast-templates: This template set will now load in BIG-IP v13.1
+* bigip-fast-templates: BIG-IP devices that have LTM and GTM provisioned cannot deploy the FAST HTTP/IIS templates without providing an FQDN for the DNS Wide IP (issue [#119](https://github.com/F5Networks/f5-appsvcs-templates/issues/119))
+
+## Changed
+
 # 1.23.0
 ## Added
 * Support for partition default route-domains; set it to an existing route-domain with a custom FAST template

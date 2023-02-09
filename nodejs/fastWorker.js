@@ -29,6 +29,7 @@ const merge = require('deepmerge');
 const Mustache = require('mustache');
 const semver = require('semver');
 const axios = require('axios');
+const uuid = require('uuid');
 
 const fast = require('@f5devcentral/f5-fast-core');
 const atgStorage = require('@f5devcentral/atg-storage');
@@ -75,6 +76,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        'badf3fa1a5bcc81888ca2516c8069b176da49b0575e86c5e8e0e811e2c5fa7e9', // v1.24
         'a0982c93ca0e182a67887636fcb3b208b018c989ee1459f02ae83cf10e9e2175', // v1.23
         '2d88c05f2b7ce83e595c42c780d51b1216c0cafcc027762f6f01990d2d43105a', // v1.21
         '8b5152db4930aa1f18f6c25b7c8a508c2901b35307333505c971de3ad5e26ef4', // v1.20
@@ -125,6 +127,7 @@ class FASTWorker {
             options.uploadPath = '/var/config/rest/downloads';
         }
         this.as3Info = null;
+        this.foundTs = null;
         this.requestCounter = 1;
         this.packageName = options.packageName || pkg.name;
         this.version = options.version || pkg.version;
@@ -154,7 +157,8 @@ class FASTWorker {
         this.lazyInit = options.lazyInit;
 
         this.initRetries = 0;
-        this.initMaxRetries = 15;
+        this.initMaxRetries = process.env.FAST_INIT_MAX_RETRIES || 15;
+        this.initRetryDelay = process.env.FAST_INIT_RETRY_DELAY_IN_MS || 5000;
         this.initTimeout = false;
 
         this.isPublic = true;
@@ -207,6 +211,7 @@ class FASTWorker {
         this.provisionData = null;
         this._hydrateCache = null;
         this._provisionConfigCacheTime = null;
+        this._provisionConfigCacheTTL = process.env.FAST_PROVISION_CONFIG_CACHE_TTL_IN_MS || 10000;
 
         this.tracer.logEvent(0, 'created_fast_worker');
     }
@@ -441,8 +446,9 @@ class FASTWorker {
         reqid = reqid || 0;
         let prevConfig;
         let persisted = false;
+        const uniqueStr = uuid.v4();
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, 'saving config data'))
+            .then(() => this.enterTransaction(reqid, 'saving config data', uniqueStr))
             .then(() => this.configStorage.getItem(configKey, config))
             .then((data) => {
                 prevConfig = data;
@@ -462,7 +468,7 @@ class FASTWorker {
 
                 return Promise.resolve();
             })
-            .then(() => this.exitTransaction(reqid, 'saving config data'))
+            .then(() => this.exitTransaction(reqid, 'saving config data', uniqueStr))
             .then(() => persisted)
             .catch((e) => {
                 this.logger.severe(`FAST Worker: Failed to save config: ${e.stack}`);
@@ -659,12 +665,12 @@ class FASTWorker {
                     clearTimeout(this.initTimeout);
                 }
                 this.logger.info(`FAST Worker: Entering UNHEALTHY state: ${e.message}`);
-                // we will retry initWorker 5 times with 5 seconds delay for 404 errors
+                // initWorker method will be retried for 404 errors; by default, 15 retries with 5 secs delay.
+                // FAST_INIT_MAX_RETRIES and FAST_INIT_RETRY_DELAY env vars can be used for adjusting retries settings.
                 if (this.initRetries <= this.initMaxRetries && ((e.status && e.status === 404) || e.message.match(/404/))) {
                     this.initRetries += 1;
-                    this.initTimeout = setTimeout(() => { this.initWorker(reqid); }, 2000);
                     this.logger.info(`FAST Worker: initWorker failed; Retry #${this.initRetries}. Error: ${e.message}`);
-                    return this._delay(2000)
+                    return this._delay(this.initRetryDelay)
                         .then(() => this.initWorker(reqid));
                 }
                 this.logger.severe(`FAST Worker: initWorker failed. ${e.message}\n${e.stack}`);
@@ -737,9 +743,9 @@ class FASTWorker {
      */
     loadOnDiskTemplateSets(reqid, config) {
         let saveState = true;
-
+        const uniqueStr = uuid.v4();
         return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, 'loading template sets from disk'))
+            .then(() => this.enterTransaction(reqid, 'loading template sets from disk', uniqueStr))
             .then(() => this.recordTransaction(
                 reqid,
                 'gather list of templates from disk',
@@ -767,7 +773,7 @@ class FASTWorker {
                 this.templateProvider.invalidateCache();
                 return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
             })
-            .then(() => this.exitTransaction(reqid, 'loading template sets from disk'))
+            .then(() => this.exitTransaction(reqid, 'loading template sets from disk', uniqueStr))
             // Persist any template set changes
             .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
@@ -1011,20 +1017,24 @@ class FASTWorker {
      * enter Transaction Logging operation
      * @param {number} reqid - FASTWorker process id, identifying the request
      * @param {string} text - description of transaction
+     * @param {string} uniqueStr - unique string used for transaction id
      * @returns {Promise}
      */
-    enterTransaction(reqid, text) {
-        this.transactionLogger.enter(`${reqid}@@${text}`);
+    enterTransaction(reqid, text, uniqueStr) {
+        this.transactionLogger.enter(`${reqid}@@${text}@@${uniqueStr}`);
+        return Promise.resolve();
     }
 
     /**
      * exit Transaction Logging operation
      * @param {number} reqid - FASTWorker process id, identifying the request
      * @param {string} text - description of transaction
+     * @param {string} uniqueStr - unique string used for transaction id
      * @returns {Promise}
      */
-    exitTransaction(reqid, text) {
-        this.transactionLogger.exit(`${reqid}@@${text}`);
+    exitTransaction(reqid, text, uniqueStr) {
+        this.transactionLogger.exit(`${reqid}@@${text}@@${uniqueStr}`);
+        return Promise.resolve();
     }
 
     /**
@@ -1035,7 +1045,7 @@ class FASTWorker {
      * @returns {Promise}
      */
     recordTransaction(reqid, text, promise) {
-        return this.transactionLogger.enterPromise(`${reqid}@@${text}`, promise);
+        return this.transactionLogger.enterPromise(`${reqid}@@${text}@@${uuid.v4()}`, promise);
     }
 
     /**
@@ -1065,9 +1075,10 @@ class FASTWorker {
      * gather Template Set information
      * @param {string} tsid - name of Template Set to gather
      * @param {Object} config - object containing the FASTWorker config Settings
+     * @param {Array} apps - optional list of applications (will fetch if not provided)
      * @returns {Promise}
      */
-    gatherTemplateSet(reqid, tsid, config) {
+    gatherTemplateSet(reqid, tsid, config, apps) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
                 .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
@@ -1086,11 +1097,18 @@ class FASTWorker {
                             return fsTsData;
                         });
                 }),
-            this.recordTransaction(
-                reqid,
-                'gathering a list of applications from the driver',
-                this.driver.listApplications({ reqid })
-            )
+            Promise.resolve()
+                .then(() => {
+                    if (typeof apps !== 'undefined') {
+                        return Promise.resolve(apps);
+                    }
+
+                    return this.recordTransaction(
+                        reqid,
+                        'gathering a list of applications from the driver',
+                        this.driver.listApplications({ reqid })
+                    );
+                })
         ])
             .then(([tsData, appsList]) => {
                 if (!tsData) {
@@ -1151,8 +1169,17 @@ class FASTWorker {
             .then(() => this.getConfig(requestId)
                 .then((data) => { config = data; }))
             .then(() => this.enterTransaction(requestId, 'gathering template set data'))
-            .then(() => this.templateProvider.listSets())
-            .then(setList => Promise.all(setList.map(setName => this.gatherTemplateSet(requestId, setName, config))))
+            .then(() => Promise.all([
+                this.templateProvider.listSets(),
+                this.recordTransaction(
+                    requestId,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ requestId })
+                )
+            ]))
+            .then(([setList, appsList]) => Promise.all(setList.map(
+                setName => this.gatherTemplateSet(requestId, setName, config, appsList)
+            )))
             .then((tmplSets) => {
                 info.installedTemplates = tmplSets;
             })
@@ -1179,60 +1206,69 @@ class FASTWorker {
      * @returns {Promise}
      */
     gatherProvisionData(requestId, clearCache, skipAS3) {
-        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= 10000) {
+        if (clearCache && (Date.now() - this._provisionConfigCacheTime) >= this._provisionConfigCacheTTL) {
             this.provisionData = null;
+            this.foundTs = null;
             this._provisionConfigCacheTime = Date.now();
         }
-        return Promise.resolve()
-            .then(() => {
-                if (this.provisionData !== null) {
-                    return Promise.resolve(this.provisionData);
-                }
+        return Promise.all([
+            Promise.resolve()
+                .then(() => {
+                    if (this.provisionData !== null) {
+                        return Promise.resolve(this.provisionData);
+                    }
 
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching module provision information',
-                    this.bigip.getProvisionData()
-                );
-            })
-            .then((response) => {
-                this.provisionData = response;
-            })
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching module provision information',
+                        this.bigip.getProvisionData()
+                    );
+                })
+                .then((response) => {
+                    this.provisionData = response;
+                }),
+            Promise.resolve()
+                .then(() => {
+                    if (this.foundTs !== null) {
+                        return Promise.resolve(this.foundTs);
+                    }
+
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching TS module information',
+                        this.bigip.getTSInfo()
+                    )
+                        .then((response) => { this.foundTs = response.status && response.status < 400; });
+                }),
+            Promise.resolve()
+                .then(() => {
+                    if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
+                        return Promise.resolve(this.as3Info);
+                    }
+                    return this.recordTransaction(
+                        requestId,
+                        'Fetching AS3 info',
+                        this.driver.getInfo({ requestId })
+                    )
+                        .then(response => response.data);
+                })
+                .then((response) => {
+                    this.as3Info = response;
+                })
+        ])
             .then(() => {
+                const tsLevel = this.foundTs ? 'nominal' : 'none';
                 const tsInfo = this.provisionData.items.filter(x => x.name === 'ts')[0];
-                if (tsInfo) {
-                    return Promise.resolve({ status: 304 });
+                if (!tsInfo) {
+                    // Create fake ts module
+                    this.provisionData.items.push({
+                        name: 'ts',
+                        level: this.foundTs ? 'nominal' : 'none'
+                    });
+                } else {
+                    // Module already exists, update it
+                    tsInfo.level = tsLevel;
                 }
-
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching TS module information',
-                    this.bigip.getTSInfo()
-                );
-            })
-            .then((response) => {
-                if (response.status === 304) {
-                    return Promise.resolve();
-                }
-
-                return this.provisionData.items.push({
-                    name: 'ts',
-                    level: (response.status === 200) ? 'nominal' : 'none'
-                });
-            })
-            .then(() => {
-                if (skipAS3 || (this.as3Info !== null && this.as3Info.version)) {
-                    return Promise.resolve(this.as3Info);
-                }
-                return this.recordTransaction(
-                    requestId,
-                    'Fetching AS3 info',
-                    this.driver.getInfo({ requestId })
-                )
-                    .then(response => response.data);
-            })
-            .then((response) => {
-                this.as3Info = response;
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
@@ -1555,49 +1591,106 @@ class FASTWorker {
     }
 
     /**
-     * ensure Pool Member config get updated for Applications
+     * redeploy converted Applications with updates for version discrepencies
      * @param {Object} restOperation
      * @param {Object[]} apps - array of Applications to convert
      * @returns {Promise}
      */
-    convertPoolMembers(restOperation, apps) {
+    migrateLegacyApps(restOperation, apps) {
         const reqid = restOperation.requestId;
-
         const convertTemplateNames = [
             'bigip-fast-templates/http',
             'bigip-fast-templates/tcp',
             'bigip-fast-templates/microsoft_iis'
         ];
-
-        const newApps = [];
+        const oldGtmTemplateNames = [
+            'bigip-fast-templates/http',
+            'bigip-fast-templates/microsoft_iis'
+        ];
+        const shouldConvertWideIp = app => (
+            oldGtmTemplateNames.includes(app.template)
+            && app.template
+            && typeof app.template === 'string'
+            && app.view.gtm_fqdn
+            && typeof app.view.gtm_fqdn === 'string'
+            && app.view.gtm_fqdn !== ''
+        );
+        const poolConvertingApps = [];
+        const oldGtmApps = [];
+        let newApps = [];
 
         apps.forEach((app) => {
-            const convert = (
+            const convertPool = (
                 convertTemplateNames.includes(app.template)
                 && app.view.pool_members
                 && app.view.pool_members.length > 0
                 && typeof app.view.pool_members[0] === 'string'
             );
-            if (convert) {
+
+            if (convertPool) {
                 app.view.pool_members = [{
                     serverAddresses: app.view.pool_members,
                     servicePort: app.view.pool_port || 80
                 }];
                 delete app.view.pool_port;
+
                 newApps.push(app);
                 this.logger.info(
                     `FAST Worker [${reqid}]: updating pool_members on ${app.tenant}/${app.name}`
                 );
+
+                if (shouldConvertWideIp(app)) {
+                    poolConvertingApps.push(app);
+                }
+
+                return;
+            }
+
+            if (shouldConvertWideIp(app)) {
+                oldGtmApps.push(app);
             }
         });
 
         let promiseChain = Promise.resolve();
+        if (poolConvertingApps.length > 0 || oldGtmApps.length > 0) {
+            promiseChain = promiseChain
+                .then(() => this.gatherProvisionData(reqid, true, true))
+                .then(([provisionData]) => {
+                    const gtmProvisioned = provisionData.items.filter(x => x.name === 'gtm' && x.level !== 'none');
+                    if (gtmProvisioned.length > 0) {
+                        const convert = (app) => {
+                            const oldTemplate = app.template;
+                            app.template = `${oldTemplate}_wideip`;
+                            newApps.push(app);
+                            this.logger.info(
+                                `FAST Worker [${reqid}]: migrating ${app.tenant}/${app.name} from ${oldTemplate} to ${app.template}`
+                            );
+                        };
+
+                        // apps with pool members being converted
+                        poolConvertingApps.forEach((app) => {
+                            Object.keys(newApps).forEach((key) => {
+                                if (newApps[key].tenant === app.tenant && newApps[key].name === app.name) {
+                                    delete newApps[key];
+                                }
+                            });
+                            convert(app);
+                            newApps = newApps.filter(newApp => newApp);
+                        });
+
+                        // apps without pool members needing converted
+                        oldGtmApps.forEach((app) => {
+                            convert(app);
+                        });
+                    }
+                });
+        }
         // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
         postOp.complete = () => postOp;
         postOp.setMethod('Post');
 
-        if (newApps.length > 0) {
+        if (newApps.length > 0 || poolConvertingApps.length > 0 || oldGtmApps.length > 0) {
             promiseChain = promiseChain
                 .then(() => {
                     postOp.setBody(newApps.map(app => ({
@@ -1990,7 +2083,7 @@ class FASTWorker {
                     this.driver.getRawDeclaration({ reqid })
                 ))
                 .then(resp => resp.data[tenant][app])
-                .then(appDef => this.convertPoolMembers(restOperation, [appDef]))
+                .then(appDef => this.migrateLegacyApps(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
@@ -2004,7 +2097,7 @@ class FASTWorker {
                 'gathering a list of applications from the driver',
                 this.driver.listApplications({ reqid })
             ))
-            .then(appsList => this.convertPoolMembers(restOperation, appsList))
+            .then(appsList => this.migrateLegacyApps(restOperation, appsList))
             .then((appsList) => {
                 restOperation.setBody(appsList);
                 this.completeRestOperation(restOperation);
@@ -2552,9 +2645,9 @@ class FASTWorker {
                 // Automatically convert any apps using the old pool_members definition
                 return this.recordTransaction(
                     reqid,
-                    'converting applications with old pool_members definition',
+                    'converting applications with old wide ip and/or pool_members definition',
                     this.driver.listApplications({ reqid })
-                        .then(apps => this.convertPoolMembers(reqid, apps))
+                        .then(apps => this.migrateLegacyApps(reqid, apps))
                 );
             })
             .then(() => this.genRestResponse(restOperation, 200, '', undefined))
