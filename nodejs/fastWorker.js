@@ -1159,13 +1159,20 @@ class FASTWorker {
         let config;
 
         return Promise.resolve()
-            .then(() => this.recordTransaction(
-                requestId,
-                'GET to appsvcs/info',
-                this.driver.getInfo({ requestId })
-            ))
+            .then(() => {
+                if (this.as3Info) {
+                    return Promise.resolve(this.as3Info);
+                }
+
+                return this.recordTransaction(
+                    requestId,
+                    'GET to appsvcs/info',
+                    this.driver.getInfo({ requestId })
+                )
+                    .then(response => response.data);
+            })
             .then((as3response) => {
-                info.as3Info = as3response.data;
+                info.as3Info = as3response;
                 this.as3Info = info.as3Info;
             })
             .then(() => this.getConfig(requestId)
