@@ -283,7 +283,7 @@ class FASTWorker {
                 const valid = validate(config);
                 if (!valid) {
                     return Promise.reject(new Error(
-                        `invalid config: ${validate.errors}`
+                        `invalid config: ${JSON.stringify(validate.errors, null, 2)}`
                     ));
                 }
 
