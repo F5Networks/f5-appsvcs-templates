@@ -16,6 +16,7 @@ Currently supported versions:
 | ---------------- | ------------------- | -------------- |
 | 1.22             | 15-Nov-2022         | 15-Feb-2023    |
 | 1.23             | 13-Jan-2023         | 12-Apr-2023    |
+| 1.24             | 09-Feb-2023         | 09-May-2023    |
 
 Versions no longer supported:
 
