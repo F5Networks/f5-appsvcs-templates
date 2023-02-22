@@ -222,6 +222,9 @@ describe('Express Adapter', function () {
             spySetSecureContextFunc = sinon.spy();
             spyCloseFunc = sinon.stub().resolves();
             sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
+                if (!app) {
+                    throw new Error('Error while creating app.');
+                }
                 testCertKeyChain = certKeyChain;
                 appArg = app;
                 return {
@@ -358,6 +361,16 @@ describe('Express Adapter', function () {
                 message: 'Failed to load TLS key and certificate: Failed to read ca certificate.'
             });
         });
+
+        it('startup_failure_due_to_cert_problem', () => expressAdapter.startHttpsServer(false, {
+            tlsKeyEnvName: 'F5_APPSVCS_SERVICE_KEY',
+            tlsCertEnvName: 'F5_APPSVCS_SERVICE_CERT',
+            tlsCaEnvName: 'F5_APPSVCS_SERVICE_CA',
+            allowLocalCert: true,
+            port: testPort
+        }).catch((err) => {
+            assert.notStrictEqual(err, 'Failed to start HTTP Server');
+        }));
     });
 
     describe('stopHttpsServer', () => {
