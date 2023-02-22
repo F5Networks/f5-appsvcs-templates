@@ -259,7 +259,13 @@ function startHttpsServer(app, options) {
     }
 
     // Create server
-    server = https.createServer(certKeyChain, app);
+    try {
+        server = https.createServer(certKeyChain, app);
+    } catch (err) {
+        return Promise.reject(new Error(
+            `Failed to start HTTP Server: ${err}`
+        ));
+    }
 
     // Watch for cert changes
     const watchPaths = [
