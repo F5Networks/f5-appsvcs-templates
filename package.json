@@ -133,6 +133,7 @@
     "@f5devcentral/f5-teem": "^1.5.0",
     "ajv": "^6.12.6",
     "axios": "^0.27.2",
+    "axios-retry": "^3.4.0",
     "core-js": "^3.27.2",
     "deepmerge": "^4.3.0",
     "extract-zip": "^1.7.0",

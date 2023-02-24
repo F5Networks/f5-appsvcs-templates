@@ -229,7 +229,7 @@ function resetScope(scope) {
 describe('fastWorker tests', function () {
     this.timeout(3000);
     const host = 'http://localhost:8100';
-    const as3ep = '/mgmt/shared/appsvcs/declare';
+    const as3ep = /\/mgmt\/shared\/appsvcs\/declare.*/;
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
     const as3stub = {
         class: 'ADC',
@@ -379,7 +379,7 @@ describe('fastWorker tests', function () {
 
             nock(host)
                 .persist()
-                .post(`${as3ep}/Common?async=true`)
+                .post(as3ep)
                 .reply(202, {});
 
             const scope = nock(host)
@@ -2251,7 +2251,7 @@ describe('fastWorker tests', function () {
             const op = new RestOp('/shared/fast/applications/tenant/app');
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2265,7 +2265,7 @@ describe('fastWorker tests', function () {
             op.setBody(['tenantfoo']);
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(400, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2280,7 +2280,7 @@ describe('fastWorker tests', function () {
             op.setBody({ fuzz: false });
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(400, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2295,7 +2295,7 @@ describe('fastWorker tests', function () {
             op.setBody(['tenant/foo']);
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2309,7 +2309,7 @@ describe('fastWorker tests', function () {
             const op = new RestOp('/shared/fast/applications');
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2427,7 +2427,7 @@ describe('fastWorker tests', function () {
                 .reply(200, as3stub);
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`, (body) => {
+                .post(as3ep, (body) => {
                     retrievedAddr = body.foo.bar.serviceMain.virtualAddresses[0];
                     return true;
                 })
@@ -2476,7 +2476,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
@@ -2495,7 +2495,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
@@ -2518,7 +2518,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant 01?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
@@ -2537,7 +2537,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPut(op)
                 .then(() => {
@@ -2580,7 +2580,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`, (body) => {
+                .post(as3ep, (body) => {
                     console.log(body);
                     assert.strictEqual(
                         body.tenant.app.serviceMain.virtualPort,
@@ -2751,7 +2751,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {
                     code: 202,
                     message: [
@@ -2841,7 +2841,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {
                     code: 202,
                     message: [
@@ -2934,7 +2934,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {
                     code: 202,
                     message: [
