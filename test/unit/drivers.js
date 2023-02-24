@@ -171,6 +171,28 @@ describe('AS3 Driver tests', function () {
 
         return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
     });
+    it('create_app_with_retries', function () {
+        this.clock.restore();
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+        mockAS3(as3stub);
+
+        nock(host)
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(503)
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(503)
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(503)
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(202, {});
+
+        return assert.isFulfilled(driver.createApplication(appDef, appMetadata));
+    });
     it('create_app_with_route_domain', function () {
         const driver = new AS3Driver();
         driver._static_id = 'STATIC';
