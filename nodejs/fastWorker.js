@@ -458,8 +458,7 @@ class FASTWorker {
             .then((data) => {
                 prevConfig = data;
             })
-            .then(() => this.gatherProvisionData(reqid, true, false))
-            .then(provisionData => this.driver.setSettings(config, provisionData, false, { reqid }))
+            .then(() => this.driver.setSettings(config))
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
@@ -656,7 +655,12 @@ class FASTWorker {
                 // Get and store device information
                 this.setDeviceInfo(reqid),
                 // Get the AS3 driver ready
-                this.prepareAS3Driver(reqid, config),
+                this.recordTransaction(
+                    reqid,
+                    'ready AS3 driver',
+                    this.driver.loadMixins()
+                        .then(() => this.driver.setSettings(config))
+                ),
                 // watch for configSync logs, if device is in an HA Pair
                 this.recordTransaction(
                     reqid,
@@ -719,35 +723,6 @@ class FASTWorker {
             'run lazy initialization',
             this.initWorker(reqid)
         );
-    }
-
-    /**
-     * prepare the AS3 Driver
-     * @param {number} reqid - FASTWorker process id, identifying the request
-     * @param {Object} config - object containing the FASTWorker config Settings
-     * @returns {Promise}
-     */
-    prepareAS3Driver(reqid, config) {
-        return Promise.resolve()
-            .then(() => this.driver.getInfo())
-            .then((as3InfoResponse) => {
-                if (as3InfoResponse.status === 200) {
-                    return Promise.resolve();
-                }
-                const errMessage = typeof as3InfoResponse.data === 'object' ? JSON.stringify(as3InfoResponse.data) : as3InfoResponse.statusText;
-                return Promise.reject(new Error(`AS3 Info Response: ${errMessage}`));
-            })
-            .then(() => this.recordTransaction(
-                reqid,
-                'ready AS3 driver',
-                this.driver.loadMixins()
-            ))
-            .then(() => this.recordTransaction(
-                reqid,
-                'sync AS3 driver settings',
-                Promise.resolve()
-                    .then(() => this.saveConfig(config, reqid))
-            ));
     }
 
     /**
@@ -1231,6 +1206,18 @@ class FASTWorker {
                     // Module already exists, update it
                     tsInfo.level = tsLevel;
                 }
+            })
+            .then(() => {
+                // Update driver settings while we have updated provision data
+                const provisionedModules = this.provisionData.items
+                    .filter(x => x.level !== 'none')
+                    .map(x => x.name);
+
+                return this.recordTransaction(
+                    requestId,
+                    'updating AS3 driver with module provisioning information',
+                    this.driver.updateProvisionInfo(provisionedModules)
+                );
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),

@@ -348,6 +348,12 @@ describe('fastWorker tests', function () {
                     'foo bar !@$^&*()-+_': as3App
                 }
             }));
+
+        nock(host)
+            .persist()
+            .post('/mgmt/shared/appsvcs/declare/Common')
+            .query(true)
+            .reply(200, {});
     });
 
     afterEach(function () {

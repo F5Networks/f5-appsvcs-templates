@@ -612,7 +612,6 @@ describe('Settings', function () {
         })));
     it('C72081274 POST then GET settings', () => {
         const postBody = {
-            enable_telemetry: false,
             deletedTemplateSets: [],
             enableIpam: false
         };
@@ -696,7 +695,6 @@ describe('Settings', function () {
     });
     it('PUT then GET settings', () => {
         const putBody = {
-            enable_telemetry: false,
             deletedTemplateSets: [],
             enableIpam: false
         };
