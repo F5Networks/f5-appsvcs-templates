@@ -105,7 +105,7 @@ const supportedHashes = {
 
 function _getPathElements(restOp) {
     const uri = restOp.getUri();
-    const pathElements = uri.pathname.split('/');
+    const pathElements = decodeURI(uri.pathname).split('/');
     if (!uri.pathname.includes('shared/fast')) {
         pathElements.shift();
     }
@@ -2073,8 +2073,8 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         if (appid) {
             const pathElements = _getPathElements(restOperation);
-            const tenant = decodeURI(pathElements.itemId);
-            const app = decodeURI(pathElements.itemSubId);
+            const tenant = pathElements.itemId;
+            const app = pathElements.itemSubId;
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid,
@@ -2903,7 +2903,7 @@ class FASTWorker {
         const pathElements = _getPathElements(restOperation);
 
         if (appid) {
-            data = [`${decodeURI(pathElements.itemId)}/${decodeURI(pathElements.itemSubId)}`];
+            data = [`${pathElements.itemId}/${pathElements.itemSubId}`];
         } else if (!data) {
             data = [];
         }
@@ -3167,8 +3167,8 @@ class FASTWorker {
         }
         const reqid = restOperation.requestId;
         const pathElements = _getPathElements(restOperation);
-        const tenant = decodeURI(pathElements.itemId);
-        const app = decodeURI(pathElements.itemSubId);
+        const tenant = pathElements.itemId;
+        const app = pathElements.itemSubId;
         const newParameters = data.parameters;
         // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);
