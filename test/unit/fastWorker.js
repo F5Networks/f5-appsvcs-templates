@@ -47,6 +47,7 @@ const templatesPath = path.join(process.cwd(), 'templates');
 
 class RestOp {
     constructor(uri) {
+        uri = encodeURI(uri);
         this.uri = {
             pathname: uri,
             path: uri,
@@ -2066,6 +2067,15 @@ describe('fastWorker tests', function () {
                 .then(() => assert.equal(op.status, 200))
                 .then(() => worker.templateProvider.listSets())
                 .then(setNames => assert.strictEqual(setNames.length, 0));
+        });
+        it('delete_templatesets_spaces', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/templatesets/template set');
+
+            worker.storage.data['template set'] = {};
+
+            return worker.onDelete(op)
+                .then(() => assert.equal(op.status, 200));
         });
     });
 

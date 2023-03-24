@@ -2,6 +2,7 @@
 ## Added
 
 ## Fixed
+* worker: Fix DELETE to /templatesets/<tsid> when <tsid> contains spaces (issue[#123](https://github.com/F5Networks/f5-appsvcs-templates/issues/119))
 
 ## Changed
 
