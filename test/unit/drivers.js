@@ -557,6 +557,7 @@ describe('AS3 Driver tests', function () {
                 assert.strictEqual(secondTask.message, 'pending');
                 assert.strictEqual(secondTask.tenant, 'tenantName');
                 assert.strictEqual(secondTask.application, 'appName');
-            });
+            })
+            .finally(() => clearTimeout(driver._pendingTasksTimeout));
     });
 });
