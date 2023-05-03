@@ -1,11 +1,11 @@
 openapi: "3.0.0"
 info:
   version: 1.25.0-rc.12
-  title: F5 Application Services Templates API
+  title: F5 BIG-IP Application Services Templates API
   license:
     name: Apache 2.0
   description: |
-    # F5 Application Services Templates (FAST)
+    # F5 BIG-IP Application Services Templates (FAST)
 
     This is the documentation for the FAST templating extension. This document
     catalogs the API endpoints exposed by the extension. Note that the path for
