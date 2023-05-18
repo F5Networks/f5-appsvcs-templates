@@ -5,6 +5,7 @@
 * worker: Fix DELETE to /templatesets/<tsid> when <tsid> contains spaces (issue[#123](https://github.com/F5Networks/f5-appsvcs-templates/issues/119))
 
 ## Changed
+* worker: Improve startup times
 
 # 1.24.0
 ## Added
