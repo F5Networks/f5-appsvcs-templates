@@ -216,6 +216,11 @@ The template will validate and be added to the system. When navigating to the **
 The rest of this page explains more about what the templating system can do.
 By using JSON schema alongside the templates, BIG-IP FAST provides a powerful system for validating template parameters ensuring applications get deployed as expected.
 
+.. IMPORTANT::
+
+  When submitting applications in a batch (more than 1), and one of the application returns an error, the whole batch will fail.
+
+
 POST vs PUT 
 ^^^^^^^^^^^
 
