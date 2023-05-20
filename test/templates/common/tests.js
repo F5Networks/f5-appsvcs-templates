@@ -528,6 +528,11 @@ const httpTests = {
                 expected.t1.app1.app1.class = 'Service_L4';
                 expected.t1.app1.app1.profileL4 = 'basic';
                 expected.t1.app1.app1.persistenceMethods = ['source-address'];
+                view.make_monitor = false;
+                view.use_https_monitor = true;
+                view.monitor_name_https_fastl4 = '/Common/https';
+                expected.t1.app1.app1_pool.monitors = [{ bigip: view.monitor_name_https_fastl4 }];
+                delete expected.t1.app1.app1_monitor;
                 delete expected.t1.app1.app1.serverTLS;
                 delete expected.t1.app1.app1.clientTLS;
                 delete expected.t1.app1.app1.profileTCP;
@@ -538,6 +543,15 @@ const httpTests = {
                 delete expected.t1.app1.app1_waf_policy;
                 delete expected.t1.app1.app1.profileDOS;
                 delete expected.t1.app1.app1.profileIntegratedBotDefense;
+            });
+            util.assertRendering(template, view, expected);
+        });
+
+        describe('use existing https monitor with fastl4', () => {
+            before(() => {
+                view.use_https_monitor = false;
+                view.monitor_name_http_fastl4 = '/Common/http';
+                expected.t1.app1.app1_pool.monitors = [{ bigip: view.monitor_name_http_fastl4 }];
             });
             util.assertRendering(template, view, expected);
         });
