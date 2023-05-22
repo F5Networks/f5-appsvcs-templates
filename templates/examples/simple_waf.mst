@@ -23,7 +23,7 @@
         "virtualAddresses": [ "{{virtual_address}}" ],
         "pool": "{{application_name}}_web_pool",
         "policyWAF": {
-          "bigip": "{{WAF_policy_path}}"
+          "use": "{{application_name}}_waf_policy"
         },
         "serverTLS": "webtls"
       },
@@ -36,6 +36,13 @@
           "servicePort": {{server_port::integer}},
           "serverAddresses": {{server_address::array}}
         }]
+      },
+      "{{application_name}}_waf_policy": {
+          class: 'WAF_Policy',
+          policy: {
+              text: '{ "policy": { "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
+          },
+          ignoreChanges: true
       },
       "webtls": {
         "class": "TLS_Server",
