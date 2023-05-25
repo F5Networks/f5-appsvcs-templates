@@ -1722,6 +1722,8 @@ class FASTWorker {
             .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
             .then((tmpl) => {
                 tmpl.title = tmpl.title || tmplid;
+                // always assume AS3 declaration (JSON)
+                tmpl.contentType = 'application/json';
                 return Promise.resolve()
                     .then(() => this.checkDependencies(tmpl, reqid, true))
                     .then(() => this.hydrateSchema(tmpl, reqid, true))
