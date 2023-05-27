@@ -106,7 +106,6 @@ function createApplicationDefinition(appId, numTenants, templateWeight) {
         }
     };
 
-    console.log(JSON.stringify(WEIGHTED_TEMPLATES));
     return WEIGHTED_TEMPLATES[templateWeight];
 }
 
@@ -303,7 +302,7 @@ async function main(createEndpoint) {
                 description: 'The relative weight of configuration objects deployed inthe FAST template to deploy, e.g., light, medium, heavy',
                 alias: 'w',
                 type: 'string',
-                default: 'heavy'
+                default: 'light'
             },
             bigipTarget: {
                 description: 'The IP address and port of the BIG-IP to target',
