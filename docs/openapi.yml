@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  version: 1.25.0-rc.15
+  version: 1.25.0-rc.16
   title: F5 BIG-IP Application Services Templates API
   license:
     name: Apache 2.0
