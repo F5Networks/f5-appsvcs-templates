@@ -1177,7 +1177,7 @@ definitions:
         "class": "Service_HTTPS",
       {{/enable_tls_server}}
       {{^enable_tls_server}}
-        "class": "Service_TCP",
+        "class": "Service_HTTP",
       {{/enable_tls_server}}
   service_tls_server_def:
     template: |
