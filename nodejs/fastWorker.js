@@ -2032,9 +2032,8 @@ class FASTWorker {
                 .then(() => this.recordTransaction(
                     reqid,
                     'GET request to appsvcs/declare',
-                    this.driver.getRawDeclaration({ reqid })
+                    this.driver.listApplication(tenant, app, { reqid })
                 ))
-                .then(resp => resp.data[tenant][app])
                 .then(appDef => this.migrateLegacyApps(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);

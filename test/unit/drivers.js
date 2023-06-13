@@ -144,6 +144,21 @@ describe('AS3 Driver tests', function () {
         console.log(JSON.stringify(as3WithApp, null, 2));
         return assert.becomes(driver.listApplications(), [appMetadata]);
     });
+    it('list_app', function () {
+        const driver = new AS3Driver();
+        mockAS3(as3WithApp);
+        console.log(JSON.stringify(as3WithApp, null, 2));
+        const asdf = driver.listApplication('tenantName', 'appName');
+        console.log(`JDK asdf: ${JSON.stringify(appMetadata)}`);
+        return assert.becomes(asdf, {
+            class: 'Application',
+            constants: {
+                class: 'Constants',
+                fast: appMetadata
+            },
+            _links: undefined
+        });
+    });
     it('list_apps_500_error', function () {
         const driver = new AS3Driver();
         nock(host)
