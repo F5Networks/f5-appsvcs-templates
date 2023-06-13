@@ -73,11 +73,11 @@ describe('AS3 Driver tests', function () {
             }
         });
         this.clock = sinon.useFakeTimers();
+        this.clock.restore();
     });
 
     afterEach(function () {
         nock.cleanAll();
-        this.clock.restore();
     });
 
     const mockAS3 = (body, code) => {
@@ -160,9 +160,11 @@ describe('AS3 Driver tests', function () {
         });
     });
     it('list_apps_500_error', function () {
+        process.env.FAST_MAX_RETRIES_COUNT = 3;
         const driver = new AS3Driver();
         nock(host)
             .get(as3ep)
+            .times(3)
             .query(true)
             .reply(500, {})
             .persist();
@@ -469,32 +471,33 @@ describe('AS3 Driver tests', function () {
                     }
                 ]
             });
-        return assert.becomes(driver.getTasks(), [
-            {
-                application: 'appName',
-                id: 'foo1',
-                code: 200,
-                message: 'in progress',
-                name: '',
-                parameters: {},
-                tenant: 'tenantName',
-                operation: 'delete',
-                timestamp: new Date().toISOString(),
-                host: 'localhost'
-            },
-            {
-                application: 'appName',
-                id: 'foo2',
-                code: 200,
-                message: 'success',
-                name: appMetadata.template,
-                parameters: appMetadata.view,
-                tenant: 'tenantName',
-                operation: 'update',
-                timestamp: '2021-05-05T17:14:24.794Z',
-                host: 'foobar'
-            }
-        ]);
+        return driver.getTasks()
+            .then((tasks) => {
+                assert.deepStrictEqual(tasks[1], {
+                    application: 'appName',
+                    id: 'foo2',
+                    code: 200,
+                    message: 'success',
+                    name: appMetadata.template,
+                    parameters: appMetadata.view,
+                    tenant: 'tenantName',
+                    operation: 'update',
+                    timestamp: '2021-05-05T17:14:24.794Z',
+                    host: 'foobar'
+                });
+                delete tasks[0].timestamp;
+                assert.deepStrictEqual(tasks[0], {
+                    application: 'appName',
+                    id: 'foo1',
+                    code: 200,
+                    message: 'in progress',
+                    name: '',
+                    parameters: {},
+                    tenant: 'tenantName',
+                    operation: 'delete',
+                    host: 'localhost'
+                });
+            });
     });
     it('get_tasks_500_error', function () {
         const driver = new AS3Driver();

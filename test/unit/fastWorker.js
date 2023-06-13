@@ -374,6 +374,11 @@ describe('fastWorker tests', function () {
                 .post(as3ep)
                 .reply(202, {});
 
+            nock(host)
+                .persist()
+                .get(as3TaskEp)
+                .reply(200, []);
+
             const scope = nock(host)
                 .get('/mgmt/shared/iapp/blocks')
                 .reply(200, { items: [] })
