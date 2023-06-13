@@ -3,8 +3,9 @@
 * bigip-fast-templates: deploying the HTTP template with a FastL4 profile now allows you to monitor HTTPS pool members
 
 ## Fixed
- * worker: Fix DELETE to /templatesets/<tsid> when <tsid> contains spaces (issue [#123](https://github.com/F5Networks/f5-appsvcs-templates/issues/123))
+* worker: Fix DELETE to /templatesets/<tsid> when <tsid> contains spaces (issue [#123](https://github.com/F5Networks/f5-appsvcs-templates/issues/123))
 * bigip-fast-templates: Exchange uses Service_HTTP for plain text, instead of a Service_TCP - which will not fire the required HTTP iRule Events (issue [#132](https://github.com/F5Networks/f5-appsvcs-templates/issues/132))
+* worker: response to GET for /applications and /applications/<tenant>/<app> now matches OpenAPI spec (issue [#127](https://github.com/F5Networks/f5-appsvcs-templates/issues/127))
 
 ## Changed
 * worker: Improve startup times

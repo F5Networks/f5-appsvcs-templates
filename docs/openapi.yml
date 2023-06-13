@@ -1002,7 +1002,36 @@ components:
       properties:
         class:
           type: string
-          pattern: '.*'
+          title: Application class
+          example: application
+        constants:
+          type: object
+          properties:
+            fast: 
+              type: object            
+              properties: &fastAs3AppProps
+                template:
+                  description: must be valid Template in the system
+                  type: string
+                  example: examples/simple_udp_defaults
+                setHash:
+                  type: string
+                  description: the hash of the Template Set used to deploy this Application
+                  example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
+                view:
+                  $ref: "#/components/schemas/ParametersDefinition"
+                templateType:
+                  type: string
+                  description: Template type, e.g., local, GitHub or GitLab
+                  example: local
+                lastModified:
+                  type: string
+                  format: date-time
+                  description: timestamp of when the Application was last modified
+                ipamAddrs:
+                  $ref: "#/components/schemas/ObjectDefinition"
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     FastApplicationDefinition:
       type: object
       title: Application Definition
@@ -1094,22 +1123,7 @@ components:
         - tenant
         - name
       properties:
-        template:
-          description: must be valid Template in the system
-          type: string
-          example: examples/simple_udp_defaults
-        setHash:
-          type: string
-          description: the hash of the Template Set used to deploy this Application
-          example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
-        view:
-          $ref: "#/components/schemas/ParametersDefinition"
-        lastModified:
-          type: string
-          format: date-time
-          description: timestamp of when the Application was last modified
-        ipamAddrs:
-          $ref: "#/components/schemas/ObjectDefinition"
+        <<: *fastAs3AppProps
         tenant:
           type: string
           description: the tenant the Application belongs to
@@ -1118,6 +1132,8 @@ components:
           type: string
           description: the name of the Application
           example: app
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     FastApplicationList:
       title: Application List
       type: array
