@@ -24,9 +24,12 @@ const sinon = require('sinon');
 const mock = require('mock-fs');
 const fs = require('fs');
 const axios = require('axios');
+const express = require('express');
 const http = require('http');
 const https = require('https');
 const expressAdapter = require('../../stand-alone/expressAdapter');
+
+const PARSER_SIZE_LIMIT = '1mb';
 
 describe('Express Adapter', function () {
     let mockFastWorker01;
@@ -69,6 +72,7 @@ describe('Express Adapter', function () {
 
     describe('generateApp', () => {
         let axiosCreateSpy;
+        let expressJsonSpy;
         function assertFastWorker(fastWorker) {
             // validate logger
             assert.deepEqual(fastWorker.logger, {
@@ -87,6 +91,7 @@ describe('Express Adapter', function () {
 
         beforeEach(() => {
             axiosCreateSpy = sinon.spy(axios, 'create');
+            expressJsonSpy = sinon.spy(express, 'json');
         });
 
         afterEach(() => {
@@ -99,6 +104,7 @@ describe('Express Adapter', function () {
                 .then((app) => {
                     assert.strictEqual(app.name, 'app');
                     assert.strictEqual(app._router.stack.filter(stack => stack.name === 'bound dispatch')[0].route.path, '/mgmt/shared/fast/*');
+                    assert.strictEqual(expressJsonSpy.firstCall.args[0].limit, PARSER_SIZE_LIMIT);
                     assertFastWorker(mockFastWorker01);
                 }));
 
@@ -106,6 +112,7 @@ describe('Express Adapter', function () {
             () => expressAdapter.generateApp([mockFastWorker01, mockFastWorker02], {})
                 .then((app) => {
                     assert.strictEqual(app.name, 'app');
+                    assert.strictEqual(expressJsonSpy.firstCall.args[0].limit, PARSER_SIZE_LIMIT);
                     assertFastWorker(mockFastWorker01);
                     assertFastWorker(mockFastWorker02);
                 }));
@@ -116,6 +123,7 @@ describe('Express Adapter', function () {
             };
             http.Agent = sinon.spy();
             https.Agent = sinon.spy();
+            process.env.FAST_JSON_REQ_BODY_LIMIT = '100mb';
             return expressAdapter.generateApp(mockFastWorker01, {
                 middleware: [middleware],
                 staticFiles: 'test-static-file',
@@ -128,6 +136,7 @@ describe('Express Adapter', function () {
             })
                 .then((app) => {
                     assert.strictEqual(app.name, 'app');
+                    assert.strictEqual(expressJsonSpy.firstCall.args[0].limit, process.env.FAST_JSON_REQ_BODY_LIMIT);
                     assert.ok(app._router.stack.filter(stack => stack.name === 'middleware').length);
                     assertFastWorker(mockFastWorker01);
                     assert.ok(http.Agent.called && https.Agent.called);

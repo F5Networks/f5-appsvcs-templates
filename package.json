@@ -7,6 +7,8 @@
   "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
   "scripts": {
+    "audit-dev": "npm audit --json > .auditReport.json; f5-appsvcs-utils-audit",
+    "audit-production": "npm audit --production --json > .auditReport.json; f5-appsvcs-utils-audit",
     "lint": "eslint --ext .js,.vue nodejs lib presentation/app.js presentation/pages presentation/components test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
@@ -23,6 +25,7 @@
     "test-performance": "node scripts/bench.js --testCaseName ${TEST_CASE} --numApplications ${PERF_BATCH_NUM_APPS} --numTenants ${PERF_BATCH_NUM_TENANTS} --batchSize ${PERF_BATCH_SIZE} --templateWeight ${PERF_BATCH_WEIGHT}",
     "version": "./scripts/fix-version.sh",
     "start": "node --unhandled-rejections=strict stand-alone/app.js",
+    "set-local-registry-scopes": "npm config set @automation-toolchain:registry https://${ARTIFACTORY_SERVER}/artifactory/api/npm/${ARTIFACTORY_REPO_NPM}",
     "watch": "NODE_ENV=development npm-watch"
   },
   "keywords": [
@@ -32,6 +35,7 @@
     "api"
   ],
   "devDependencies": {
+    "@automation-toolchain/f5-appsvcs-utils": "1.35.7",
     "@babel/cli": "^7.21.5",
     "@babel/core": "^7.21.8",
     "@babel/plugin-transform-runtime": "^7.21.4",
@@ -89,6 +93,13 @@
         4
       ]
     }
+  },
+  "auditProcessor": {
+    "allowlist": [
+      "GHSA-c2qf-rxjj-qqgw",
+      "GHSA-p8p7-x288-28g6",
+      "GHSA-j8xg-fqg3-53r7"
+    ]
   },
   "nyc": {
     "all": true,
