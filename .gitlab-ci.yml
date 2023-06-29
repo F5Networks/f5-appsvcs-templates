@@ -20,6 +20,8 @@ coverage:
     stage: test_build
     tags:
         - cm-official-docker-executor
+    before_script:
+        - npm run set-local-registry-scopes
     script:
         - npm ci
         - npm run lint
@@ -32,6 +34,8 @@ coverage:
 
 build:
     stage: test_build
+    before_script:
+        - npm run set-local-registry-scopes
     script:
         - apt-get update && apt-get install -y rpm git
         - npm ci && npm run build
@@ -43,16 +47,19 @@ build:
 
 audit_packages:
     stage: test_build
-    allow_failure: true
     tags:
         - cm-official-docker-executor
+    before_script:
+        - npm run set-local-registry-scopes
     script:
-        - npm ci && npm audit --production
+        - npm ci && npm run audit-production
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
   stage: test_build
   allow_failure: true
+  before_script:
+    - npm run set-local-registry-scopes
   script:
     - cd docs
     - pip3 install -r requirements.txt
@@ -120,6 +127,8 @@ publish_to_github:
   stage: release
   variables: 
     GH_TOKEN: "${GITHUB_API_TOKEN}"
+  before_script:
+    - npm run set-local-registry-scopes
   script:
     - npm ci
     - scripts/release.sh
@@ -131,6 +140,7 @@ perfomance_tests:
   only:
     - schedules
   before_script:
+    - npm run set-local-registry-scopes
     - npm ci
   script:
     # Test case name is constructed using the following: ${NUM_APPS}-${NUM_TENANTS}-${BATCH_SIZE}-${TEMPLATE_WEIGHT}
