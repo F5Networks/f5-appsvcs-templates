@@ -9,6 +9,7 @@
 
 ## Changed
 * worker: Improve startup times
+* driver: Add caching of AS3 /task endpoint
 
 # 1.24.0
 ## Added
