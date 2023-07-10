@@ -183,15 +183,21 @@ class TeemDeviceMock {
     }
 }
 
+const FS_TEMPLATE_LIST = [
+    'examples',
+    'bigip-fast-templates'
+];
+const STATIC_FS_TEMPLATE_PROVIDER = new fast.FsTemplateProvider(
+    templatesPath,
+    FS_TEMPLATE_LIST
+);
+
 function createWorker() {
     const worker = new FASTWorker({
         templateStorage: new atgStorage.StorageMemory(),
         configStorage: new atgStorage.StorageMemory(),
         secretsManager: new SecretsBase64(),
-        fsTemplateList: [
-            'examples',
-            'bigip-fast-templates'
-        ],
+        fsTemplateList: FS_TEMPLATE_LIST,
         configPath: process.cwd(),
         templatesPath,
         uploadPath: './test/unit/mockDir',
@@ -199,6 +205,8 @@ function createWorker() {
     });
     patchWorker(worker);
 
+    worker.fsTemplateProvider = STATIC_FS_TEMPLATE_PROVIDER;
+    worker.templateProvider.providers[0] = STATIC_FS_TEMPLATE_PROVIDER;
     worker.teemDevice = new TeemDeviceMock();
     worker.ipamProviders = new IpamProviders({
         secretsManager: worker.secretsManager,
@@ -240,6 +248,14 @@ describe('fastWorker tests', function () {
     };
     let as3Scope;
     let provisionScope;
+
+    before(function () {
+        const worker = new FASTWorker();
+
+        STATIC_FS_TEMPLATE_PROVIDER.supportedHashes = worker.fsTemplateProvider.supportedHashes;
+        return Promise.resolve();
+        // return STATIC_FS_TEMPLATE_PROVIDER.listSets();
+    });
 
     beforeEach(function () {
         this.clock = sinon.useFakeTimers();
