@@ -34,6 +34,8 @@ describe('AS3 Driver tests', function () {
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
     const host = 'http://localhost:8100';
 
+    const FAST_MAX_RETRIES_COUNT = process.env.FAST_MAX_RETRIES_COUNT;
+
     let appDef;
     let as3stub;
     let appMetadata;
@@ -73,11 +75,18 @@ describe('AS3 Driver tests', function () {
             }
         });
         this.clock = sinon.useFakeTimers();
-        this.clock.restore();
     });
 
     afterEach(function () {
         nock.cleanAll();
+        this.clock.restore();
+
+        // restore env constants
+        if (FAST_MAX_RETRIES_COUNT) {
+            process.env.FAST_MAX_RETRIES_COUNT = FAST_MAX_RETRIES_COUNT;
+        } else {
+            delete process.env.FAST_MAX_RETRIES_COUNT;
+        }
     });
 
     const mockAS3 = (body, code) => {
@@ -110,6 +119,7 @@ describe('AS3 Driver tests', function () {
     });
     it('get_decl_retry', function () {
         const driver = new AS3Driver();
+        this.clock.restore();
         nock(host)
             .get(as3ep)
             .query(true)
@@ -161,6 +171,7 @@ describe('AS3 Driver tests', function () {
     });
     it('list_apps_500_error', function () {
         process.env.FAST_MAX_RETRIES_COUNT = 3;
+        this.clock.restore();
         const driver = new AS3Driver();
         nock(host)
             .get(as3ep)
@@ -500,6 +511,8 @@ describe('AS3 Driver tests', function () {
             });
     });
     it('get_tasks_500_error', function () {
+        process.env.FAST_MAX_RETRIES_COUNT = 3;
+        this.clock.restore();
         const driver = new AS3Driver();
         nock(host)
             .get(as3TaskEp)
@@ -507,6 +520,45 @@ describe('AS3 Driver tests', function () {
             .persist();
 
         return assert.isRejected(driver.getTasks(), 'AS3 Driver failed to GET tasks');
+    });
+    it('get_tasks_use_cache', function () {
+        const driver = new AS3Driver();
+        driver._task_ids.foo1 = `${AS3DriverConstantsKey}%delete%tenantName%appName%0-0-0-0-0`;
+
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: []
+            })
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                    {
+                        id: 'foo1',
+                        results: [{
+                            code: 200,
+                            message: 'in progress'
+                        }],
+                        declaration: {}
+                    }
+                ]
+            });
+
+        return driver.getTasks()
+            .then((tasks) => {
+                assert.deepStrictEqual(tasks, []);
+            })
+            .then(() => driver.getTasks())
+            .then((tasks) => {
+                // should still use the cached version
+                assert.deepStrictEqual(tasks, []);
+            })
+            .then(() => this.clock.tick(2000))
+            .then(() => driver.getTasks())
+            .then((tasks) => {
+                // cached timed out, should be the next nocked call /tasks
+                assert.strictEqual(tasks[0].id, 'foo1');
+            });
     });
     it('set_auth_token', function () {
         const getAuthToken = () => Promise.resolve('secret');
