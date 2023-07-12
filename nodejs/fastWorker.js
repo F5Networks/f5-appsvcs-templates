@@ -1149,6 +1149,9 @@ class FASTWorker {
             this.foundTs = null;
             this._provisionConfigCacheTime = Date.now();
         }
+
+        const updateAS3 = this.provisionData === null;
+
         return Promise.all([
             Promise.resolve()
                 .then(() => {
@@ -1209,6 +1212,11 @@ class FASTWorker {
                 }
             })
             .then(() => {
+                if (!updateAS3) {
+                    // Using cached data, do not bother updating AS3 in this case
+                    return Promise.resolve();
+                }
+
                 // Update driver settings while we have updated provision data
                 const provisionedModules = this.provisionData.items
                     .filter(x => x.level !== 'none')
