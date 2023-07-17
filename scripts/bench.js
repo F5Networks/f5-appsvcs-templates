@@ -183,7 +183,10 @@ async function waitForCompletedTask(endpoint, taskid, pollRate) {
 }
 
 async function deployApps(endpoint, params) {
-    const deployInfo = {};
+    const deployInfo = {
+        deployTimes: {},
+        waitTime: 0
+    };
     const {
         numApplications,
         numTenants,
@@ -200,6 +203,7 @@ async function deployApps(endpoint, params) {
     });
 
     let appsDeployed = 0;
+    const taskIds = [];
 
     console.log(`Deploying ${numApplications} ${templateWeight} apps across ${numTenants} tenant(s) in ${numBatches} batch(es)`);
     /* eslint-disable no-restricted-syntax */
@@ -227,12 +231,27 @@ async function deployApps(endpoint, params) {
                 return Promise.reject(e);
             });
         /* eslint-disable no-await-in-loop */
-        await waitForCompletedTask(endpoint, taskId);
+        if (params.concurrent) {
+            taskIds.push(taskId);
+        } else {
+            await waitForCompletedTask(endpoint, taskId, params.pollRate);
+        }
 
         appsDeployed += batch.length;
         const elapsedTime = (Date.now() - startTime) / 1000;
-        deployInfo[batchId] = [batch.length, elapsedTime];
+        deployInfo.deployTimes[batchId] = [batch.length, elapsedTime];
         console.log(`    ${batch.length} ${templateWeight} app(s) deployed in ${elapsedTime}s`);
+    }
+
+    if (taskIds.length > 0) {
+        const startTime = Date.now();
+        console.log(`Waiting for ${taskIds.length} tasks to finish`);
+
+        await Promise.all(taskIds.map(taskId => waitForCompletedTask(endpoint, taskId, params.pollRate)));
+
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        deployInfo.waitTime = elapsedTime;
+        console.log(`\twaiting for tasks finished in ${elapsedTime}s`);
     }
 
     return deployInfo;
@@ -253,7 +272,7 @@ function report(params, results) {
     console.log(JSON.stringify(filteredParams), '\n');
     let csvContent = 'batch, apps deployed, time to deploy (s), total apps, total time (s)\n';
     console.log(csvContent);
-    Object.entries(results).forEach(([batchId, [appsDeployed, dt]]) => {
+    Object.entries(results.deployTimes).forEach(([batchId, [appsDeployed, dt]]) => {
         sumDt += dt;
         sumApps += appsDeployed;
         console.log(`${batchId}, ${appsDeployed}, ${dt}, ${sumApps}, ${sumDt}`);
@@ -263,6 +282,9 @@ function report(params, results) {
     // writing csv file
     fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_results.csv`), csvContent);
     fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_metadata.json`), JSON.stringify(filteredParams));
+
+    console.log('\ndeploy time, wait time, total time');
+    console.log(`${sumDt}, ${results.waitTime}, ${sumDt + results.waitTime}`);
 }
 
 async function runBench(endpoint, params) {
@@ -270,7 +292,11 @@ async function runBench(endpoint, params) {
 
     await resetBigIp(endpoint);
 
+    const startTime = Date.now();
     const results = await deployApps(endpoint, params);
+
+    const elapsedTime = (Date.now() - startTime) / 1000;
+    console.log(`Total deployment time: ${elapsedTime}s`);
 
     report(
         params,
@@ -312,6 +338,12 @@ async function main(createEndpoint) {
                 alias: 'w',
                 type: 'string',
                 default: 'light'
+            },
+            concurrent: {
+                description: 'Deploy batches concurrently (instead of waiting for one to finish before deploying another)',
+                alias: 'c',
+                type: 'boolean',
+                default: false
             },
             bigipTarget: {
                 description: 'The IP address and port of the BIG-IP to target',
