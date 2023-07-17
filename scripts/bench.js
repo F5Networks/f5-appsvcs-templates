@@ -305,7 +305,7 @@ async function main(createEndpoint) {
                 description: 'The number of apps to deploy in a single FAST request',
                 alias: 'b',
                 type: 'number',
-                default: 10
+                default: 1
             },
             templateWeight: {
                 description: 'The relative weight of configuration objects deployed inthe FAST template to deploy, e.g., light, medium, heavy',
