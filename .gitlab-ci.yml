@@ -54,6 +54,14 @@ audit_packages:
     script:
         - npm ci && npm run audit-production
 
+format_examples_templates:
+    stage: test_build
+    tags:
+        - cm-official-docker-executor
+    script:
+        - npm run set-local-registry-scopes
+        - npm ci && npm run format-templates && npm run validate-templates-are-formatted
+
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
   stage: test_build
