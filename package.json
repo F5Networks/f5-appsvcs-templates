@@ -6,9 +6,13 @@
   "description": "",
   "repository": "github:F5Networks/f5-appsvcs-templates",
   "main": "nodejs/templateWorker.js",
+  "config": {
+    "templateSetDirectory": "templates/examples"
+  },
   "scripts": {
     "audit-dev": "npm audit --json > .auditReport.json; f5-appsvcs-utils-audit",
     "audit-production": "npm audit --production --json > .auditReport.json; f5-appsvcs-utils-audit",
+    "format-templates": "./scripts/templatesFormatter.js --directory $npm_package_config_templateSetDirectory",
     "lint": "eslint --ext .js,.vue nodejs lib presentation/app.js presentation/pages presentation/components test scripts stand-alone",
     "test": "npm run testunit",
     "testunit": "mocha --recursive \"./test/unit/*.js\"",
@@ -26,6 +30,7 @@
     "version": "./scripts/fix-version.sh",
     "start": "node --unhandled-rejections=strict stand-alone/app.js",
     "set-local-registry-scopes": "npm config set @automation-toolchain:registry https://${ARTIFACTORY_SERVER}/artifactory/api/npm/${ARTIFACTORY_REPO_NPM}",
+    "validate-templates-are-formatted": "if [ \"$(git diff --name-only $npm_package_config_templateSetDirectory | wc -c)\" -gt 0 ]; then echo \"ERROR: Please run 'npm run format-templates' locally and commit changes.\"; exit 1; fi",
     "watch": "NODE_ENV=development npm-watch"
   },
   "keywords": [
@@ -35,7 +40,7 @@
     "api"
   ],
   "devDependencies": {
-    "@automation-toolchain/f5-appsvcs-utils": "1.35.7",
+    "@automation-toolchain/f5-appsvcs-utils": "1.38.0",
     "@babel/cli": "^7.21.5",
     "@babel/core": "^7.21.8",
     "@babel/plugin-transform-runtime": "^7.21.4",
@@ -48,6 +53,7 @@
     "chai": "^4.3.7",
     "chai-as-promised": "^7.1.1",
     "chai-openapi-response-validator": "^0.14.2",
+    "commander": "^10.0.1",
     "css-loader": "^6.7.3",
     "eslint": "^8.40.0",
     "eslint-plugin-import": "^2.27.5",
