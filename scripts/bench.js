@@ -166,7 +166,7 @@ async function resetBigIp(endpoint) {
     await endpoint.delete('/mgmt/shared/appsvcs/declare');
 }
 
-async function waitForCompletedTask(endpoint, taskid) {
+async function waitForCompletedTask(endpoint, taskid, pollRate) {
     if (!taskid) {
         return Promise.reject(new Error('failed to get a taskid'));
     }
@@ -178,12 +178,21 @@ async function waitForCompletedTask(endpoint, taskid) {
         return result;
     }
 
-    await promiseDelay(100);
-    return waitForCompletedTask(endpoint, taskid);
+    await promiseDelay(pollRate);
+    return waitForCompletedTask(endpoint, taskid, pollRate);
 }
 
-async function deployApps(endpoint, numApplications, numTenants, batchSize, templateWeight) {
-    const deployInfo = {};
+async function deployApps(endpoint, params) {
+    const deployInfo = {
+        deployTimes: {},
+        waitTime: 0
+    };
+    const {
+        numApplications,
+        numTenants,
+        batchSize,
+        templateWeight
+    } = params;
     const numBatches = Math.ceil(numApplications / batchSize);
     const appsInLastBatch = numApplications % batchSize || batchSize;
     const batches = mapRange(numBatches, (batchId) => {
@@ -194,6 +203,7 @@ async function deployApps(endpoint, numApplications, numTenants, batchSize, temp
     });
 
     let appsDeployed = 0;
+    const taskIds = [];
 
     console.log(`Deploying ${numApplications} ${templateWeight} apps across ${numTenants} tenant(s) in ${numBatches} batch(es)`);
     /* eslint-disable no-restricted-syntax */
@@ -221,12 +231,27 @@ async function deployApps(endpoint, numApplications, numTenants, batchSize, temp
                 return Promise.reject(e);
             });
         /* eslint-disable no-await-in-loop */
-        await waitForCompletedTask(endpoint, taskId);
+        if (params.concurrent) {
+            taskIds.push(taskId);
+        } else {
+            await waitForCompletedTask(endpoint, taskId, params.pollRate);
+        }
 
         appsDeployed += batch.length;
         const elapsedTime = (Date.now() - startTime) / 1000;
-        deployInfo[batchId] = [batch.length, elapsedTime];
+        deployInfo.deployTimes[batchId] = [batch.length, elapsedTime];
         console.log(`    ${batch.length} ${templateWeight} app(s) deployed in ${elapsedTime}s`);
+    }
+
+    if (taskIds.length > 0) {
+        const startTime = Date.now();
+        console.log(`Waiting for ${taskIds.length} tasks to finish`);
+
+        await Promise.all(taskIds.map(taskId => waitForCompletedTask(endpoint, taskId, params.pollRate)));
+
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        deployInfo.waitTime = elapsedTime;
+        console.log(`\twaiting for tasks finished in ${elapsedTime}s`);
     }
 
     return deployInfo;
@@ -235,11 +260,19 @@ async function deployApps(endpoint, numApplications, numTenants, batchSize, temp
 function report(params, results) {
     let sumDt = 0;
     let sumApps = 0;
+    const filteredParams = Object.fromEntries(Object.entries(params).filter(
+        ([key]) => (
+            !key.includes(['-'])
+            && key !== '$0'
+            && key !== '_'
+            && key.length > 1
+        )
+    ));
     console.log('\n=== Results ===\n');
-    console.log(JSON.stringify(params), '\n');
+    console.log(JSON.stringify(filteredParams), '\n');
     let csvContent = 'batch, apps deployed, time to deploy (s), total apps, total time (s)\n';
     console.log(csvContent);
-    Object.entries(results).forEach(([batchId, [appsDeployed, dt]]) => {
+    Object.entries(results.deployTimes).forEach(([batchId, [appsDeployed, dt]]) => {
         sumDt += dt;
         sumApps += appsDeployed;
         console.log(`${batchId}, ${appsDeployed}, ${dt}, ${sumApps}, ${sumDt}`);
@@ -248,23 +281,25 @@ function report(params, results) {
 
     // writing csv file
     fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_results.csv`), csvContent);
-    fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_metadata.json`), JSON.stringify(params));
+    fs.writeFileSync(path.join(process.cwd(), `perfomance-tests-results/${params.testCaseName}_metadata.json`), JSON.stringify(filteredParams));
+
+    console.log('\ndeploy time, wait time, total time');
+    console.log(`${sumDt}, ${results.waitTime}, ${sumDt + results.waitTime}`);
 }
 
-async function runBench(endpoint, testCaseName, numApplications, numTenants, batchSize, templateWeight) {
+async function runBench(endpoint, params) {
     await setAuthToken(endpoint);
 
     await resetBigIp(endpoint);
 
-    const results = await deployApps(endpoint, numApplications, numTenants, batchSize, templateWeight);
+    const startTime = Date.now();
+    const results = await deployApps(endpoint, params);
+
+    const elapsedTime = (Date.now() - startTime) / 1000;
+    console.log(`Total deployment time: ${elapsedTime}s`);
 
     report(
-        {
-            numApplications,
-            numTenants,
-            batchSize,
-            testCaseName
-        },
+        params,
         results
     );
 }
@@ -296,13 +331,19 @@ async function main(createEndpoint) {
                 description: 'The number of apps to deploy in a single FAST request',
                 alias: 'b',
                 type: 'number',
-                default: 10
+                default: 1
             },
             templateWeight: {
                 description: 'The relative weight of configuration objects deployed inthe FAST template to deploy, e.g., light, medium, heavy',
                 alias: 'w',
                 type: 'string',
                 default: 'light'
+            },
+            concurrent: {
+                description: 'Deploy batches concurrently (instead of waiting for one to finish before deploying another)',
+                alias: 'c',
+                type: 'boolean',
+                default: false
             },
             bigipTarget: {
                 description: 'The IP address and port of the BIG-IP to target',
@@ -311,6 +352,11 @@ async function main(createEndpoint) {
             bigipCredentials: {
                 description: 'The username and password of the BIG-IP in the form user:pass',
                 type: 'string'
+            },
+            taskPollRate: {
+                description: 'The rate at which to query task status (in ms)',
+                type: 'number',
+                default: 1000
             }
         })
         .argv;
@@ -328,7 +374,7 @@ async function main(createEndpoint) {
     fs.mkdirSync(path.join(process.cwd(), 'perfomance-tests-results'), { recursive: true });
     const endpoint = createEndpoint(bigipTarget, bigipCreds);
     // eslint-disable-next-line max-len
-    await runBench(endpoint, argv.testCaseName, argv.numApplications, argv.numTenants, argv.batchSize, argv.templateWeight);
+    await runBench(endpoint, argv);
 }
 
 if (require.main === module) {
