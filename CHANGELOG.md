@@ -1,6 +1,7 @@
 # 1.25.0
 ## Added
 * bigip-fast-templates: deploying the HTTP template with a FastL4 profile now allows you to monitor HTTPS pool members
+* bigip-fast-templates: allow use of existing Server TLS profile in the Exchange template
 
 ## Fixed
 * worker: Fix DELETE to /templatesets/<tsid> when <tsid> contains spaces (issue [#123](https://github.com/F5Networks/f5-appsvcs-templates/issues/123))
