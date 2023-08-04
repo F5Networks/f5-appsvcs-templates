@@ -313,6 +313,7 @@ class FASTWorker {
             tsIpAddress: '',
             ipamProviders: [],
             disableDeclarationCache: false,
+            pendingTasksMaxNumber: 10,
             _gitTemplateSets: {}
         };
         return Object.assign({}, defaultConfig);
@@ -398,6 +399,15 @@ class FASTWorker {
                         'which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config.',
                         'Disabling declaration caching will negatively impact FAST performance.'
                     ].join(' ')
+                },
+                pendingTasksMaxNumber: {
+                    title: 'Maximum number of pending tasks',
+                    type: 'number',
+                    minimum: 0,
+                    description: [
+                        'Specifies max number of pending tasks which can be accepted by FAST. When max limit reached, FAST would return 503 error',
+                        'Use batching as a better way to deploy many apps at once.'
+                    ].join('')
                 },
                 enableIpam: {
                     title: 'Enable IPAM for Official F5 FAST Templates (Experimental/Beta)',

@@ -531,6 +531,30 @@ describe('Applications', function () {
                 });
             });
     });
+    it('Deploy burst should fail due to reaching max number of pending tasks ', function () {
+        this.timeout(240000);
+        return Promise.resolve()
+            .then(() => endpoint.post('/mgmt/shared/fast/settings', {
+                pendingTasksMaxNumber: 3,
+                deletedTemplateSets: []
+            }))
+            .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
+                .then(() => endpoint.post('/mgmt/shared/fast/applications', {
+                    name: 'examples/simple_udp_defaults',
+                    parameters: {
+                        tenant_name: 'tenant',
+                        application_name: `burst${num}`,
+                        virtual_address: `10.0.1.${num}`,
+                        server_addresses: [
+                            `10.0.1.${num}`
+                        ]
+                    }
+                }))
+                .catch((e) => {
+                    assert.strictEqual(e.response.status, 503);
+                    assert.strictEqual(e.response.data.message, 'Error: Could not generate AS3 declaration: AS3 Driver: Max number of pending tasks reached. Please use batching for deploying many applications at once or increase max number of pending tasks via settings endpoint. The current setting is 3');
+                }))));
+    });
 });
 
 describe('Settings', function () {
@@ -599,6 +623,7 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
+                pendingTasksMaxNumber: 10,
                 enable_telemetry: enableTelemetry,
                 log_asm: logASM,
                 log_afm: logAFM,
@@ -629,6 +654,7 @@ describe('Settings', function () {
                     ipamProviders: [],
                     enableIpam: false,
                     disableDeclarationCache: false,
+                    pendingTasksMaxNumber: 10,
                     // driver defaults
                     enable_telemetry: enableTelemetry,
                     log_asm: logASM,
@@ -671,6 +697,7 @@ describe('Settings', function () {
             },
             tsIpAddress: '255.255.255.254',
             disableDeclarationCache: false,
+            pendingTasksMaxNumber: 3,
             _links: { self: url }
         };
         const expected = {
@@ -696,7 +723,8 @@ describe('Settings', function () {
     it('PUT then GET settings', () => {
         const putBody = {
             deletedTemplateSets: [],
-            enableIpam: false
+            enableIpam: false,
+            pendingTasksMaxNumber: 5
         };
         const expected = {
             data: { code: 200, message: '', _links: { self: url } },
@@ -712,6 +740,7 @@ describe('Settings', function () {
                     ipamProviders: [],
                     enableIpam: false,
                     disableDeclarationCache: false,
+                    pendingTasksMaxNumber: 5,
                     // driver defaults
                     enable_telemetry: enableTelemetry,
                     log_asm: logASM,
@@ -754,6 +783,7 @@ describe('Settings', function () {
                     },
                     tsIpAddress: '255.255.255.254',
                     disableDeclarationCache: true,
+                    pendingTasksMaxNumber: 10,
                     _links: { self: url }
                 };
                 return endpoint.get(url)
