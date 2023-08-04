@@ -630,4 +630,61 @@ describe('AS3 Driver tests', function () {
             })
             .finally(() => clearTimeout(driver._pendingTasksTimeout));
     });
+    it('max_pending_tasks_reached', function () {
+        this.clock.restore();
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+        mockAS3(as3stub);
+        nock(host)
+            .persist()
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(202, {
+                id: 'task1'
+            });
+        return Promise.resolve()
+            .then(() => driver.setSettings({
+                pendingTasksMaxNumber: 5
+            }))
+            .then(() => {
+                assert.strictEqual(driver._pendingTasksMaxNumber, 5);
+                const promises = [];
+                for (let i = 0; i < 15; i += 1) {
+                    promises.push(driver.createApplication(appDef, appMetadata));
+                }
+                return assert.isRejected(Promise.all(promises), `AS3 Driver: Max number of pending tasks reached. Please use batching for deploying many applications at once or increase max number of pending tasks via settings endpoint. The current setting is ${driver._pendingTasksMaxNumber}`);
+            });
+    });
+    it('max_pending_tasks_disabled', function () {
+        this.clock.restore();
+        const driver = new AS3Driver();
+        driver._static_id = 'STATIC';
+        mockAS3(as3stub);
+        nock(host)
+            .persist()
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .query(true)
+            .reply(202, {
+                id: 'task1'
+            });
+        return Promise.resolve()
+            .then(() => driver.setSettings({
+                pendingTasksMaxNumber: 0
+            }))
+            .then(() => {
+                assert.strictEqual(driver._pendingTasksMaxNumber, 0);
+                const promises = [];
+                for (let i = 0; i < 15; i += 1) {
+                    promises.push(driver.createApplication(appDef, appMetadata));
+                }
+                return Promise.all(promises);
+            })
+            .then((results) => {
+                results.forEach((result) => {
+                    assert.strictEqual(result.status, 202);
+                });
+                assert.strictEqual(results[0].data.id, 'task1');
+                assert.notStrictEqual(results[1].data.id, '');
+            });
+    });
 });
