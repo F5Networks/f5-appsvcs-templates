@@ -1,4 +1,4 @@
-image: $DOCKERHUB_URL/node:12-buster
+image: $DOCKERHUB_URL/node:14-buster
 
 include:
   - project: automation-toolchain/atg-shared-templates
@@ -20,6 +20,8 @@ coverage:
     stage: test_build
     tags:
         - cm-official-docker-executor
+    before_script:
+        - npm run set-local-registry-scopes
     script:
         - npm ci
         - npm run lint
@@ -32,6 +34,8 @@ coverage:
 
 build:
     stage: test_build
+    before_script:
+        - npm run set-local-registry-scopes
     script:
         - apt-get update && apt-get install -y rpm git
         - npm ci && npm run build
@@ -43,16 +47,27 @@ build:
 
 audit_packages:
     stage: test_build
-    allow_failure: true
+    tags:
+        - cm-official-docker-executor
+    before_script:
+        - npm run set-local-registry-scopes
+    script:
+        - npm ci && npm run audit-production
+
+format_examples_templates:
+    stage: test_build
     tags:
         - cm-official-docker-executor
     script:
-        - npm ci && npm audit --production
+        - npm run set-local-registry-scopes
+        - npm ci && npm run format-templates && npm run validate-templates-are-formatted
 
 create_docs:
   image: ${CONTAINTHEDOCS_IMAGE}
   stage: test_build
   allow_failure: true
+  before_script:
+    - npm run set-local-registry-scopes
   script:
     - cd docs
     - pip3 install -r requirements.txt
@@ -120,6 +135,8 @@ publish_to_github:
   stage: release
   variables: 
     GH_TOKEN: "${GITHUB_API_TOKEN}"
+  before_script:
+    - npm run set-local-registry-scopes
   script:
     - npm ci
     - scripts/release.sh
@@ -131,14 +148,12 @@ perfomance_tests:
   only:
     - schedules
   before_script:
+    - npm run set-local-registry-scopes
     - npm ci
   script:
-    # Test Cases name is constructed using the folliwing: ${numApplications}_${numTenants}_${batchSize}
-    - node scripts/bench.js --testCaseName 50-1-1 --numApplications 50 --numTenants 1 --batchSize 1
-    - node scripts/bench.js --testCaseName 100-1-10 --numApplications 100 --numTenants 1 --batchSize 10
-    - node scripts/bench.js --testCaseName 100-1-25 --numApplications 100 --numTenants 1 --batchSize 25
-    - node scripts/bench.js --testCaseName 100-20-10 --numApplications 100 --numTenants 20 --batchSize 10
-    - node scripts/bench.js --testCaseName 300-20-50 --numApplications 300 --numTenants 20 --batchSize 50
+    # Test case name is constructed using the following: ${NUM_APPS}-${NUM_TENANTS}-${BATCH_SIZE}-${TEMPLATE_WEIGHT}
+    - TEST_CASES=("50-1-1-heavy" "100-1-10-medium" "100-1-25-light" "100-20-10" "300-20-50")
+    - for TEST_CASE in ${TEST_CASES[@]}; do echo "Test case name = ${TEST_CASE}"; echo $TEST_CASE | ( IFS="-" read -r APPS TENANTS SIZE WEIGHT; unset $IFS; export PERF_BATCH_NUM_APPS=$APPS; export PERF_BATCH_NUM_TENANTS=$TENANTS; export PERF_BATCH_SIZE=$SIZE; export PERF_BATCH_WEIGHT=$WEIGHT; npm run test-performance; ) done
     # Generating HTML results pages
     - node scripts/generate_pref_tests_html.js
   artifacts:

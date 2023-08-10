@@ -47,6 +47,7 @@ const templatesPath = path.join(process.cwd(), 'templates');
 
 class RestOp {
     constructor(uri) {
+        uri = encodeURI(uri);
         this.uri = {
             pathname: uri,
             path: uri,
@@ -170,8 +171,6 @@ const patchWorker = (worker) => {
     });
 };
 
-let testStorage = null;
-
 class TeemDeviceMock {
     report(reportName, reportVersion, declaration, extraFields) {
         // console.error(`${reportName}: ${JSON.stringify(extraFields)}`);
@@ -184,19 +183,21 @@ class TeemDeviceMock {
     }
 }
 
-function copyStorage(src) {
-    return new atgStorage.StorageMemory(Object.assign({}, src.data));
-}
+const FS_TEMPLATE_LIST = [
+    'examples',
+    'bigip-fast-templates'
+];
+const STATIC_FS_TEMPLATE_PROVIDER = new fast.FsTemplateProvider(
+    templatesPath,
+    FS_TEMPLATE_LIST
+);
 
 function createWorker() {
     const worker = new FASTWorker({
-        templateStorage: copyStorage(testStorage),
+        templateStorage: new atgStorage.StorageMemory(),
         configStorage: new atgStorage.StorageMemory(),
         secretsManager: new SecretsBase64(),
-        fsTemplateList: [
-            'examples',
-            'bigip-fast-templates'
-        ],
+        fsTemplateList: FS_TEMPLATE_LIST,
         configPath: process.cwd(),
         templatesPath,
         uploadPath: './test/unit/mockDir',
@@ -204,6 +205,8 @@ function createWorker() {
     });
     patchWorker(worker);
 
+    worker.fsTemplateProvider = STATIC_FS_TEMPLATE_PROVIDER;
+    worker.templateProvider.providers[0] = STATIC_FS_TEMPLATE_PROVIDER;
     worker.teemDevice = new TeemDeviceMock();
     worker.ipamProviders = new IpamProviders({
         secretsManager: worker.secretsManager,
@@ -229,7 +232,7 @@ function resetScope(scope) {
 describe('fastWorker tests', function () {
     this.timeout(3000);
     const host = 'http://localhost:8100';
-    const as3ep = '/mgmt/shared/appsvcs/declare';
+    const as3ep = /\/mgmt\/shared\/appsvcs\/declare.*/;
     const as3TaskEp = '/mgmt/shared/appsvcs/task';
     const as3stub = {
         class: 'ADC',
@@ -247,12 +250,11 @@ describe('fastWorker tests', function () {
     let provisionScope;
 
     before(function () {
-        const tsNames = [
-            'bigip-fast-templates',
-            'examples'
-        ];
-        testStorage = new atgStorage.StorageMemory();
-        return fast.DataStoreTemplateProvider.fromFs(testStorage, templatesPath, tsNames);
+        const worker = new FASTWorker();
+
+        STATIC_FS_TEMPLATE_PROVIDER.supportedHashes = worker.fsTemplateProvider.supportedHashes;
+        return Promise.resolve();
+        // return STATIC_FS_TEMPLATE_PROVIDER.listSets();
     });
 
     beforeEach(function () {
@@ -362,6 +364,12 @@ describe('fastWorker tests', function () {
                     'foo bar !@$^&*()-+_': as3App
                 }
             }));
+
+        nock(host)
+            .persist()
+            .post('/mgmt/shared/appsvcs/declare/Common')
+            .query(true)
+            .reply(200, {});
     });
 
     afterEach(function () {
@@ -379,8 +387,13 @@ describe('fastWorker tests', function () {
 
             nock(host)
                 .persist()
-                .post(`${as3ep}/Common?async=true`)
+                .post(as3ep)
                 .reply(202, {});
+
+            nock(host)
+                .persist()
+                .get(as3TaskEp)
+                .reply(200, []);
 
             const scope = nock(host)
                 .get('/mgmt/shared/iapp/blocks')
@@ -1543,8 +1556,8 @@ describe('fastWorker tests', function () {
                     const foundSets = op.body.map(x => x.name);
                     assert(foundSets.includes('bigip-fast-templates'));
                     assert(foundSets.includes('examples'));
-                    assert.strictEqual(op.body[0]._links.self, '/mgmt/shared/fast/templatesets/examples');
-                    assert.strictEqual(op.body[1]._links.self, '/mgmt/shared/fast/templatesets/bigip-fast-templates');
+                    assert.strictEqual(op.body[1]._links.self, '/mgmt/shared/fast/templatesets/examples');
+                    assert.strictEqual(op.body[0]._links.self, '/mgmt/shared/fast/templatesets/bigip-fast-templates');
                     expect(op.body).to.satisfySchemaInApiSpec('TemplateSetList');
                 });
         });
@@ -1558,8 +1571,8 @@ describe('fastWorker tests', function () {
                     const foundSets = op.body.map(x => x.name);
                     assert(foundSets.includes('bigip-fast-templates'));
                     assert(foundSets.includes('examples'));
-                    assert.strictEqual(op.body[0]._links.self, '/api/v1/application-templates/templatesets/examples');
-                    assert.strictEqual(op.body[1]._links.self, '/api/v1/application-templates/templatesets/bigip-fast-templates');
+                    assert.strictEqual(op.body[1]._links.self, '/api/v1/application-templates/templatesets/examples');
+                    assert.strictEqual(op.body[0]._links.self, '/api/v1/application-templates/templatesets/bigip-fast-templates');
                     expect(op.body).to.satisfySchemaInApiSpec('TemplateSetList');
                 });
         });
@@ -1621,7 +1634,7 @@ describe('fastWorker tests', function () {
         it('post_templateset', function () {
             const worker = createWorker();
             const op = new RestOp('/shared/fast/templatesets');
-            const infoOp = new RestOp('/shared/fast/info');
+            const getOp = new RestOp('/shared/fast/templatesets/testset');
 
             this.clock.restore();
             op.setBody({
@@ -1638,16 +1651,9 @@ describe('fastWorker tests', function () {
                     assert.equal(op.status, 200);
                     expect(op.body).to.satisfySchemaInApiSpec('FastResponse200');
                 })
-                .then(() => worker.templateProvider.listSets())
-                .then((tmplSets) => {
-                    assert(tmplSets.includes('testset'));
-                })
-                .then(() => worker.onGet(infoOp))
+                .then(() => worker.onGet(getOp))
                 .then(() => {
-                    assert.strictEqual(infoOp.status, 200);
-
-                    const tsNames = infoOp.body.installedTemplates.map(x => x.name);
-                    assert(tsNames.includes('testset'));
+                    assert.strictEqual(getOp.status, 200);
                 });
         });
         it('post_templateset_new_endpoint', function () {
@@ -1733,6 +1739,7 @@ describe('fastWorker tests', function () {
                 })
                 .then(() => worker.templateProvider.list())
                 .then((templates) => {
+                    console.log(templates);
                     assert(templates.includes('testset-github2/f5_https'));
                 })
                 // test git data in template sets
@@ -1926,6 +1933,7 @@ describe('fastWorker tests', function () {
             return worker.onGet(getTsOpAll1)
                 .then(() => {
                     assert.equal(getTsOpAll1.status, 200);
+                    assert.notEqual(getTsOpAll1.body, []);
                     console.log(JSON.stringify(getTsOpAll1.body, null, 2));
 
                     const sets = objFromSets(getTsOpAll1.body);
@@ -1992,26 +2000,46 @@ describe('fastWorker tests', function () {
         it('delete_templateset', function () {
             const worker = createWorker();
             const templateSet = 'bigip-fast-templates';
-            const op = new RestOp(`/shared/fast/templatesets/${templateSet}`);
+            const opUri = `/shared/fast/templatesets/${templateSet}`;
+            let op = new RestOp(opUri);
 
-            return worker.templateProvider.hasSet(templateSet)
-                .then(result => assert(result))
-                .then(() => worker.onDelete(op))
+            return worker.onGet(op)
                 .then(() => assert.equal(op.status, 200))
-                .then(() => worker.templateProvider.hasSet(templateSet))
-                .then(result => assert(!result));
+                .then(() => {
+                    op = new RestOp(opUri);
+                    return worker.onDelete(op);
+                })
+                .then(() => assert.equal(op.status, 200))
+                .then(() => {
+                    op = new RestOp(opUri);
+                    return worker.onGet(op);
+                })
+                .then(() => {
+                    assert.equal(op.status, 200);
+                    assert.equal(op.body.enabled, false);
+                });
         });
         it('delete_templateset_new_endpoint', function () {
             const worker = createWorker();
             const templateSet = 'bigip-fast-templates';
-            const op = new RestOp(`/api/v1/application-templates/templatesets/${templateSet}`);
+            const opUri = `/api/v1/application-templates/templatesets/${templateSet}`;
+            let op = new RestOp(opUri);
 
-            return worker.templateProvider.hasSet(templateSet)
-                .then(result => assert(result))
-                .then(() => worker.onDelete(op))
+            return worker.onGet(op)
                 .then(() => assert.equal(op.status, 200))
-                .then(() => worker.templateProvider.hasSet(templateSet))
-                .then(result => assert(!result));
+                .then(() => {
+                    op = new RestOp(opUri);
+                    return worker.onDelete(op);
+                })
+                .then(() => assert.equal(op.status, 200))
+                .then(() => {
+                    op = new RestOp(opUri);
+                    return worker.onGet(op);
+                })
+                .then(() => {
+                    assert.equal(op.status, 200);
+                    assert.equal(op.body.enabled, false);
+                });
         });
         it('delete_templateset_bad', function () {
             const worker = createWorker();
@@ -2060,12 +2088,28 @@ describe('fastWorker tests', function () {
         });
         it('delete_all_templatesets', function () {
             const worker = createWorker();
-            const op = new RestOp('/shared/fast/templatesets');
+            const opUri = '/shared/fast/templatesets';
+            let op = new RestOp(opUri);
 
             return worker.onDelete(op)
                 .then(() => assert.equal(op.status, 200))
-                .then(() => worker.templateProvider.listSets())
-                .then(setNames => assert.strictEqual(setNames.length, 0));
+                .then(() => {
+                    op = new RestOp(opUri);
+                    return worker.onGet(op);
+                })
+                .then(() => {
+                    assert.equal(op.status, 200);
+                    assert.equal(op.body.length, 0);
+                });
+        });
+        it('delete_templatesets_spaces', function () {
+            const worker = createWorker();
+            const op = new RestOp('/shared/fast/templatesets/template set');
+
+            worker.storage.data['template set'] = {};
+
+            return worker.onDelete(op)
+                .then(() => assert.equal(op.status, 200));
         });
     });
 
@@ -2251,7 +2295,7 @@ describe('fastWorker tests', function () {
             const op = new RestOp('/shared/fast/applications/tenant/app');
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2265,7 +2309,7 @@ describe('fastWorker tests', function () {
             op.setBody(['tenantfoo']);
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(400, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2280,7 +2324,7 @@ describe('fastWorker tests', function () {
             op.setBody({ fuzz: false });
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(400, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2295,7 +2339,7 @@ describe('fastWorker tests', function () {
             op.setBody(['tenant/foo']);
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2309,7 +2353,7 @@ describe('fastWorker tests', function () {
             const op = new RestOp('/shared/fast/applications');
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onDelete(op)
                 .then(() => {
@@ -2427,7 +2471,7 @@ describe('fastWorker tests', function () {
                 .reply(200, as3stub);
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`, (body) => {
+                .post(as3ep, (body) => {
                     retrievedAddr = body.foo.bar.serviceMain.virtualAddresses[0];
                     return true;
                 })
@@ -2476,7 +2520,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
@@ -2495,7 +2539,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
@@ -2518,7 +2562,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/tenant 01?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPost(op)
                 .then(() => {
@@ -2537,7 +2581,7 @@ describe('fastWorker tests', function () {
             });
             nock(host)
                 .persist()
-                .post(`${as3ep}/foo?async=true`)
+                .post(as3ep)
                 .reply(202, {});
             return worker.onPut(op)
                 .then(() => {
@@ -2580,7 +2624,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`, (body) => {
+                .post(as3ep, (body) => {
                     console.log(body);
                     assert.strictEqual(
                         body.tenant.app.serviceMain.virtualPort,
@@ -2751,7 +2795,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {
                     code: 202,
                     message: [
@@ -2841,7 +2885,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {
                     code: 202,
                     message: [
@@ -2934,7 +2978,7 @@ describe('fastWorker tests', function () {
                     }
                 }))
                 .persist()
-                .post(`${as3ep}/tenant?async=true`)
+                .post(as3ep)
                 .reply(202, {
                     code: 202,
                     message: [

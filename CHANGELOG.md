@@ -1,3 +1,17 @@
+# 1.25.0
+## Added
+* bigip-fast-templates: deploying the HTTP template with a FastL4 profile now allows you to monitor HTTPS pool members
+* bigip-fast-templates: allow use of existing Server TLS profile in the Exchange template
+
+## Fixed
+* worker: Fix DELETE to /templatesets/<tsid> when <tsid> contains spaces (issue [#123](https://github.com/F5Networks/f5-appsvcs-templates/issues/123))
+* bigip-fast-templates: Exchange uses Service_HTTP for plain text, instead of a Service_TCP - which will not fire the required HTTP iRule Events (issue [#132](https://github.com/F5Networks/f5-appsvcs-templates/issues/132))
+* worker: response to GET for /applications and /applications/<tenant>/<app> now matches OpenAPI spec (issue [#127](https://github.com/F5Networks/f5-appsvcs-templates/issues/127))
+
+## Changed
+* worker: Improve startup times
+* driver: Add caching of AS3 /task endpoint
+
 # 1.24.0
 ## Added
 * bigip-fast-templates: Add two new templates, HTTP with DNS Wide IP and IIS with DNS Wide IP, for deploying applications with DNS WideIP from FQDN and Virtual Server destination IP, on devices with LTM and GTM provisioned (issue [#119](https://github.com/F5Networks/f5-appsvcs-templates/issues/119))

@@ -2,10 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/hyper-schema",
   "definitions": {
     "port": {
-      "type": "integer",
-      "minimuim": 0,
+      "default": 443,
       "maximum": 65535,
-      "default": 443
+      "minimuim": 0,
+      "type": "integer"
     }
   }
 }

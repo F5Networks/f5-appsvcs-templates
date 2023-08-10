@@ -14,6 +14,8 @@
  */
 
 /* eslint-disable no-console */
+/* eslint-disable no-plusplus */
+/* eslint-disable quotes */
 
 'use strict';
 
@@ -50,16 +52,20 @@ async function readingTestsData() {
 function generateHtmlPage() {
     // Generate sub-pages for each test case.
     let resultedHtmlPage = '';
+    let buildChartPage = '';
+    let tempChartPage = '';
 
     let results;
     let metadata;
+    let i = 1;
 
     casesNames.forEach((caseName) => {
         results = testsResults.filter(item => item.name === caseName && item.type === 'results')[0].content;
         // Setting tests metadata
         metadata = JSON.parse(testsResults.filter(item => item.name === caseName && item.type === 'metadata')[0].content);
         resultedHtmlPage += `<table><caption style='text-align:top'>Test Case Name: ${caseName}<br/>Settings: numApplications: ${metadata.numApplications} numTenants: ${metadata.numTenants} batchSize: ${metadata.batchSize} </caption>`;
-
+        buildChartPage += `        var data${i} = google.visualization.arrayToDataTable([\n`;
+        buildChartPage += `          ['Batch', '${caseName}'],\n`;
         // Adding table headers data
         resultedHtmlPage += '<tr>';
         results.split('\n')[0].split(',').forEach((headerValue) => {
@@ -69,18 +75,53 @@ function generateHtmlPage() {
 
         results.split('\n').slice(1).filter(n => n).forEach((line) => {
             resultedHtmlPage += '<tr>';
+            buildChartPage += '          [';
             line.split(',').filter(n => n).forEach((value) => {
                 resultedHtmlPage += `<td>${value}</td>`;
             });
+            line.split(',').slice(0, 1).filter(n => n).forEach((value) => {
+                const batch = Number(value) + 1;
+                buildChartPage += `'${batch}',`;
+            });
+            line.split(',').slice(2, 3).filter(n => n).forEach((value) => {
+                buildChartPage += `${value}`;
+            });
             resultedHtmlPage += '</tr>';
+            buildChartPage += `],\n`;
         });
         resultedHtmlPage += '</table>';
         resultedHtmlPage += '</br>';
+        buildChartPage += `        ]);\n`;
+        buildChartPage += `        var options${i} = {\n`;
+        buildChartPage += `          title: 'Settings: numApplications: ${metadata.numApplications} numTenants: ${metadata.numTenants} batchSize: ${metadata.batchSize}',\n`;
+        buildChartPage += `          curveType: 'function',\n`;
+        buildChartPage += `          legend: { position: 'right' },\n`;
+        buildChartPage += `          hAxis: {\n`;
+        buildChartPage += `          title: 'Batch Run'\n`;
+        buildChartPage += `          },\n`;
+        buildChartPage += `          vAxis: {\n`;
+        buildChartPage += `          title: 'Run Duration'\n`;
+        buildChartPage += `          },\n`;
+        buildChartPage += `          lineWidth: 4,\n`;
+        buildChartPage += `          };\n`;
+        buildChartPage += `        var chart = new google.visualization.LineChart(document.getElementById('curve_chart${i}'));\n`;
+        buildChartPage += `        chart.draw(data${i}, options${i});\n`;
+        tempChartPage += `    <div id="curve_chart${i}" style="width: 900px; height: 500px"></div>\n`;
+        i++;
     });
+    buildChartPage += `}\n`;
+    buildChartPage += `    </script>\n`;
+    buildChartPage += `  </head>\n`;
+    buildChartPage += `  <body>\n`;
+    buildChartPage += tempChartPage;
+    buildChartPage += `  </body>\n`;
+    buildChartPage += `</html>`;
 
     // Generate main index.html
     const mainPageTemplate = fs.readFileSync(path.join(__dirname, '/perf_tests_index.html'), { encoding: 'utf8', flag: 'r' });
+    const mainChartPageTemplate = fs.readFileSync(path.join(__dirname, '/perf_tests_line_charts.html'), { encoding: 'utf8', flag: 'r' });
     fs.writeFileSync(path.join(process.cwd(), 'perfomance-tests-results/index.html'), mainPageTemplate.replace('%REPLACE_WITH_HTML%', resultedHtmlPage));
+    fs.writeFileSync(path.join(process.cwd(), 'perfomance-tests-results/charts.html'), mainChartPageTemplate.replace('%REPLACE_WITH_HTML%', buildChartPage));
 }
 
 async function main() {

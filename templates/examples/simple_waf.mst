@@ -2,7 +2,7 @@
   ** FOR DEMONSTRATION PURPOSES--NOT INTENDED FOR USE IN PRODUCTION **
   This template is an example of how one might build a simple WAF application with load balancing.
   It allows the user to provide a virtual IP address and port, a list of HTTP server addresses,
-  the name of a pre-loaded TLS certificate, and the name of a pre-configured WAF policy.
+  and the name of a pre-loaded TLS certificate.
   The user-supplied values are inserted when the template is rendered, yielding an AS3 declaration
   suitable for submission to BIG-IP.
 }}
@@ -23,7 +23,7 @@
         "virtualAddresses": [ "{{virtual_address}}" ],
         "pool": "{{application_name}}_web_pool",
         "policyWAF": {
-          "bigip": "{{WAF_policy_path}}"
+          "use": "{{application_name}}_waf_policy"
         },
         "serverTLS": "webtls"
       },
@@ -36,6 +36,13 @@
           "servicePort": {{server_port::integer}},
           "serverAddresses": {{server_address::array}}
         }]
+      },
+      "{{application_name}}_waf_policy": {
+          class: 'WAF_Policy',
+          policy: {
+              text: '{ "policy": { "template": { "name": "POLICY_TEMPLATE_RAPID_DEPLOYMENT" } } }'
+          },
+          ignoreChanges: true
       },
       "webtls": {
         "class": "TLS_Server",

@@ -1,11 +1,11 @@
 openapi: "3.0.0"
 info:
-  version: 1.24.0
-  title: F5 Application Services Templates API
+  version: 1.25.0-rc.20
+  title: F5 BIG-IP Application Services Templates API
   license:
     name: Apache 2.0
   description: |
-    # F5 Application Services Templates (FAST)
+    # F5 BIG-IP Application Services Templates (FAST)
 
     This is the documentation for the FAST templating extension. This document
     catalogs the API endpoints exposed by the extension. Note that the path for
@@ -1002,7 +1002,36 @@ components:
       properties:
         class:
           type: string
-          pattern: '.*'
+          title: Application class
+          example: application
+        constants:
+          type: object
+          properties:
+            fast: 
+              type: object            
+              properties: &fastAs3AppProps
+                template:
+                  description: must be valid Template in the system
+                  type: string
+                  example: examples/simple_udp_defaults
+                setHash:
+                  type: string
+                  description: the hash of the Template Set used to deploy this Application
+                  example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
+                view:
+                  $ref: "#/components/schemas/ParametersDefinition"
+                templateType:
+                  type: string
+                  description: Template type, e.g., local, GitHub or GitLab
+                  example: local
+                lastModified:
+                  type: string
+                  format: date-time
+                  description: timestamp of when the Application was last modified
+                ipamAddrs:
+                  $ref: "#/components/schemas/ObjectDefinition"
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     FastApplicationDefinition:
       type: object
       title: Application Definition
@@ -1094,22 +1123,7 @@ components:
         - tenant
         - name
       properties:
-        template:
-          description: must be valid Template in the system
-          type: string
-          example: examples/simple_udp_defaults
-        setHash:
-          type: string
-          description: the hash of the Template Set used to deploy this Application
-          example: b4e574f5692532a03deb40b78599a7913ff63b2a31897a7b0168d99246d64715
-        view:
-          $ref: "#/components/schemas/ParametersDefinition"
-        lastModified:
-          type: string
-          format: date-time
-          description: timestamp of when the Application was last modified
-        ipamAddrs:
-          $ref: "#/components/schemas/ObjectDefinition"
+        <<: *fastAs3AppProps
         tenant:
           type: string
           description: the tenant the Application belongs to
@@ -1118,6 +1132,8 @@ components:
           type: string
           description: the name of the Application
           example: app
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
     FastApplicationList:
       title: Application List
       type: array
@@ -1519,6 +1535,11 @@ components:
           type: boolean
           description: Do not cache AS3 declarations.
           example: false
+        pendingTasksMaxNumber:
+          type: number
+          minimum: 0
+          description: Specifies max number of pending tasks which can be accepted by FAST. When max limit reached, FAST would return 503 error. This can be disabled by setting to 0.
+          example: 10
         enable_telemetry:
           type: boolean
           description: Enable Telemetry Streaming related options in templates.
@@ -1562,7 +1583,7 @@ components:
           type: object
         $schema:
           type: string
-      example: {type: "object",properties: {enable_telemetry: {type: "boolean",title: "Enable Telemetry Streaming log forwarding",description: "Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.\nMore information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)\n",propertyOrder: 0,format: "checkbox"},log_afm: {type: "boolean",title: "Forward AFM logs to Telemetry Streaming",description: "Requires AFM and ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 1,format: "checkbox"},log_asm: {type: "boolean",title: "Forward ASM logs to Telemetry Streaming",description: "Requires ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 2,format: "checkbox"},deletedTemplateSets: {type: "array",items: {type: "string"},\uniqueItems: true,options: {hidden: true},propertyOrder: 0,format: "table"},disableDeclarationCache: {title: "Disable AS3 Declaration Cache",type: "boolean",description: "Do not cache AS3 declarations. This ensures FAST is always using up-to-date declarations from AS3, which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config. Disabling declaration caching will negatively impact FAST performance.",propertyOrder: 1,format: "checkbox"},enableIpam: {title: "Enable IPAM for Official F5 FAST Templates (Experimental/Beta)",description: "**NOTE: An IPAM provider must be configured to deploy a valid application using IPAM.**",type: "boolean",propertyOrder: 2,format: "checkbox"},ipamProviders: {title: "IPAM Providers (Experimental/Beta)",description: "Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses",type: "array",items: {oneOf: [{type: "object",title: "Infoblox",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Infoblox"],default: "Infoblox",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/fixedaddress?_return_as_object=1&_return_fields=ipv4addr"},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{'ipv4addr': 'func: nextavailableip: network/{{network}}','mac': '00: 00: 00: 00: 00: 00','comment': 'Created by F5 Application Services Templates'}",options: {grid_columns: 4,grid_break: true,hidden: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$.result.ipv4addr",options: {grid_columns: 4,hidden: true}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "$.result._ref",options: {grid_columns: 4,grid_break: true,hidden: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/{{addressRef}}"},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,hidden: true}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "delete",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "",options: {hidden: true}},authHeaderValue: {title: "Authorization Header Value",type: "string",default: "",options: {hidden: true}},apiVersion: {title: "API Version",type: "string",default: "v2.4",options: {grid_columns: 2}},network: {title: "Network Name",type: "string",options: {grid_columns: 3,grid_break: true}}}},{type: "object",title: "Generic",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Generic"],default: "Generic",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4}},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,grid_break: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$",options: {grid_columns: 4}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "",options: {grid_columns: 4,grid_break: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4}},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "post",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "Authorization"},authHeaderValue: {title: "Authorization Header Value",type: "string"}}}]},propertyOrder: 3,format: "table"}},required: ["enable_telemetry","deletedTemplateSets"],dependencies: {log_afm: ["enable_telemetry"],log_asm: ["enable_telemetry"]},title: "FAST Settings",description: "",definitions: {},$schema: "http://json-schema.org/schema#"}
+      example: {type: "object",properties: {enable_telemetry: {type: "boolean",title: "Enable Telemetry Streaming log forwarding",description: "Automatically setup log forwarding for Telemetry Streaming when deploying FAST applications.\nMore information can be found [here](https://clouddocs.f5.com/products/extensions/f5-telemetry-streaming/latest/event-listener.html)\n",propertyOrder: 0,format: "checkbox"},log_afm: {type: "boolean",title: "Forward AFM logs to Telemetry Streaming",description: "Requires AFM and ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 1,format: "checkbox"},log_asm: {type: "boolean",title: "Forward ASM logs to Telemetry Streaming",description: "Requires ASM to be provisioned",options: {hidden: true,dependencies: {enable_telemetry: true}},propertyOrder: 2,format: "checkbox"},deletedTemplateSets: {type: "array",items: {type: "string"},\uniqueItems: true,options: {hidden: true},propertyOrder: 0,format: "table"},disableDeclarationCache: {title: "Disable AS3 Declaration Cache",type: "boolean",description: "Do not cache AS3 declarations. This ensures FAST is always using up-to-date declarations from AS3, which is only an issue if something other than FAST (e.g., config sync) is modifying AS3 config. Disabling declaration caching will negatively impact FAST performance.",propertyOrder: 1,format: "checkbox"},pendingTasksMaxNumber:{title: 'Maximum number of pending tasks',type: 'number',description: 'Specifies max number of pending tasks which can be accepted by FAST. When max limit reached, FAST would return 503 error.'},enableIpam: {title: "Enable IPAM for Official F5 FAST Templates (Experimental/Beta)",description: "**NOTE: An IPAM provider must be configured to deploy a valid application using IPAM.**",type: "boolean",propertyOrder: 2,format: "checkbox"},ipamProviders: {title: "IPAM Providers (Experimental/Beta)",description: "Configure IPAM providers that can be used in FAST templates to automatically manage IP addresses",type: "array",items: {oneOf: [{type: "object",title: "Infoblox",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Infoblox"],default: "Infoblox",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/fixedaddress?_return_as_object=1&_return_fields=ipv4addr"},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{'ipv4addr': 'func: nextavailableip: network/{{network}}','mac': '00: 00: 00: 00: 00: 00','comment': 'Created by F5 Application Services Templates'}",options: {grid_columns: 4,grid_break: true,hidden: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$.result.ipv4addr",options: {grid_columns: 4,hidden: true}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "$.result._ref",options: {grid_columns: 4,grid_break: true,hidden: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4,hidden: true},default: "{{host}}/wapi/{{apiVersion}}/{{addressRef}}"},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,hidden: true}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "delete",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "",options: {hidden: true}},authHeaderValue: {title: "Authorization Header Value",type: "string",default: "",options: {hidden: true}},apiVersion: {title: "API Version",type: "string",default: "v2.4",options: {grid_columns: 2}},network: {title: "Network Name",type: "string",options: {grid_columns: 3,grid_break: true}}}},{type: "object",title: "Generic",format: "grid-strict",properties: {serviceType: {title: "Service Type",type: "string",enum: ["Generic"],default: "Generic",options: {hidden: true}},name: {title: "Name",type: "string",options: {grid_columns: 2,grid_break: true}},host: {title: "Host",type: "string",options: {grid_columns: 4}},username: {title: "Username",type: "string",options: {grid_columns: 4}},password: {title: "Password",type: "string",format: "password",options: {grid_columns: 4,grid_break: true}},retrieveUrl: {title: "Retrieve URL",type: "string",format: "textarea",options: {grid_columns: 4}},retrieveBody: {title: "Retrieve Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4,grid_break: true}},retrievePathQuery: {title: "Retrieve Path Query",type: "string",format: "textarea",default: "$",options: {grid_columns: 4}},retrieveRefPathQuery: {title: "Retrieve Reference Path Query",type: "string",format: "textarea",default: "",options: {grid_columns: 4,grid_break: true}},releaseUrl: {title: "Release URL",type: "string",format: "textarea",options: {grid_columns: 4}},releaseBody: {title: "Release Body",type: "string",format: "textarea",default: "{}",options: {grid_columns: 4}},releaseMethod: {title: "Release Method",type: "string",enum: ["get","post","put","patch","delete"],default: "post",options: {hidden: true}},authHeaderName: {title: "Authorization Header Name",type: "string",default: "Authorization"},authHeaderValue: {title: "Authorization Header Value",type: "string"}}}]},propertyOrder: 3,format: "table"}},required: ["enable_telemetry","deletedTemplateSets"],dependencies: {log_afm: ["enable_telemetry"],log_asm: ["enable_telemetry"]},title: "FAST Settings",description: "",definitions: {},$schema: "http://json-schema.org/schema#"}
     Info:
       type: object
       description: Info about FAST api.

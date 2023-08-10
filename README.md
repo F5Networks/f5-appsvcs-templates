@@ -103,7 +103,8 @@ After installing RPM package on the BIGIP system, in order to enable performance
  * FAST Worker: 
    * FAST_INIT_MAX_RETRIES - integer number which represents retries number used for FAST Worker initialization workflow.
    * FAST_INIT_RETRY_DELAY_IN_MS - milliseconds to delay between retries used within FAST Worker initialization.
-   * FAST_PROVISION_CONFIG_CACHE_TTL_IN_MS - milliseconds to define cache live time for Provision Config. 
+   * FAST_PROVISION_CONFIG_CACHE_TTL_IN_MS - milliseconds to define cache live time for Provision Config.
+   * FAST_JSON_REQ_BODY_LIMIT - string value to control the maximum request body size (i.e. 100kb, 1mb); by default, it uses 1mb
    
  * AS3 Driver:
    * FAST_PENDING_TASK_POLL_RATE_IN_MS - milliseconds to define AS3 task poll rate.

@@ -76,6 +76,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '003b8ca78a45b67a97ea78007bd2d36d82a94710753bbca5a2e0fc71496c03e3', // v1.25
         'badf3fa1a5bcc81888ca2516c8069b176da49b0575e86c5e8e0e811e2c5fa7e9', // v1.24
         'a0982c93ca0e182a67887636fcb3b208b018c989ee1459f02ae83cf10e9e2175', // v1.23
         '2d88c05f2b7ce83e595c42c780d51b1216c0cafcc027762f6f01990d2d43105a', // v1.21
@@ -105,7 +106,7 @@ const supportedHashes = {
 
 function _getPathElements(restOp) {
     const uri = restOp.getUri();
-    const pathElements = uri.pathname.split('/');
+    const pathElements = decodeURI(uri.pathname).split('/');
     if (!uri.pathname.includes('shared/fast')) {
         pathElements.shift();
     }
@@ -180,8 +181,14 @@ class FASTWorker {
         this.driver.setTracer(this.tracer);
         this.storage = options.templateStorage || new StorageDataGroup(dataGroupPath);
         this.configStorage = options.configStorage || new StorageDataGroup(configDGPath);
-        this.templateProvider = new DataStoreTemplateProvider(this.storage, undefined, supportedHashes);
-        this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList);
+        this.fsTemplateProvider = new FsTemplateProvider(this.templatesPath, options.fsTemplateList, supportedHashes);
+        this.templateProvider = new fast.CompositeTemplateProvider(
+            [
+                this.fsTemplateProvider,
+                new DataStoreTemplateProvider(this.storage, undefined, supportedHashes)
+            ],
+            supportedHashes
+        );
         if (options.disableTeem) {
             this.teemDevice = null;
         } else {
@@ -283,7 +290,7 @@ class FASTWorker {
                 const valid = validate(config);
                 if (!valid) {
                     return Promise.reject(new Error(
-                        `invalid config: ${validate.errors}`
+                        `invalid config: ${JSON.stringify(validate.errors, null, 2)}`
                     ));
                 }
 
@@ -306,6 +313,7 @@ class FASTWorker {
             tsIpAddress: '',
             ipamProviders: [],
             disableDeclarationCache: false,
+            pendingTasksMaxNumber: 10,
             _gitTemplateSets: {}
         };
         return Object.assign({}, defaultConfig);
@@ -321,10 +329,9 @@ class FASTWorker {
         let mergedDefaults = this._getDefaultConfig();
         return Promise.resolve()
             .then(() => this.enterTransaction(reqid, 'gathering config data'))
-            .then(() => this.gatherProvisionData(reqid, true, false))
-            .then(provisionData => Promise.all([
+            .then(() => Promise.all([
                 this.configStorage.getItem(configKey),
-                this.driver.getSettings(provisionData[0])
+                this.driver.getSettings()
             ]))
             .then(([config, driverSettings]) => {
                 if (config) {
@@ -393,6 +400,15 @@ class FASTWorker {
                         'Disabling declaration caching will negatively impact FAST performance.'
                     ].join(' ')
                 },
+                pendingTasksMaxNumber: {
+                    title: 'Maximum number of pending tasks',
+                    type: 'number',
+                    minimum: 0,
+                    description: [
+                        'Specifies max number of pending tasks which can be accepted by FAST. When max limit reached, FAST would return 503 error',
+                        'Use batching as a better way to deploy many apps at once.'
+                    ].join('')
+                },
                 enableIpam: {
                     title: 'Enable IPAM for Official F5 FAST Templates (Experimental/Beta)',
                     description: '**NOTE: An IPAM provider must be configured to deploy a valid application using IPAM.**',
@@ -453,8 +469,7 @@ class FASTWorker {
             .then((data) => {
                 prevConfig = data;
             })
-            .then(() => this.gatherProvisionData(reqid, true, false))
-            .then(provisionData => this.driver.setSettings(config, provisionData, false, { reqid }))
+            .then(() => this.driver.setSettings(config))
             .then(() => this.configStorage.setItem(configKey, config))
             .then(() => {
                 if (JSON.stringify(prevConfig) !== JSON.stringify(config)) {
@@ -647,17 +662,32 @@ class FASTWorker {
                 this.tracer.logEvent(reqid, 'config_loaded');
                 config = cfg;
             })
-            .then(() => this.setDeviceInfo(reqid))
-            // Get the AS3 driver ready
-            .then(() => this.prepareAS3Driver(reqid, config))
-            // Load template sets from disk (i.e., those from the RPM)
-            .then(() => this.loadOnDiskTemplateSets(reqid, config))
-            // watch for configSync logs, if device is in an HA Pair
-            .then(() => this.recordTransaction(
-                reqid,
-                'setting up watch for config-sync',
-                this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this))
-            ))
+            .then(() => Promise.all([
+                // Get and store device information
+                this.setDeviceInfo(reqid),
+                // Get the AS3 driver ready
+                this.recordTransaction(
+                    reqid,
+                    'ready AS3 driver',
+                    this.driver.loadMixins()
+                        .then(() => this.driver.setSettings(config))
+                ),
+                // watch for configSync logs, if device is in an HA Pair
+                this.recordTransaction(
+                    reqid,
+                    'setting up watch for config-sync',
+                    this.bigip.watchConfigSyncStatus(this.onConfigSync.bind(this))
+                ),
+                // pre-cache templates at startup to avoid long requests
+                this.recordTransaction(
+                    reqid,
+                    'readying templates',
+                    this.templateProvider.listSets()
+                        .then(setList => setList.map(
+                            setName => this.gatherTemplateSet(reqid, setName, config, [])
+                        ))
+                )
+            ]))
             .then(() => this.generateTeemReportOnStart(reqid))
             .then(() => Promise.resolve(config))
             .catch((e) => {
@@ -704,78 +734,6 @@ class FASTWorker {
             'run lazy initialization',
             this.initWorker(reqid)
         );
-    }
-
-    /**
-     * prepare the AS3 Driver
-     * @param {number} reqid - FASTWorker process id, identifying the request
-     * @param {Object} config - object containing the FASTWorker config Settings
-     * @returns {Promise}
-     */
-    prepareAS3Driver(reqid, config) {
-        return Promise.resolve()
-            .then(() => this.driver.getInfo())
-            .then((as3InfoResponse) => {
-                if (as3InfoResponse.status === 200) {
-                    return Promise.resolve();
-                }
-                const errMessage = typeof as3InfoResponse.data === 'object' ? JSON.stringify(as3InfoResponse.data) : as3InfoResponse.statusText;
-                return Promise.reject(new Error(`AS3 Info Response: ${errMessage}`));
-            })
-            .then(() => this.recordTransaction(
-                reqid,
-                'ready AS3 driver',
-                this.driver.loadMixins()
-            ))
-            .then(() => this.recordTransaction(
-                reqid,
-                'sync AS3 driver settings',
-                Promise.resolve()
-                    .then(() => this.saveConfig(config, reqid))
-            ));
-    }
-
-    /**
-     * load Template Sets from filesystem
-     * @param {number} reqid - FASTWorker process id, identifying the request
-     * @param {Object} config - object containing the FASTWorker config Settings
-     * @returns {Promise}
-     */
-    loadOnDiskTemplateSets(reqid, config) {
-        let saveState = true;
-        const uniqueStr = uuid.v4();
-        return Promise.resolve()
-            .then(() => this.enterTransaction(reqid, 'loading template sets from disk', uniqueStr))
-            .then(() => this.recordTransaction(
-                reqid,
-                'gather list of templates from disk',
-                this.fsTemplateProvider.listSets()
-            ))
-            .then((fsSets) => {
-                const deletedSets = config.deletedTemplateSets;
-                const ignoredSets = [];
-                const sets = [];
-                fsSets.forEach((setName) => {
-                    if (deletedSets.includes(setName)) {
-                        ignoredSets.push(setName);
-                    } else {
-                        sets.push(setName);
-                    }
-                });
-                this.logger.info(
-                    `FAST Worker: Loading template sets from disk: ${JSON.stringify(sets)} (skipping: ${JSON.stringify(ignoredSets)})`
-                );
-                if (sets.length === 0) {
-                    // Nothing to do
-                    saveState = false;
-                    return Promise.resolve();
-                }
-                this.templateProvider.invalidateCache();
-                return DataStoreTemplateProvider.fromFs(this.storage, this.templatesPath, sets);
-            })
-            .then(() => this.exitTransaction(reqid, 'loading template sets from disk', uniqueStr))
-            // Persist any template set changes
-            .then(() => saveState && this.recordTransaction(reqid, 'persist template data store', this.storage.persist()));
     }
 
     /**
@@ -1081,22 +1039,7 @@ class FASTWorker {
     gatherTemplateSet(reqid, tsid, config, apps) {
         return Promise.all([
             this.templateProvider.hasSet(tsid)
-                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined)))
-                .then((tsData) => {
-                    if (tsData) {
-                        return Promise.resolve(tsData);
-                    }
-
-                    return Promise.resolve()
-                        .then(() => this.fsTemplateProvider.hasSet(tsid))
-                        .then(result => (result ? this.fsTemplateProvider.getSetData(tsid) : undefined))
-                        .then((fsTsData) => {
-                            if (fsTsData) {
-                                fsTsData.enabled = false;
-                            }
-                            return fsTsData;
-                        });
-                }),
+                .then(result => (result ? this.templateProvider.getSetData(tsid) : Promise.resolve(undefined))),
             Promise.resolve()
                 .then(() => {
                     if (typeof apps !== 'undefined') {
@@ -1115,9 +1058,6 @@ class FASTWorker {
                     return Promise.reject(new Error(`Template set ${tsid} does not exist`));
                 }
 
-                if (typeof tsData.enabled === 'undefined') {
-                    tsData.enabled = true;
-                }
                 tsData.templates.forEach((tmpl) => {
                     tmpl.appsList = appsList
                         .filter(x => x.template === tmpl.name)
@@ -1125,6 +1065,7 @@ class FASTWorker {
                 });
                 const gitData = config._gitTemplateSets[tsid];
                 Object.assign(tsData, gitData);
+                tsData.enabled = !config.deletedTemplateSets.includes(tsid);
                 return tsData;
             })
             .then(tsData => this.filterTemplates(tsData.templates)
@@ -1157,13 +1098,20 @@ class FASTWorker {
         let config;
 
         return Promise.resolve()
-            .then(() => this.recordTransaction(
-                requestId,
-                'GET to appsvcs/info',
-                this.driver.getInfo({ requestId })
-            ))
+            .then(() => {
+                if (this.as3Info) {
+                    return Promise.resolve(this.as3Info);
+                }
+
+                return this.recordTransaction(
+                    requestId,
+                    'GET to appsvcs/info',
+                    this.driver.getInfo({ requestId })
+                )
+                    .then(response => response.data);
+            })
             .then((as3response) => {
-                info.as3Info = as3response.data;
+                info.as3Info = as3response;
                 this.as3Info = info.as3Info;
             })
             .then(() => this.getConfig(requestId)
@@ -1211,6 +1159,9 @@ class FASTWorker {
             this.foundTs = null;
             this._provisionConfigCacheTime = Date.now();
         }
+
+        const updateAS3 = this.provisionData === null;
+
         return Promise.all([
             Promise.resolve()
                 .then(() => {
@@ -1269,6 +1220,23 @@ class FASTWorker {
                     // Module already exists, update it
                     tsInfo.level = tsLevel;
                 }
+            })
+            .then(() => {
+                if (!updateAS3) {
+                    // Using cached data, do not bother updating AS3 in this case
+                    return Promise.resolve();
+                }
+
+                // Update driver settings while we have updated provision data
+                const provisionedModules = this.provisionData.items
+                    .filter(x => x.level !== 'none')
+                    .map(x => x.name);
+
+                return this.recordTransaction(
+                    requestId,
+                    'updating AS3 driver with module provisioning information',
+                    this.driver.updateProvisionInfo(provisionedModules)
+                );
             })
             .then(() => Promise.all([
                 Promise.resolve(this.provisionData),
@@ -1772,6 +1740,8 @@ class FASTWorker {
             .then(tmpl => fast.Template.fromJson(JSON.stringify(tmpl)))
             .then((tmpl) => {
                 tmpl.title = tmpl.title || tmplid;
+                // always assume AS3 declaration (JSON)
+                tmpl.contentType = 'application/json';
                 return Promise.resolve()
                     .then(() => this.checkDependencies(tmpl, reqid, true))
                     .then(() => this.hydrateSchema(tmpl, reqid, true))
@@ -2074,15 +2044,14 @@ class FASTWorker {
         const reqid = restOperation.requestId;
         if (appid) {
             const pathElements = _getPathElements(restOperation);
-            const tenant = decodeURI(pathElements.itemId);
-            const app = decodeURI(pathElements.itemSubId);
+            const tenant = pathElements.itemId;
+            const app = pathElements.itemSubId;
             return Promise.resolve()
                 .then(() => this.recordTransaction(
                     reqid,
                     'GET request to appsvcs/declare',
-                    this.driver.getRawDeclaration({ reqid })
+                    this.driver.listApplication(tenant, app, { reqid })
                 ))
-                .then(resp => resp.data[tenant][app])
                 .then(appDef => this.migrateLegacyApps(restOperation, [appDef]))
                 .then((appDefs) => {
                     restOperation.setBody(appDefs[0]);
@@ -2182,18 +2151,23 @@ class FASTWorker {
             .then(() => this.recordTransaction(
                 reqid,
                 'gathering a list of template sets',
-                (showDisabled) ? this.fsTemplateProvider.listSets() : this.templateProvider.listSets()
+                this.templateProvider.listSets()
             ))
             .then(setList => Promise.all([
                 Promise.resolve(setList),
-                this.getConfig(reqid)
+                this.getConfig(reqid),
+                this.recordTransaction(
+                    reqid,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ reqid })
+                )
             ]))
-            .then(([setList, config]) => this.recordTransaction(
+            .then(([setList, config, appsList]) => this.recordTransaction(
                 reqid,
                 'gathering data for each template set',
-                Promise.all(setList.map(x => this.gatherTemplateSet(reqid, x, config)))
+                Promise.all(setList.map(x => this.gatherTemplateSet(reqid, x, config, appsList)))
             ))
-            .then(setList => ((showDisabled) ? setList.filter(x => !x.enabled) : setList))
+            .then(setList => setList.filter(x => x.enabled === !showDisabled))
             .then((setList) => {
                 restOperation.setBody(setList);
                 this.completeRestOperation(restOperation);
@@ -2621,11 +2595,12 @@ class FASTWorker {
                         date: new Date()
                     };
                 }
+
                 // If we are installing a delete template set, remove it from the deleted list
                 if (config.deletedTemplateSets.includes(tsid)) {
                     config.deletedTemplateSets = config.deletedTemplateSets.filter(x => x !== tsid);
-                    return this.saveConfig(config, reqid);
                 }
+
                 return this.saveConfig(config, reqid);
             })
             .then((persisted) => {
@@ -2899,7 +2874,7 @@ class FASTWorker {
         const pathElements = _getPathElements(restOperation);
 
         if (appid) {
-            data = [`${decodeURI(pathElements.itemId)}/${decodeURI(pathElements.itemSubId)}`];
+            data = [`${pathElements.itemId}/${pathElements.itemSubId}`];
         } else if (!data) {
             data = [];
         }
@@ -3002,8 +2977,13 @@ class FASTWorker {
                     .then((data) => { config = data; }))
                 .then(() => this.recordTransaction(
                     reqid,
+                    'gathering a list of applications from the driver',
+                    this.driver.listApplications({ reqid })
+                ))
+                .then(appsList => this.recordTransaction(
+                    reqid,
                     `gathering template set data for ${tsid}`,
-                    this.gatherTemplateSet(reqid, tsid, config)
+                    this.gatherTemplateSet(reqid, tsid, config, appsList)
                 ))
                 .then((setData) => {
                     const usedBy = setData.templates.reduce((acc, curr) => {
@@ -3021,6 +3001,14 @@ class FASTWorker {
                     reqid,
                     'deleting a template set from the data store',
                     this.templateProvider.removeSet(tsid)
+                        .catch((e) => {
+                            if (e.message && e.message.match(/Set removal not implemented/)) {
+                                // Tried deleting FS template
+                                return Promise.resolve();
+                            }
+
+                            return Promise.reject(e);
+                        })
                 ))
                 .then(() => {
                     config.deletedTemplateSets.push(tsid);
@@ -3040,7 +3028,7 @@ class FASTWorker {
                 })
                 .then(() => this.genRestResponse(restOperation, 200, 'success', undefined))
                 .catch((e) => {
-                    if (e.message.match(/failed to find template set/)) {
+                    if (e.message.match(/Could not find template set/)) {
                         return this.genRestResponse(restOperation, 404, e.message, e.stack);
                     }
                     if (e.message.match(/being used by/)) {
@@ -3064,6 +3052,14 @@ class FASTWorker {
                             reqid,
                             `deleting template set: ${set}`,
                             this.templateProvider.removeSet(set)
+                                .catch((e) => {
+                                    if (e.message && e.message.match(/Set removal not implemented/)) {
+                                        // Tried deleting FS template
+                                        return Promise.resolve();
+                                    }
+
+                                    return Promise.reject(e);
+                                })
                         ));
                 });
                 return promiseChain
@@ -3158,8 +3154,8 @@ class FASTWorker {
         }
         const reqid = restOperation.requestId;
         const pathElements = _getPathElements(restOperation);
-        const tenant = decodeURI(pathElements.itemId);
-        const app = decodeURI(pathElements.itemSubId);
+        const tenant = pathElements.itemId;
+        const app = pathElements.itemSubId;
         const newParameters = data.parameters;
         // clone restOp, but make sure to unhook complete op
         const postOp = Object.assign(Object.create(Object.getPrototypeOf(restOperation)), restOperation);

@@ -699,6 +699,42 @@ describe(template, function () {
         util.assertRendering(template, view, expected);
     });
 
+    describe('use plain text', function () {
+        before(() => {
+            view.enable_tls_server = false;
+            delete expected.t1.app1.app1_tls_server;
+            delete expected.t1.app1.app1_certificate;
+
+            delete expected.t1.app1.app1_pop3_vs.serverTLS;
+            delete expected.t1.app1.app1_imap4_vs.serverTLS;
+
+            delete expected.t1.app1.app1_owa_vs.serverTLS;
+            expected.t1.app1.app1_owa_vs.redirect80 = false;
+            expected.t1.app1.app1_owa_vs.class = 'Service_HTTP';
+
+            delete expected.t1.app1.app1_ews_vs.serverTLS;
+            expected.t1.app1.app1_ews_vs.redirect80 = false;
+            expected.t1.app1.app1_ews_vs.class = 'Service_HTTP';
+
+            delete expected.t1.app1.app1_as_vs.serverTLS;
+            expected.t1.app1.app1_as_vs.redirect80 = false;
+            expected.t1.app1.app1_as_vs.class = 'Service_HTTP';
+
+            delete expected.t1.app1.app1_ad_vs.serverTLS;
+            expected.t1.app1.app1_ad_vs.redirect80 = false;
+            expected.t1.app1.app1_ad_vs.class = 'Service_HTTP';
+
+            delete expected.t1.app1.app1_mapi_vs.serverTLS;
+            expected.t1.app1.app1_mapi_vs.redirect80 = false;
+            expected.t1.app1.app1_mapi_vs.class = 'Service_HTTP';
+
+            delete expected.t1.app1.app1_oa_vs.serverTLS;
+            expected.t1.app1.app1_oa_vs.redirect80 = false;
+            expected.t1.app1.app1_oa_vs.class = 'Service_HTTP';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
     describe('clean up', function () {
         util.cleanUp();
     });

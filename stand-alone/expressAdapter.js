@@ -86,12 +86,14 @@ function getWorkerResponse(worker, req, res) {
 
 function _createExpressApp(options) {
     options = options || {};
+    const PARSER_SIZE_LIMIT = process.env.FAST_JSON_REQ_BODY_LIMIT || '1mb';
     const app = express();
     if (options.staticFiles) {
         app.use(express.static(options.staticFiles));
     }
-    app.use(express.json());
-
+    app.use(express.json({
+        limit: PARSER_SIZE_LIMIT
+    }));
     // Load any middleware
     if (options.middleware) {
         options.middleware.forEach(x => app.use(x));
@@ -259,7 +261,13 @@ function startHttpsServer(app, options) {
     }
 
     // Create server
-    server = https.createServer(certKeyChain, app);
+    try {
+        server = https.createServer(certKeyChain, app);
+    } catch (err) {
+        return Promise.reject(new Error(
+            `Failed to start HTTP Server: ${err}`
+        ));
+    }
 
     // Watch for cert changes
     const watchPaths = [
