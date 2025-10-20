@@ -230,9 +230,9 @@ texinfo_documents = [
 linkcheck_ignore = [
     'https://github.com/json-editor/json-editor#format',
     'https://github.com/json-editor/json-editor#ref-and-definitions',
-    'https://github.com/F5Networks/f5-appsvcs-templates/releases/tag/v1.15.0', # not available yet
+    'https://www.npmjs.com/',
+    'https://www.npmjs.com/package/@f5devcentral/f5-fast-core',
 ]
-
 
 # Generate API docs
 cwd = os.getcwd()
@@ -241,8 +241,8 @@ if not os.path.exists('node_modules'):
     subprocess.check_call(['npm', 'ci'])
 subprocess.check_call([
     'npx',
-    'redoc-cli',
-    'bundle',
+    'redocly',
+    'build-docs',
     '-o', 'docs/_static/apidocs.html',
     'docs/openapi.yml'
 ])

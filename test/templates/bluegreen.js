@@ -49,6 +49,7 @@ const expected = {
     id: 'urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7',
     t1: {
         class: 'Tenant',
+        useCommonRouteDomainTenant: true,
         app1: {
             class: 'Application',
             template: 'generic',

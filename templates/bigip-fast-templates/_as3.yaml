@@ -1,33 +1,63 @@
-title: AS3
-contentType: application/json
 bigipHideTemplate: true
-definitions:
-  tenant_name:
-    title: Tenant Name
-    description: The *tenant* is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
-    type: string
-    minLength: 1
-    maxLength: 255
-    pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
-    immutable: true
-  app_name:
-    title: Application Name
-    description: The *application* is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
-    type: string
-    minLength: 1
-    maxLength: 255
-    pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
-    immutable: true
-template: |
-  {
-    "class": "ADC",
-    "schemaVersion": "3.0.0",
-    "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
-    "{{tenant_name}}": {
-      "class": "Tenant",
-      "{{app_name}}": {
-        "class": "Application",
-        "template": "generic"
+
+bipMinVer: &bigipMinimumVersion 17.5
+
+
+# AS3 template base
+as3_base: &as3_base
+  title: AS3
+  contentType: application/json
+  definitions:
+    tenant_name:
+      title: Tenant Name
+      description: The *tenant* is the high-level grouping in an AS3 declaration. FAST deploys all configuration for a given tenant in a BIG-IP partition of the same name.
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
+      immutable: true
+    app_name:
+      title: Application Name
+      description: The *application* is the low-level grouping in an AS3 declaration. FAST deploys all configuration for a given application in a BIG-IP folder within the tenant partition.
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: ^[A-Za-z][0-9A-Za-z_.-]*$
+      immutable: true
+  template: |
+    {
+      "class": "ADC",
+      "schemaVersion": "3.0.0",
+      "id": "urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7",
+      "{{tenant_name}}": {
+        "class": "Tenant",
+        "{{app_name}}": {
+          "class": "Application",
+          "template": "generic"
+        }
       }
     }
-  }
+
+# UnCommon Route Domain support for >=17.5
+commonRD: &commonRD
+  title: Use Route Domains inside the Common Tenant
+  contentType: application/json
+  bigipMinimumVersion: *bigipMinimumVersion
+  definitions:
+    use_common_rd:
+      title: Common Route Domains
+      description: All Route Domains exist inside the default/Common partition
+      type: boolean
+      default: true
+  template: |
+    {
+      "{{tenant_name}}": {
+        "useCommonRouteDomainTenant": {{use_common_rd}}
+      }
+    }
+
+# subtemplate with basic as3 settings
+<<: *as3_base
+anyOf: 
+  - {}
+  - <<: *commonRD

@@ -76,6 +76,7 @@ const configKey = 'config';
 // Known good hashes for template sets
 const supportedHashes = {
     'bigip-fast-templates': [
+        '51ed36e13a64eb6977881a5f0b28306d95f4bb01f8e0b6f547c9e566e7c8a7c9', // v1.26
         '003b8ca78a45b67a97ea78007bd2d36d82a94710753bbca5a2e0fc71496c03e3', // v1.25
         'badf3fa1a5bcc81888ca2516c8069b176da49b0575e86c5e8e0e811e2c5fa7e9', // v1.24
         'a0982c93ca0e182a67887636fcb3b208b018c989ee1459f02ae83cf10e9e2175', // v1.23
@@ -118,6 +119,17 @@ function _getPathElements(restOp) {
         itemSubId: pathElements[5],
         elements: pathElements
     };
+}
+
+class FastError extends Error {
+    constructor(message, errors) {
+        super(message);
+        this.name = 'FastError';
+        if (typeof errors === 'string') {
+            errors = [{ summary: errors }];
+        }
+        this.errors = errors;
+    }
 }
 
 /** Class representing a FAST Worker process. */
@@ -168,7 +180,7 @@ class FASTWorker {
         this.WORKER_ALT_URI_PATHS = options.altUriPaths || [];
         const bigipInfo = options.bigipInfo || {
             host: 'http://localhost:8100',
-            username: 'admin',
+            username: 'admin', // gitleaks:allow
             password: '',
             strictCerts: true
         };
@@ -289,9 +301,11 @@ class FASTWorker {
             .then((validate) => {
                 const valid = validate(config);
                 if (!valid) {
-                    return Promise.reject(new Error(
-                        `invalid config: ${JSON.stringify(validate.errors, null, 2)}`
-                    ));
+                    const err = new Error('Invalid config');
+                    err.errors = validate.errors.map(
+                        ve => ({ summary: `${ve.dataPath.slice(1)} ${ve.message}` })
+                    );
+                    return Promise.reject(err);
                 }
 
                 return Promise.resolve(config);
@@ -313,7 +327,8 @@ class FASTWorker {
             tsIpAddress: '',
             ipamProviders: [],
             disableDeclarationCache: false,
-            pendingTasksMaxNumber: 10,
+            pendingTasksMaxNumber: 25,
+            enableTasksAutoBatch: true,
             _gitTemplateSets: {}
         };
         return Object.assign({}, defaultConfig);
@@ -408,6 +423,12 @@ class FASTWorker {
                         'Specifies max number of pending tasks which can be accepted by FAST. When max limit reached, FAST would return 503 error',
                         'Use batching as a better way to deploy many apps at once.'
                     ].join('')
+                },
+                enableTasksAutoBatch: {
+                    title: 'Enable automatic batching of pending tasks',
+                    description: 'Enables automatic batching of pending tasks so all tasks would be combined in one AS3 declaration',
+                    type: 'boolean',
+                    default: true
                 },
                 enableIpam: {
                     title: 'Enable IPAM for Official F5 FAST Templates (Experimental/Beta)',
@@ -1386,6 +1407,13 @@ class FASTWorker {
                         if (typeof prop !== 'undefined') {
                             acc[key] = prop;
                         }
+                    } else if (value.items.type && value.items.type === 'object' && value.items.properties) {
+                        const properties = value.items.properties;
+                        Object.keys(properties || {}).forEach((idx) => {
+                            if (typeof properties[idx][childName] !== 'undefined') {
+                                acc[`${key}.items.properties.${idx}`] = properties[idx];
+                            }
+                        });
                     }
                 }
                 return acc;
@@ -1475,10 +1503,11 @@ class FASTWorker {
                                 return this._hydrateCache[endPoint];
                             }
 
+                            const nameOnly = endPoint === 'ltm/node';
                             return this.recordTransaction(
                                 requestId,
                                 `fetching data from ${endPoint}`,
-                                this.bigip.getSharedObjects(endPoint, prop.enumFromBigip.filter)
+                                this.bigip.getSharedObjects(endPoint, prop.enumFromBigip.filter, nameOnly)
                             )
                                 .then((items) => {
                                     this._hydrateCache[endPoint] = items;
@@ -1781,12 +1810,18 @@ class FASTWorker {
         data.forEach((tmplData) => {
             if (!tmplData.name) {
                 promiseChain = promiseChain
-                    .then(() => Promise.reject(new Error('name property is missing')));
+                    .then(() => Promise.reject(new FastError(
+                        'Failed to load template',
+                        'name property is missing'
+                    )));
                 return;
             }
             if (!tmplData.parameters) {
                 promiseChain = promiseChain
-                    .then(() => Promise.reject(new Error('parameters property is missing')));
+                    .then(() => Promise.reject(new FastError(
+                        `Failed to render template: ${tmplData.name}`,
+                        'parameters property is missing'
+                    )));
                 return;
             }
             if (typeof tmplData.allowOverwrite === 'undefined') {
@@ -1799,7 +1834,7 @@ class FASTWorker {
                 .then(() => {
                     if (!setName || !templateName) {
                         return Promise.reject(new Error(
-                            `expected name to be of the form "setName/templateName", but got ${tmplData.name}`
+                            `expected name to be of the form 'setName/templateName', but got ${tmplData.name}`
                         ));
                     }
                     return Promise.resolve();
@@ -1811,7 +1846,10 @@ class FASTWorker {
                 ))
                 .then(setData => Object.assign(tsData, setData))
                 .then(() => this.fetchTemplate(reqid, tmplData.name))
-                .catch(e => Promise.reject(new Error(`Unable to load template: ${tmplData.name}. ${e.message}`)))
+                .catch(e => Promise.reject(new FastError(
+                    `Failed to load template: ${tmplData.name}`,
+                    e.message.replaceAll('"', "'")
+                )))
                 .then((tmpl) => {
                     const schema = tmpl.getParametersSchema();
                     const ipFromIpamProps = this.getPropsWithChild(schema, 'ipFromIpam', true);
@@ -1829,8 +1867,9 @@ class FASTWorker {
                     .then(([tenantName, appName]) => `${tenantName}/${appName}`)
                     .then((tenantAndApp) => {
                         if (!tmplData.allowOverwrite && appsList.includes(tenantAndApp)) {
-                            return Promise.reject(new Error(
-                                `application ${tenantAndApp} already exists and "allowOverwrite" is false`
+                            return Promise.reject(new FastError(
+                                `Failed to render template: ${tmplData.name}`,
+                                `application ${tenantAndApp} already exists and 'allowOverwrite' is false`
                             ));
                         }
                         return Promise.resolve();
@@ -1840,7 +1879,22 @@ class FASTWorker {
                     // Release any IPAM IP addrs
                     .then(() => this.ipamProviders.releaseIPAMAddress(reqid, config, { ipamAddrs }))
                     // Now re-reject
-                    .then(() => Promise.reject(new Error(`Failed to render template: ${tmplData.name}. ${e.message}`))))
+                    .then(() => {
+                        if (e.errors) {
+                            return Promise.reject(e);
+                        }
+
+                        let errors = e.message;
+                        if (e.validationErrors) {
+                            errors = e.validationErrors.map(validationError => ({
+                                summary: validationError.message
+                            }));
+                        }
+                        return Promise.reject(new FastError(
+                            `Failed to render template: ${tmplData.name}`,
+                            errors
+                        ));
+                    }))
                 .then((decl) => {
                     const templateType = this._returnTemplateType(tsData);
                     const appData = {
@@ -1950,7 +2004,7 @@ class FASTWorker {
      * @param {string} stack - stack trace if error
      * @returns {Promise}
      */
-    genRestResponse(restOperation, code, message, stack) {
+    genRestResponse(restOperation, code, message, stack, errors) {
         let doParse = false;
         if (typeof message !== 'string') {
             message = JSON.stringify(message, null, 2);
@@ -1962,11 +2016,15 @@ class FASTWorker {
         if (doParse) {
             message = JSON.parse(message);
         }
+        if (typeof errors === 'string') {
+            errors = [{ summary: errors }];
+        }
         restOperation.setStatusCode(code);
         restOperation.setBody({
             code,
             requestId: restOperation.requestId,
-            message
+            message,
+            errors
         });
         if (stack) {
             restOperation.stack = stack;
@@ -2014,9 +2072,21 @@ class FASTWorker {
                 })
                 .catch((e) => {
                     if (e.message.match(/Could not find template/)) {
-                        return this.genRestResponse(restOperation, 404, `Client Error: Could not find template ${tmplid}`, e.stack);
+                        return this.genRestResponse(
+                            restOperation,
+                            404,
+                            `Failed to find template ${tmplid}`,
+                            e.stack,
+                            e.message
+                        );
                     }
-                    return this.genRestResponse(restOperation, 400, `Client Error: Could not load template ${tmplid}`, e.stack);
+                    return this.genRestResponse(
+                        restOperation,
+                        400,
+                        `Failed to load template ${tmplid}`,
+                        e.stack,
+                        e.message
+                    );
                 });
         }
 
@@ -2057,7 +2127,13 @@ class FASTWorker {
                     restOperation.setBody(appDefs[0]);
                     this.completeRestOperation(restOperation);
                 })
-                .catch(e => this.genRestResponse(restOperation, 404, `Client Error: Could not find application ${tenant}/${app}`, e.stack));
+                .catch(e => this.genRestResponse(
+                    restOperation,
+                    404,
+                    `Failed to find application ${tenant}/${app}`,
+                    e.stack,
+                    `no application named ${tenant}/${app}`
+                ));
         }
 
         return Promise.resolve()
@@ -2141,7 +2217,13 @@ class FASTWorker {
                 })
                 .catch((e) => {
                     if (e.message.match(/No templates found/) || e.message.match(/does not exist/)) {
-                        return this.genRestResponse(restOperation, 404, e.message, undefined);
+                        return this.genRestResponse(
+                            restOperation,
+                            404,
+                            `Failed to find template set ${tsid}`,
+                            e.stack,
+                            e.message
+                        );
                     }
                     return this.genRestResponse(restOperation, 500, `Internal Error: Could not get templateset ${tsid}`, e.stack);
                 });
@@ -2247,13 +2329,19 @@ class FASTWorker {
                     case 'settings-schema':
                         return this.getSettingsSchema(restOperation);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${pathElements.pathname}`, undefined);
+                        return this.genRestResponse(
+                            restOperation,
+                            404,
+                            `unknown resource: ${collection}`,
+                            undefined,
+                            `no resource defined for ${collection}`
+                        );
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, 'Internal Error: Failed to process get request', e.stack);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, undefined));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, e.errors));
     }
 
     /**
@@ -2275,11 +2363,11 @@ class FASTWorker {
             .then(() => this.renderTemplates(reqid, data))
             .catch((e) => {
                 let code = 400;
-                if (e.message.match(/Could not find template/)) {
+                if (e.errors && e.errors[0].summary.match(/Could not find template/)) {
                     code = 404;
                 }
 
-                return Promise.reject(this.genRestResponse(restOperation, code, e.message, e.stack));
+                return Promise.reject(this.genRestResponse(restOperation, code, e.message, e.stack, e.errors));
             })
             .then((renderResults) => {
                 appsData = renderResults;
@@ -2299,12 +2387,14 @@ class FASTWorker {
                     return Promise.reject();
                 }
                 const code = (e.response) ? e.response.status : 500;
+                const msg = (e.response) ? e.response.data.message : e.message;
                 return this.releaseIPAMAddressesFromApps(reqid, appsData)
                     .then(() => Promise.reject(this.genRestResponse(
                         restOperation,
                         code,
-                        `Error: Could not generate AS3 declaration: ${e.message}`,
-                        e.stack
+                        `Failed to submit declaration to AS3: ${msg}`,
+                        e.stack,
+                        e.errors
                     )));
             })
             .then((response) => {
@@ -2441,7 +2531,9 @@ class FASTWorker {
         const reqid = restOperation.requestId;
 
         if (!data.name && !data.gitHubRepo && !data.gitLabRepo) {
-            return this.genRestResponse(restOperation, 400, 'Client Error: Must supply one of the following parameters: name, gitHubRepo, gitLabRepo', undefined);
+            const msg = 'Failed to install template set';
+            const errors = 'Must supply one of the following parameters: name, gitHubRepo, gitLabRepo';
+            return this.genRestResponse(restOperation, 400, msg, undefined, errors);
         }
 
         data.gitRef = data.gitRef || 'main';
@@ -2470,7 +2562,7 @@ class FASTWorker {
                     }
                     if (!data.gitToken && !data.unprotected) {
                         return Promise.reject(
-                            new Error('Must set "unprotected" boolean property to true to install publicly available templatesets')
+                            new Error("Must set 'unprotected' boolean property to true to install publicly available templatesets")
                         );
                     }
                 }
@@ -2627,19 +2719,21 @@ class FASTWorker {
             })
             .then(() => this.genRestResponse(restOperation, 200, '', undefined))
             .catch((e) => {
-                if (e.message.match(/no such file/)) {
-                    return this.genRestResponse(restOperation, 404, `Client Error: ${setsrc} does not exist`, undefined);
+                let code = 500;
+                let msg = e.message;
+                const errors = e.message;
+
+                if (e.message.match(/no such file/) || msg.match(/failed fetching/)) {
+                    code = 404;
+                    msg = 'Failed to find template set to install';
+                } else if (e.message.match(/failed validation/)) {
+                    code = 400;
+                    msg = 'Template set failed validation';
+                } else if (e.message.match(/Must set 'unprotected' boolean property/)) {
+                    code = 422;
+                    msg = 'Failed to install template set';
                 }
-                if (e.message.match(/failed fetching/)) {
-                    return this.genRestResponse(restOperation, 404, e.message, e.stack);
-                }
-                if (e.message.match(/failed validation/)) {
-                    return this.genRestResponse(restOperation, 400, e.message, e.stack);
-                }
-                if (e.message.match(/Must set "unprotected" boolean property/)) {
-                    return this.genRestResponse(restOperation, 422, e.message, e.stack);
-                }
-                return this.genRestResponse(restOperation, 500, e.message, e.stack);
+                return this.genRestResponse(restOperation, code, msg, e.stack, errors);
             })
             .finally(() => fs.removeSync(scratch));
     }
@@ -2658,8 +2752,9 @@ class FASTWorker {
             .catch(e => Promise.reject(this.genRestResponse(
                 restOperation,
                 422,
-                `Client Error: Supplied settings were not valid:\n${e.message}`,
-                e.stack
+                'Supplied settings were not valid',
+                e.stack,
+                e.errors
             )))
             .then(() => this.encryptConfigSecrets(config))
             .then(() => this.saveConfig(config, reqid))
@@ -2690,10 +2785,10 @@ class FASTWorker {
             .then(() => this.renderTemplates(reqid, data))
             .catch((e) => {
                 let code = 400;
-                if (e.message.match(/Could not find template/)) {
+                if (e.errors && e.errors[0].summary.match(/Could not find template/)) {
                     code = 404;
                 }
-                return Promise.reject(this.genRestResponse(restOperation, code, e.message, e.stack));
+                return Promise.reject(this.genRestResponse(restOperation, code, e.message, e.stack, e.errors));
             })
             .then(rendered => this.releaseIPAMAddressesFromApps(reqid, rendered)
                 .then(() => rendered))
@@ -2853,13 +2948,19 @@ class FASTWorker {
                     case 'offbox-templatesets':
                         return this.postOffBoxTemplates(restOperation, body);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${pathElements.pathname}`, undefined);
+                        return this.genRestResponse(
+                            restOperation,
+                            404,
+                            `unknown resource: ${collection}`,
+                            undefined,
+                            `no resource defined for ${collection}`
+                        );
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message, e.stack);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, e.errors));
     }
 
     /**
@@ -2888,7 +2989,10 @@ class FASTWorker {
         try {
             appNames = data.map(x => x.split('/'));
         } catch (e) {
-            return Promise.reject(new Error(`Incorrect app info provided: ${JSON.stringify(data)}`));
+            return Promise.reject(new FastError(
+                'Failed to delete applications',
+                `Incorrect app info provided: ${JSON.stringify(data)}`
+            ));
         }
 
         const badAppNames = appNames
@@ -2896,9 +3000,9 @@ class FASTWorker {
             .map(appName => appName.join('/'));
 
         if (badAppNames.length !== 0) {
-            return Promise.reject(new Error(
-                `Invalid application name(s) supplied: ${badAppNames.join(',')}`
-            ));
+            const err = new Error('Failed to delete applications');
+            err.errors = `Invalid application name(s) supplied: ${badAppNames.join(',')}`;
+            return Promise.reject(err);
         }
 
         let appsData;
@@ -2946,19 +3050,14 @@ class FASTWorker {
                 });
             })
             .catch((e) => {
-                if (e.message.match('no tenant found')) {
-                    return this.genRestResponse(restOperation, 404, e.message, e.stack);
+                let code = 500;
+                let msg = e.message;
+                const errors = e.message;
+                if (e.message.match('no tenant found') || e.message.match('could not find application')) {
+                    code = 404;
+                    msg = 'Failed to find application to delete';
                 }
-                if (e.message.match('could not find application')) {
-                    return this.genRestResponse(restOperation, 404, e.message, e.stack);
-                }
-                if (e.message.match('Invalid application name')) {
-                    return this.genRestResponse(restOperation, 400, e.message, e.stack);
-                }
-                if (e.message.match('Incorrect app info provided')) {
-                    return this.genRestResponse(restOperation, 400, e.message, e.stack);
-                }
-                return this.genRestResponse(restOperation, 500, e.message, e.stack);
+                return this.genRestResponse(restOperation, code, msg, e.stack, errors);
             });
     }
 
@@ -3028,13 +3127,17 @@ class FASTWorker {
                 })
                 .then(() => this.genRestResponse(restOperation, 200, 'success', undefined))
                 .catch((e) => {
+                    let code = 500;
+                    let msg = e.message;
+                    const errors = e.message;
                     if (e.message.match(/Could not find template set/)) {
-                        return this.genRestResponse(restOperation, 404, e.message, e.stack);
+                        code = 404;
+                        msg = 'Failed to find template set';
+                    } else if (e.message.match(/being used by/)) {
+                        code = 400;
+                        msg = 'Failed to delete template set';
                     }
-                    if (e.message.match(/being used by/)) {
-                        return this.genRestResponse(restOperation, 400, e.message, e.stack);
-                    }
-                    return this.genRestResponse(restOperation, 500, e.message, e.stack);
+                    return this.genRestResponse(restOperation, code, msg, e.stack, errors);
                 });
         }
 
@@ -3131,13 +3234,19 @@ class FASTWorker {
                     case 'settings':
                         return this.deleteSettings(restOperation);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: Unknown endpoint ${pathElements.pathname}`, undefined);
+                        return this.genRestResponse(
+                            restOperation,
+                            404,
+                            `unknown resource: ${collection}`,
+                            undefined,
+                            `no resource defined for ${collection}`
+                        );
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message, e.stack);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, e.errors));
     }
 
     /**
@@ -3149,8 +3258,13 @@ class FASTWorker {
      */
     patchApplications(restOperation, appid, data) {
         if (!appid) {
-            return Promise.resolve()
-                .then(() => this.genRestResponse(restOperation, 400, 'Client Error: PATCH is not supported on this endpoint', undefined));
+            return this.genRestResponse(
+                restOperation,
+                405,
+                'invalid method',
+                undefined,
+                'PATCH is not supported on /applications'
+            );
         }
         const reqid = restOperation.requestId;
         const pathElements = _getPathElements(restOperation);
@@ -3190,8 +3304,9 @@ class FASTWorker {
                         this.genRestResponse(
                             restOperation,
                             422,
-                            `Client Error: PATCH would change tenant name from ${tenant} to ${tenantName}`,
-                            undefined
+                            'Unsupported PATCH request',
+                            undefined,
+                            `PATCH would change tenant name from ${tenant} to ${tenantName}`
                         )
                     );
                 }
@@ -3200,8 +3315,9 @@ class FASTWorker {
                         this.genRestResponse(
                             restOperation,
                             422,
-                            `Client Error: PATCH would change application name from ${app} to ${appName}`,
-                            undefined
+                            'Unsupported PATCH request',
+                            undefined,
+                            `PATCH would change application name from ${app} to ${appName}`
                         )
                     );
                 }
@@ -3248,8 +3364,9 @@ class FASTWorker {
             .catch(e => Promise.reject(this.genRestResponse(
                 restOperation,
                 422,
-                `Client Error: Supplied settings were not valid:\n${e.message}`,
-                e.stack
+                'Supplied settings were not valid',
+                e.stack,
+                e.errors
             )))
             .then(() => this.saveConfig(combinedConfig, reqid))
             .then(() => Promise.resolve(this.tracer.setOptions(
@@ -3291,13 +3408,19 @@ class FASTWorker {
                     case 'settings':
                         return this.patchSettings(restOperation, body);
                     default:
-                        return this.genRestResponse(restOperation, 404, `Client Error: unknown endpoint ${pathElements.pathname}`, undefined);
+                        return this.genRestResponse(
+                            restOperation,
+                            404,
+                            `unknown resource: ${collection}`,
+                            undefined,
+                            `no resource defined for ${collection}`
+                        );
                     }
                 } catch (e) {
                     return this.genRestResponse(restOperation, 500, e.message, e.stack);
                 }
             })
-            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack));
+            .catch(e => this.genRestResponse(restOperation, 400, e.message, e.stack, e.erors));
     }
 
     /**

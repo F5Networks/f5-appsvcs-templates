@@ -12,6 +12,7 @@ F5 BIG-IP Telemetery Streaming
 | Once BIG-IP TS is installed, ASM and/or AFM logging can be enabled (default if provisioned) or disabled per deployment. 
 | For instructions on provisioning BIG-IP modules see `K12111: Provisioning licensed BIG-IP modules <https://support.f5.com/csp/article/K12111>`_.
 |
+
 *tsIPAddress* is used to configure F5 BIG-IP Telemetry Streaming by allowing the setting of and IP address used to create BIG-IP TS objects.
 The IP address will be used in both node and virtual addresses by parameterizing the values.  
 
@@ -48,6 +49,7 @@ IPAM
 |
 | From the **Settings** tab, click the **+ row** button. *Infoblox* will be selected by default
 | The following settings are available for the *Infoblox* IPAM provider - 
+
 1. Name - give the IPAM provider a name. It is used by BIG-IP FAST templates to identify which provider to use for deploying or deleting applications
 2. Host - The host is the location of the IPAM provider. For example: **https://ipamexample.com/api/v1**
 3. Username - username for accessing the IPAM provider
@@ -56,6 +58,7 @@ IPAM
 6. Network Name - this is the name of the network from which you want to assign IPs in the IPAM provider. Please note that this is the name according to the API and not the common name in the IPAM frontend. For example: **ZG5zLm5ldDdvcmskKJHuNTAuMTAuGF8yNCf5:10.5.1.0/24/default**
 
 | If you select the *Generic* IPAM provider, the following settings are available - 
+
 1. Name - give the IPAM provider a name. It is used by BIG-IP FAST templates to identify which provider to use for deploying or deleting applications
 2. Host - The host is the location of the IPAM provider. For example: **https://ipamexample.com/api/v1**
 3. Username - username for accessing the IPAM provider

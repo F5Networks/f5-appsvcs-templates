@@ -45,6 +45,7 @@ The path on BIG-IP: ``/mgmt/tm/${enumFromBigip}?$select=fullPath``
 .. seealso:: BIG-IP :ref:`endpoint-list` for a list of BIG-IP endpoints.
 
 *(enumFromBigip)* supports filtering of BIG-IP metadata based on provided regex:
+
 .. code-block:: yaml
 
     definitions:
@@ -173,6 +174,7 @@ Markdown in Schema Descriptions
 | Using Markdown code in the description for a parameter will be rendered in the GUI.
 | An example would be using an asterisk on each side of a word to make it italic. 
 |
+
 description: Hold the *control* key to select multiple iRules to attach to the TCP virtual server. Would be written as:
 :: 
 
@@ -193,7 +195,9 @@ Use Existing Default Route Domain on Tenant on Custom Templates
 | F5 BIG-IP FAST supports Tenant-level default route domains allowing you to set a non-zero default route domain.
 | This setting can be exercised only during the very first F5 BIG-IP FAST deployment. Subsequent route domain updates will be ignored.
 | You can only use a route domain created before the deployment. F5 BIG-IP FAST cannot create new route domains as of yet. Setting this value is optional and ignoring it will keep the default route domain of zero.
+| The defaultRouteDomain property is an exception to the rule: FAST will ignore all other properties in the ADC and Tenant classes. Read more in :ref:`Template Authoring -- Limits<limits>`
 | 
+
 In the following example, *defaultRouteDomain* is set to 1 for the given tenant. In the next update, no *defaultRouteDomain* needs to be specified:
 
 .. code-block:: json

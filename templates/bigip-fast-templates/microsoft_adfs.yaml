@@ -218,6 +218,12 @@ allOf:
       pool_port:
         title: Port for Active Directory Services
         default: 443
+      share_node:
+        title: Share Node
+        description: Create Member Nodes in Common so they can be shared among all Tenants; uncheck for exclusive use within this Tenant
+        type: boolean
+        default: true
+        dependencies: []
       load_balancing_mode:
         title: Load Balancing Method
         description: A *load balancing method* is an algorithm that the BIG-IP system uses
@@ -246,7 +252,7 @@ allOf:
                 "members": [{
                   "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
                   "servicePort": 49443,
-                  "shareNodes": true
+                  "shareNodes": {{share_node::boolean}}
                 }],
                 "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
                 "slowRampTime": {{slow_ramp_time::integer}},
@@ -255,11 +261,11 @@ allOf:
             {{/client_cert}}
             "{{app_name}}_pool": {
               "class": "Pool",
-              "members": [{
-                "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
-                "servicePort": {{pool_port:f5:port}},
-                "shareNodes": true
-              }],
+                "members": [{
+                  "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
+                  "servicePort": {{pool_port:f5:port}},
+                  "shareNodes": {{share_node::boolean}}
+                }],
               "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
               "slowRampTime": {{slow_ramp_time::integer}}
             }

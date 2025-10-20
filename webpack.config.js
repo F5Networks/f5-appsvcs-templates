@@ -6,8 +6,14 @@ const webpack = require('webpack');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
 
+// Capture build-time Node version once so it can be injected for version checks in browser libs
+const buildNodeVersion = process.versions && process.versions.node ? process.versions.node : '22.12.0';
+
 module.exports = {
-    entry: './presentation/app.js',
+    entry: [
+        './presentation/shim.js',
+        './presentation/app.js'
+    ],
     output: {
         filename: 'bundle.js',
         path: path.resolve(__dirname, 'presentation')
@@ -36,6 +42,7 @@ module.exports = {
     resolve: {
         fallback: {
             child_process: false,
+            process: require.resolve('process/browser'),
             crypto: false,
             dgram: false,
             fs: false,
@@ -51,6 +58,7 @@ module.exports = {
         }
     },
     plugins: [
+        new webpack.ProvidePlugin({ process: 'process/browser' }),
         new NodePolyfillPlugin({
             excludeAliases: [
                 'crypto',
@@ -63,8 +71,9 @@ module.exports = {
         }),
         new VueLoaderPlugin(),
         new webpack.DefinePlugin({
+            __BUILD_NODE_VERSION__: JSON.stringify(buildNodeVersion),
             __VUE_OPTIONS_API__: JSON.stringify(true),
             __VUE_PROD_DEVTOOLS__: JSON.stringify(false)
-        })
+        }),
     ]
 };

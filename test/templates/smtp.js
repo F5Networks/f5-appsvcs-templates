@@ -89,6 +89,7 @@ const expected = {
     id: 'urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7',
     t1: {
         class: 'Tenant',
+        useCommonRouteDomainTenant: true,
         app1: {
             class: 'Application',
             template: 'generic',
@@ -129,14 +130,16 @@ const expected = {
                     serverAddresses: ['10.2.1.1'],
                     connectionLimit: 500,
                     priorityGroup: 1,
-                    shareNodes: true
+                    shareNodes: true,
+                    adminState: 'enable'
                 },
                 {
                     servicePort: 8025,
                     serverAddresses: ['10.2.1.2'],
                     connectionLimit: 1000,
                     priorityGroup: 1,
-                    shareNodes: true
+                    shareNodes: true,
+                    adminState: 'enable'
                 }],
                 loadBalancingMode: view.load_balancing_mode,
                 slowRampTime: 500,

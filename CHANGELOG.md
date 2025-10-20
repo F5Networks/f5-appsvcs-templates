@@ -1,3 +1,20 @@
+# 1.26.0
+## Added
+* bigip-fast-templates: Create new pool members from existing nodes
+* bigip-fast-templates: Use existing or generate new SNI TLS Server profiles
+* bigip-fast-templates: Configure availability of members when creating a new pool; options inclued enable, disable and offline
+* bigip-fast-templates: Create pool members in /Common with MS Exchange and ADFS templates
+
+## Fixed
+* bigip-fast-templates: allow route-domains outside /Common on v17.5
+* worker: installing a template set with a space in the name no longer creates two data-group records
+* bigip-fast-templates: Microsoft Exchange template iRule now references Tenant/Applications specific pools
+* MBIPMP-43545: Update certs rotation routine to wait till all files updated
+
+## Changed
+* worker: Add "errors" array property to error responses and make error messages cleaner
+* worker: Add "errors" array to tasks and pull this information out of "messages" to make "messages" cleaner
+
 # 1.25.0
 ## Added
 * bigip-fast-templates: deploying the HTTP template with a FastL4 profile now allows you to monitor HTTPS pool members

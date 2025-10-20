@@ -1,4 +1,4 @@
-/* Copyright 2021 F5 Networks, Inc.
+/* Copyright 2024 F5 Networks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ const axios = require('axios');
 const express = require('express');
 const http = require('http');
 const https = require('https');
-const fs = require('fs');
-const path = require('path');
 
+const certsUtils = require('./certsUtils');
 const RestOperation = require('./restOperation');
 
-let server;
+// Global state for the server
+const server = {};
 
 function restOpFromRequest(req) {
     const restOp = new RestOperation();
@@ -191,122 +191,108 @@ function generateApp(workers, options) {
 }
 
 function startHttpsServer(app, options) {
-    let key;
-    let keyPath;
-    let cert;
-    let certPath;
-    let ca;
-    let errors = '';
-
     const port = options.port || 8080;
     const allowLocalCert = options.allowLocalCert;
 
     stopHttpsServer();
 
-    // Try getting TLS file locations from the env
-    const caPath = process.env[options.tlsCaEnvName || 'F5_SERVICE_CA'];
-    if (caPath) {
-        try {
-            ca = fs.readFileSync(caPath, 'utf8');
-        } catch (err) {
-            errors = `${errors}\n${err.message}`;
-        }
-    }
+    let certKeyChainConfig = {
+        ca: process.env[options.tlsCaEnvName || 'F5_SERVICE_CA'] || null,
+        cert: process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'] || null,
+        key: process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'] || null
+    };
 
-    keyPath = process.env[options.tlsKeyEnvName || 'F5_SERVICE_KEY'];
-    if (keyPath) {
-        try {
-            key = fs.readFileSync(keyPath, 'utf8');
-        } catch (err) {
-            errors = `${errors}\n${err.message}`;
-        }
-    }
-
-    certPath = process.env[options.tlsCertEnvName || 'F5_SERVICE_CERT'];
-    if (certPath) {
-        try {
-            cert = fs.readFileSync(certPath, 'utf8');
-        } catch (err) {
-            errors = `${errors}\n${err.message}`;
-        }
-    }
+    let certKeyChain = certsUtils.readCertsChain(certKeyChainConfig);
+    let errors = certKeyChain.errors;
+    certKeyChain = certKeyChain.chain;
 
     // Grab from a dev location as a fallback
-    if (allowLocalCert && (!key || !cert)) {
-        keyPath = options.tlsKeyLocalName || 'certs/key.pem';
-        try {
-            key = fs.readFileSync(keyPath, 'utf8');
-        } catch (err) {
-            errors = `${errors}\n${err.message}`;
-        }
+    if (allowLocalCert && (!certKeyChain.cert || !certKeyChain.key)) {
+        // TODO: should CA be re-read then?
+        certKeyChainConfig = {
+            cert: options.tlsCertLocalName || 'certs/certificate.pem',
+            key: options.tlsKeyLocalName || 'certs/key.pem'
+        };
 
-        certPath = options.tlsKeyLocalName || 'certs/certificate.pem';
-        try {
-            cert = fs.readFileSync(certPath, 'utf8');
-        } catch (err) {
-            errors = `${errors}\n${err.message}`;
+        certKeyChain = certsUtils.readCertsChain(certKeyChainConfig);
+        if (certKeyChain.errors) {
+            errors = `${errors}\n${certKeyChain.errors}`;
         }
+        certKeyChain = certKeyChain.chain;
     }
 
-    if (!key || !cert) {
+    // TODO: should we check for CA errors?
+    if (!certKeyChain.key || !certKeyChain.cert) {
         return Promise.reject(new Error(
-            `Failed to load TLS key and certificate: ${errors.trim()}`
+            `Failed to load TLS key and certificate: ${errors}`
         ));
     }
 
-    let certKeyChain = { key, cert };
-
-    if (caPath && ca) {
-        certKeyChain.ca = ca;
+    // Remove CA config if not defined
+    if (!certKeyChainConfig.ca) {
+        delete certKeyChainConfig.ca;
     }
 
-    // Create server
+    // Read the most recent modification time of config
+    const mostRecentMtime = certsUtils.mostRecentMtime(certKeyChainConfig);
+
+    // Create server and start listening
     try {
-        server = https.createServer(certKeyChain, app);
+        server.server = https.createServer(certKeyChain, app);
+        server.server.listen(port);
     } catch (err) {
         return Promise.reject(new Error(
             `Failed to start HTTP Server: ${err}`
         ));
     }
 
-    // Watch for cert changes
-    const watchPaths = [
-        path.basename(keyPath),
-        path.basename(certPath)
-    ];
-    fs.watch(path.dirname(keyPath), (event, fname) => {
-        if (!watchPaths.includes(fname)) {
-            return;
-        }
-
-        console.log(`Certificate change detected (${event}:${fname}); reloading`);
-        try {
-            key = fs.readFileSync(keyPath, 'utf8');
-            cert = fs.readFileSync(certPath, 'utf8');
-            certKeyChain = { key, cert };
-            if (caPath) {
-                ca = fs.readFileSync(caPath, 'utf8');
-                certKeyChain.ca = ca;
-            }
-
-            server.setSecureContext(certKeyChain);
-            console.log('Certificate reload complete');
-        } catch (e) {
-            console.log(e);
+    if (mostRecentMtime < certsUtils.mostRecentMtime(certKeyChainConfig)) {
+        // Reload cert/key if new ones are loaded during the execution of startHttpsServer
+        certKeyChain = certsUtils.readCertsChain(certKeyChainConfig);
+        if (certKeyChain.errors) {
+            console.log(certKeyChain.errors);
             console.log('Certificate reload failed');
+        } else {
+            updateServerSecureContext(certKeyChain.chain);
         }
-    });
+    }
 
-    // Start listening
-    server.listen(port);
+    server.certsRotation = new certsUtils.CertsRotation(
+        updateServerSecureContext,
+        certKeyChainConfig,
+        {
+            maxPendingOps: options.certsRotationMaxPendingOps,
+            waitTimeout: options.certsRotationWaitTimeout
+        }
+    );
+    server.certsRotation.start();
+
     return Promise.resolve(server);
 }
 
 function stopHttpsServer() {
-    if (server) {
-        server.close();
+    if (server.server) {
+        server.server.close();
+        server.server = null;
     }
-    server = null;
+
+    if (server.certsRotation) {
+        server.certsRotation.stop();
+        server.certsRotation = null;
+    }
+}
+
+function updateServerSecureContext(certKeyChain) {
+    if (!server.server) {
+        return;
+    }
+    try {
+        server.server.setSecureContext(certKeyChain);
+        console.log('Certificate reload complete');
+    } catch (e) {
+        console.log(e);
+        console.log('Certificate reload failed');
+    }
 }
 
 module.exports = {

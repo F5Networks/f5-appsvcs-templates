@@ -1,12 +1,9 @@
-image: $DOCKERHUB_URL/node:14-buster
+image: $DOCKERHUB_URL/node:22
 
 include:
-  - project: automation-toolchain/atg-shared-templates
-    file: security/base.gitlab-ci.yml
-    ref: v1.1.6
-
-variables:
-  SECRET_DETECTION_EXCLUDED_PATHS: "presentation/css/choices.min.css"
+ - project: automation-toolchain/atg-shared-templates
+   file: security/base.gitlab-ci.yml
+   ref: v2.2.0
 
 stages:
     - atg-shared-checks
@@ -145,6 +142,8 @@ publish_to_github:
 
 perfomance_tests:
   stage: perfomance_tests
+  variables:
+    TEST_CASES: "${TEST_CASES}"
   only:
     - schedules
   before_script:
@@ -152,11 +151,22 @@ perfomance_tests:
     - npm ci
   script:
     # Test case name is constructed using the following: ${NUM_APPS}-${NUM_TENANTS}-${BATCH_SIZE}-${TEMPLATE_WEIGHT}
-    - TEST_CASES=("50-1-1-heavy" "100-1-10-medium" "100-1-25-light" "100-20-10" "300-20-50")
-    - for TEST_CASE in ${TEST_CASES[@]}; do echo "Test case name = ${TEST_CASE}"; echo $TEST_CASE | ( IFS="-" read -r APPS TENANTS SIZE WEIGHT; unset $IFS; export PERF_BATCH_NUM_APPS=$APPS; export PERF_BATCH_NUM_TENANTS=$TENANTS; export PERF_BATCH_SIZE=$SIZE; export PERF_BATCH_WEIGHT=$WEIGHT; npm run test-performance; ) done
+    - TEST_CASES=(${TEST_CASES})
+    - for TEST_CASE in ${TEST_CASES[@]}; do 
+    -   echo "Test case name = ${TEST_CASE}"; 
+    -   echo $TEST_CASE | ( 
+    -     IFS="-" read -r APPS TENANTS SIZE WEIGHT; \
+    -     unset $IFS; \
+    -     export PERF_BATCH_NUM_APPS=$APPS; \
+    -     export PERF_BATCH_NUM_TENANTS=$TENANTS; \
+    -     export PERF_BATCH_SIZE=$SIZE; \
+    -     export PERF_BATCH_WEIGHT=$WEIGHT; \
+    -     export TEST_CASE=${TEST_CASE}; \
+    -     npm run test-performance; \
+    -   ) 
+    - done
     # Generating HTML results pages
-    - node scripts/generate_pref_tests_html.js
+    - node scripts/generate_perf_tests_html.js
   artifacts:
     paths:
       - perfomance-tests-results
-

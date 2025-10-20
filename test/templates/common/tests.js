@@ -388,8 +388,35 @@ const poolTests = {
             util.assertRendering(template, view, expected);
         });
 
+        describe('use existing pool members', () => {
+            before(() => {
+                view.use_static_members = false;
+                view.use_existing_nodes = true;
+                view.use_sd = false;
+                delete view.service_discovery;
+                view.existing_pool_members = [
+                    {
+                        serverAddresses: '1.1.1.1', servicePort: 80, connectionLimit: 0, priorityGroup: 0, shareNodes: true
+                    },
+                    {
+                        serverAddresses: '2.2.2.2', servicePort: 80, connectionLimit: 0, priorityGroup: 0, shareNodes: true
+                    }
+                ];
+                expected.t1.app1.app1_pool.members = [
+                    {
+                        serverAddresses: '1.1.1.1', servicePort: 80, connectionLimit: 0, priorityGroup: 0, shareNodes: true, adminState: 'enable'
+                    },
+                    {
+                        serverAddresses: '2.2.2.2', servicePort: 80, connectionLimit: 0, priorityGroup: 0, shareNodes: true, adminState: 'enable'
+                    }
+                ];
+            });
+            util.assertRendering(template, view, expected);
+        });
+
         describe('use existing pool', () => {
             before(() => {
+                view.use_existing_nodes = false;
                 delete view.pool_members;
                 delete view.load_balancing_mode;
                 delete view.slow_ramp_time;
@@ -470,6 +497,69 @@ const httpTests = {
                 view.enable_firewall_staging_policy = true;
                 view.firewall_staging_policy = '/Common/staging1';
                 expected.t1.app1.app1.policyFirewallStaged = { bigip: '/Common/staging1' };
+            });
+            util.assertRendering(template, view, expected);
+        });
+
+        describe('new tls server sni profiles', () => {
+            before(() => {
+                // new TLS profiles
+                view.enable_tls_server = true;
+                view.make_tls_server_profile = true;
+                view.tls_server_use_sni = true;
+                view.make_tls_server_sni_profile = true;
+                view.tls_server_sni_cert_names = [
+                    { tls_sni_fqdn: 'f5.com', tls_cert: '/Common/test1', tls_key: '/Common/test2' },
+                    { tls_sni_fqdn: 'example.com', tls_cert: '/Common/test3', tls_key: '/Common/test4' }
+                ];
+                expected.t1.app1.app1.serverTLS = 'app1_tls_server';
+                expected.t1.app1.app1_tls_server = {
+                    class: 'TLS_Server',
+                    certificates: [
+                        {
+                            certificate: 'f5.com_certificate',
+                            matchToSNI: 'f5.com'
+                        },
+                        {
+                            certificate: 'example.com_certificate',
+                            matchToSNI: 'example.com'
+                        }
+                    ]
+                };
+                expected.t1.app1['f5.com_certificate'] = {
+                    class: 'Certificate',
+                    certificate: {
+                        bigip: '/Common/test1'
+                    },
+                    privateKey: {
+                        bigip: '/Common/test2'
+                    }
+                };
+                expected.t1.app1['example.com_certificate'] = {
+                    class: 'Certificate',
+                    certificate: {
+                        bigip: '/Common/test3'
+                    },
+                    privateKey: {
+                        bigip: '/Common/test4'
+                    }
+                };
+                delete expected.t1.app1.app1_certificate;
+            });
+            util.assertRendering(template, view, expected);
+        });
+
+        describe('existing tls server sni profiles', () => {
+            before(() => {
+                // existing TLS profiles
+                view.make_tls_server_profile = false;
+                view.tls_server_use_sni = true;
+                view.make_tls_server_sni_profile = false;
+                view.tls_server_sni_profile_names = [{ tls_server_sni_profile: '/Common/test1' }, { tls_server_sni_profile: '/Common/test2' }];
+                expected.t1.app1.app1.serverTLS = [{ bigip: '/Common/test1' }, { bigip: '/Common/test2' }];
+                delete expected.t1.app1.app1_tls_server;
+                delete expected.t1.app1['f5.com_certificate'];
+                delete expected.t1.app1['example.com_certificate'];
             });
             util.assertRendering(template, view, expected);
         });

@@ -73,8 +73,8 @@ git push github HEAD:master
 ##                          ##
  ############################
 echo "Download rpm/hash from artifactory"
-wget -qO f5-appsvcs-templates-${RELVER}-1.noarch.rpm https://artifactory.f5net.com:443/artifactory/f5-automation-toolchain-generic/f5-appsvcs-templates/${RELVER}/f5-appsvcs-templates-${RELVER}-1.noarch.rpm;
-wget -qO f5-appsvcs-templates-${RELVER}-1.noarch.rpm.sha256.txt https://artifactory.f5net.com:443/artifactory/f5-automation-toolchain-generic/f5-appsvcs-templates/${RELVER}/f5-appsvcs-templates-${RELVER}-1.noarch.rpm.sha256.txt
+wget -qO f5-appsvcs-templates-${RELVER}-1.noarch.rpm https://${ARTIFACTORY_SERVER}:443/artifactory/f5-automation-toolchain-generic/f5-appsvcs-templates/${RELVER}/f5-appsvcs-templates-${RELVER}-1.noarch.rpm;
+wget -qO f5-appsvcs-templates-${RELVER}-1.noarch.rpm.sha256.txt https://${ARTIFACTORY_SERVER}:443/artifactory/f5-automation-toolchain-generic/f5-appsvcs-templates/${RELVER}/f5-appsvcs-templates-${RELVER}-1.noarch.rpm.sha256.txt
 
 
 echo "Set up gh api and create the new release"
@@ -99,7 +99,7 @@ build_release_notes | gh release create v${RELVER} --notes-start-tag v${RELVER} 
 echo "Set up permissions for new minor-rc.0 version on develop"
 git config --global user.name $GITLAB_SERVICE_ACCOUNT_USER
 git config --global user.email $GITLAB_SERVICE_ACCOUNT_EMAIL
-git remote add mystique https://gitlab-ci-token:${GITLAB_SERVICE_ACCOUNT_TOKEN}@gitswarm.f5net.com/automation-toolchain/mystique.git/
+git remote add mystique https://gitlab-ci-token:${GITLAB_SERVICE_ACCOUNT_TOKEN}@${GITLAB_URL}/automation-toolchain/mystique.git/
 
 git fetch mystique develop
 git checkout mystique/develop

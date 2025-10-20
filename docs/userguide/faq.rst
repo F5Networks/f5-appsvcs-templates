@@ -29,6 +29,7 @@ BIG-IP AS3 should not be used to directly modify the application.
 Please note: BIG-IP AS3 has a wider range of control over the BIG-IP configuration than BIG-IP FAST.
 For example, BIG-IP AS3 can modify the /Common/Shared partition, while BIG-IP FAST cannot.
 When a user modifies /Common/Shared via AS3, they should use AS3's per-tenant API to avoid modifying tenants that FAST is managing.
+BIG-IP AS3 can set properties of the `ADC` and `Tenant` classes that BIG-IP FAST cannot, with `defaultRouteDomain <https://clouddocs.f5.com/products/extensions/f5-appsvcs-templates/latest/userguide/advanced-features.html#use-existing-default-route-domain-on-tenant-on-custom-templates>`_ being the only exception.
 
 Does BIG-IP FAST collect any usage data?
 ----------------------------------------
@@ -37,7 +38,7 @@ BIG-IP FAST gathers non-identifiable usage data for the purposes of improving th
 To opt out of data collection, disable the BIG-IP systems phone home feature as described in the "Disabling the Automatic Phone Home" section of `K15000: Overview of the Automatic Update check and Automatic Phone Home features <https://support.f5.com/csp/article/K15000/>`_.
 
 Is BIG-IP FAST officially supported by F5?
------------------------------------------
+------------------------------------------
 
 Yes, beginning with v1.0 BIG-IP FAST is supported with the following requirements:
 

@@ -38,7 +38,7 @@ Using the *person* section example from above, 2 types of lists can be created: 
 If the *person* key exists, and has a value of false, or an empty list, the text between the pound and slash will not be displayed.
 In the following example, *person* has a ``parameter: false``, therefore RED will not be displayed, resulting in the ``Rendered Output: BLUE``.
 
-.. code-block:: yaml
+.. code-block:: none
 
     {{#person}}
         "RED"],
@@ -49,7 +49,7 @@ In the following example, *person* has a ``parameter: false``, therefore RED wil
 
 Parameters:
 
-.. code-block:: json
+.. code-block:: none
 
     person: false
 
@@ -107,7 +107,7 @@ For BIG-IP FAST, a partial definition must contain template text, i.e., define a
         {{/useVar}}
     useVar:
       type: boolean
-    template: |
+  template: |
     {{> partialDef}}
     {{> partialDef}}
 
@@ -163,6 +163,7 @@ Definitions
 | 1. We need to define the subschemas to be used later on, and 
 | 2. We need a standard for calling and reusing these definitions.
 |
+
 To establish a difference between the main schema and the auxiliary definitions, we adopt the convention that every JSON Schema document consists of two parts; a JSON Schema, and a set of definitions.  
 
 For example, if we want a definition for virtuals, it may look like this:
@@ -180,6 +181,7 @@ For example, if we want a definition for virtuals, it may look like this:
 .. seealso:: `JSON Editor: $ref and definitions <https://github.com/json-editor/json-editor#ref-and-definitions>`_ for additional code examples.
 
 | **Array**: Arrays are used for ordered elements. 
+
 In JSON, each element in an array may be of a different type.  
 Elements of the array may be ordered or unordered based on the API being templated.
 This section covers typical JSON schema definitions for common patterns.
@@ -198,6 +200,7 @@ For example, *virtuals* is defined with a *type: array* having *items* defined w
 | **Numeric Types**: JSON has two numeric types; *integer* and *number*.  
 | An *integer* is used for integral (whole) numbers, while a *number* is any numerical value including integers and floating-point (decimal) numbers.  
 |
+
 **Ranges**: Combining *minimum* and *maximum* keywords for ranges or *exclusiveMinimum* and *exclusiveMaximum* for expressing exclusive ranges. 
 The example below defines the range of port numbers as *type: integer*.
 
@@ -238,7 +241,7 @@ This allows for basic validation and can be used for certain strings such as IPv
 
 
 
-.. seealso:: JSON schema `Built-in Formats <https://json-schema.org/understanding-json-schema/reference/string.html?highlight=maxlength#built-in-formats>`_ and `Regular Expressions <https://json-schema.org/understanding-json-schema/reference/string.html#id6>`_ for more information.
+.. seealso:: JSON schema `Built-in Formats <https://json-schema.org/understanding-json-schema/reference/type#built-in-formats>`_ and `Regular Expressions <https://json-schema.org/understanding-json-schema/reference/string.html#regexp>`_ for more information.
 
 | **Boolean**: The *boolean* type ``{ type: boolean }`` matches two values; *true* or *false* and must be used in all lower case characters. 
 
@@ -252,6 +255,7 @@ Combining Schema
 | BIG-IP FAST also uses they keywords of *oneOf/allOf/anyOf* for template merging, however this section is focused on JSON schema.
 |
 | **anyOf**: One or more of the contained schema is validated against the instance value.  
+
 It is less restrictive than *allOf* as more than one of the same *type* may be specified.
 
 .. code-block:: json
@@ -265,6 +269,7 @@ It is less restrictive than *allOf* as more than one of the same *type* may be s
 
 | **oneOf**: Validates against exactly one subschema even though multiple instances listed.  
 | For example, if *multipleOf* is set to 5 and 3, validation will pass on 10 and 9, but will fail on 2 as neither 5 nor 3 are multiples of 2.  
+
 It will also fail on 15 as it is a *multipleOf*  both 5 and 3 not *oneOf*.
 
 .. code-block:: json
@@ -307,4 +312,4 @@ When authoring templates using yaml, *allOf* takes on a special meaning by refer
         - $ref: "tcp.yaml#"
 
 
-.. seealso:: For detailed information, additional code examples and references, visit `Understanding JSON Schema <https://json-schema.org/understanding-json-schema/index.html>`_
+.. seealso:: For detailed information, additional code examples and references, visit `Understanding JSON Schema <https://json-schema.org/understanding-json-schema>`_

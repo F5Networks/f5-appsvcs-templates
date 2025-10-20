@@ -18,6 +18,7 @@ Requirements:
 
    * Choose the most current version
    * Under the **Assets** section, click the .rpm file, downloading to a location accessible from the BIG-IP
+
 2. From the BIG-IP management GUI, install the extension by navigating to **iApps > Package Management LX**
 3. Click **Import** then select the RPM you downloaded
 4. Click **Upload**
