@@ -1,7 +1,7 @@
 .. _advanced_templates:
 
 Advanced Template Features (with examples)
-=========================================
+==========================================
 |
 | Creating templates covering multiple functions can be quite involved. 
 | We will break down some of the advanced techniques used within individual parts of our complex BIG-IP FAST Templates.
@@ -130,7 +130,7 @@ The bigip-fast-templates template set's ``_shape.yaml`` sub-template uses this p
 
 
 Merging Sub-Templates with $ref
-``````````````````````````````
+```````````````````````````````
 
 A set of sub-templates can be merged into one single template using the anyOf or allOf, as in the bigip-fast-templates template set's ``dns.yaml`` template:
 
@@ -179,12 +179,12 @@ A set of sub-templates can be merged into one single template using the anyOf or
       }
 
 
-.. seealso:: `Using $ref -- JSON Schema <https://json-schema.org/understanding-json-schema/structuring.html#ref>`_ 
+.. seealso:: `Using $ref -- JSON Schema <https://json-schema.org/understanding-json-schema/structuring.html#dollarref>`_
     for more about merging a schema reference in a sub-template.
 
 
 Context Specific Sub-Template References
-```````````````````````````````````````
+````````````````````````````````````````
 
 You can include a section of a sub-template, reference by a hash argument that follows the file's name in the $ref/reference. 
 The bigip-fast-templates template set's ``dns.yaml`` template uses #/dns to specify the following dns specific portion of the ``_virtual.yaml`` sub-template file:
@@ -230,10 +230,10 @@ The bigip-fast-templates template set's ``dns.yaml`` template uses #/dns to spec
 
 
 Re-using Schema within a Sub-Template
-````````````````````````````````````
+`````````````````````````````````````
 
 The bigip-fast-templates template set uses `YAML Anchors and Aliases <https://yaml.org/spec/1.2.2/#3222-anchors-and-aliases>`_ to set a base configuration that can be reused and overwritten for different contexts.
-An example is the ``_virtual.yaml`` sub-template, that creates a &virtual_base Anchor and uses it in a general context (without a hash argument on the $ref), and also overwrites the *virtual_base alias for the fastl4 context.
+An example is the ``_virtual.yaml`` sub-template, that creates a ``&virtual_base`` Anchor and uses it in a general context (without a hash argument on the $ref), and also overwrites the *virtual_base alias for the fastl4 context.
 
 .. code-block:: yaml
    :emphasize-lines: 3, 48, 54
@@ -341,7 +341,7 @@ An example is the ``_virtual.yaml`` sub-template, that creates a &virtual_base A
             }
 
 Referencing a Sub-Template within another Sub-Template
-````````````````````````````````````````````````````
+``````````````````````````````````````````````````````
 
 The bigip-fast-templates template set's ``_security_policy.yaml`` sub-template can merge the schema of two sub-templates (sub-sub-templates), into a sub-template -- which can be referenced/merged into the top level template's schema.
 
@@ -424,7 +424,7 @@ The bigip-fast-templates template set's ``_security_policy.yaml`` sub-template c
 Overwriting a Property in Alias
 ```````````````````````````````
 
-The bigip-fast-templates template set's ``_security_policy.yaml`` sub-template shows how we might use an alias to property definitions, *waf_policy_def, and then overwrite an individual property within it: waf_partial_vs
+The bigip-fast-templates template set's ``_security_policy.yaml`` sub-template shows how we might use an alias to property definitions, ``*waf_policy_def``, and then overwrite an individual property within it: waf_partial_vs
 
 .. code-block:: yaml
    :emphasize-lines: 8, 9, 10, 11, 12, 13, 14, 15

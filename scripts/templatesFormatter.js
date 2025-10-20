@@ -13,7 +13,7 @@
 
 const path = require('path');
 const { Command } = require('commander');
-const { DirectoryFormatter } = require('@automation-toolchain/f5-appsvcs-utils');
+const DirectoryFormatter = require('../lib/directoryFormatter');
 
 const packageInfo = require('../package.json');
 

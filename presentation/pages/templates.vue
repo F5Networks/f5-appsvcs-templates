@@ -282,6 +282,7 @@ export default {
                     this.$root.dispOutput(`Failed to install ${tsName}:\n${e.message}`);
                 })
                 .finally(() => {
+                    this.$refs.fileInput.value = '';
                     this.$root.busy = false;
                 });
         },

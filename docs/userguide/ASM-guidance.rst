@@ -47,6 +47,7 @@ By unchecking **WAF Security Policy**, BIG-IP FAST can assign a Bot Defense Prof
 |
 | The table below outlines each template and their corresponding security policy.
 |
+
 .. list-table::
       :widths: 30 80 
       :header-rows: 1

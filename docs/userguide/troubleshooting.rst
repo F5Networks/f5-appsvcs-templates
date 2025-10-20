@@ -142,6 +142,7 @@ HTTP Template Health Monitors not Displaying Properly
 | 1. Combining the HTTP template with the FastL4 health monitor may result in the health monitor not displaying correctly. 
 | 2. HTTPS monitor may not hide when the BIG-IP FAST generated HTTPS monitor is selected.
 |
+
 The resolution is to upgrade to BIG-IP FAST version 1.17.0 or later.
 
 Config not Loading after Updating /Common/Shared

@@ -34,6 +34,7 @@ const view = {
     // pool spec
     pool_members: ['10.0.0.1', '10.0.0.2'],
     pool_port: 80,
+    share_node: true,
     load_balancing_mode: 'round-robin',
     slow_ramp_time: 300,
 
@@ -59,6 +60,7 @@ const expected = {
     id: 'urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7',
     t1: {
         class: 'Tenant',
+        useCommonRouteDomainTenant: true,
         app1: {
             class: 'Application',
             template: 'generic',
@@ -151,6 +153,23 @@ const expected = {
 
 describe(template, function () {
     describe('tls bridging with a common virtual address', function () {
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('do not share pool member nodes', function () {
+        before(() => {
+            view.share_node = false;
+            expected.t1.app1.app1_pool.members = [
+                {
+                    serverAddresses: [
+                        '10.0.0.1',
+                        '10.0.0.2'
+                    ],
+                    servicePort: 80,
+                    shareNodes: false
+                }
+            ];
+        });
         util.assertRendering(template, view, expected);
     });
 

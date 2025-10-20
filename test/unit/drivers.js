@@ -27,7 +27,7 @@ const chaiAsPromised = require('chai-as-promised');
 chai.use(chaiAsPromised);
 const assert = chai.assert;
 
-const { AS3Driver, AS3DriverConstantsKey } = require('../../lib/drivers');
+const { AS3Driver, AS3DriverConstantsKey, Task } = require('../../lib/drivers');
 
 describe('AS3 Driver tests', function () {
     const as3ep = '/mgmt/shared/appsvcs/declare';
@@ -101,9 +101,8 @@ describe('AS3 Driver tests', function () {
     it('app_stitching', function () {
         const driver = new AS3Driver();
         const decl = Object.assign({}, as3stub);
-        driver._static_id = 'STATIC';
         driver._stitchDecl(decl, appDef);
-        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef, { id: 'STATIC' }));
+        assert.deepStrictEqual(decl, Object.assign({}, as3stub, appDef));
     });
     it('get_decl', function () {
         const driver = new AS3Driver();
@@ -159,7 +158,6 @@ describe('AS3 Driver tests', function () {
         mockAS3(as3WithApp);
         console.log(JSON.stringify(as3WithApp, null, 2));
         const asdf = driver.listApplication('tenantName', 'appName');
-        console.log(`JDK asdf: ${JSON.stringify(appMetadata)}`);
         return assert.becomes(asdf, {
             class: 'Application',
             constants: {
@@ -189,11 +187,10 @@ describe('AS3 Driver tests', function () {
     });
     it('create_app', function () {
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
 
         nock(host)
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp))
             .query(true)
             .reply(202, {});
 
@@ -202,20 +199,20 @@ describe('AS3 Driver tests', function () {
     it('create_app_with_retries', function () {
         this.clock.restore();
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
 
+        const as3Body = Object.assign({}, as3WithApp);
         nock(host)
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, as3Body)
             .query(true)
             .reply(503)
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, as3Body)
             .query(true)
             .reply(503)
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, as3Body)
             .query(true)
             .reply(503)
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, as3Body)
             .query(true)
             .reply(202, {});
 
@@ -223,7 +220,6 @@ describe('AS3 Driver tests', function () {
     });
     it('create_app_with_route_domain', function () {
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
 
         appDef = {
@@ -242,12 +238,10 @@ describe('AS3 Driver tests', function () {
     });
     it('create_app_user_agent', function () {
         const driver = new AS3Driver({ userAgent: 'foo-bar/1.0' });
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
 
         nock(host)
             .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, {
-                id: 'STATIC',
                 controls: {
                     class: 'Controls',
                     userAgent: 'foo-bar/1.0'
@@ -260,7 +254,6 @@ describe('AS3 Driver tests', function () {
     });
     it('create_multiple_apps', function () {
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
 
         const secondAppDef = {
             tenantName: {
@@ -279,7 +272,7 @@ describe('AS3 Driver tests', function () {
             }
         };
 
-        const as3WithMultipleApps = Object.assign({}, as3WithApp, { id: 'STATIC' });
+        const as3WithMultipleApps = Object.assign({}, as3WithApp);
         as3WithMultipleApps.tenantName.secondApp = {
             class: 'Application',
             constants: {
@@ -405,11 +398,10 @@ describe('AS3 Driver tests', function () {
     });
     it('create_app_return_200', function () {
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
 
         nock(host)
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp))
             .query(true)
             .reply(200, {});
 
@@ -438,7 +430,24 @@ describe('AS3 Driver tests', function () {
     });
     it('get_tasks', function () {
         const driver = new AS3Driver();
-        driver._task_ids.foo1 = `${AS3DriverConstantsKey}%delete%tenantName%appName%0-0-0-0-0`;
+        driver._pendingTasks = [
+            new Task({
+                id: 'foo2',
+                operation: 'update',
+                application: appMetadata.name,
+                tenant: appMetadata.tenant,
+                name: appMetadata.template,
+                parameters: appMetadata.view
+            }),
+            new Task({
+                id: 'foo1',
+                operation: 'delete',
+                application: appMetadata.name,
+                tenant: appMetadata.tenant,
+                name: appMetadata.template,
+                parameters: appMetadata.view
+            })
+        ];
         nock(host)
             .get(as3TaskEp)
             .reply(200, {
@@ -447,7 +456,9 @@ describe('AS3 Driver tests', function () {
                         id: 'foo1',
                         results: [{
                             code: 200,
-                            message: 'in progress'
+                            message: 'in progress',
+                            tenant: '',
+                            host: ''
                         }],
                         declaration: {}
                     },
@@ -494,7 +505,9 @@ describe('AS3 Driver tests', function () {
                     tenant: 'tenantName',
                     operation: 'update',
                     timestamp: '2021-05-05T17:14:24.794Z',
-                    host: 'foobar'
+                    host: 'foobar',
+                    _as3Id: null,
+                    _batchStatus: 'single'
                 });
                 delete tasks[0].timestamp;
                 assert.deepStrictEqual(tasks[0], {
@@ -502,11 +515,65 @@ describe('AS3 Driver tests', function () {
                     id: 'foo1',
                     code: 200,
                     message: 'in progress',
-                    name: '',
-                    parameters: {},
+                    name: appMetadata.template,
+                    parameters: appMetadata.view,
                     tenant: 'tenantName',
                     operation: 'delete',
-                    host: 'localhost'
+                    host: 'localhost',
+                    _as3Id: null,
+                    _batchStatus: 'single'
+                });
+            });
+    });
+    it('get_tasks_422_error', function () {
+        const driver = new AS3Driver();
+        driver._pendingTasks = [
+            new Task({
+                id: 'foo',
+                operation: 'create',
+                application: appMetadata.name,
+                tenant: appMetadata.tenant,
+                name: appMetadata.template,
+                parameters: appMetadata.view
+            })
+        ];
+        nock(host)
+            .get(as3TaskEp)
+            .reply(200, {
+                items: [
+                    {
+                        id: 'foo',
+                        results: [{
+                            code: 422,
+                            message: 'invalid declaration',
+                            tenant: '',
+                            host: '',
+                            errors: [
+                                'something bad'
+                            ]
+                        }],
+                        declaration: {}
+                    }
+                ]
+            });
+        return driver.getTasks()
+            .then((tasks) => {
+                delete tasks[0].timestamp;
+                assert.deepStrictEqual(tasks[0], {
+                    application: 'appName',
+                    id: 'foo',
+                    code: 422,
+                    message: 'invalid declaration',
+                    name: appMetadata.template,
+                    parameters: appMetadata.view,
+                    tenant: 'tenantName',
+                    operation: 'create',
+                    host: 'localhost',
+                    errors: [
+                        'something bad'
+                    ],
+                    _as3Id: null,
+                    _batchStatus: 'single'
                 });
             });
     });
@@ -514,6 +581,9 @@ describe('AS3 Driver tests', function () {
         process.env.FAST_MAX_RETRIES_COUNT = 3;
         this.clock.restore();
         const driver = new AS3Driver();
+        driver._pendingTasks = [
+            new Task()
+        ];
         nock(host)
             .get(as3TaskEp)
             .reply(500, {})
@@ -523,8 +593,6 @@ describe('AS3 Driver tests', function () {
     });
     it('get_tasks_use_cache', function () {
         const driver = new AS3Driver();
-        driver._task_ids.foo1 = `${AS3DriverConstantsKey}%delete%tenantName%appName%0-0-0-0-0`;
-
         nock(host)
             .get(as3TaskEp)
             .reply(200, {
@@ -548,16 +616,28 @@ describe('AS3 Driver tests', function () {
             .then((tasks) => {
                 assert.deepStrictEqual(tasks, []);
             })
+            .then(() => {
+                // Add a pending task
+                driver._pendingTasks = [
+                    new Task({
+                        id: 'foo1',
+                        operation: 'delete',
+                        tenant: 'tenantName',
+                        application: 'appName'
+                    })
+                ];
+            })
             .then(() => driver.getTasks())
             .then((tasks) => {
                 // should still use the cached version
-                assert.deepStrictEqual(tasks, []);
+                assert.strictEqual(tasks[0].message, 'pending');
             })
             .then(() => this.clock.tick(2000))
             .then(() => driver.getTasks())
             .then((tasks) => {
                 // cached timed out, should be the next nocked call /tasks
                 assert.strictEqual(tasks[0].id, 'foo1');
+                assert.strictEqual(tasks[0].message, 'in progress');
             });
     });
     it('set_auth_token', function () {
@@ -580,11 +660,10 @@ describe('AS3 Driver tests', function () {
     it('burst_handling', function () {
         this.clock.restore();
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
         nock(host)
             .persist()
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp))
             .query(true)
             .reply(202, {
                 id: 'task1'
@@ -598,9 +677,8 @@ describe('AS3 Driver tests', function () {
             .then((results) => {
                 results.forEach((result) => {
                     assert.strictEqual(result.status, 202);
+                    assert.notStrictEqual(result.data.id, '');
                 });
-                assert.strictEqual(results[0].data.id, 'task1');
-                assert.notStrictEqual(results[1].data.id, '');
             })
             .then(() => nock(host)
                 .persist()
@@ -633,11 +711,10 @@ describe('AS3 Driver tests', function () {
     it('max_pending_tasks_reached', function () {
         this.clock.restore();
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
         nock(host)
             .persist()
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp))
             .query(true)
             .reply(202, {
                 id: 'task1'
@@ -652,17 +729,16 @@ describe('AS3 Driver tests', function () {
                 for (let i = 0; i < 15; i += 1) {
                     promises.push(driver.createApplication(appDef, appMetadata));
                 }
-                return assert.isRejected(Promise.all(promises), `AS3 Driver: Max number of pending tasks reached. Please use batching for deploying many applications at once or increase max number of pending tasks via settings endpoint. The current setting is ${driver._pendingTasksMaxNumber}`);
+                return assert.isRejected(Promise.all(promises), 'AS3 Driver reached the maximum number of allowed pending tasks');
             });
     });
     it('max_pending_tasks_disabled', function () {
         this.clock.restore();
         const driver = new AS3Driver();
-        driver._static_id = 'STATIC';
         mockAS3(as3stub);
         nock(host)
             .persist()
-            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp, { id: 'STATIC' }))
+            .post(`${as3ep}/tenantName`, Object.assign({}, as3WithApp))
             .query(true)
             .reply(202, {
                 id: 'task1'
@@ -683,7 +759,7 @@ describe('AS3 Driver tests', function () {
                 results.forEach((result) => {
                     assert.strictEqual(result.status, 202);
                 });
-                assert.strictEqual(results[0].data.id, 'task1');
+                assert.ok(results[0].data.id.match(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i));
                 assert.notStrictEqual(results[1].data.id, '');
             });
     });

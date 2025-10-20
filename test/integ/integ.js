@@ -15,6 +15,7 @@
 
 /* eslint-disable no-console */
 /* eslint-disable func-names */
+/* eslint-disable no-promise-executor-return */
 
 'use strict';
 
@@ -296,7 +297,10 @@ describe('Applications', function () {
                     console.log(actual);
                 }
                 assert.strictEqual(actual.code, exp.code);
-                assert.match(actual.message, new RegExp(`${exp.message}`));
+                assert.match(actual.message, new RegExp(exp.message));
+                if (exp.errors) {
+                    assert.match(actual.errors[0].summary, new RegExp(exp.errors[0].summary));
+                }
             });
     }
 
@@ -320,9 +324,12 @@ describe('Applications', function () {
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
-    function createOrUpdateApplication(templateName, parameters) {
+    function createOrUpdateApplication(templateName, parameters, expected) {
         parameters = parameters || {};
         return Promise.resolve()
+            .then(() => endpoint.patch('/mgmt/shared/fast/settings', {
+                pendingTasksMaxNumber: 25
+            }))
             .then(() => endpoint.put('/mgmt/shared/fast/applications', {
                 name: templateName,
                 parameters
@@ -336,7 +343,7 @@ describe('Applications', function () {
                 }
                 return waitForCompletedTask(taskid);
             })
-            .then(task => assertResponse(task))
+            .then(task => assertResponse(task, expected))
             .catch(e => handleHTTPError(e, `deploy ${templateName}`));
     }
 
@@ -471,8 +478,21 @@ describe('Applications', function () {
                 '10.0.0.11'
             ]
         }))
+        .then(() => promiseDelay(10000))
         .then(() => patchApplication('foo/patch', {
-            virtual_port: 3333
+            server_addresses: [
+                '10.0.0.12'
+            ]
+        }, {
+            code: 200,
+            parameters: {
+                application_name: 'patch',
+                virtual_address: '10.0.0.11',
+                server_addresses: [
+                    '10.0.0.12'
+                ],
+                virtual_port: 5555
+            }
         })));
     it('C72081271 PATCH existing application should not create a new application', () => Promise.resolve()
         .then(() => deployApplication('examples/simple_udp_defaults', {
@@ -487,18 +507,36 @@ describe('Applications', function () {
             virtual_address: '10.0.0.13'
         }, {
             code: 422,
-            message: 'change application name'
+            message: 'Unsupported PATCH request',
+            errors: [
+                { summary: 'change application name' }
+            ]
         })));
     it('PUT to update existent application', () => createOrUpdateApplication('examples/simple_udp_defaults', {
         application_name: 'put',
         virtual_address: '10.1.2.2',
         server_addresses: [
-            '10.1.0.2'
+            '10.1.0.3'
         ]
+    }, {
+        code: 200,
+        parameters: {
+            application_name: 'put',
+            virtual_address: '10.1.2.2',
+            server_addresses: [
+                '10.1.0.3'
+            ],
+            virtual_port: '5555'
+        }
     }));
-    it('C72081272 Deploy burst of applications', function () {
+    it('C72081272 Deploy burst of applications without auto-batch', function () {
         this.timeout(240000);
         return Promise.resolve()
+            .then(() => endpoint.post('/mgmt/shared/fast/settings', {
+                pendingTasksMaxNumber: 5,
+                enableTasksAutoBatch: false,
+                deletedTemplateSets: []
+            }))
             .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
                 .then(() => endpoint.post('/mgmt/shared/fast/applications', {
                     name: 'examples/simple_udp_defaults',
@@ -516,16 +554,36 @@ describe('Applications', function () {
                 resp => waitForCompletedTask(resp.data.message[0].id)
             )))
             .then((tasks) => {
-                // console.log(JSON.stringify(
-                //     tasks.map(task => ({
-                //         id: task.id,
-                //         code: task.code,
-                //         message: task.message,
-                //         application: task.application
-                //     })),
-                //     null,
-                //     2
-                // ));
+                tasks.forEach((task) => {
+                    assert.strictEqual(task.code, 200);
+                });
+            });
+    });
+    it('Deploy burst of applications with auto-batch', function () {
+        this.timeout(240000);
+        return Promise.resolve()
+            .then(() => endpoint.post('/mgmt/shared/fast/settings', {
+                pendingTasksMaxNumber: 5,
+                enableTasksAutoBatch: true,
+                deletedTemplateSets: []
+            }))
+            .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
+                .then(() => endpoint.post('/mgmt/shared/fast/applications', {
+                    name: 'examples/simple_udp_defaults',
+                    parameters: {
+                        tenant_name: 'tenant',
+                        application_name: `burst${num}`,
+                        virtual_address: `10.0.1.${num}`,
+                        server_addresses: [
+                            `10.0.1.${num}`
+                        ]
+                    }
+                }))
+                .catch(e => handleHTTPError(e, `posting burst app ${num}`)))))
+            .then(responses => Promise.all(responses.map(
+                resp => waitForCompletedTask(resp.data.message[0].id)
+            )))
+            .then((tasks) => {
                 tasks.forEach((task) => {
                     assert.strictEqual(task.code, 200);
                 });
@@ -536,6 +594,7 @@ describe('Applications', function () {
         return Promise.resolve()
             .then(() => endpoint.post('/mgmt/shared/fast/settings', {
                 pendingTasksMaxNumber: 3,
+                enableTasksAutoBatch: false,
                 deletedTemplateSets: []
             }))
             .then(() => Promise.all([...Array(5).keys()].map(num => Promise.resolve()
@@ -551,8 +610,12 @@ describe('Applications', function () {
                     }
                 }))
                 .catch((e) => {
-                    assert.strictEqual(e.response.status, 503);
-                    assert.strictEqual(e.response.data.message, 'Error: Could not generate AS3 declaration: AS3 Driver: Max number of pending tasks reached. Please use batching for deploying many applications at once or increase max number of pending tasks via settings endpoint. The current setting is 3');
+                    const rsp = e.response;
+                    console.log(rsp.data);
+                    assert.ok(e.response);
+                    assert.strictEqual(rsp.status, 503);
+                    assert.strictEqual(rsp.data.message, 'Failed to submit declaration to AS3: AS3 Driver reached the maximum number of allowed pending tasks');
+                    assert.strictEqual(rsp.data.errors[0].summary, 'Please use batching for deploying many applications at once or increase max number of pending tasks via settings endpoint. The current setting is 3');
                 }))));
     });
 });
@@ -623,7 +686,8 @@ describe('Settings', function () {
                 enableIpam: false,
                 disableDeclarationCache: false,
                 // driver defaults
-                pendingTasksMaxNumber: 10,
+                pendingTasksMaxNumber: 25,
+                enableTasksAutoBatch: true,
                 enable_telemetry: enableTelemetry,
                 log_asm: logASM,
                 log_afm: logAFM,
@@ -654,7 +718,8 @@ describe('Settings', function () {
                     ipamProviders: [],
                     enableIpam: false,
                     disableDeclarationCache: false,
-                    pendingTasksMaxNumber: 10,
+                    pendingTasksMaxNumber: 25,
+                    enableTasksAutoBatch: true,
                     // driver defaults
                     enable_telemetry: enableTelemetry,
                     log_asm: logASM,
@@ -698,6 +763,7 @@ describe('Settings', function () {
             tsIpAddress: '255.255.255.254',
             disableDeclarationCache: false,
             pendingTasksMaxNumber: 3,
+            enableTasksAutoBatch: true,
             _links: { self: url }
         };
         const expected = {
@@ -724,7 +790,8 @@ describe('Settings', function () {
         const putBody = {
             deletedTemplateSets: [],
             enableIpam: false,
-            pendingTasksMaxNumber: 5
+            pendingTasksMaxNumber: 5,
+            enableTasksAutoBatch: false
         };
         const expected = {
             data: { code: 200, message: '', _links: { self: url } },
@@ -741,6 +808,7 @@ describe('Settings', function () {
                     enableIpam: false,
                     disableDeclarationCache: false,
                     pendingTasksMaxNumber: 5,
+                    enableTasksAutoBatch: false,
                     // driver defaults
                     enable_telemetry: enableTelemetry,
                     log_asm: logASM,
@@ -783,7 +851,8 @@ describe('Settings', function () {
                     },
                     tsIpAddress: '255.255.255.254',
                     disableDeclarationCache: true,
-                    pendingTasksMaxNumber: 10,
+                    pendingTasksMaxNumber: 25,
+                    enableTasksAutoBatch: true,
                     _links: { self: url }
                 };
                 return endpoint.get(url)

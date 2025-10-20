@@ -11,17 +11,24 @@ rm -rf "${tmpdir}"
 mkdir "${tmpdir}"
 cp "${src}"/package* "${tmpdir}"/
 pushd "${tmpdir}"
-mapfile -t file_modules < <(grep 'file:' package.json | sed 's/\s*".*": "file:\(.*\)",/\1/')
-for file_module in "${file_modules[@]}"; do
-    module_path="${src}"/"${file_module}"
-    npm pack "${module_path}"
-    module_pkg_name=$(node -e "console.log(require('${module_path}/package.json').name);")
-    module_pkg_name=${module_pkg_name//@}
-    module_pkg_name=${module_pkg_name//\//-}
-    module_pkg_ver=$(node -e "console.log(require('${module_path}/package.json').version)")
-    module_pkg=${module_pkg_name}-${module_pkg_ver}.tgz
-    sed -i'.bu' "s%file:${file_module}%file:${module_pkg}%" package.json
-done
+file_modules=()
+while IFS= read -r module; do
+    [[ -n "$module" ]] && file_modules+=("$module")
+done < <(grep 'file:' package.json | sed 's/\s*".*": "file:\(.*\)",/\1/')
+
+# Only process file modules if any were found
+if [[ ${#file_modules[@]} -gt 0 ]]; then
+    for file_module in "${file_modules[@]}"; do
+        module_path="${src}"/"${file_module}"
+        npm pack "${module_path}"
+        module_pkg_name=$(node -e "console.log(require('${module_path}/package.json').name);")
+        module_pkg_name=${module_pkg_name//@}
+        module_pkg_name=${module_pkg_name//\//-}
+        module_pkg_ver=$(node -e "console.log(require('${module_path}/package.json').version)")
+        module_pkg=${module_pkg_name}-${module_pkg_ver}.tgz
+        sed -i'.bu' "s%file:${file_module}%file:${module_pkg}%" package.json
+    done
+fi
 if [[ $include_optional == "true" || $include_optional == "TRUE" ]]; then
     npm ci --only=production --no-audit
 else
@@ -34,7 +41,8 @@ if [[ $skip_babel == 1 ]]; then
 else
     prevpwd=$(pwd)
     pushd "${src}"
-    npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" --copy-files
+    npx babel "${prevpwd}/${tmpdir}"/node_modules -d "${target}" --copy-files \
+        --ignore "**/*.test.js,**/test/**,**/tests/**,**/__tests__/**,**/spec/**,**/*.spec.js"
     popd
 fi
 

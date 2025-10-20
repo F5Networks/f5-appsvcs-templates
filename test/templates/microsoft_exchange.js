@@ -35,6 +35,7 @@ const view = {
     // pool spec
     pool_members: ['10.0.0.1', '10.0.0.2'],
     pool_port: 80,
+    share_node: true,
     load_balancing_mode: 'least-connections-member',
     slow_ramp_time: 300,
 
@@ -74,6 +75,7 @@ const expected = {
     id: 'urn:uuid:a858e55e-bbe6-42ce-a9b9-0f4ab33e3bf7',
     t1: {
         class: 'Tenant',
+        useCommonRouteDomainTenant: true,
         app1: {
             class: 'Application',
             template: 'generic',
@@ -301,7 +303,7 @@ const expected = {
             },
             app1_combined_pool_irule3: {
                 class: 'iRule',
-                iRule: 'when HTTP_REQUEST {\n    switch -glob -- [string tolower [HTTP::path]] {  \n        "/microsoft-server-activesync*" {\n            TCP::idletime 1800\n            pool exchangeVS_as_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }   \n        "/owa*" {\n            \n            pool exchangeVS_owa_pool\n            return\n        }\n        "/ecp*" {\n            \n            pool exchangeVS_owa_pool\n            return\n        }   \n        "/ews*" {\n            pool exchangeVS_ews_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }\n        "/oab*" {\n            pool exchangeVS_ews_pool\n            persist none\n            return\n        }          \n        "/autodiscover*" {\n            pool exchangeVS_ad_pool\n            persist none\n            return\n        }   \n        default {\n            pool exchangeVS_owa_pool\n        }  \n    }\n}\nwhen HTTP_RESPONSE {\n    if { ( [HTTP::header exists "WWW-Authenticate"] &&\n        [string tolower [HTTP::header values "WWW-Authenticate"]] contains "negotiate" ) ||\n        ( [HTTP::header exists "Persistent-Auth"] &&\n        [string tolower [HTTP::header "Persistent-Auth"]] contains "true" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   } \n   if {[HTTP::header exists "Transfer-Encoding"]} {\n        HTTP::payload rechunk\n   }\n}'
+                iRule: 'when HTTP_REQUEST {\n    switch -glob -- [string tolower [HTTP::path]] {  \n        "/microsoft-server-activesync*" {\n            TCP::idletime 1800\n            pool /t1/app1/exchangeVS_as_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }   \n        "/owa*" {\n            \n            pool /t1/app1/exchangeVS_owa_pool\n            return\n        }\n        "/ecp*" {\n            \n            pool /t1/app1/exchangeVS_owa_pool\n            return\n        }   \n        "/ews*" {\n            pool /t1/app1/exchangeVS_ews_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }\n        "/oab*" {\n            pool /t1/app1/exchangeVS_ews_pool\n            persist none\n            return\n        }          \n        "/autodiscover*" {\n            pool /t1/app1/exchangeVS_ad_pool\n            persist none\n            return\n        }   \n        default {\n            pool /t1/app1/exchangeVS_owa_pool\n        }  \n    }\n}\nwhen HTTP_RESPONSE {\n    if { ( [HTTP::header exists "WWW-Authenticate"] &&\n        [string tolower [HTTP::header values "WWW-Authenticate"]] contains "negotiate" ) ||\n        ( [HTTP::header exists "Persistent-Auth"] &&\n        [string tolower [HTTP::header "Persistent-Auth"]] contains "true" ) } {\n        ONECONNECT::reuse disable\n        ONECONNECT::detach disable\n        NTLM::disable\n   } \n   if {[HTTP::header exists "Transfer-Encoding"]} {\n        HTTP::payload rechunk\n   }\n}'
             },
             app1_owa_redirect_irule3: {
                 class: 'iRule',
@@ -731,6 +733,78 @@ describe(template, function () {
             delete expected.t1.app1.app1_oa_vs.serverTLS;
             expected.t1.app1.app1_oa_vs.redirect80 = false;
             expected.t1.app1.app1_oa_vs.class = 'Service_HTTP';
+        });
+        util.assertRendering(template, view, expected);
+    });
+
+    describe('do not share pool member nodes', function () {
+        before(() => {
+            view.share_node = false;
+
+            expected.t1.app1.exchangeVS_ad_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 80,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_as_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 80,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_ews_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 80,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_imap4_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 993,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_pop3_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 995,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_owa_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 80,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_mapi_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 80,
+                shareNodes: false
+            }];
+            expected.t1.app1.exchangeVS_oa_pool.members = [{
+                serverAddresses: [
+                    '10.0.0.1',
+                    '10.0.0.2'
+                ],
+                servicePort: 80,
+                shareNodes: false
+            }];
         });
         util.assertRendering(template, view, expected);
     });

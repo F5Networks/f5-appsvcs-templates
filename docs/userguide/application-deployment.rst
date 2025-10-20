@@ -16,6 +16,7 @@ For this example we are using **examples/simple_udp.** Fields noted with an aste
 | 5. Enter the server_port.
 | 6. Enter a server_address for each server. This field is not required.
 |
+
 See the image below for example field entries.
 
 .. image:: Example_template.png
@@ -27,6 +28,7 @@ From the Debug View buttons, select View Rendered to display a sample of the ren
 
 .. image:: View_Rendered.png
    :width: 350
+
 |
 | Clicking on Deploy will start a deployment job.
 | The current status of the job can be found on the *History* tab.

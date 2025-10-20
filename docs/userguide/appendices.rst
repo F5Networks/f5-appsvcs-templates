@@ -14,5 +14,4 @@ Appendices Index
    template-list
    endpoint-list
    APM-guidance
-   AFM-guidance
    ASM-guidance

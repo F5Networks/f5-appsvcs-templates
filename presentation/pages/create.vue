@@ -201,6 +201,15 @@ export default {
                         if (prop.enum && typeof prop.format === 'undefined') {
                             prop.format = 'choices';
                         }
+                        // also filter for drop-downs that don't specify a filter in array of objects
+                        if (prop.items && prop.items.type === 'object' && prop.items.properties) {
+                            Object.keys(prop.items.properties || {}).forEach((idx) => {
+                                const item = prop.items.properties[idx];
+                                if (item.enum && typeof item.format === 'undefined') {
+                                    item.format = 'choices';
+                                }
+                            });
+                        }
                     });
 
                     // Prep IPAM fields for existing applications

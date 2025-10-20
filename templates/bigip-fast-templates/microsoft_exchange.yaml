@@ -63,6 +63,12 @@ definitions:
     description: Specify the port to use for all services except POP & IMAP.
     default: 80
     dependencies: []
+  share_node:
+    title: Share Node
+    description: Create Member Nodes in Common so they can be shared among all Tenants; uncheck for exclusive use within this Tenant
+    type: boolean
+    default: false
+    dependencies: []
   load_balancing_mode:
     title: Load Balancing Method
     description: A *load balancing method* is an algorithm that the BIG-IP system uses
@@ -552,7 +558,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -621,7 +627,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -691,7 +697,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -764,7 +770,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -836,7 +842,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -905,7 +911,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": {{pool_port:f5:port}},
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -974,7 +980,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": 995,
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -1033,7 +1039,7 @@ definitions:
           "members": [{
             "serverAddresses": {{pool_members:f5:ipv4_ipv6_array}},
             "servicePort": 993,
-            "shareNodes": true
+            "shareNodes": {{share_node::boolean}}
           }],
           "loadBalancingMode": "{{load_balancing_mode:f5:load_balancing_mode}}",
           "slowRampTime": {{slow_ramp_time::integer}},
@@ -1133,41 +1139,41 @@ definitions:
   app_irule_as_def:
     template: >-
       {{#activesync}}
-      \n        \"/microsoft-server-activesync*\" {\n            TCP::idletime 1800\n            pool exchangeVS_as_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }
+      \n        \"/microsoft-server-activesync*\" {\n            TCP::idletime 1800\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_as_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }
       {{/activesync}}
   app_irule_owa2_def:
     template: >-
       {{#owa}}
-      \n        \"/owa*\" {\n            \n            pool exchangeVS_owa_pool\n            return\n        }\n        \"/ecp*\" {\n            \n            pool exchangeVS_owa_pool\n            return\n        }
+      \n        \"/owa*\" {\n            \n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_owa_pool\n            return\n        }\n        \"/ecp*\" {\n            \n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_owa_pool\n            return\n        }
       {{/owa}}
   app_irule_ews_def:
     template: >-
       {{#ews}}
-      \n        \"/ews*\" {\n            pool exchangeVS_ews_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }\n        \"/oab*\" {\n            pool exchangeVS_ews_pool\n            persist none\n            return\n        }
+      \n        \"/ews*\" {\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_ews_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }\n        \"/oab*\" {\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_ews_pool\n            persist none\n            return\n        }
       {{/ews}}
   app_irule_mapi_def:
     template: >-
       {{#outlook}}
       {{#outlookMAPI}}
-      \n        \"/mapi*\" {\n            pool exchangeVS_mapi_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n         }
+      \n        \"/mapi*\" {\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_mapi_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n         }
       {{/outlookMAPI}}
       {{/outlook}}
   app_irule_rpc_def:
     template: >-
       {{#outlook}}
       {{#outlookRPC}}
-      \n        \"/rpc/rpcproxy.dll*\" {\n            pool exchangeVS_oa_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }
+      \n        \"/rpc/rpcproxy.dll*\" {\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_oa_pool\n            COMPRESS::disable\n            CACHE::disable\n            return\n        }
       {{/outlookRPC}}
       {{/outlook}}
   app_irule_ad_def:
     template: >-
       {{#autodiscover}}
-      \n        \"/autodiscover*\" {\n            pool exchangeVS_ad_pool\n            persist none\n            return\n        }
+      \n        \"/autodiscover*\" {\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_ad_pool\n            persist none\n            return\n        }
       {{/autodiscover}}
   app_irule_combined_default:
     template: >-
       {{#owa}}
-      \n        default {\n            pool exchangeVS_owa_pool\n        }
+      \n        default {\n            pool /{{tenant_name}}/{{app_name}}/exchangeVS_owa_pool\n        }
       {{/owa}}
   app_irule_combined_oneconnect:
     template: >-

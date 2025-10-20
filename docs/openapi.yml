@@ -1,6 +1,6 @@
 openapi: "3.0.0"
 info:
-  version: 1.25.0
+  version: 1.26.0-rc.28
   title: F5 BIG-IP Application Services Templates API
   license:
     name: Apache 2.0
@@ -1267,6 +1267,9 @@ components:
           description: Any messages (such as "success" or "in progress") for the Task
           type: string
           example: success
+        errors:
+          description: A list of errors reported back by AS3 for the given task
+          type: array
         tenant:
           description: Tenant associated with the Task
           type: string
@@ -1627,20 +1630,19 @@ components:
     FastResponse400:
       title: Response 400
       type: object
-      description: AS3 errors (e.g., invalid schema) are forwarded as 400-level errors. See AS3 documentation for details.
+      description: Bad Request
       required:
         - code
         - message
+        - errors
       properties:
         code:
-          type: integer
-          format: int32
-          minimum: 400
-          maximum: 400
-          example: 400
+          enum: [400]
         message:
           type: string
           example: the request was not successful
+        errors:
+          $ref: "#/components/schemas/ErrorsArray"
         requestId:
           type: integer
           example: 3
@@ -1651,20 +1653,65 @@ components:
     FastResponse404:
       title: Response 404
       type: object
-      description: Not Found.
+      description: Not Found
       required:
         - code
         - message
+        - errors
       properties:
         code:
-          type: integer
-          format: int32
-          minimum: 404
-          maximum: 404
-          example: 404
+          enum: [404]
         message:
           type: string
           example: resource not found
+        errors:
+          $ref: "#/components/schemas/ErrorsArray"
+        requestId:
+          type: integer
+          example: 3
+          minimum: 1
+          maximum: 4294967295
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
+    FastResponse405:
+      title: Response 405
+      type: object
+      description: Method Not Allowed
+      required:
+        - code
+        - message
+        - errors
+      properties:
+        code:
+          enum: [405]
+        message:
+          type: string
+          example: DELETE not allowed on /endpoint
+        errors:
+          $ref: "#/components/schemas/ErrorsArray"
+        requestId:
+          type: integer
+          example: 3
+          minimum: 1
+          maximum: 4294967295
+        _links:
+          $ref: "#/components/schemas/LinksDefinition"
+    FastResponse422:
+      title: Response 422
+      type: object
+      description: Unprocessable Content
+      required:
+        - code
+        - message
+        - errors
+      properties:
+        code:
+          enum: [422]
+        message:
+          type: string
+          example: request was well-formed, but had semantic errors
+        errors:
+          $ref: "#/components/schemas/ErrorsArray"
         requestId:
           type: integer
           example: 3
@@ -1679,40 +1726,15 @@ components:
       required:
         - code
         - message
+        - errors
       properties:
         code:
-          type: integer
-          format: int32
-          minimum: 500
-          maximum: 500
-          example: 500
+          enum: [500]
         message:
           type: string
           example: internal server error
-        requestId:
-          type: integer
-          example: 3
-          minimum: 1
-          maximum: 4294967295
-        _links:
-          $ref: "#/components/schemas/LinksDefinition"
-    FastResponse422:
-      title: Response 422
-      type: object
-      description: Supplied configuration was invalid.
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-          minimum: 422
-          maximum: 422
-          example: 422
-        message:
-          type: string
-          example: supplied configuration was invalid
+        error:
+          $ref: "#/components/schemas/ErrorsArray"
         requestId:
           type: integer
           example: 3
@@ -1854,6 +1876,20 @@ components:
         authHeaderValue:
           title: Authorization Header Value
           type: string
+    ErrorsArray:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        required:
+          - summary
+        properties:
+          summary:
+            type: string
+            description: brief message describing the error
+          details:
+            type: string
+            description: extra information about the error
     LinksDefinition:
       type: object
       title: Links Definition

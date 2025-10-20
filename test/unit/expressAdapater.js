@@ -192,13 +192,15 @@ describe('Express Adapter', function () {
     });
 
     describe('startHttpsServer', () => {
-        let testApp;
         let appArg;
+        let fsWatchStub;
+        let testApp;
         let testPort;
         let testCertKeyChain;
         let spyListenFunc;
         let spyCloseFunc;
         let spySetSecureContextFunc;
+        let spyServerStartFunc;
 
         function assertHttpsServer(options) {
             const certs = {
@@ -215,6 +217,12 @@ describe('Express Adapter', function () {
             assert.deepEqual(testApp, appArg);
         }
 
+        function sleep(ms) {
+            return new Promise((resolve) => {
+                setTimeout(resolve, ms);
+            });
+        }
+
         beforeEach(() => {
             testPort = 6443;
             mock({
@@ -226,11 +234,14 @@ describe('Express Adapter', function () {
                     }
                 })
             });
-            fs.watch = sinon.spy();
-            spyListenFunc = sinon.spy();
-            spySetSecureContextFunc = sinon.spy();
+            fsWatchStub = sinon.stub(fs, 'watch');
+            fsWatchStub.returns({ close: sinon.spy() });
+
+            spyListenFunc = sinon.stub();
+            spySetSecureContextFunc = sinon.stub();
             spyCloseFunc = sinon.stub().resolves();
-            sinon.stub(https, 'createServer').callsFake((certKeyChain, app) => {
+            spyServerStartFunc = sinon.stub(https, 'createServer');
+            spyServerStartFunc.callsFake((certKeyChain, app) => {
                 if (!app) {
                     throw new Error('Error while creating app.');
                 }
@@ -380,9 +391,311 @@ describe('Express Adapter', function () {
         }).catch((err) => {
             assert.notStrictEqual(err, 'Failed to start HTTP Server');
         }));
+
+        it('should reload certificates on update', () => {
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 10 // 10 ms for the test is enough
+            }).then(() => {
+                assertHttpsServer({ ca: true });
+
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-2-----',
+                            'key.pem': '-----PRIVATE KEY-2-----',
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-2-----'
+                        }
+                    })
+                });
+
+                fsWatchStub.args[0][1]('changed', 'ca_certificate.pem');
+                return sleep(30);
+            }).then(() => {
+                assert.deepStrictEqual(spySetSecureContextFunc.callCount, 1);
+                assert.deepStrictEqual(spySetSecureContextFunc.args[0][0], {
+                    cert: '-----CERTIFICATE-2-----',
+                    key: '-----PRIVATE KEY-2-----',
+                    ca: '-----CA_CERTIFICATE-2-----'
+                }, 'should reload certificates');
+            });
+        });
+
+        it('should wait till all files updated', () => {
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 20 // 20 ms for the test is enough
+            }).then(() => {
+                assertHttpsServer({ ca: true });
+
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-2-----',
+                            'key.pem': '-----PRIVATE KEY-2-----',
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-2-----'
+                        }
+                    })
+                });
+                fsWatchStub.args[0][1]('changed', 'ca_certificate.pem');
+                return sleep(5);
+            }).then(() => {
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-3-----',
+                            'key.pem': '-----PRIVATE KEY-3-----',
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-3-----'
+                        }
+                    })
+                });
+                fsWatchStub.args[0][1]('changed', 'key.pem');
+                return sleep(30);
+            }).then(() => {
+                assert.deepStrictEqual(spySetSecureContextFunc.callCount, 1);
+                assert.deepStrictEqual(spySetSecureContextFunc.args[0][0], {
+                    cert: '-----CERTIFICATE-3-----',
+                    key: '-----PRIVATE KEY-3-----',
+                    ca: '-----CA_CERTIFICATE-3-----'
+                }, 'should reload certificates');
+            });
+        });
+
+        it('should not fail when unable to update certs', () => {
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 10 // 20 ms for the test is enough
+            }).then(() => {
+                assertHttpsServer({ ca: true });
+
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-2-----',
+                            'key.pem': '-----PRIVATE KEY-2-----',
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-2-----'
+                        }
+                    })
+                });
+                fsWatchStub.args[0][1]('changed', 'ca_certificate.pem');
+                spySetSecureContextFunc.throws(new Error('expected set secure context error'));
+
+                return sleep(20);
+            }).then(() => {
+                assert.deepStrictEqual(spySetSecureContextFunc.callCount, 1);
+                assert.deepStrictEqual(spySetSecureContextFunc.args[0][0], {
+                    cert: '-----CERTIFICATE-2-----',
+                    key: '-----PRIVATE KEY-2-----',
+                    ca: '-----CA_CERTIFICATE-2-----'
+                }, 'should try to reload certificates');
+            });
+        });
+
+        it('should reject when unable to start listening', () => {
+            spyListenFunc.throws(new Error('expected server listen error'));
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            return assert.rejects(expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 10 // 20 ms for the test is enough
+            }), {
+                name: 'Error',
+                message: 'Failed to start HTTP Server: Error: expected server listen error'
+            });
+        });
+
+        it('should reject when unable to start server', () => {
+            spyServerStartFunc.throws(new Error('expected server start error'));
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            return assert.rejects(expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 10 // 20 ms for the test is enough
+            }), {
+                name: 'Error',
+                message: 'Failed to start HTTP Server: Error: expected server start error'
+            });
+        });
+
+        it('should ignore changes for non-chain files', () => {
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 20 // 20 ms for the test is enough
+            }).then(() => {
+                assertHttpsServer({ ca: true });
+
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-2-----',
+                            'key.pem': '-----PRIVATE KEY-2-----',
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-2-----'
+                        }
+                    })
+                });
+                fsWatchStub.args[0][1]('changed', 'another_certificate.pem');
+                return sleep(30);
+            }).then(() => {
+                assert.deepStrictEqual(spySetSecureContextFunc.callCount, 0);
+            });
+        });
+
+        it('should be able to watch for updates from multiple folders', () => {
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs-2/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs-3/ca_certificate.pem';
+
+            mock({
+                certs: mock.directory({
+                    items: {
+                        'key.pem': '-----PRIVATE KEY-----'
+                    }
+                }),
+                'certs-2': mock.directory({
+                    items: {
+                        'certificate.pem': '-----CERTIFICATE-----'
+                    }
+                }),
+                'certs-3': mock.directory({
+                    items: {
+                        'ca_certificate.pem': '-----CA_CERTIFICATE-----'
+                    }
+                })
+            });
+
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 20 // 20 ms for the test is enough
+            }).then(() => {
+                assertHttpsServer({ ca: true });
+
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'key.pem': '-----PRIVATE KEY-2-----'
+                        }
+                    }),
+                    'certs-2': mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-----'
+                        }
+                    }),
+                    'certs-3': mock.directory({
+                        items: {
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-----'
+                        }
+                    })
+                });
+                fsWatchStub.args.find(args => args[0] === 'certs')[1]('changed', 'key.pem');
+                return sleep(5);
+            }).then(() => {
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'key.pem': '-----PRIVATE KEY-2-----'
+                        }
+                    }),
+                    'certs-2': mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-2-----'
+                        }
+                    }),
+                    'certs-3': mock.directory({
+                        items: {
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-----'
+                        }
+                    })
+                });
+                fsWatchStub.args.find(args => args[0] === 'certs-2')[1]('changed', 'certificate.pem');
+                return sleep(30);
+            }).then(() => {
+                assert.deepStrictEqual(spySetSecureContextFunc.callCount, 1);
+                assert.deepStrictEqual(spySetSecureContextFunc.args[0][0], {
+                    cert: '-----CERTIFICATE-2-----',
+                    key: '-----PRIVATE KEY-2-----',
+                    ca: '-----CA_CERTIFICATE-----'
+                }, 'should reload certificates');
+            });
+        });
+
+        it('should update server configuration when certificates were updated at listener startup', () => {
+            assert.ok(testApp);
+
+            process.env.F5_SERVICE_KEY = 'certs/key.pem';
+            process.env.F5_SERVICE_CERT = 'certs/certificate.pem';
+            process.env.F5_SERVICE_CA = 'certs/ca_certificate.pem';
+
+            spyListenFunc.callsFake(() => {
+                mock({
+                    certs: mock.directory({
+                        items: {
+                            'certificate.pem': '-----CERTIFICATE-2-----',
+                            'key.pem': '-----PRIVATE KEY-2-----',
+                            'ca_certificate.pem': '-----CA_CERTIFICATE-2-----'
+                        }
+                    })
+                });
+            });
+
+            return expressAdapter.startHttpsServer(testApp, {
+                allowLocalCert: true,
+                port: testPort,
+                certsRotationWaitTimeout: 20 // 20 ms for the test is enough
+            }).then(() => {
+                assertHttpsServer({ ca: true });
+                assert.deepStrictEqual(spySetSecureContextFunc.callCount, 1);
+                assert.deepStrictEqual(spySetSecureContextFunc.args[0][0], {
+                    cert: '-----CERTIFICATE-2-----',
+                    key: '-----PRIVATE KEY-2-----',
+                    ca: '-----CA_CERTIFICATE-2-----'
+                }, 'should reload certificates on startup');
+            });
+        });
     });
 
     describe('stopHttpsServer', () => {
+        let fsWatchStub;
         let testApp;
         let testPort;
         let spyListenFunc;
@@ -400,7 +713,9 @@ describe('Express Adapter', function () {
                     }
                 })
             });
-            fs.watch = sinon.spy();
+            fsWatchStub = sinon.stub(fs, 'watch');
+            fsWatchStub.returns({ close: sinon.spy() });
+
             spyListenFunc = sinon.spy();
             spySetSecureContextFunc = sinon.spy();
             spyCloseFunc = sinon.stub();
@@ -436,6 +751,10 @@ describe('Express Adapter', function () {
         it('default_settings', () => {
             expressAdapter.stopHttpsServer();
             assert.ok(spyCloseFunc.called);
+            assert.deepStrictEqual(fsWatchStub.returnValues.length, 1);
+            fsWatchStub.returnValues.forEach(rval => assert.ok(rval.close.called, 'should close FSWatcher'));
+
+            assert.doesNotThrow(() => expressAdapter.stopHttpsServer());
         });
     });
 
